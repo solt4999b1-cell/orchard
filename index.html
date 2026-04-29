@@ -355,6 +355,18 @@
     border-radius: 10px; white-space: nowrap;
   }
 
+
+  /* ── 품종명 파란색 강조 ── */
+  .variety-blue { color: #1565C0 !important; font-weight: 700; }
+  .task-variety {
+    font-size: 12px; color: #1565C0; font-weight: 600;
+    margin-top: 3px; line-height: 1.7;
+  }
+  .task-variety span {
+    display: inline-block; background: #E3F2FD;
+    border-radius: 6px; padding: 1px 7px; margin: 1px 2px;
+    font-size: 11px; color: #1565C0; font-weight: 700;
+  }
 </style>
 </head>
 <body>
@@ -741,9 +753,9 @@ function getMonthlyTasks(month) {
       {id:'m1', name:'머루콩 파종 ★한계일임박', detail:'5/10~20일 엄수 · 3이랑 직파 · 25cm 간격', loc:'2구역 3이랑', urgent:true},
       {id:'m2', name:'생강 심기', detail:'토종10+개량20 · 7이랑 0~9.6m · 30cm 도랑', loc:'2구역 7이랑', urgent:true},
       {id:'m3', name:'선비잡이콩 파종', detail:'5/25~6/5 · 1이랑 전체 직파', loc:'2구역 1이랑', urgent:false},
-      {id:'m4', name:'수박 모종 정식 (1이랑)', detail:'블랙망고·애플·자몽·흑피미니·애플미니·보우짱', loc:'1구역 1이랑 고랑①~⑨⑪', urgent:true},
-      {id:'m5', name:'오이·호박·참외 모종 정식', detail:'2이랑 9고랑 · 기둥유인 설치', loc:'1구역 2이랑', urgent:true},
-      {id:'m6', name:'노지 수박·참외 정식', detail:'2이랑 참외3종+망고수박3 · 4이랑 복수박·접목애플수박', loc:'2구역 2·4이랑', urgent:false},
+      {id:'m4', name:'수박·단호박 모종 정식 (1이랑)', detail:'<span class="task-variety"><span>블랙망고수박</span><span>애플수박</span><span>자몽애플수박</span><span>흑피애플미니꼬꼬마①②</span><span>애플미니꼬꼬마①②</span><span>보우짱단호박①②</span><span>접목수박(고랑⑪)</span></span>', loc:'1구역 1이랑 고랑①~⑨⑪', urgent:true},
+      {id:'m5', name:'오이·호박·참외 모종 정식', detail:'<span class="task-variety"><span>백다다기오이</span><span>쿠카멜론①②</span><span>애호박①②</span><span>맷돌호박①②</span><span>망고참외</span><span>꿀참외</span></span>기둥유인 설치', loc:'1구역 2이랑 고랑①~⑨', urgent:true},
+      {id:'m6', name:'노지 수박·참외 정식 (2구역)', detail:'<span class="task-variety"><span>개구리참외</span><span>베타카로틴참외</span><span>사과참외</span><span>망고수박①②③</span><span>접목애플수박①②</span><span>복수박①②</span></span>', loc:'2구역 2이랑+4이랑', urgent:false},
       {id:'m7', name:'고구마 모종 정식', detail:'흐린날·저녁 정식 권장 · 활착률↑', loc:'사이구역 A·B이랑', urgent:false},
       {id:'m8', name:'비료·멀칭', detail:`퇴비1kg/㎡ · ${weatherMode==='drought'?'★건조대비 멀칭 전면 실시':'비닐멀칭 실시'}`, loc:'전체', urgent:weatherMode==='drought'},
       {id:'m9', name:'물주기', detail:`${weatherMode==='drought'?'★건조·파종후 충분히 30분 이상':'파종후 기본 관수'}`, loc:'파종 이랑', urgent:weatherMode==='drought'},
@@ -761,17 +773,17 @@ function getMonthlyTasks(month) {
     7: [
       {id:'jl1', name:'블랙베리·복분자 수확', detail:'매주 주말 수확 · 7월 중순 최성기', loc:'1구역 2이랑', urgent:false},
       {id:'jl2', name:'살구 5종 수확', detail:'킹코트·하코트·백살구·B360·대천황', loc:'2구역 7·8·9이랑', urgent:false},
-      {id:'jl3', name:'오이·쿠카멜론 수확', detail:'매주 수확 · 기둥유인 상태 점검', loc:'1구역 2이랑', urgent:false},
-      {id:'jl4', name:'참외 수확', detail:'망고·꿀·개구리·베타카로틴·사과참외', loc:'1·2구역', urgent:false},
-      {id:'jl5', name:'수박 착과 확인·그물망 점검', detail:'천장수박 그물망 · 접목수박 조류망', loc:'1구역 1이랑', urgent:true},
+      {id:'jl3', name:'오이·쿠카멜론 수확', detail:'<span class="task-variety"><span>백다다기오이(고랑②)</span><span>쿠카멜론①(고랑③)</span><span>쿠카멜론②(고랑④)</span></span>기둥유인 상태 점검', loc:'1구역 2이랑', urgent:false},
+      {id:'jl4', name:'참외 수확', detail:'<span class="task-variety"><span>망고참외</span><span>꿀참외</span><span>개구리참외</span><span>베타카로틴참외</span><span>사과참외</span></span>', loc:'1구역2이랑+2구역2이랑', urgent:false},
+      {id:'jl5', name:'수박 착과 확인·그물망 점검', detail:'<span class="task-variety"><span>블랙망고수박</span><span>애플수박</span><span>자몽애플수박</span><span>흑피·애플미니꼬꼬마×4</span></span>천장 그물망 · 접목수박 조류망', loc:'1구역 1이랑', urgent:true},
       {id:'jl6', name:`★${weatherMode==='drought'?'집중호우 대비 지지대 보강':'장마중 배수로 점검'}`, detail:`${weatherMode==='drought'?'덩굴·클립·지주 긴급 보강':'배수로 막힘 확인·제거'}`, loc:'전체', urgent:true},
       {id:'jl7', name:'병충해 방제', detail:`${weatherMode==='drought'?'호우 직후 24시간 내 살균제':'장마중 역병·탄저병 예방'}`, loc:'전체', urgent:true},
       {id:'jl8', name:'★폭염일 오전 6~9시만 작업', detail:'33°C↑ 폭염경보 → 오후 작업 절대 금지', loc:'전체', urgent:true},
     ],
     8: [
-      {id:'ag1', name:'수박 전량 수확 ★8/20전', detail:'복수박·접목수박·꼬꼬마수박 완료', loc:'1구역·2구역', urgent:true},
+      {id:'ag1', name:'수박 전량 수확 ★8/20전', detail:'<span class="task-variety"><span>복수박①②</span><span>접목애플수박①②</span><span>망고수박①②③</span><span>블랙망고수박</span><span>애플수박</span><span>자몽애플수박</span><span>흑피·애플미니꼬꼬마×4</span><span>보우짱단호박①②</span></span>', loc:'1구역 1이랑+2구역 2·4이랑', urgent:true},
       {id:'ag2', name:'★8/20 김장무 파종', detail:'날짜 엄수 · 4이랑 전체 · 가뭄시 2회/일관수', loc:'2구역 4이랑', urgent:true},
-      {id:'ag3', name:'애호박·맷돌호박 수확', detail:'착과 후 10~14일 수확', loc:'1구역 2이랑', urgent:false},
+      {id:'ag3', name:'호박 수확', detail:'<span class="task-variety"><span>애호박①(고랑①)</span><span>애호박②(고랑⑨)</span><span>맷돌호박①(고랑⑦)</span><span>맷돌호박②(고랑⑧)</span></span>착과 후 10~14일', loc:'1구역 2이랑', urgent:false},
       {id:'ag4', name:'고구마 덩굴 정리', detail:'과도한 덩굴 제거 · 구 비대 집중', loc:'사이구역 A·B이랑', urgent:false},
       {id:'ag5', name:'배추 모종 발아 준비', detail:'8월 하순 실내 발아 시작', loc:'실내', urgent:false},
       {id:'ag6', name:'병충해 방제 (노린재)', detail:'8월 노린재 급증 · 방제 시기', loc:'전체', urgent:false},
@@ -797,65 +809,6 @@ function getMonthlyTasks(month) {
   };
   return all[month] || [];
 }
-
-// ── 이랑 현황 데이터 ─────────────────────────────────
-function getIrangData(month) {
-  const base = [
-    {zone:'1구역 구조물', name:'1이랑 (천장유인)', color:'#E8F5E9', border:'#2E7D32',
-      crops: month<=5 ? '다래4주+으름4주 덩굴유인중\n수박8종+단호박2 모종 정식' :
-             month<=7 ? '다래+으름 덩굴 무성(천장덮기)\n수박8종 착과·수확중\n접목수박 고랑⑩ 열매 안착' :
-             '수박 수확완료\n다래·으름 낙엽 시작',
-      status: month<=5?'active': month<=9?'harvest':'prepare'},
-    {zone:'1구역 구조물', name:'2이랑 (기둥유인)', color:'#E3F2FD', border:'#1565C0',
-      crops: month<=5 ? '블랙베리9+복분자2 꽃핌\n오이3+호박4+참외2 정식' :
-             month<=7 ? '블랙베리·복분자 수확중\n오이·쿠카멜론·참외·호박 수확중' :
-             '블랙베리 수확완료·전정\n오이·호박·참외 수확완료',
-      status: month<=5?'active': month<=8?'harvest':'prepare'},
-    {zone:'1구역 구조물', name:'3이랑 (마늘→동부)', color:'#F3E5F5', border:'#6A1B9A',
-      crops: month<=5 ? '바이오체리 열매달림\n머루포도 덩굴생육\n양파(4~13m)+마늘(13~22m) 비대중' :
-             month<=6 ? '양파·마늘 수확완료\n→ 동부 파종 완료·생육초기' :
-             month<=9 ? '머루포도 수확중\n동부 생육중·수확' :
-             '동부 수확완료\n마늘 파종완료·생육초기',
-      status: month<=5?'active':month<=9?'harvest':'active'},
-    {zone:'사이구역', name:'A·B이랑 (고구마)', color:'#FFF3E0', border:'#E65100',
-      crops: month<=5 ? '고구마 모종 정식 (5월중순)\n순 활착중' :
-             month<=9 ? '고구마 덩굴 왕성 생육\n구 비대중' :
-             '고구마 수확 (10월초~중순)\n서리 전 완료 필수',
-      status: month<=5?'prepare':month<=9?'active':'harvest'},
-    {zone:'사이구역', name:'C·D이랑 (감자→배추)', color:'#FFF3E0', border:'#BF360C',
-      crops: month<=5 ? '감자 꽃핌·구 비대중' :
-             month<=8 ? '감자 수확완료\n배추 모종 준비중' :
-             '배추 결구중 (11월 수확)',
-      status: month<=5?'active':month<=8?'wait':'active'},
-    {zone:'2구역 동쪽', name:'10이랑 (어수리+사과)', color:'#E8F5E9', border:'#1B5E20',
-      crops: month<=5 ? '어수리3포기 새순수확\n사과묘목3주 개화·착과' :
-             month<=9 ? '어수리 하엽\n사과 과실 비대중' :
-             '어수리 고사(월동)\n돌고·아리수사과 수확',
-      status: month<=5?'harvest':month<=9?'active':'harvest'},
-    {zone:'2구역 동쪽', name:'9이랑 (어수리+곤드레+살구)', color:'#E8F5E9', border:'#2E7D32',
-      crops: month<=5 ? '어수리4+곤드레3 새순수확\n킹코트·하코트살구 착과' :
-             month<=7 ? '어수리·곤드레 하엽\n살구 수확(6~7월)' :
-             '어수리·곤드레 고사(월동)\n살구 수확완료',
-      status: month<=5?'harvest':month<=7?'harvest':'wait'},
-    {zone:'2구역', name:'7이랑 (생강+살구+어수리)', color:'#FFF3E0', border:'#E65100',
-      crops: month<=5 ? '앵두 수확시작\n생강 싹트기\n어수리·곤드레 수확\n황·청근대 수확' :
-             month<=9 ? '생강 왕성 생육\n살구 수확완료\n어수리·곤드레 하엽' :
-             '생강 수확(10월하순)\n어수리·곤드레 고사',
-      status: month<=5?'harvest':month<=9?'active':'harvest'},
-    {zone:'2구역', name:'3이랑 (머루콩 40개)', color:'#DCEDC8', border:'#558B2F',
-      crops: month<=5 ? '헤이즐넛①② 생육\n머루콩 파종(5/10~20)·발아' :
-             month<=9 ? '헤이즐넛 생육\n머루콩 왕성 생육' :
-             '헤이즐넛 개화\n머루콩 수확(10~11월)',
-      status: month<=5?'active':month<=9?'active':'harvest'},
-    {zone:'2구역 서쪽', name:'2이랑 (참외+수박→마늘)', color:'#FFF9C4', border:'#854F0B',
-      crops: month<=5 ? '참외3종+망고수박3+접목애플수박① 정식' :
-             month<=8 ? '참외3종 수확중\n망고수박3·접목애플수박 착과·수확' :
-             '참외·수박 수확완료\n마늘 파종완료·생육초기',
-      status: month<=5?'prepare':month<=8?'harvest':'active'},
-  ];
-  return base;
-}
-
 // ── D-day 데이터 ─────────────────────────────────────
 function getDDayData() {
   return [
@@ -934,7 +887,6 @@ function renderTasks() {
   document.getElementById('taskCountBadge').textContent = `${total}개`;
   document.getElementById('progressFill').style.width = `${total ? (done/total*100) : 0}%`;
 
-  // 이번 주 준비사항
   const next = getNextWeekPrep(month);
   if (next.length) {
     document.getElementById('nextWeekCard').style.display='block';
@@ -942,8 +894,6 @@ function renderTasks() {
       `<div class="task-item"><div class="task-info"><div class="task-name">${n.name}</div><div class="task-detail">${n.detail}</div></div></div>`
     ).join('');
   }
-
-  // 팁
   renderTip(month);
 }
 
@@ -987,7 +937,6 @@ function toggleTask(key, el) {
 function renderDDay() {
   const ddayData = getDDayData();
   const harvestData = getHarvestData();
-
   function buildGrid(data) {
     return data.map(d => {
       const days = daysUntil(...d.date);
@@ -1005,7 +954,138 @@ function renderDDay() {
   document.getElementById('harvestGrid').innerHTML = buildGrid(harvestData);
 }
 
-// ── 이랑 현황 렌더 ───────────────────────────────────
+
+
+// ── 이랑 현황 데이터 ─────────────────────────────────
+function getIrangData(month) {
+  const B = (t) => `<span style="color:#1565C0;font-weight:700">${t}</span>`;
+  const base = [
+    {zone:'1구역 구조물', name:'1이랑 (천장유인)', color:'#E8F5E9', border:'#2E7D32',
+      crops: month<=5
+        ? `다래4주+으름4주 덩굴유인중\n${B('블랙망고수박·애플수박·자몽애플수박')}\n${B('흑피·애플미니꼬꼬마×4·보우짱단호박×2')}\n${B('접목수박(고랑⑪)')} 모종 정식`
+        : month<=7
+        ? `다래+으름 덩굴 무성(천장덮기)\n${B('블랙망고수박·애플수박·자몽애플수박')} 착과중\n${B('흑피·애플미니꼬꼬마수박×4')} 착과·그물망\n${B('보우짱단호박①②')} 착과·접목수박 고랑⑩ 안착`
+        : `수박·단호박 수확완료\n다래·으름 낙엽 시작`,
+      status: month<=5?'active':month<=9?'harvest':'prepare'},
+
+    {zone:'1구역 구조물', name:'2이랑 (기둥유인)', color:'#E3F2FD', border:'#1565C0',
+      crops: month<=5
+        ? `블랙베리9+복분자2 꽃핌\n${B('백다다기오이·쿠카멜론①②')} 정식\n${B('애호박①②·맷돌호박①②')} 정식\n${B('망고참외·꿀참외')} 정식`
+        : month<=7
+        ? `블랙베리·복분자 수확중\n${B('백다다기오이·쿠카멜론①②')} 수확중\n${B('망고참외·꿀참외')} 수확중\n${B('맷돌호박①②')} 착과중(조류망2겹)\n${B('애호박①②')} 수확중`
+        : `블랙베리 수확완료·전정\n${B('백다다기오이·쿠카멜론①②')} 수확완료\n${B('애호박·맷돌호박·망고참외·꿀참외')} 수확완료`,
+      status: month<=5?'active':month<=8?'harvest':'prepare'},
+
+    {zone:'1구역 구조물', name:'3이랑 (마늘→동부)', color:'#F3E5F5', border:'#6A1B9A',
+      crops: month<=5
+        ? `바이오체리 열매달림\n머루포도 덩굴생육\n양파(4~13m)+마늘(13~22m) 비대중`
+        : month<=6
+        ? `양파·마늘 수확완료\n→ 동부 파종 완료·생육초기`
+        : month<=9
+        ? `머루포도 수확중\n동부 생육중·수확`
+        : `동부 수확완료\n마늘 파종완료·생육초기`,
+      status: month<=5?'active':month<=9?'harvest':'active'},
+
+    {zone:'사이구역', name:'A·B이랑 (고구마)', color:'#FFF3E0', border:'#E65100',
+      crops: month<=5
+        ? `${B('고구마')} 모종 정식 (5월중순)\n순 활착중`
+        : month<=9
+        ? `${B('고구마')} 덩굴 왕성 생육\n구 비대중`
+        : `${B('고구마')} 수확 (10월초~중순)\n서리 전 완료 필수`,
+      status: month<=5?'prepare':month<=9?'active':'harvest'},
+
+    {zone:'사이구역', name:'C·D이랑 (감자→배추)', color:'#FFF3E0', border:'#BF360C',
+      crops: month<=5
+        ? `${B('감자')} 꽃핌·구 비대중`
+        : month<=8
+        ? `${B('감자')} 수확완료\n${B('배추')} 모종 준비중`
+        : `${B('배추')} 결구중 (11월 수확)`,
+      status: month<=5?'active':month<=8?'wait':'active'},
+
+    {zone:'2구역', name:'1이랑 15m (선비잡이콩)', color:'#DCEDC8', border:'#33691E',
+      crops: month<=5
+        ? `${B('선비잡이콩')} 파종(5/25~6/5)\n발아 준비중`
+        : month<=9
+        ? `${B('선비잡이콩')} 왕성 생육\n덩굴뻗기·착협중`
+        : `${B('선비잡이콩')} 수확(11월초~중)\n꼬투리 건조중`,
+      status: month<=5?'prepare':month<=9?'active':'harvest'},
+
+    {zone:'2구역', name:'2이랑 14.6m (참외+수박→마늘)', color:'#FFF9C4', border:'#854F0B',
+      crops: month<=5
+        ? `${B('개구리참외·베타카로틴참외·사과참외')} 정식\n${B('망고수박①②③')} 정식\n${B('접목애플수박①')} 정식`
+        : month<=8
+        ? `${B('개구리·베타카로틴·사과참외')} 수확중(6~8월)\n${B('망고수박①②③')} 착과·수확중\n${B('접목애플수박①')} 착과중`
+        : `참외·수박 수확완료\n마늘 파종완료·생육초기`,
+      status: month<=5?'prepare':month<=8?'harvest':'active'},
+
+    {zone:'2구역', name:'3이랑 13.4m (머루콩·헤이즐넛)', color:'#DCEDC8', border:'#558B2F',
+      crops: month<=5
+        ? `헤이즐넛①② 생육\n${B('머루콩')} 파종(5/10~20)·발아`
+        : month<=9
+        ? `헤이즐넛 생육\n${B('머루콩')} 왕성 생육`
+        : `헤이즐넛 개화\n${B('머루콩')} 수확(10~11월)`,
+      status: month<=5?'active':month<=9?'active':'harvest'},
+
+    {zone:'2구역', name:'4이랑 12.6m (노지수박→김장무)', color:'#FFCCBC', border:'#BF360C',
+      crops: month<=5
+        ? `황근대5+청근대4 수확중\n${B('복수박①②·접목애플수박②')} 모종 정식`
+        : month<=7
+        ? `황·청근대 정리완료\n${B('복수박①②')} 착과·수확중(8/20전)\n${B('접목애플수박②')} 착과중`
+        : month<=8
+        ? `수박 수확완료(8/20전)\n${B('김장무')} 파종(8/20)·생육중`
+        : `${B('김장무')} 생육중·수확준비(10~11월)`,
+      status: month<=5?'active':month<=7?'harvest':month<=8?'active':'harvest'},
+
+    {zone:'2구역', name:'5이랑 11.4m (매실·모과+어수리)', color:'#FFF3E0', border:'#BF360C',
+      crops: month<=5
+        ? `남고·노천매실 착과(수확전)\n마르멜로·모과 꽃핌·착과\n어수리6포기 새순수확`
+        : month<=7
+        ? `남고·노천매실 수확(6~7월)\n마르멜로·모과 과실 비대중\n어수리 하엽`
+        : `마르멜로 수확(10월)\n대실모과·모과 수확(10~11월)\n어수리 고사`,
+      status: month<=5?'harvest':month<=9?'active':'harvest'},
+
+    {zone:'2구역', name:'6이랑 10.3m (양파전용)', color:'#E0F2F1', border:'#00695C',
+      crops: month<=8
+        ? `비어있음\n${B('양파')} 정식 준비(9월중하순)`
+        : `${B('양파')} 정식완료\n생육초기·월동준비`,
+      status: month<=8?'wait':'active'},
+
+    {zone:'2구역', name:'7이랑 9.6m (생강+살구+어수리)', color:'#FFF3E0', border:'#E65100',
+      crops: month<=5
+        ? `앵두 수확시작(5~6월)\n백살구·B360살구 착과중\n${B('토종생강+개량생강')} 싹트기\n어수리·곤드레 수확`
+        : month<=9
+        ? `${B('토종생강+개량생강')} 왕성 생육\n살구 수확완료\n어수리·곤드레 하엽`
+        : `${B('생강')} 수확(10월하순)\n어수리·곤드레 고사`,
+      status: month<=5?'harvest':month<=9?'active':'harvest'},
+
+    {zone:'2구역', name:'8이랑 8.6m (대천황살구+어수리+곤드레)', color:'#E8F5E9', border:'#388E3C',
+      crops: month<=5
+        ? `어수리3·곤드레4 새순수확\n대천황살구 착과중`
+        : month<=7
+        ? `어수리·곤드레 하엽\n대천황살구 수확(7월)`
+        : `어수리·곤드레 고사(월동)\n살구 수확완료`,
+      status: month<=5?'harvest':month<=7?'harvest':'wait'},
+
+    {zone:'2구역', name:'9이랑 7.1m (킹코트·하코트살구+어수리+곤드레)', color:'#E8F5E9', border:'#2E7D32',
+      crops: month<=5
+        ? `어수리4·곤드레3 새순수확\n킹코트·하코트살구 착과중`
+        : month<=7
+        ? `어수리·곤드레 하엽\n킹코트·하코트살구 수확(6~7월)`
+        : `어수리·곤드레 고사(월동)\n살구 수확완료`,
+      status: month<=5?'harvest':month<=7?'harvest':'wait'},
+
+    {zone:'2구역', name:'10이랑 6.5m (나가노·돌고·아리수사과+어수리)', color:'#E8F5E9', border:'#1B5E20',
+      crops: month<=5
+        ? `어수리3포기 새순수확\n나가노·돌고·아리수사과 개화·착과`
+        : month<=9
+        ? `어수리 하엽\n사과 과실 비대중`
+        : `어수리 고사(월동)\n돌고·아리수사과 수확(10월)`,
+      status: month<=5?'harvest':month<=9?'active':'harvest'},
+  ];
+  return base;
+}
+
+
 function renderIrang() {
   const month = getMonthNum();
   const data = getIrangData(month);
@@ -1015,7 +1095,7 @@ function renderIrang() {
     `<div class="irang-item" style="background:${d.color};border-left-color:${d.border}">
       <div class="irang-zone">${d.zone}</div>
       <div class="irang-name">${d.name}</div>
-      <div class="irang-crops">${d.crops.replace(/\n/g,'<br>')}</div>
+      <div class="irang-crops">${d.crops.replace(/\\n/g,'<br>').replace(/\[([^\]]+)\]/g,'<span style="color:#1565C0;font-weight:700">$1</span>')}</div>
       <span class="irang-status ${statusClass[d.status]}">${statusLabel[d.status]}</span>
     </div>`
   ).join('');
