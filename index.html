@@ -246,6 +246,115 @@
   .empty-icon { font-size: 48px; margin-bottom: 12px; }
   .empty-text { font-size: 15px; font-weight: 600; }
   .empty-sub { font-size: 13px; margin-top: 6px; }
+
+  /* ── 생육일수 섹션 ── */
+  .plant-card {
+    background: white; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 14px; overflow: hidden;
+  }
+  .plant-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .plant-title { font-size: 15px; font-weight: 700; color: var(--gray); }
+  .plant-subtitle { font-size: 11px; color: #9E9E9E; margin-top: 2px; }
+  .plant-add-btn {
+    margin: 0 16px 14px;
+    background: var(--green-pale); border: 1.5px dashed var(--green);
+    border-radius: var(--radius-sm); padding: 12px;
+    text-align: center; cursor: pointer; color: var(--green-dark);
+    font-size: 13px; font-weight: 600; transition: all 0.2s;
+  }
+  .plant-add-btn:active { background: var(--green-light); }
+
+  /* 입력 폼 */
+  .plant-form {
+    background: var(--green-pale); border-radius: var(--radius-sm);
+    padding: 14px; margin: 0 16px 14px; display: none;
+  }
+  .plant-form.open { display: block; }
+  .form-row { margin-bottom: 10px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+  .form-select, .form-input {
+    width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--green-light); background: white;
+    font-size: 14px; color: #212121; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+  .form-select:focus, .form-input:focus {
+    outline: none; border-color: var(--green);
+  }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-save {
+    flex: 2; padding: 11px; background: var(--green); color: white;
+    border: none; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-cancel {
+    flex: 1; padding: 11px; background: white; color: var(--gray);
+    border: 1.5px solid #BDBDBD; border-radius: var(--radius-sm);
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+
+  /* 생육 아이템 */
+  .grow-item {
+    padding: 14px 16px; border-bottom: 1px solid #F5F5F5;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .grow-item:last-child { border-bottom: none; }
+  .grow-emoji { font-size: 28px; flex-shrink: 0; }
+  .grow-info { flex: 1; min-width: 0; }
+  .grow-name { font-size: 14px; font-weight: 700; color: #212121; }
+  .grow-loc { font-size: 11px; color: var(--green-dark); background: var(--green-pale);
+    padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 3px; }
+  .grow-date { font-size: 11px; color: #9E9E9E; margin-top: 4px; }
+  .grow-right { text-align: right; flex-shrink: 0; }
+  .grow-days {
+    font-size: 30px; font-weight: 800; line-height: 1;
+    color: var(--green-dark);
+  }
+  .grow-days-label { font-size: 10px; color: #9E9E9E; margin-top: 2px; }
+  .grow-stage {
+    font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 12px; margin-top: 5px; display: inline-block;
+  }
+  .stage-seed { background: #FFF3E0; color: var(--orange); }
+  .stage-sprout { background: var(--green-pale); color: var(--green-dark); }
+  .stage-grow { background: #E8F5E9; color: var(--green); }
+  .stage-flower { background: #FCE4EC; color: #C2185B; }
+  .stage-fruit { background: #E3F2FD; color: var(--blue); }
+  .stage-harvest { background: var(--amber-light); color: var(--amber); }
+  .grow-progress-wrap { height: 4px; background: #E0E0E0; border-radius: 2px; margin-top: 6px; }
+  .grow-progress-bar { height: 100%; border-radius: 2px; transition: width 0.4s; }
+  .grow-delete {
+    width: 28px; height: 28px; border-radius: 50%; background: #FFEBEE;
+    border: none; color: var(--red); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 6px; margin-left: auto;
+  }
+  .grow-note { font-size: 11px; color: #757575; margin-top: 4px; font-style: italic; }
+
+  /* 빈 상태 */
+  .grow-empty {
+    padding: 36px 20px; text-align: center; color: #BDBDBD;
+  }
+  .grow-empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .grow-empty-text { font-size: 14px; font-weight: 600; }
+  .grow-empty-sub { font-size: 12px; margin-top: 5px; }
+
+  /* 생육 단계 요약 바 */
+  .stage-guide {
+    background: var(--green-pale); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin: 0 0 14px;
+  }
+  .stage-guide-title { font-size: 11px; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+  .stage-list { display: flex; gap: 6px; flex-wrap: wrap; }
+  .stage-chip {
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 10px; white-space: nowrap;
+  }
+
 </style>
 </head>
 <body>
@@ -272,6 +381,7 @@
   <div class="tab" onclick="showTab('irang')">🌱 이랑 현황</div>
   <div class="tab" onclick="showTab('monthly')">📅 월별 일정</div>
   <div class="tab" onclick="showTab('weather')">🌤️ 날씨 대응</div>
+  <div class="tab" onclick="showTab('grow')">🌿 생육일수</div>
 </div>
 
 <!-- 컨텐츠 -->
@@ -412,6 +522,130 @@
     </div>
   </div>
 
+  <!-- ⑥ 생육일수 -->
+  <div class="section" id="sec-grow">
+    <!-- 생육 단계 가이드 -->
+    <div class="stage-guide">
+      <div class="stage-guide-title">📖 생육 단계 기준</div>
+      <div class="stage-list">
+        <span class="stage-chip stage-seed">🌰 씨앗 0~7일</span>
+        <span class="stage-chip stage-sprout">🌱 발아 7~21일</span>
+        <span class="stage-chip stage-grow">🌿 생육 21~60일</span>
+        <span class="stage-chip stage-flower">🌸 개화 60~90일</span>
+        <span class="stage-chip stage-fruit">🍉 착과 90~120일</span>
+        <span class="stage-chip stage-harvest">✂️ 수확기 120일~</span>
+      </div>
+    </div>
+
+    <!-- 추가 버튼 -->
+    <div class="plant-card">
+      <div class="plant-header">
+        <span class="card-icon">🌿</span>
+        <div>
+          <div class="plant-title">심은 날짜 기록</div>
+          <div class="plant-subtitle">모종·씨앗 정식일 입력 → 경과일 자동 계산</div>
+        </div>
+      </div>
+      <div class="plant-add-btn" onclick="togglePlantForm()">＋ 새 작물 추가</div>
+      <!-- 입력 폼 -->
+      <div class="plant-form" id="plantForm">
+        <div class="form-row">
+          <div class="form-label">작물 선택</div>
+          <select class="form-select" id="fCrop">
+            <optgroup label="수박류">
+              <option value="블랙망고수박|🍉|1구역 1이랑 고랑②|180">블랙망고수박 (고랑②)</option>
+              <option value="애플수박|🍉|1구역 1이랑 고랑③|180">애플수박 (고랑③)</option>
+              <option value="자몽애플수박|🍉|1구역 1이랑 고랑④|180">자몽애플수박 (고랑④)</option>
+              <option value="흑피애플미니꼬꼬마수박①|🍉|1구역 고랑⑤|170">흑피미니꼬꼬마수박① (고랑⑤)</option>
+              <option value="흑피애플미니꼬꼬마수박②|🍉|1구역 고랑⑥|170">흑피미니꼬꼬마수박② (고랑⑥)</option>
+              <option value="애플미니꼬꼬마수박①|🍉|1구역 고랑⑦|160">애플미니꼬꼬마수박① (고랑⑦)</option>
+              <option value="애플미니꼬꼬마수박②|🍉|1구역 고랑⑧|160">애플미니꼬꼬마수박② (고랑⑧)</option>
+              <option value="접목수박|🍉|1구역 1이랑 고랑⑪|160">접목수박 (고랑⑪)</option>
+              <option value="망고수박①|🍉|2구역 2이랑|160">망고수박① (2구역)</option>
+              <option value="망고수박②|🍉|2구역 2이랑|160">망고수박② (2구역)</option>
+              <option value="망고수박③|🍉|2구역 2이랑|160">망고수박③ (2구역)</option>
+              <option value="복수박①|🍉|2구역 4이랑|160">복수박① (2구역)</option>
+              <option value="복수박②|🍉|2구역 4이랑|160">복수박② (2구역)</option>
+              <option value="접목애플수박①|🍉|2구역 2이랑|160">접목애플수박① (2구역)</option>
+              <option value="접목애플수박②|🍉|2구역 4이랑|160">접목애플수박② (2구역)</option>
+            </optgroup>
+            <optgroup label="참외">
+              <option value="망고참외|🍈|1구역 2이랑 고랑⑤|100">망고참외 (고랑⑤)</option>
+              <option value="꿀참외|🍈|1구역 2이랑 고랑⑥|100">꿀참외 (고랑⑥)</option>
+              <option value="개구리참외|🍈|2구역 2이랑|100">개구리참외 (2구역)</option>
+              <option value="베타카로틴참외|🍈|2구역 2이랑|100">베타카로틴참외 (2구역)</option>
+              <option value="사과참외|🍈|2구역 2이랑|100">사과참외 (2구역)</option>
+            </optgroup>
+            <optgroup label="오이류">
+              <option value="백다다기오이|🥒|1구역 2이랑 고랑②|60">백다다기오이 (고랑②)</option>
+              <option value="쿠카멜론①|🥒|1구역 2이랑 고랑③|60">쿠카멜론① (고랑③)</option>
+              <option value="쿠카멜론②|🥒|1구역 2이랑 고랑④|60">쿠카멜론② (고랑④)</option>
+            </optgroup>
+            <optgroup label="호박류">
+              <option value="미니단호박보우짱①|🎃|1구역 1이랑 고랑①|110">보우짱단호박① (고랑①)</option>
+              <option value="미니단호박보우짱②|🎃|1구역 1이랑 고랑⑨|110">보우짱단호박② (고랑⑨)</option>
+              <option value="애호박①|🟢|1구역 2이랑 고랑①|60">애호박① (고랑①)</option>
+              <option value="애호박②|🟢|1구역 2이랑 고랑⑨|60">애호박② (고랑⑨)</option>
+              <option value="맷돌호박①|🎃|1구역 2이랑 고랑⑦|130">맷돌호박① (고랑⑦)</option>
+              <option value="맷돌호박②|🎃|1구역 2이랑 고랑⑧|130">맷돌호박② (고랑⑧)</option>
+            </optgroup>
+            <optgroup label="콩류">
+              <option value="머루콩|🫘|2구역 3이랑|160">머루콩 (2구역 3이랑)</option>
+              <option value="선비잡이콩|🫘|2구역 1이랑|170">선비잡이콩 (2구역 1이랑)</option>
+              <option value="동부|🫘|1구역 3이랑|80">동부 (1구역 3이랑)</option>
+            </optgroup>
+            <optgroup label="기타">
+              <option value="토종생강|🌿|2구역 7이랑|150">토종생강 (7이랑)</option>
+              <option value="개량생강|🌿|2구역 7이랑|150">개량생강 (7이랑)</option>
+              <option value="고구마|🍠|사이구역 A·B이랑|120">고구마 (사이구역)</option>
+              <option value="양파|🧅|2구역 6이랑|200">양파 (6이랑)</option>
+              <option value="마늘|🧄|2구역 2이랑|220">마늘 (2·3이랑)</option>
+              <option value="김장무|🥕|2구역 4이랑|60">김장무 (4이랑)</option>
+              <option value="직접입력|✏️|직접입력|0">직접 입력...</option>
+            </optgroup>
+          </select>
+        </div>
+        <!-- 직접 입력 필드 (숨김) -->
+        <div class="form-row" id="customRow" style="display:none">
+          <div class="form-label">작물명 직접 입력</div>
+          <input type="text" class="form-input" id="fCustomName" placeholder="예: 방울토마토">
+        </div>
+        <div class="form-row-2">
+          <div class="form-row" style="margin:0">
+            <div class="form-label">심은 날짜</div>
+            <input type="date" class="form-input" id="fDate" value="2026-04-29">
+          </div>
+          <div class="form-row" style="margin:0">
+            <div class="form-label">메모 (선택)</div>
+            <input type="text" class="form-input" id="fNote" placeholder="예: 접목모종">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="savePlant()">저장</button>
+          <button class="btn-cancel" onclick="togglePlantForm()">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 생육 목록 -->
+    <div class="plant-card">
+      <div class="plant-header">
+        <span class="card-icon">📊</span>
+        <div>
+          <div class="plant-title">생육 현황</div>
+          <div class="plant-subtitle" id="growSubtitle">심은 작물이 없습니다</div>
+        </div>
+      </div>
+      <div id="growList">
+        <div class="grow-empty">
+          <div class="grow-empty-icon">🌰</div>
+          <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
+          <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div><!-- /content -->
 
 <!-- 하단 네비게이션 -->
@@ -435,6 +669,10 @@
   <div class="nav-item" onclick="showTab('weather')">
     <div class="nav-icon">🌤️</div>
     <div class="nav-label">날씨대응</div>
+  </div>
+  <div class="nav-item" onclick="showTab('grow')">
+    <div class="nav-icon">🌿</div>
+    <div class="nav-label">생육일수</div>
   </div>
 </div>
 
@@ -820,9 +1058,128 @@ function showTab(id) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`sec-${id}`).classList.add('active');
-  const tabMap = {today:0, dday:1, irang:2, monthly:3, weather:4};
+  const tabMap = {today:0, dday:1, irang:2, monthly:3, weather:4, grow:5};
   document.querySelectorAll('.tab')[tabMap[id]]?.classList.add('active');
   document.querySelectorAll('.nav-item')[tabMap[id]]?.classList.add('active');
+}
+
+
+// ── 생육일수 기능 ─────────────────────────────────────
+let plants = JSON.parse(localStorage.getItem('plants') || '[]');
+
+function togglePlantForm() {
+  const form = document.getElementById('plantForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) {
+    // 오늘 날짜로 초기화
+    const t = new Date(2026,3,29);
+    const dd = t.toISOString().split('T')[0];
+    document.getElementById('fDate').value = dd;
+    document.getElementById('fNote').value = '';
+  }
+}
+
+document.getElementById('fCrop').addEventListener('change', function() {
+  const isCustom = this.value.startsWith('직접입력');
+  document.getElementById('customRow').style.display = isCustom ? 'block' : 'none';
+});
+
+function savePlant() {
+  const sel = document.getElementById('fCrop').value;
+  const parts = sel.split('|');
+  let name, emoji, loc, totalDays;
+  if (parts[0] === '직접입력') {
+    name = document.getElementById('fCustomName').value.trim() || '작물';
+    emoji = '🌱'; loc = '직접입력'; totalDays = 120;
+  } else {
+    [name, emoji, loc, totalDays] = parts;
+    totalDays = parseInt(totalDays) || 120;
+  }
+  const dateVal = document.getElementById('fDate').value;
+  const note = document.getElementById('fNote').value.trim();
+  if (!dateVal) { alert('날짜를 선택하세요'); return; }
+  const id = Date.now().toString();
+  plants.push({ id, name, emoji, loc, dateStr: dateVal, totalDays, note });
+  localStorage.setItem('plants', JSON.stringify(plants));
+  togglePlantForm();
+  renderGrow();
+}
+
+function deletePlant(id) {
+  if (!confirm('삭제할까요?')) return;
+  plants = plants.filter(p => p.id !== id);
+  localStorage.setItem('plants', JSON.stringify(plants));
+  renderGrow();
+}
+
+function getStage(days, total) {
+  const pct = days / total;
+  if (days <= 7)   return {cls:'stage-seed',   label:'씨앗·발아전', icon:'🌰'};
+  if (days <= 21)  return {cls:'stage-sprout', label:'발아·초기',  icon:'🌱'};
+  if (days <= 60)  return {cls:'stage-grow',   label:'생육중',     icon:'🌿'};
+  if (days <= 90)  return {cls:'stage-flower', label:'개화기',     icon:'🌸'};
+  if (days <= 120) return {cls:'stage-fruit',  label:'착과기',     icon:'🍉'};
+  return {cls:'stage-harvest', label:'수확기', icon:'✂️'};
+}
+
+function getProgressColor(days, total) {
+  const pct = days / total;
+  if (pct < 0.3) return '#66BB6A';
+  if (pct < 0.6) return '#FFA726';
+  if (pct < 0.9) return '#E65100';
+  return '#C62828';
+}
+
+function renderGrow() {
+  const list = document.getElementById('growList');
+  const subtitle = document.getElementById('growSubtitle');
+  if (!plants.length) {
+    list.innerHTML = `<div class="grow-empty">
+      <div class="grow-empty-icon">🌰</div>
+      <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
+      <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
+    </div>`;
+    subtitle.textContent = '심은 작물이 없습니다';
+    return;
+  }
+
+  // 경과일 기준 정렬 (오래된 것 먼저)
+  const sorted = [...plants].sort((a,b) => a.dateStr.localeCompare(b.dateStr));
+  subtitle.textContent = `${plants.length}종 관리 중`;
+
+  list.innerHTML = sorted.map(p => {
+    const planted = new Date(p.dateStr);
+    const today = new Date(2026,3,29);
+    const elapsed = Math.round((today - planted) / 86400000);
+    const remaining = Math.max(0, p.totalDays - elapsed);
+    const pct = Math.min(100, Math.round(elapsed / p.totalDays * 100));
+    const stage = getStage(elapsed, p.totalDays);
+    const barColor = getProgressColor(elapsed, p.totalDays);
+    const plantedFmt = p.dateStr.replace(/-/g, '/').slice(5); // MM/DD
+    const harvestMsg = remaining > 0
+      ? `수확까지 약 <strong>${remaining}일</strong> 남음`
+      : `<span style="color:var(--red);font-weight:700">수확 시기 도달!</span>`;
+    return `<div class="grow-item">
+      <div class="grow-emoji">${stage.icon}</div>
+      <div class="grow-info">
+        <div class="grow-name">${p.name}</div>
+        <span class="grow-loc">${p.loc}</span>
+        <div class="grow-date">
+          심은날: ${plantedFmt} &nbsp;·&nbsp; ${harvestMsg}
+          ${p.note ? `<br><span style="color:#9E9E9E">${p.note}</span>` : ''}
+        </div>
+        <span class="grow-stage ${stage.cls}">${stage.label}</span>
+        <div class="grow-progress-wrap">
+          <div class="grow-progress-bar" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+      </div>
+      <div class="grow-right">
+        <div class="grow-days">${elapsed}</div>
+        <div class="grow-days-label">일째</div>
+        <button class="grow-delete" onclick="deletePlant('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ── 전체 렌더 ────────────────────────────────────────
@@ -832,6 +1189,7 @@ function renderAll() {
   renderDDay();
   renderIrang();
   renderMonthly();
+  renderGrow();
 }
 
 // ── 초기 실행 ────────────────────────────────────────
