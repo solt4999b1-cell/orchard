@@ -526,14 +526,18 @@
   <div class="section" id="sec-grow">
     <!-- 생육 단계 가이드 -->
     <div class="stage-guide">
-      <div class="stage-guide-title">📖 생육 단계 기준</div>
+      <div class="stage-guide-title">📖 품종별 주요 작업 시기</div>
       <div class="stage-list">
-        <span class="stage-chip stage-seed">🌰 씨앗 0~7일</span>
-        <span class="stage-chip stage-sprout">🌱 발아 7~21일</span>
-        <span class="stage-chip stage-grow">🌿 생육 21~60일</span>
-        <span class="stage-chip stage-flower">🌸 개화 60~90일</span>
-        <span class="stage-chip stage-fruit">🍉 착과 90~120일</span>
-        <span class="stage-chip stage-harvest">✂️ 수확기 120일~</span>
+        <span class="stage-chip stage-seed">오이·애호박 수확 50~60일</span>
+        <span class="stage-chip stage-sprout">소형수박 수확 65~75일</span>
+        <span class="stage-chip stage-grow">중형수박·참외 수확 75~85일</span>
+        <span class="stage-chip stage-flower">접목수박 수확 90일</span>
+        <span class="stage-chip stage-fruit">맷돌호박·단호박 수확 95~110일</span>
+        <span class="stage-chip stage-harvest">콩류 수확 85~175일</span>
+      </div>
+      <div style="margin-top:8px">
+        <div style="font-size:10px;color:#558B2F">✂️ 순치기 알림 | 🍉 착과확인 알림 | ✅ 수확 임박 알림 — 7일 전부터 자동 표시</div>
+        <div style="font-size:10px;color:#1565C0;margin-top:3px">🔵 근채류(감자·고구마·생강·양파·마늘·배추·무) 구비대기·결구기 별도 표시</div>
       </div>
     </div>
 
@@ -552,56 +556,61 @@
         <div class="form-row">
           <div class="form-label">작물 선택</div>
           <select class="form-select" id="fCrop">
-            <optgroup label="수박류">
-              <option value="블랙망고수박|🍉|1구역 1이랑 고랑②|180">블랙망고수박 (고랑②)</option>
-              <option value="애플수박|🍉|1구역 1이랑 고랑③|180">애플수박 (고랑③)</option>
-              <option value="자몽애플수박|🍉|1구역 1이랑 고랑④|180">자몽애플수박 (고랑④)</option>
-              <option value="흑피애플미니꼬꼬마수박①|🍉|1구역 고랑⑤|170">흑피미니꼬꼬마수박① (고랑⑤)</option>
-              <option value="흑피애플미니꼬꼬마수박②|🍉|1구역 고랑⑥|170">흑피미니꼬꼬마수박② (고랑⑥)</option>
-              <option value="애플미니꼬꼬마수박①|🍉|1구역 고랑⑦|160">애플미니꼬꼬마수박① (고랑⑦)</option>
-              <option value="애플미니꼬꼬마수박②|🍉|1구역 고랑⑧|160">애플미니꼬꼬마수박② (고랑⑧)</option>
-              <option value="접목수박|🍉|1구역 1이랑 고랑⑪|160">접목수박 (고랑⑪)</option>
-              <option value="망고수박①|🍉|2구역 2이랑|160">망고수박① (2구역)</option>
-              <option value="망고수박②|🍉|2구역 2이랑|160">망고수박② (2구역)</option>
-              <option value="망고수박③|🍉|2구역 2이랑|160">망고수박③ (2구역)</option>
-              <option value="복수박①|🍉|2구역 4이랑|160">복수박① (2구역)</option>
-              <option value="복수박②|🍉|2구역 4이랑|160">복수박② (2구역)</option>
-              <option value="접목애플수박①|🍉|2구역 2이랑|160">접목애플수박① (2구역)</option>
-              <option value="접목애플수박②|🍉|2구역 4이랑|160">접목애플수박② (2구역)</option>
+            <optgroup label="🍉 수박류">
+              <option value="블랙망고수박|🍉|1구역 1이랑 고랑②|75|15|45">블랙망고수박 (고랑② · 75일)</option>
+              <option value="애플수박|🍉|1구역 1이랑 고랑③|75|15|45">애플수박 (고랑③ · 75일)</option>
+              <option value="자몽애플수박|🍉|1구역 1이랑 고랑④|75|15|45">자몽애플수박 (고랑④ · 75일)</option>
+              <option value="흑피애플미니꼬꼬마수박①|🍉|1구역 고랑⑤|65|12|40">흑피미니꼬꼬마①(고랑⑤ · 65일)</option>
+              <option value="흑피애플미니꼬꼬마수박②|🍉|1구역 고랑⑥|65|12|40">흑피미니꼬꼬마②(고랑⑥ · 65일)</option>
+              <option value="애플미니꼬꼬마수박①|🍉|1구역 고랑⑦|65|12|40">애플미니꼬꼬마①(고랑⑦ · 65일)</option>
+              <option value="애플미니꼬꼬마수박②|🍉|1구역 고랑⑧|65|12|40">애플미니꼬꼬마②(고랑⑧ · 65일)</option>
+              <option value="접목수박|🍉|1구역 1이랑 고랑⑪|90|18|55">접목수박 (고랑⑪→⑩ · 90일)</option>
+              <option value="망고수박①|🍉|2구역 2이랑|80|15|50">망고수박① (2구역 · 80일)</option>
+              <option value="망고수박②|🍉|2구역 2이랑|80|15|50">망고수박② (2구역 · 80일)</option>
+              <option value="망고수박③|🍉|2구역 2이랑|80|15|50">망고수박③ (2구역 · 80일)</option>
+              <option value="복수박①|🍉|2구역 4이랑|80|15|50">복수박① (2구역 · 80일)</option>
+              <option value="복수박②|🍉|2구역 4이랑|80|15|50">복수박② (2구역 · 80일)</option>
+              <option value="접목애플수박①|🍉|2구역 2이랑|85|15|52">접목애플수박① (2구역 · 85일)</option>
+              <option value="접목애플수박②|🍉|2구역 4이랑|85|15|52">접목애플수박② (2구역 · 85일)</option>
             </optgroup>
-            <optgroup label="참외">
-              <option value="망고참외|🍈|1구역 2이랑 고랑⑤|100">망고참외 (고랑⑤)</option>
-              <option value="꿀참외|🍈|1구역 2이랑 고랑⑥|100">꿀참외 (고랑⑥)</option>
-              <option value="개구리참외|🍈|2구역 2이랑|100">개구리참외 (2구역)</option>
-              <option value="베타카로틴참외|🍈|2구역 2이랑|100">베타카로틴참외 (2구역)</option>
-              <option value="사과참외|🍈|2구역 2이랑|100">사과참외 (2구역)</option>
+            <optgroup label="🍈 참외류">
+              <option value="망고참외|🍈|1구역 2이랑 고랑⑤|75|12|45">망고참외 (고랑⑤ · 75일)</option>
+              <option value="꿀참외|🍈|1구역 2이랑 고랑⑥|75|12|45">꿀참외 (고랑⑥ · 75일)</option>
+              <option value="개구리참외|🍈|2구역 2이랑|80|12|50">개구리참외 (2구역 · 80일)</option>
+              <option value="베타카로틴참외|🍈|2구역 2이랑|80|12|50">베타카로틴참외 (2구역 · 80일)</option>
+              <option value="사과참외|🍈|2구역 2이랑|80|12|50">사과참외 (2구역 · 80일)</option>
             </optgroup>
-            <optgroup label="오이류">
-              <option value="백다다기오이|🥒|1구역 2이랑 고랑②|60">백다다기오이 (고랑②)</option>
-              <option value="쿠카멜론①|🥒|1구역 2이랑 고랑③|60">쿠카멜론① (고랑③)</option>
-              <option value="쿠카멜론②|🥒|1구역 2이랑 고랑④|60">쿠카멜론② (고랑④)</option>
+            <optgroup label="🥒 오이류">
+              <option value="백다다기오이|🥒|1구역 2이랑 고랑②|50|7|28">백다다기오이 (고랑② · 50일)</option>
+              <option value="쿠카멜론①|🥒|1구역 2이랑 고랑③|55|7|35">쿠카멜론① (고랑③ · 55일)</option>
+              <option value="쿠카멜론②|🥒|1구역 2이랑 고랑④|55|7|35">쿠카멜론② (고랑④ · 55일)</option>
             </optgroup>
-            <optgroup label="호박류">
-              <option value="미니단호박보우짱①|🎃|1구역 1이랑 고랑①|110">보우짱단호박① (고랑①)</option>
-              <option value="미니단호박보우짱②|🎃|1구역 1이랑 고랑⑨|110">보우짱단호박② (고랑⑨)</option>
-              <option value="애호박①|🟢|1구역 2이랑 고랑①|60">애호박① (고랑①)</option>
-              <option value="애호박②|🟢|1구역 2이랑 고랑⑨|60">애호박② (고랑⑨)</option>
-              <option value="맷돌호박①|🎃|1구역 2이랑 고랑⑦|130">맷돌호박① (고랑⑦)</option>
-              <option value="맷돌호박②|🎃|1구역 2이랑 고랑⑧|130">맷돌호박② (고랑⑧)</option>
+            <optgroup label="🎃 호박류">
+              <option value="미니단호박보우짱①|🎃|1구역 1이랑 고랑①|95|18|55">보우짱단호박① (고랑① · 95일)</option>
+              <option value="미니단호박보우짱②|🎃|1구역 1이랑 고랑⑨|95|18|55">보우짱단호박② (고랑⑨ · 95일)</option>
+              <option value="애호박①|🟢|1구역 2이랑 고랑①|45|7|28">애호박① (고랑① · 45일)</option>
+              <option value="애호박②|🟢|1구역 2이랑 고랑⑨|45|7|28">애호박② (고랑⑨ · 45일)</option>
+              <option value="맷돌호박①|🎃|1구역 2이랑 고랑⑦|110|18|65">맷돌호박① (고랑⑦ · 110일)</option>
+              <option value="맷돌호박②|🎃|1구역 2이랑 고랑⑧|110|18|65">맷돌호박② (고랑⑧ · 110일)</option>
             </optgroup>
-            <optgroup label="콩류">
-              <option value="머루콩|🫘|2구역 3이랑|160">머루콩 (2구역 3이랑)</option>
-              <option value="선비잡이콩|🫘|2구역 1이랑|170">선비잡이콩 (2구역 1이랑)</option>
-              <option value="동부|🫘|1구역 3이랑|80">동부 (1구역 3이랑)</option>
+            <optgroup label="🫘 콩류">
+              <option value="머루콩|🫘|2구역 3이랑|165|0|90">머루콩 (3이랑 · 165일)</option>
+              <option value="선비잡이콩|🫘|2구역 1이랑|175|0|95">선비잡이콩 (1이랑 · 175일)</option>
+              <option value="동부|🫘|1구역 3이랑|85|0|45">동부 (3이랑 마늘후작 · 85일)</option>
             </optgroup>
-            <optgroup label="기타">
-              <option value="토종생강|🌿|2구역 7이랑|150">토종생강 (7이랑)</option>
-              <option value="개량생강|🌿|2구역 7이랑|150">개량생강 (7이랑)</option>
-              <option value="고구마|🍠|사이구역 A·B이랑|120">고구마 (사이구역)</option>
-              <option value="양파|🧅|2구역 6이랑|200">양파 (6이랑)</option>
-              <option value="마늘|🧄|2구역 2이랑|220">마늘 (2·3이랑)</option>
-              <option value="김장무|🥕|2구역 4이랑|60">김장무 (4이랑)</option>
-              <option value="직접입력|✏️|직접입력|0">직접 입력...</option>
+            <optgroup label="🥔 근채류·엽채류">
+              <option value="감자(봄재배)|🥔|사이구역 C·D이랑|110|0|0">감자 봄재배 (C·D이랑 · 110일)</option>
+              <option value="고구마|🍠|사이구역 A·B이랑|125|20|0">고구마 (A·B이랑 · 125일)</option>
+              <option value="토종생강|🌿|2구역 7이랑|155|0|0">토종생강 (7이랑 · 155일)</option>
+              <option value="개량생강|🌿|2구역 7이랑|155|0|0">개량생강 (7이랑 · 155일)</option>
+              <option value="양파(중만생)|🧅|2구역 6이랑|220|0|0">양파 중만생 (6이랑 · 220일)</option>
+              <option value="마늘(한지형)|🧄|2구역 2·3이랑|240|0|0">마늘 한지형 (2·3이랑 · 240일)</option>
+              <option value="배추(가을)|🥬|사이구역 C·D이랑|70|0|0">배추 가을 (C·D이랑 · 70일)</option>
+              <option value="김장무|🥕|2구역 4이랑|65|0|0">김장무 (4이랑 · 65일)</option>
+              <option value="열무(여름)|🥬|직접선택|35|0|0">열무 여름 (35일)</option>
+            </optgroup>
+            <optgroup label="✏️ 직접입력">
+              <option value="직접입력|✏️|직접입력|120|0|60">직접 입력...</option>
             </optgroup>
           </select>
         </div>
@@ -1087,19 +1096,22 @@ document.getElementById('fCrop').addEventListener('change', function() {
 function savePlant() {
   const sel = document.getElementById('fCrop').value;
   const parts = sel.split('|');
-  let name, emoji, loc, totalDays;
+  let name, emoji, loc, totalDays, pinchDay, fruitDay;
   if (parts[0] === '직접입력') {
     name = document.getElementById('fCustomName').value.trim() || '작물';
-    emoji = '🌱'; loc = '직접입력'; totalDays = 120;
+    emoji = '🌱'; loc = '직접입력';
+    totalDays = 120; pinchDay = 0; fruitDay = 60;
   } else {
-    [name, emoji, loc, totalDays] = parts;
+    [name, emoji, loc, totalDays, pinchDay, fruitDay] = parts;
     totalDays = parseInt(totalDays) || 120;
+    pinchDay  = parseInt(pinchDay)  || 0;
+    fruitDay  = parseInt(fruitDay)  || 0;
   }
   const dateVal = document.getElementById('fDate').value;
   const note = document.getElementById('fNote').value.trim();
   if (!dateVal) { alert('날짜를 선택하세요'); return; }
   const id = Date.now().toString();
-  plants.push({ id, name, emoji, loc, dateStr: dateVal, totalDays, note });
+  plants.push({ id, name, emoji, loc, dateStr: dateVal, totalDays, pinchDay, fruitDay, note });
   localStorage.setItem('plants', JSON.stringify(plants));
   togglePlantForm();
   renderGrow();
@@ -1112,14 +1124,47 @@ function deletePlant(id) {
   renderGrow();
 }
 
-function getStage(days, total) {
-  const pct = days / total;
-  if (days <= 7)   return {cls:'stage-seed',   label:'씨앗·발아전', icon:'🌰'};
-  if (days <= 21)  return {cls:'stage-sprout', label:'발아·초기',  icon:'🌱'};
-  if (days <= 60)  return {cls:'stage-grow',   label:'생육중',     icon:'🌿'};
-  if (days <= 90)  return {cls:'stage-flower', label:'개화기',     icon:'🌸'};
-  if (days <= 120) return {cls:'stage-fruit',  label:'착과기',     icon:'🍉'};
-  return {cls:'stage-harvest', label:'수확기', icon:'✂️'};
+function getStage(days, total, pinchDay, fruitDay, name) {
+  const needPinch = pinchDay > 0;
+  const needFruit = fruitDay > 0;
+  // 근채류·엽채류 전용 단계
+  const rootCrops = ['감자','고구마','생강','양파','마늘','배추','김장무','열무','무'];
+  const isRoot = rootCrops.some(r => (name||'').includes(r));
+
+  if (days < 0) return {cls:'stage-seed', label:'심기 전', icon:'🌰'};
+  if (days === 0) return {cls:'stage-seed', label:'오늘 심음!', icon:'🌱'};
+  if (days <= 7) return {cls:'stage-seed', label:'발아·출아 대기', icon:'🌰'};
+
+  if (isRoot) {
+    const pct = days / total;
+    if (days <= 20)  return {cls:'stage-sprout', label:'출아·초기생육', icon:'🌱'};
+    if (pct < 0.35)  return {cls:'stage-grow',   label:'잎 생육중', icon:'🌿'};
+    if (pct < 0.65)  return {cls:'stage-flower',  label:'구·덩이 비대중', icon:'🔵'};
+    if (pct < 0.90)  return {cls:'stage-fruit',   label:'비대 완성기', icon:'💛'};
+    if (days >= total - 10) return {cls:'stage-harvest', label:'✂️ 수확 시기!', icon:'✂️'};
+    return {cls:'stage-fruit', label:'수확 임박', icon:'💛'};
+  }
+
+  // 순치기 시기
+  if (needPinch && days >= pinchDay - 3 && days <= pinchDay + 5)
+    return {cls:'stage-flower', label:'⚠️ 순치기 시기!', icon:'✂️'};
+
+  // 착과 시기
+  if (needFruit && days >= fruitDay - 3 && days <= fruitDay + 10)
+    return {cls:'stage-fruit', label:'🍉 착과 확인!', icon:'🍉'};
+
+  // 수확 시기
+  if (days >= total - 5 && days <= total + 14)
+    return {cls:'stage-harvest', label:'✂️ 수확 시기!', icon:'✂️'};
+  if (days > total + 14)
+    return {cls:'stage-harvest', label:'수확 완료?', icon:'✅'};
+
+  // 일반 생육 단계 (pinchDay 기준 상대적으로)
+  const pivot = needPinch ? pinchDay : Math.floor(total * 0.3);
+  if (days <= 14) return {cls:'stage-sprout', label:'발아·초기', icon:'🌱'};
+  if (days < pivot) return {cls:'stage-grow', label:'생육중', icon:'🌿'};
+  if (needFruit && days < fruitDay) return {cls:'stage-flower', label:'개화·순치기후', icon:'🌸'};
+  return {cls:'stage-grow', label:'생육중', icon:'🌿'};
 }
 
 function getProgressColor(days, total) {
@@ -1153,12 +1198,67 @@ function renderGrow() {
     const elapsed = Math.round((today - planted) / 86400000);
     const remaining = Math.max(0, p.totalDays - elapsed);
     const pct = Math.min(100, Math.round(elapsed / p.totalDays * 100));
-    const stage = getStage(elapsed, p.totalDays);
+    const pinchDay  = p.pinchDay  || 0;
+    const fruitDay  = p.fruitDay  || 0;
+    const stage = getStage(elapsed, p.totalDays, pinchDay, fruitDay, p.name);
     const barColor = getProgressColor(elapsed, p.totalDays);
-    const plantedFmt = p.dateStr.replace(/-/g, '/').slice(5); // MM/DD
+    const plantedFmt = p.dateStr.replace(/-/g, '/').slice(5);
+
+    // 수확 메시지
+    const rootCropCheck = ['감자','고구마','생강','양파','마늘','배추','김장무','열무','무'];
+    const isRootForMsg = rootCropCheck.some(r => p.name.includes(r));
+    const harvestWord = p.name.includes('마늘') || p.name.includes('양파') ? '수확·굴취' :
+                        p.name.includes('생강') ? '굴취' :
+                        p.name.includes('배추') ? '결구·수확' :
+                        p.name.includes('무') ? '수확' : '수확';
     const harvestMsg = remaining > 0
-      ? `수확까지 약 <strong>${remaining}일</strong> 남음`
-      : `<span style="color:var(--red);font-weight:700">수확 시기 도달!</span>`;
+      ? `${harvestWord}까지 약 <strong>${remaining}일</strong> 남음`
+      : `<span style="color:var(--red);font-weight:700">✂️ ${harvestWord} 시기 도달!</span>`;
+
+    // 다음 작업 알림 계산
+    let nextAction = '';
+    const rootCropNames = ['감자','고구마','생강','양파','마늘','배추','김장무','열무','무'];
+    const isRootCrop = rootCropNames.some(r => p.name.includes(r));
+    if (pinchDay > 0) {
+      const pinchLeft = pinchDay - elapsed;
+      const pinchActionLabel = p.name.includes('고구마') ? '덩굴 뒤집기!' : '순치기!';
+      const pinchDetail = p.name.includes('고구마') ? '고구마 덩굴뒤집기 — 부정근 제거' : '어미줄기 적심하세요';
+      if (pinchLeft > 0 && pinchLeft <= 7)
+        nextAction = `<div style="background:#FFF3E0;border-radius:6px;padding:5px 8px;margin-top:5px;font-size:11px;color:#E65100"><strong>⚠️ D-${pinchLeft}일 후 ${pinchActionLabel}</strong> (${pinchDay}일째)</div>`;
+      else if (pinchLeft <= 0 && pinchLeft >= -7)
+        nextAction = `<div style="background:#FFEBEE;border-radius:6px;padding:5px 8px;margin-top:5px;font-size:11px;color:#C62828"><strong>🔴 지금 ${pinchActionLabel}</strong> ${pinchDetail}</div>`;
+    }
+    if (fruitDay > 0 && !nextAction) {
+      const fruitLeft = fruitDay - elapsed;
+      if (fruitLeft > 0 && fruitLeft <= 7)
+        nextAction = `<div style="background:#E3F2FD;border-radius:6px;padding:5px 8px;margin-top:5px;font-size:11px;color:#1565C0"><strong>🍉 D-${fruitLeft}일 후 착과 확인!</strong> (${fruitDay}일째)</div>`;
+      else if (fruitLeft <= 0 && fruitLeft >= -10)
+        nextAction = `<div style="background:#E8F5E9;border-radius:6px;padding:5px 8px;margin-top:5px;font-size:11px;color:#1B5E20"><strong>🍉 착과 확인 시기!</strong> 포기당 1개 남기기</div>`;
+    }
+    if (remaining <= 7 && remaining > 0 && !nextAction)
+      nextAction = `<div style="background:#FFF9C4;border-radius:6px;padding:5px 8px;margin-top:5px;font-size:11px;color:#854F0B"><strong>✂️ D-${remaining}일 후 수확!</strong> 준비하세요</div>`;
+
+    // 순치기·착과 일정 요약
+    let schedule = '';
+    const rootCheck2 = ['감자','고구마','생강','양파','마늘','배추','김장무','열무','무'];
+    const isRootSched = rootCheck2.some(r => p.name.includes(r));
+    const schedItems = [];
+    if (pinchDay > 0) {
+      const lbl = p.name.includes('고구마') ? `덩굴뒤집기 ${pinchDay}일째` : `순치기 ${pinchDay}일째`;
+      schedItems.push(lbl);
+    }
+    if (fruitDay > 0 && !isRootSched) schedItems.push(`착과확인 ${fruitDay}일째`);
+    if (isRootSched) {
+      const midLbl = p.name.includes('배추')||p.name.includes('무') ? '결구시작' :
+                     p.name.includes('마늘')||p.name.includes('양파') ? '구비대기' : '비대기';
+      schedItems.push(`${midLbl} ${Math.round(p.totalDays*0.5)}일째`);
+    }
+    const hvLbl = p.name.includes('생강') ? '굴취' :
+                  p.name.includes('마늘')||p.name.includes('양파') ? '수확·굴취' :
+                  p.name.includes('배추') ? '결구수확' : '수확';
+    schedItems.push(`${hvLbl} ${p.totalDays}일째`);
+    schedule = `<div style="font-size:10px;color:#9E9E9E;margin-top:3px">${schedItems.join(' → ')}</div>`;
+
     return `<div class="grow-item">
       <div class="grow-emoji">${stage.icon}</div>
       <div class="grow-info">
@@ -1166,12 +1266,14 @@ function renderGrow() {
         <span class="grow-loc">${p.loc}</span>
         <div class="grow-date">
           심은날: ${plantedFmt} &nbsp;·&nbsp; ${harvestMsg}
-          ${p.note ? `<br><span style="color:#9E9E9E">${p.note}</span>` : ''}
+          ${p.note ? `<span style="color:#9E9E9E"> · ${p.note}</span>` : ''}
         </div>
+        ${schedule}
         <span class="grow-stage ${stage.cls}">${stage.label}</span>
         <div class="grow-progress-wrap">
           <div class="grow-progress-bar" style="width:${pct}%;background:${barColor}"></div>
         </div>
+        ${nextAction}
       </div>
       <div class="grow-right">
         <div class="grow-days">${elapsed}</div>
