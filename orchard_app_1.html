@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="새솔동 과수원">
+<meta name="theme-color" content="#1B5E20">
+<title>새솔동 과수원 관리</title>
+<style>
+  :root {
+    --green-dark: #1B5E20;
+    --green: #2E7D32;
+    --green-mid: #388E3C;
+    --green-light: #C8E6C9;
+    --green-pale: #E8F5E9;
+    --orange: #E65100;
+    --orange-light: #FFF3E0;
+    --red: #C62828;
+    --red-light: #FFEBEE;
+    --blue: #1565C0;
+    --blue-light: #E3F2FD;
+    --amber: #F57F17;
+    --amber-light: #FFF9C4;
+    --purple: #6A1B9A;
+    --purple-light: #F3E5F5;
+    --gray: #37474F;
+    --gray-light: #ECEFF1;
+    --white: #FFFFFF;
+    --shadow: 0 2px 12px rgba(0,0,0,0.12);
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: #F1F8E9;
+    color: #212121;
+    min-height: 100vh;
+    padding-bottom: 80px;
+  }
+
+  /* ── 상단 헤더 ── */
+  .header {
+    background: linear-gradient(135deg, #1B5E20 0%, #2E7D32 60%, #388E3C 100%);
+    padding: 52px 20px 20px;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 2px 16px rgba(27,94,32,0.35);
+  }
+  .header-top { display: flex; justify-content: space-between; align-items: center; }
+  .app-title { font-size: 20px; font-weight: 700; color: white; letter-spacing: -0.5px; }
+  .app-sub { font-size: 12px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+  .date-badge {
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 20px; padding: 6px 14px;
+    color: white; font-size: 13px; font-weight: 600;
+  }
+  .weather-toggle {
+    display: flex; gap: 8px; margin-top: 14px;
+  }
+  .weather-btn {
+    flex: 1; padding: 8px; border-radius: 10px; border: 1.5px solid rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.1); color: white; font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .weather-btn.active { background: white; color: var(--green-dark); border-color: white; }
+
+  /* ── 탭 ── */
+  .tab-bar {
+    display: flex; background: white;
+    border-bottom: 1px solid #E0E0E0;
+    position: sticky; top: 130px; z-index: 99;
+    overflow-x: auto; scrollbar-width: none;
+  }
+  .tab-bar::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: 0 0 auto; padding: 13px 18px;
+    font-size: 13px; font-weight: 600; color: #757575;
+    cursor: pointer; border-bottom: 2.5px solid transparent;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .tab.active { color: var(--green-dark); border-bottom-color: var(--green-dark); }
+
+  /* ── 컨텐츠 ── */
+  .content { padding: 16px; max-width: 480px; margin: 0 auto; }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── 카드 ── */
+  .card {
+    background: white; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 14px; overflow: hidden;
+  }
+  .card-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .card-icon { font-size: 22px; }
+  .card-title { font-size: 15px; font-weight: 700; color: var(--gray); }
+  .card-badge {
+    margin-left: auto; padding: 3px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 700;
+  }
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-green { background: var(--green-pale); color: var(--green-dark); }
+  .badge-amber { background: var(--amber-light); color: var(--amber); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .card-body { padding: 0 16px 14px; }
+
+  /* ── 작업 아이템 ── */
+  .task-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 11px 0; border-bottom: 1px solid #F5F5F5;
+  }
+  .task-item:last-child { border-bottom: none; }
+  .task-check {
+    width: 22px; height: 22px; border-radius: 50%;
+    border: 2px solid #BDBDBD; cursor: pointer;
+    flex-shrink: 0; margin-top: 1px; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .task-check.done { background: var(--green); border-color: var(--green); }
+  .task-check.done::after { content: '✓'; color: white; font-size: 13px; }
+  .task-info { flex: 1; }
+  .task-name { font-size: 14px; font-weight: 600; color: #212121; }
+  .task-name.done { text-decoration: line-through; color: #9E9E9E; }
+  .task-detail { font-size: 12px; color: #757575; margin-top: 3px; }
+  .task-location {
+    font-size: 11px; color: var(--green-dark); background: var(--green-pale);
+    padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px;
+  }
+  .task-urgent {
+    font-size: 11px; color: var(--red); background: var(--red-light);
+    padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 4px;
+  }
+
+  /* ── D-day 카드 ── */
+  .dday-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 4px 0 14px; }
+  .dday-item {
+    border-radius: var(--radius-sm); padding: 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .dday-label { font-size: 11px; font-weight: 600; opacity: 0.8; }
+  .dday-crop { font-size: 13px; font-weight: 700; }
+  .dday-num { font-size: 22px; font-weight: 800; }
+  .dday-sub { font-size: 10px; opacity: 0.7; }
+  .dday-red { background: var(--red-light); color: var(--red); }
+  .dday-orange { background: var(--orange-light); color: var(--orange); }
+  .dday-green { background: var(--green-pale); color: var(--green-dark); }
+  .dday-blue { background: var(--blue-light); color: var(--blue); }
+  .dday-amber { background: var(--amber-light); color: var(--amber); }
+  .dday-purple { background: var(--purple-light); color: var(--purple); }
+
+  /* ── 날씨 알림 ── */
+  .weather-alert {
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 10px; display: flex; gap: 10px; align-items: flex-start;
+  }
+  .alert-icon { font-size: 18px; flex-shrink: 0; }
+  .alert-text { font-size: 13px; font-weight: 500; }
+  .alert-sub { font-size: 11px; margin-top: 3px; opacity: 0.8; }
+  .alert-warn { background: #FFF3E0; color: var(--orange); }
+  .alert-danger { background: var(--red-light); color: var(--red); }
+  .alert-ok { background: var(--green-pale); color: var(--green-dark); }
+  .alert-info { background: var(--blue-light); color: var(--blue); }
+
+  /* ── 이랑 현황 ── */
+  .irang-list { padding-bottom: 14px; }
+  .irang-item {
+    border-radius: var(--radius-sm); padding: 12px 14px;
+    margin-bottom: 8px; border-left: 4px solid transparent;
+  }
+  .irang-zone { font-size: 10px; font-weight: 700; opacity: 0.7; text-transform: uppercase; }
+  .irang-name { font-size: 14px; font-weight: 700; margin: 2px 0; }
+  .irang-crops { font-size: 12px; line-height: 1.6; }
+  .irang-status {
+    display: inline-block; font-size: 10px; font-weight: 700;
+    padding: 2px 8px; border-radius: 10px; margin-top: 5px;
+  }
+  .status-active { background: var(--green-light); color: var(--green-dark); }
+  .status-harvest { background: #FFE0B2; color: #E65100; }
+  .status-prepare { background: var(--blue-light); color: var(--blue); }
+  .status-wait { background: var(--gray-light); color: var(--gray); }
+
+  /* ── 월별 일정 ── */
+  .month-item {
+    border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 10px;
+  }
+  .month-header {
+    padding: 10px 14px; font-size: 14px; font-weight: 700;
+    display: flex; align-items: center; gap: 8px; cursor: pointer;
+    justify-content: space-between;
+  }
+  .month-header-left { display: flex; align-items: center; gap: 8px; }
+  .month-arrow { font-size: 12px; transition: transform 0.2s; }
+  .month-arrow.open { transform: rotate(90deg); }
+  .month-body { display: none; padding: 0 14px 12px; background: white; }
+  .month-body.open { display: block; }
+  .month-task { font-size: 12px; padding: 5px 0; border-bottom: 1px solid #F5F5F5; color: #424242; }
+  .month-task:last-child { border-bottom: none; }
+  .month-task::before { content: '▸ '; color: var(--green-mid); }
+  .month-task.urgent { color: var(--red); }
+  .month-task.urgent::before { content: '★ '; color: var(--red); }
+
+  /* ── 체크리스트 진행률 ── */
+  .progress-bar { height: 6px; background: #E0E0E0; border-radius: 3px; margin: 8px 16px 14px; }
+  .progress-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s; }
+
+  /* ── 팁 박스 ── */
+  .tip-box {
+    background: var(--amber-light); border-radius: var(--radius-sm);
+    padding: 12px 14px; margin-bottom: 10px;
+    border-left: 3px solid var(--amber);
+  }
+  .tip-title { font-size: 12px; font-weight: 700; color: var(--amber); margin-bottom: 4px; }
+  .tip-text { font-size: 12px; color: #5D4037; line-height: 1.6; }
+
+  /* ── 하단 탭바 ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; border-top: 1px solid #E0E0E0;
+    display: flex; z-index: 200;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .nav-item {
+    flex: 1; padding: 10px 4px 8px; text-align: center; cursor: pointer;
+    transition: all 0.2s;
+  }
+  .nav-icon { font-size: 22px; }
+  .nav-label { font-size: 10px; color: #9E9E9E; margin-top: 2px; font-weight: 600; }
+  .nav-item.active .nav-label { color: var(--green-dark); }
+  .nav-item.active .nav-icon { filter: sepia(1) saturate(3) hue-rotate(85deg); }
+
+  /* ── 섹션 타이틀 ── */
+  .section-title {
+    font-size: 13px; font-weight: 700; color: #757575;
+    margin: 4px 0 10px; text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* ── 빈 상태 ── */
+  .empty-state {
+    text-align: center; padding: 40px 20px; color: #9E9E9E;
+  }
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-text { font-size: 15px; font-weight: 600; }
+  .empty-sub { font-size: 13px; margin-top: 6px; }
+
+  /* ── 생육일수 섹션 ── */
+  .plant-card {
+    background: white; border-radius: var(--radius);
+    box-shadow: var(--shadow); margin-bottom: 14px; overflow: hidden;
+  }
+  .plant-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .plant-title { font-size: 15px; font-weight: 700; color: var(--gray); }
+  .plant-subtitle { font-size: 11px; color: #9E9E9E; margin-top: 2px; }
+  .plant-add-btn {
+    margin: 0 16px 14px;
+    background: var(--green-pale); border: 1.5px dashed var(--green);
+    border-radius: var(--radius-sm); padding: 12px;
+    text-align: center; cursor: pointer; color: var(--green-dark);
+    font-size: 13px; font-weight: 600; transition: all 0.2s;
+  }
+  .plant-add-btn:active { background: var(--green-light); }
+
+  /* 입력 폼 */
+  .plant-form {
+    background: var(--green-pale); border-radius: var(--radius-sm);
+    padding: 14px; margin: 0 16px 14px; display: none;
+  }
+  .plant-form.open { display: block; }
+  .form-row { margin-bottom: 10px; }
+  .form-label { font-size: 11px; font-weight: 700; color: var(--green-dark); margin-bottom: 4px; }
+  .form-select, .form-input {
+    width: 100%; padding: 10px 12px; border-radius: var(--radius-sm);
+    border: 1.5px solid var(--green-light); background: white;
+    font-size: 14px; color: #212121; font-family: inherit;
+    -webkit-appearance: none; appearance: none;
+  }
+  .form-select:focus, .form-input:focus {
+    outline: none; border-color: var(--green);
+  }
+  .form-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .form-actions { display: flex; gap: 8px; margin-top: 12px; }
+  .btn-save {
+    flex: 2; padding: 11px; background: var(--green); color: white;
+    border: none; border-radius: var(--radius-sm); font-size: 14px;
+    font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .btn-cancel {
+    flex: 1; padding: 11px; background: white; color: var(--gray);
+    border: 1.5px solid #BDBDBD; border-radius: var(--radius-sm);
+    font-size: 14px; cursor: pointer; font-family: inherit;
+  }
+
+  /* 생육 아이템 */
+  .grow-item {
+    padding: 14px 16px; border-bottom: 1px solid #F5F5F5;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .grow-item:last-child { border-bottom: none; }
+  .grow-emoji { font-size: 28px; flex-shrink: 0; }
+  .grow-info { flex: 1; min-width: 0; }
+  .grow-name { font-size: 14px; font-weight: 700; color: #212121; }
+  .grow-loc { font-size: 11px; color: var(--green-dark); background: var(--green-pale);
+    padding: 2px 8px; border-radius: 10px; display: inline-block; margin-top: 3px; }
+  .grow-date { font-size: 11px; color: #9E9E9E; margin-top: 4px; }
+  .grow-right { text-align: right; flex-shrink: 0; }
+  .grow-days {
+    font-size: 30px; font-weight: 800; line-height: 1;
+    color: var(--green-dark);
+  }
+  .grow-days-label { font-size: 10px; color: #9E9E9E; margin-top: 2px; }
+  .grow-stage {
+    font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 12px; margin-top: 5px; display: inline-block;
+  }
+  .stage-seed { background: #FFF3E0; color: var(--orange); }
+  .stage-sprout { background: var(--green-pale); color: var(--green-dark); }
+  .stage-grow { background: #E8F5E9; color: var(--green); }
+  .stage-flower { background: #FCE4EC; color: #C2185B; }
+  .stage-fruit { background: #E3F2FD; color: var(--blue); }
+  .stage-harvest { background: var(--amber-light); color: var(--amber); }
+  .grow-progress-wrap { height: 4px; background: #E0E0E0; border-radius: 2px; margin-top: 6px; }
+  .grow-progress-bar { height: 100%; border-radius: 2px; transition: width 0.4s; }
+  .grow-delete {
+    width: 28px; height: 28px; border-radius: 50%; background: #FFEBEE;
+    border: none; color: var(--red); font-size: 15px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 6px; margin-left: auto;
+  }
+  .grow-note { font-size: 11px; color: #757575; margin-top: 4px; font-style: italic; }
+
+  /* 빈 상태 */
+  .grow-empty {
+    padding: 36px 20px; text-align: center; color: #BDBDBD;
+  }
+  .grow-empty-icon { font-size: 44px; margin-bottom: 10px; }
+  .grow-empty-text { font-size: 14px; font-weight: 600; }
+  .grow-empty-sub { font-size: 12px; margin-top: 5px; }
+
+  /* 생육 단계 요약 바 */
+  .stage-guide {
+    background: var(--green-pale); border-radius: var(--radius-sm);
+    padding: 10px 14px; margin: 0 0 14px;
+  }
+  .stage-guide-title { font-size: 11px; font-weight: 700; color: var(--green-dark); margin-bottom: 8px; }
+  .stage-list { display: flex; gap: 6px; flex-wrap: wrap; }
+  .stage-chip {
+    font-size: 10px; font-weight: 700; padding: 3px 8px;
+    border-radius: 10px; white-space: nowrap;
+  }
+
+</style>
+</head>
+<body>
+
+<!-- 헤더 -->
+<div class="header">
+  <div class="header-top">
+    <div>
+      <div class="app-title">🌿 새솔동 과수원</div>
+      <div class="app-sub">화성시 남양읍 신외리</div>
+    </div>
+    <div class="date-badge" id="todayBadge"></div>
+  </div>
+  <div class="weather-toggle">
+    <button class="weather-btn active" id="btnDrought" onclick="setWeather('drought')">☀️ 가뭄형(2025식)</button>
+    <button class="weather-btn" id="btnNormal" onclick="setWeather('normal')">🌧️ 평년 장마형</button>
+  </div>
+</div>
+
+<!-- 탭 -->
+<div class="tab-bar">
+  <div class="tab active" onclick="showTab('today')">📋 오늘 작업</div>
+  <div class="tab" onclick="showTab('dday')">⏰ D-day</div>
+  <div class="tab" onclick="showTab('irang')">🌱 이랑 현황</div>
+  <div class="tab" onclick="showTab('monthly')">📅 월별 일정</div>
+  <div class="tab" onclick="showTab('weather')">🌤️ 날씨 대응</div>
+  <div class="tab" onclick="showTab('grow')">🌿 생육일수</div>
+</div>
+
+<!-- 컨텐츠 -->
+<div class="content">
+
+  <!-- ① 오늘 작업 -->
+  <div class="section active" id="sec-today">
+    <div id="weatherAlertBox"></div>
+    <div class="section-title" id="todayTitle"></div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">✅</span>
+        <span class="card-title">오늘의 작업</span>
+        <span class="card-badge badge-green" id="taskCountBadge">0개</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+      <div class="card-body" id="taskList"></div>
+    </div>
+    <div class="card" id="nextWeekCard" style="display:none">
+      <div class="card-header">
+        <span class="card-icon">📌</span>
+        <span class="card-title">이번 주 준비 사항</span>
+      </div>
+      <div class="card-body" id="nextWeekList"></div>
+    </div>
+    <div id="tipBox"></div>
+  </div>
+
+  <!-- ② D-day -->
+  <div class="section" id="sec-dday">
+    <div class="section-title">파종·정식·수확 한계일</div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">⚠️</span>
+        <span class="card-title">한계일 D-day</span>
+        <span class="card-badge badge-red">날짜 엄수</span>
+      </div>
+      <div class="dday-grid" id="ddayGrid"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📅</span>
+        <span class="card-title">수확 예정</span>
+        <span class="card-badge badge-green">참고용</span>
+      </div>
+      <div class="dday-grid" id="harvestGrid"></div>
+    </div>
+  </div>
+
+  <!-- ③ 이랑 현황 -->
+  <div class="section" id="sec-irang">
+    <div class="section-title" id="irangTitle">현재 이랑 작물 상태</div>
+    <div class="irang-list" id="irangList"></div>
+  </div>
+
+  <!-- ④ 월별 일정 -->
+  <div class="section" id="sec-monthly">
+    <div class="section-title">5월~10월 작업 일정</div>
+    <div id="monthlyList"></div>
+  </div>
+
+  <!-- ⑤ 날씨 대응 -->
+  <div class="section" id="sec-weather">
+    <div class="section-title">날씨별 작업 대응</div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🚫</span>
+        <span class="card-title">작업 취소 기준</span>
+        <span class="card-badge badge-red">안전 최우선</span>
+      </div>
+      <div class="card-body">
+        <div class="task-item">
+          <div class="task-info">
+            <div class="task-name">집중호우 예보</div>
+            <div class="task-detail">시간당 30mm↑ or 일강수 80mm↑</div>
+            <div class="task-urgent">전면 취소 — 배수로 점검만</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info">
+            <div class="task-name">폭염경보 (35°C↑)</div>
+            <div class="task-detail">오전 6~9시만 작업 / 오후 전면 금지</div>
+            <div class="task-urgent">열사병 위험 — 혼자 작업 특히 주의</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info">
+            <div class="task-name">강풍 (10m/s↑)</div>
+            <div class="task-detail">모종 정식·파종 금지</div>
+            <div class="task-urgent">지지대 보강 후 귀가</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info">
+            <div class="task-name">안개 짙음</div>
+            <div class="task-detail">오전 작업 대기 — 약제 살포 금지</div>
+            <div class="task-location">오후 10시 이후 작업 권장</div>
+          </div>
+        </div>
+        <div class="task-item">
+          <div class="task-info">
+            <div class="task-name">서리 예보 (야간 0°C↓)</div>
+            <div class="task-detail">전날 고구마·생강·모과 긴급 수확</div>
+            <div class="task-urgent">10월말 서리 전 완료 필수</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🌦️</span>
+        <span class="card-title">비올 때 실내 대체 작업</span>
+        <span class="card-badge badge-blue">대안</span>
+      </div>
+      <div class="card-body">
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">수확물 건조·저장</div><div class="task-detail">그늘에서 2~3일 건조 후 저장</div></div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">도구 점검·손질</div><div class="task-detail">전정가위 소독·날카롭게 갈기</div></div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">다음 주 계획 수립</div><div class="task-detail">구입 물품·작업 순서 정리</div></div>
+        </div>
+        <div class="task-item">
+          <div class="task-info"><div class="task-name">씨앗·모종 구입 준비</div><div class="task-detail">온라인 주문 or 농자재 마트 방문</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="tip-box">
+      <div class="tip-title">📱 날씨 확인 방법</div>
+      <div class="tip-text">
+        기상청 날씨누리(weather.go.kr) → 동네예보 → 화성시 남양읍 신외리<br>
+        또는 기상청 앱 → 시간별 예보 → 강수확률·풍속·최고기온 확인<br><br>
+        <strong>화성시 농업기술센터: 031-369-6120</strong><br>
+        지역 병해충·특보 무료 안내
+      </div>
+    </div>
+  </div>
+
+  <!-- ⑥ 생육일수 -->
+  <div class="section" id="sec-grow">
+    <!-- 생육 단계 가이드 -->
+    <div class="stage-guide">
+      <div class="stage-guide-title">📖 생육 단계 기준</div>
+      <div class="stage-list">
+        <span class="stage-chip stage-seed">🌰 씨앗 0~7일</span>
+        <span class="stage-chip stage-sprout">🌱 발아 7~21일</span>
+        <span class="stage-chip stage-grow">🌿 생육 21~60일</span>
+        <span class="stage-chip stage-flower">🌸 개화 60~90일</span>
+        <span class="stage-chip stage-fruit">🍉 착과 90~120일</span>
+        <span class="stage-chip stage-harvest">✂️ 수확기 120일~</span>
+      </div>
+    </div>
+
+    <!-- 추가 버튼 -->
+    <div class="plant-card">
+      <div class="plant-header">
+        <span class="card-icon">🌿</span>
+        <div>
+          <div class="plant-title">심은 날짜 기록</div>
+          <div class="plant-subtitle">모종·씨앗 정식일 입력 → 경과일 자동 계산</div>
+        </div>
+      </div>
+      <div class="plant-add-btn" onclick="togglePlantForm()">＋ 새 작물 추가</div>
+      <!-- 입력 폼 -->
+      <div class="plant-form" id="plantForm">
+        <div class="form-row">
+          <div class="form-label">작물 선택</div>
+          <select class="form-select" id="fCrop">
+            <optgroup label="수박류">
+              <option value="블랙망고수박|🍉|1구역 1이랑 고랑②|180">블랙망고수박 (고랑②)</option>
+              <option value="애플수박|🍉|1구역 1이랑 고랑③|180">애플수박 (고랑③)</option>
+              <option value="자몽애플수박|🍉|1구역 1이랑 고랑④|180">자몽애플수박 (고랑④)</option>
+              <option value="흑피애플미니꼬꼬마수박①|🍉|1구역 고랑⑤|170">흑피미니꼬꼬마수박① (고랑⑤)</option>
+              <option value="흑피애플미니꼬꼬마수박②|🍉|1구역 고랑⑥|170">흑피미니꼬꼬마수박② (고랑⑥)</option>
+              <option value="애플미니꼬꼬마수박①|🍉|1구역 고랑⑦|160">애플미니꼬꼬마수박① (고랑⑦)</option>
+              <option value="애플미니꼬꼬마수박②|🍉|1구역 고랑⑧|160">애플미니꼬꼬마수박② (고랑⑧)</option>
+              <option value="접목수박|🍉|1구역 1이랑 고랑⑪|160">접목수박 (고랑⑪)</option>
+              <option value="망고수박①|🍉|2구역 2이랑|160">망고수박① (2구역)</option>
+              <option value="망고수박②|🍉|2구역 2이랑|160">망고수박② (2구역)</option>
+              <option value="망고수박③|🍉|2구역 2이랑|160">망고수박③ (2구역)</option>
+              <option value="복수박①|🍉|2구역 4이랑|160">복수박① (2구역)</option>
+              <option value="복수박②|🍉|2구역 4이랑|160">복수박② (2구역)</option>
+              <option value="접목애플수박①|🍉|2구역 2이랑|160">접목애플수박① (2구역)</option>
+              <option value="접목애플수박②|🍉|2구역 4이랑|160">접목애플수박② (2구역)</option>
+            </optgroup>
+            <optgroup label="참외">
+              <option value="망고참외|🍈|1구역 2이랑 고랑⑤|100">망고참외 (고랑⑤)</option>
+              <option value="꿀참외|🍈|1구역 2이랑 고랑⑥|100">꿀참외 (고랑⑥)</option>
+              <option value="개구리참외|🍈|2구역 2이랑|100">개구리참외 (2구역)</option>
+              <option value="베타카로틴참외|🍈|2구역 2이랑|100">베타카로틴참외 (2구역)</option>
+              <option value="사과참외|🍈|2구역 2이랑|100">사과참외 (2구역)</option>
+            </optgroup>
+            <optgroup label="오이류">
+              <option value="백다다기오이|🥒|1구역 2이랑 고랑②|60">백다다기오이 (고랑②)</option>
+              <option value="쿠카멜론①|🥒|1구역 2이랑 고랑③|60">쿠카멜론① (고랑③)</option>
+              <option value="쿠카멜론②|🥒|1구역 2이랑 고랑④|60">쿠카멜론② (고랑④)</option>
+            </optgroup>
+            <optgroup label="호박류">
+              <option value="미니단호박보우짱①|🎃|1구역 1이랑 고랑①|110">보우짱단호박① (고랑①)</option>
+              <option value="미니단호박보우짱②|🎃|1구역 1이랑 고랑⑨|110">보우짱단호박② (고랑⑨)</option>
+              <option value="애호박①|🟢|1구역 2이랑 고랑①|60">애호박① (고랑①)</option>
+              <option value="애호박②|🟢|1구역 2이랑 고랑⑨|60">애호박② (고랑⑨)</option>
+              <option value="맷돌호박①|🎃|1구역 2이랑 고랑⑦|130">맷돌호박① (고랑⑦)</option>
+              <option value="맷돌호박②|🎃|1구역 2이랑 고랑⑧|130">맷돌호박② (고랑⑧)</option>
+            </optgroup>
+            <optgroup label="콩류">
+              <option value="머루콩|🫘|2구역 3이랑|160">머루콩 (2구역 3이랑)</option>
+              <option value="선비잡이콩|🫘|2구역 1이랑|170">선비잡이콩 (2구역 1이랑)</option>
+              <option value="동부|🫘|1구역 3이랑|80">동부 (1구역 3이랑)</option>
+            </optgroup>
+            <optgroup label="기타">
+              <option value="토종생강|🌿|2구역 7이랑|150">토종생강 (7이랑)</option>
+              <option value="개량생강|🌿|2구역 7이랑|150">개량생강 (7이랑)</option>
+              <option value="고구마|🍠|사이구역 A·B이랑|120">고구마 (사이구역)</option>
+              <option value="양파|🧅|2구역 6이랑|200">양파 (6이랑)</option>
+              <option value="마늘|🧄|2구역 2이랑|220">마늘 (2·3이랑)</option>
+              <option value="김장무|🥕|2구역 4이랑|60">김장무 (4이랑)</option>
+              <option value="직접입력|✏️|직접입력|0">직접 입력...</option>
+            </optgroup>
+          </select>
+        </div>
+        <!-- 직접 입력 필드 (숨김) -->
+        <div class="form-row" id="customRow" style="display:none">
+          <div class="form-label">작물명 직접 입력</div>
+          <input type="text" class="form-input" id="fCustomName" placeholder="예: 방울토마토">
+        </div>
+        <div class="form-row-2">
+          <div class="form-row" style="margin:0">
+            <div class="form-label">심은 날짜</div>
+            <input type="date" class="form-input" id="fDate" value="2026-04-29">
+          </div>
+          <div class="form-row" style="margin:0">
+            <div class="form-label">메모 (선택)</div>
+            <input type="text" class="form-input" id="fNote" placeholder="예: 접목모종">
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="btn-save" onclick="savePlant()">저장</button>
+          <button class="btn-cancel" onclick="togglePlantForm()">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 생육 목록 -->
+    <div class="plant-card">
+      <div class="plant-header">
+        <span class="card-icon">📊</span>
+        <div>
+          <div class="plant-title">생육 현황</div>
+          <div class="plant-subtitle" id="growSubtitle">심은 작물이 없습니다</div>
+        </div>
+      </div>
+      <div id="growList">
+        <div class="grow-empty">
+          <div class="grow-empty-icon">🌰</div>
+          <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
+          <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /content -->
+
+<!-- 하단 네비게이션 -->
+<div class="bottom-nav">
+  <div class="nav-item active" onclick="showTab('today')">
+    <div class="nav-icon">📋</div>
+    <div class="nav-label">오늘작업</div>
+  </div>
+  <div class="nav-item" onclick="showTab('dday')">
+    <div class="nav-icon">⏰</div>
+    <div class="nav-label">D-day</div>
+  </div>
+  <div class="nav-item" onclick="showTab('irang')">
+    <div class="nav-icon">🌱</div>
+    <div class="nav-label">이랑현황</div>
+  </div>
+  <div class="nav-item" onclick="showTab('monthly')">
+    <div class="nav-icon">📅</div>
+    <div class="nav-label">월별일정</div>
+  </div>
+  <div class="nav-item" onclick="showTab('weather')">
+    <div class="nav-icon">🌤️</div>
+    <div class="nav-label">날씨대응</div>
+  </div>
+  <div class="nav-item" onclick="showTab('grow')">
+    <div class="nav-icon">🌿</div>
+    <div class="nav-label">생육일수</div>
+  </div>
+</div>
+
+<script>
+// ── 전역 상태 ──────────────────────────────────────────
+let weatherMode = localStorage.getItem('weatherMode') || 'drought';
+let checkedTasks = JSON.parse(localStorage.getItem('checkedTasks') || '{}');
+const TODAY = new Date(2026, 3, 29); // 4월 29일 (월=3)
+
+// ── 날짜 유틸 ──────────────────────────────────────────
+function daysUntil(y, m, d) {
+  const target = new Date(y, m-1, d);
+  return Math.round((target - TODAY) / 86400000);
+}
+function fmt(d) {
+  const days = ['일','월','화','수','목','금','토'];
+  return `${d.getMonth()+1}/${d.getDate()}(${days[d.getDay()]})`;
+}
+function getMonthNum() { return TODAY.getMonth()+1; }
+function getDay() { return TODAY.getDate(); }
+
+// ── 오늘 날짜 배지 ────────────────────────────────────
+const days = ['일','월','화','수','목','금','토'];
+document.getElementById('todayBadge').textContent =
+  `${TODAY.getFullYear()}. ${TODAY.getMonth()+1}. ${TODAY.getDate()}(${days[TODAY.getDay()]})`;
+document.getElementById('todayTitle').textContent =
+  `${TODAY.getMonth()+1}월 ${TODAY.getDate()}일 작업 목록`;
+document.getElementById('irangTitle').textContent =
+  `${TODAY.getMonth()+1}월 현재 이랑 작물 상태`;
+
+// ── 날씨 모드 ─────────────────────────────────────────
+function setWeather(mode) {
+  weatherMode = mode;
+  localStorage.setItem('weatherMode', mode);
+  document.getElementById('btnDrought').classList.toggle('active', mode==='drought');
+  document.getElementById('btnNormal').classList.toggle('active', mode==='normal');
+  renderAll();
+}
+if (weatherMode==='normal') {
+  document.getElementById('btnDrought').classList.remove('active');
+  document.getElementById('btnNormal').classList.add('active');
+}
+
+// ── 작업 데이터 (월별) ───────────────────────────────
+function getMonthlyTasks(month) {
+  const all = {
+    4: [
+      // 4월
+      {id:'a1', name:'다래·으름 덩굴 점검', detail:'구조물 클립 20~30cm 간격 확인', loc:'1구역 1이랑', urgent:false},
+      {id:'a2', name:'어수리·곤드레 새순 수확', detail:'10·9·8·7·5이랑 묘목 그늘 위치', loc:'2구역 동쪽 이랑', urgent:false},
+      {id:'a3', name:'유실수 개화 상태 점검', detail:'살구5종·사과3·매실2 착과 확인', loc:'2구역 5·7·8·9·10이랑', urgent:false},
+      {id:'a4', name:'잡초 선제 제거', detail:'전체 이랑 초기 잡초 호미로 제거', loc:'전체', urgent:false},
+      {id:'a5', name:'황·청근대 파종 or 모종 정식', detail:'7이랑 4~6.5m 위치', loc:'2구역 7이랑', urgent:false},
+    ],
+    5: [
+      // 5월
+      {id:'m1', name:'머루콩 파종 ★한계일임박', detail:'5/10~20일 엄수 · 3이랑 직파 · 25cm 간격', loc:'2구역 3이랑', urgent:true},
+      {id:'m2', name:'생강 심기', detail:'토종10+개량20 · 7이랑 0~9.6m · 30cm 도랑', loc:'2구역 7이랑', urgent:true},
+      {id:'m3', name:'선비잡이콩 파종', detail:'5/25~6/5 · 1이랑 전체 직파', loc:'2구역 1이랑', urgent:false},
+      {id:'m4', name:'수박 모종 정식 (1이랑)', detail:'블랙망고·애플·자몽·흑피미니·애플미니·보우짱', loc:'1구역 1이랑 고랑①~⑨⑪', urgent:true},
+      {id:'m5', name:'오이·호박·참외 모종 정식', detail:'2이랑 9고랑 · 기둥유인 설치', loc:'1구역 2이랑', urgent:true},
+      {id:'m6', name:'노지 수박·참외 정식', detail:'2이랑 참외3종+망고수박3 · 4이랑 복수박·접목애플수박', loc:'2구역 2·4이랑', urgent:false},
+      {id:'m7', name:'고구마 모종 정식', detail:'흐린날·저녁 정식 권장 · 활착률↑', loc:'사이구역 A·B이랑', urgent:false},
+      {id:'m8', name:'비료·멀칭', detail:`퇴비1kg/㎡ · ${weatherMode==='drought'?'★건조대비 멀칭 전면 실시':'비닐멀칭 실시'}`, loc:'전체', urgent:weatherMode==='drought'},
+      {id:'m9', name:'물주기', detail:`${weatherMode==='drought'?'★건조·파종후 충분히 30분 이상':'파종후 기본 관수'}`, loc:'파종 이랑', urgent:weatherMode==='drought'},
+    ],
+    6: [
+      {id:'j1', name:'마늘 수확', detail:'맑은날 연속 2일후 수확 · 6월 중하순', loc:'1구역 3이랑 13~22m', urgent:true},
+      {id:'j2', name:'양파 수확', detail:'잎 쓰러지면 수확 · 6월 상중순', loc:'1구역 3이랑 4~13m', urgent:false},
+      {id:'j3', name:'블랙베리 수확 시작', detail:'7월 중순 최성기 · 매주 수확', loc:'1구역 2이랑', urgent:false},
+      {id:'j4', name:'동부 파종 ★마늘수확 즉시', detail:'6월하순~7월초 엄수 · 4~22m 18m', loc:'1구역 3이랑', urgent:true},
+      {id:'j5', name:'★장마 전 잡초 대규모 제거', detail:'6월 2주차 선제 제거 필수', loc:'전체', urgent:true},
+      {id:'j6', name:'★병충해 예방 살포', detail:`${weatherMode==='normal'?'장마 직전 1회 필수 · 살균제':'건조대비 진딧물·응애 점검'}`, loc:'전체', urgent:weatherMode==='normal'},
+      {id:'j7', name:'수박 착과 절위 관리', detail:'어미줄기 적심 · 아들줄기 2개 유인', loc:'1구역 1이랑', urgent:false},
+      {id:'j8', name:'참외 손자줄기 순치기', detail:'아들줄기 12~15절 적심 → 손자줄기 착과', loc:'1·2구역', urgent:false},
+    ],
+    7: [
+      {id:'jl1', name:'블랙베리·복분자 수확', detail:'매주 주말 수확 · 7월 중순 최성기', loc:'1구역 2이랑', urgent:false},
+      {id:'jl2', name:'살구 5종 수확', detail:'킹코트·하코트·백살구·B360·대천황', loc:'2구역 7·8·9이랑', urgent:false},
+      {id:'jl3', name:'오이·쿠카멜론 수확', detail:'매주 수확 · 기둥유인 상태 점검', loc:'1구역 2이랑', urgent:false},
+      {id:'jl4', name:'참외 수확', detail:'망고·꿀·개구리·베타카로틴·사과참외', loc:'1·2구역', urgent:false},
+      {id:'jl5', name:'수박 착과 확인·그물망 점검', detail:'천장수박 그물망 · 접목수박 조류망', loc:'1구역 1이랑', urgent:true},
+      {id:'jl6', name:`★${weatherMode==='drought'?'집중호우 대비 지지대 보강':'장마중 배수로 점검'}`, detail:`${weatherMode==='drought'?'덩굴·클립·지주 긴급 보강':'배수로 막힘 확인·제거'}`, loc:'전체', urgent:true},
+      {id:'jl7', name:'병충해 방제', detail:`${weatherMode==='drought'?'호우 직후 24시간 내 살균제':'장마중 역병·탄저병 예방'}`, loc:'전체', urgent:true},
+      {id:'jl8', name:'★폭염일 오전 6~9시만 작업', detail:'33°C↑ 폭염경보 → 오후 작업 절대 금지', loc:'전체', urgent:true},
+    ],
+    8: [
+      {id:'ag1', name:'수박 전량 수확 ★8/20전', detail:'복수박·접목수박·꼬꼬마수박 완료', loc:'1구역·2구역', urgent:true},
+      {id:'ag2', name:'★8/20 김장무 파종', detail:'날짜 엄수 · 4이랑 전체 · 가뭄시 2회/일관수', loc:'2구역 4이랑', urgent:true},
+      {id:'ag3', name:'애호박·맷돌호박 수확', detail:'착과 후 10~14일 수확', loc:'1구역 2이랑', urgent:false},
+      {id:'ag4', name:'고구마 덩굴 정리', detail:'과도한 덩굴 제거 · 구 비대 집중', loc:'사이구역 A·B이랑', urgent:false},
+      {id:'ag5', name:'배추 모종 발아 준비', detail:'8월 하순 실내 발아 시작', loc:'실내', urgent:false},
+      {id:'ag6', name:'병충해 방제 (노린재)', detail:'8월 노린재 급증 · 방제 시기', loc:'전체', urgent:false},
+    ],
+    9: [
+      {id:'sp1', name:'★양파 정식', detail:'비온후 2~3일 맑은날 정식 · 400주', loc:'2구역 6이랑', urgent:true},
+      {id:'sp2', name:'생강 수확 준비', detail:'야간기온 보며 서리 전 완료', loc:'2구역 7이랑', urgent:true},
+      {id:'sp3', name:'동부 수확', detail:'맑은날 베어 그늘 2~3일 건조', loc:'1구역 3이랑', urgent:false},
+      {id:'sp4', name:'머루포도 수확', detail:'9~10월 수확 · 2이랑 묘목', loc:'1구역 3이랑 2~4m', urgent:false},
+      {id:'sp5', name:'배추 모종 정식', detail:'9월 초 · C·D이랑', loc:'사이구역 C·D이랑', urgent:false},
+      {id:'sp6', name:'가을비료 투입', detail:'유실수·다년생 이랑 가을 퇴비', loc:'2구역 전체', urgent:false},
+    ],
+    10: [
+      {id:'oc1', name:'★고구마 수확', detail:'서리 전 완료 필수 · 야간 5°C이하 전주', loc:'사이구역 A·B이랑', urgent:true},
+      {id:'oc2', name:'생강 수확', detail:'지온 10°C이하 전 · 야간 보며 결정', loc:'2구역 7이랑', urgent:true},
+      {id:'oc3', name:'★마늘 파종', detail:'비온후 3~4일 촉촉할때 · 한지형', loc:'2구역 2이랑+1구역 3이랑', urgent:true},
+      {id:'oc4', name:'머루콩·선비잡이콩 수확', detail:'꼬투리 70%이상 마른날 · 맑은날', loc:'2구역 1·3이랑', urgent:false},
+      {id:'oc5', name:'마르멜로·모과 수확', detail:'서리 전 완료', loc:'2구역 5이랑', urgent:true},
+      {id:'oc6', name:'돌고·아리수 사과 수확', detail:'10월 수확', loc:'2구역 10이랑', urgent:false},
+      {id:'oc7', name:'유실수 전정 준비', detail:'전정가위 소독·점검', loc:'2구역 전체', urgent:false},
+      {id:'oc8', name:'월동 멀칭', detail:'다년생 이랑 짚·비닐 피복', loc:'2구역 동쪽 이랑', urgent:false},
+    ],
+  };
+  return all[month] || [];
+}
+
+// ── 이랑 현황 데이터 ─────────────────────────────────
+function getIrangData(month) {
+  const base = [
+    {zone:'1구역 구조물', name:'1이랑 (천장유인)', color:'#E8F5E9', border:'#2E7D32',
+      crops: month<=5 ? '다래4주+으름4주 덩굴유인중\n수박8종+단호박2 모종 정식' :
+             month<=7 ? '다래+으름 덩굴 무성(천장덮기)\n수박8종 착과·수확중\n접목수박 고랑⑩ 열매 안착' :
+             '수박 수확완료\n다래·으름 낙엽 시작',
+      status: month<=5?'active': month<=9?'harvest':'prepare'},
+    {zone:'1구역 구조물', name:'2이랑 (기둥유인)', color:'#E3F2FD', border:'#1565C0',
+      crops: month<=5 ? '블랙베리9+복분자2 꽃핌\n오이3+호박4+참외2 정식' :
+             month<=7 ? '블랙베리·복분자 수확중\n오이·쿠카멜론·참외·호박 수확중' :
+             '블랙베리 수확완료·전정\n오이·호박·참외 수확완료',
+      status: month<=5?'active': month<=8?'harvest':'prepare'},
+    {zone:'1구역 구조물', name:'3이랑 (마늘→동부)', color:'#F3E5F5', border:'#6A1B9A',
+      crops: month<=5 ? '바이오체리 열매달림\n머루포도 덩굴생육\n양파(4~13m)+마늘(13~22m) 비대중' :
+             month<=6 ? '양파·마늘 수확완료\n→ 동부 파종 완료·생육초기' :
+             month<=9 ? '머루포도 수확중\n동부 생육중·수확' :
+             '동부 수확완료\n마늘 파종완료·생육초기',
+      status: month<=5?'active':month<=9?'harvest':'active'},
+    {zone:'사이구역', name:'A·B이랑 (고구마)', color:'#FFF3E0', border:'#E65100',
+      crops: month<=5 ? '고구마 모종 정식 (5월중순)\n순 활착중' :
+             month<=9 ? '고구마 덩굴 왕성 생육\n구 비대중' :
+             '고구마 수확 (10월초~중순)\n서리 전 완료 필수',
+      status: month<=5?'prepare':month<=9?'active':'harvest'},
+    {zone:'사이구역', name:'C·D이랑 (감자→배추)', color:'#FFF3E0', border:'#BF360C',
+      crops: month<=5 ? '감자 꽃핌·구 비대중' :
+             month<=8 ? '감자 수확완료\n배추 모종 준비중' :
+             '배추 결구중 (11월 수확)',
+      status: month<=5?'active':month<=8?'wait':'active'},
+    {zone:'2구역 동쪽', name:'10이랑 (어수리+사과)', color:'#E8F5E9', border:'#1B5E20',
+      crops: month<=5 ? '어수리3포기 새순수확\n사과묘목3주 개화·착과' :
+             month<=9 ? '어수리 하엽\n사과 과실 비대중' :
+             '어수리 고사(월동)\n돌고·아리수사과 수확',
+      status: month<=5?'harvest':month<=9?'active':'harvest'},
+    {zone:'2구역 동쪽', name:'9이랑 (어수리+곤드레+살구)', color:'#E8F5E9', border:'#2E7D32',
+      crops: month<=5 ? '어수리4+곤드레3 새순수확\n킹코트·하코트살구 착과' :
+             month<=7 ? '어수리·곤드레 하엽\n살구 수확(6~7월)' :
+             '어수리·곤드레 고사(월동)\n살구 수확완료',
+      status: month<=5?'harvest':month<=7?'harvest':'wait'},
+    {zone:'2구역', name:'7이랑 (생강+살구+어수리)', color:'#FFF3E0', border:'#E65100',
+      crops: month<=5 ? '앵두 수확시작\n생강 싹트기\n어수리·곤드레 수확\n황·청근대 수확' :
+             month<=9 ? '생강 왕성 생육\n살구 수확완료\n어수리·곤드레 하엽' :
+             '생강 수확(10월하순)\n어수리·곤드레 고사',
+      status: month<=5?'harvest':month<=9?'active':'harvest'},
+    {zone:'2구역', name:'3이랑 (머루콩 40개)', color:'#DCEDC8', border:'#558B2F',
+      crops: month<=5 ? '헤이즐넛①② 생육\n머루콩 파종(5/10~20)·발아' :
+             month<=9 ? '헤이즐넛 생육\n머루콩 왕성 생육' :
+             '헤이즐넛 개화\n머루콩 수확(10~11월)',
+      status: month<=5?'active':month<=9?'active':'harvest'},
+    {zone:'2구역 서쪽', name:'2이랑 (참외+수박→마늘)', color:'#FFF9C4', border:'#854F0B',
+      crops: month<=5 ? '참외3종+망고수박3+접목애플수박① 정식' :
+             month<=8 ? '참외3종 수확중\n망고수박3·접목애플수박 착과·수확' :
+             '참외·수박 수확완료\n마늘 파종완료·생육초기',
+      status: month<=5?'prepare':month<=8?'harvest':'active'},
+  ];
+  return base;
+}
+
+// ── D-day 데이터 ─────────────────────────────────────
+function getDDayData() {
+  return [
+    {label:'파종 한계', crop:'머루콩', date:[2026,6,10], cls:'dday-red'},
+    {label:'파종 한계', crop:'선비잡이콩', date:[2026,6,15], cls:'dday-orange'},
+    {label:'파종 한계', crop:'동부(마늘후작)', date:[2026,7,15], cls:'dday-orange'},
+    {label:'파종 필수', crop:'김장무(8/20)', date:[2026,8,20], cls:'dday-red'},
+    {label:'정식 한계', crop:'고구마모종', date:[2026,6,15], cls:'dday-orange'},
+    {label:'정식 시기', crop:'양파(9월중하순)', date:[2026,9,20], cls:'dday-blue'},
+    {label:'파종 시기', crop:'마늘(10월초)', date:[2026,10,5], cls:'dday-purple'},
+    {label:'정식 필수', crop:'배추(9월초)', date:[2026,9,5], cls:'dday-green'},
+  ];
+}
+function getHarvestData() {
+  return [
+    {label:'수확 시작', crop:'블랙베리·복분자', date:[2026,7,15], cls:'dday-green'},
+    {label:'수확 시작', crop:'살구5종', date:[2026,6,20], cls:'dday-orange'},
+    {label:'수확 필수', crop:'수박전량(8/20전)', date:[2026,8,20], cls:'dday-red'},
+    {label:'수확 시작', crop:'고구마', date:[2026,10,1], cls:'dday-amber'},
+    {label:'수확 한계', crop:'생강(서리전)', date:[2026,10,25], cls:'dday-orange'},
+    {label:'수확 시기', crop:'머루콩', date:[2026,10,15], cls:'dday-green'},
+    {label:'수확 시기', crop:'마르멜로·모과', date:[2026,10,20], cls:'dday-purple'},
+    {label:'수확 시기', crop:'돌고·아리수사과', date:[2026,10,10], cls:'dday-blue'},
+  ];
+}
+
+// ── 오늘 날씨 알림 ────────────────────────────────────
+function renderWeatherAlert() {
+  const month = getMonthNum();
+  let alerts = [];
+  if (month===5) {
+    alerts.push({type:'ok', icon:'☀️', text:'오늘 날씨: 구름많음·건조·맑음', sub:'파종·정식 작업 가능 | 대기 건조 — 파종 후 물주기 필수'});
+    if (weatherMode==='drought')
+      alerts.push({type:'warn', icon:'⚠️', text:'가뭄형 모드: 관수 2배 권장', sub:'멀칭 즉시 실시 · 파종 후 30분 이상 충분히 관수'});
+  } else if (month===7) {
+    alerts.push({type:'danger', icon:'🌧️', text:'7월 집중호우 가능성', sub:'작업 전날 기상청 예보 확인 필수 | 지지대 점검'});
+    alerts.push({type:'warn', icon:'🌡️', text:'폭염 주의', sub:'33°C↑ 예보시 오전 6~9시만 작업'});
+  } else if (month===8) {
+    alerts.push({type:'danger', icon:'🌡️', text:'8월 연속 폭염 주의', sub:'오전 6~8시·저녁 17~19시만 야외 작업'});
+    if (getDay() >= 15)
+      alerts.push({type:'danger', icon:'📅', text:'8/20 김장무 파종 임박', sub:`D-${daysUntil(2026,8,20)}일 — 날짜 엄수`});
+  }
+  const box = document.getElementById('weatherAlertBox');
+  box.innerHTML = alerts.map(a =>
+    `<div class="weather-alert alert-${a.type}">
+      <div class="alert-icon">${a.icon}</div>
+      <div>
+        <div class="alert-text">${a.text}</div>
+        <div class="alert-sub">${a.sub}</div>
+      </div>
+    </div>`).join('');
+}
+
+// ── 오늘 작업 렌더 ────────────────────────────────────
+function renderTasks() {
+  const month = getMonthNum();
+  const tasks = getMonthlyTasks(month);
+  const list = document.getElementById('taskList');
+  const todayKey = `${TODAY.getFullYear()}-${TODAY.getMonth()+1}-${TODAY.getDate()}`;
+
+  list.innerHTML = tasks.map(t => {
+    const key = `${todayKey}-${t.id}`;
+    const done = checkedTasks[key];
+    return `<div class="task-item">
+      <div class="task-check ${done?'done':''}" onclick="toggleTask('${key}',this)"></div>
+      <div class="task-info">
+        <div class="task-name ${done?'done':''}">${t.name}</div>
+        <div class="task-detail">${t.detail}</div>
+        <div class="${t.urgent?'task-urgent':'task-location'}">${t.loc}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  const total = tasks.length;
+  const done = tasks.filter(t => checkedTasks[`${todayKey}-${t.id}`]).length;
+  document.getElementById('taskCountBadge').textContent = `${total}개`;
+  document.getElementById('progressFill').style.width = `${total ? (done/total*100) : 0}%`;
+
+  // 이번 주 준비사항
+  const next = getNextWeekPrep(month);
+  if (next.length) {
+    document.getElementById('nextWeekCard').style.display='block';
+    document.getElementById('nextWeekList').innerHTML = next.map(n =>
+      `<div class="task-item"><div class="task-info"><div class="task-name">${n.name}</div><div class="task-detail">${n.detail}</div></div></div>`
+    ).join('');
+  }
+
+  // 팁
+  renderTip(month);
+}
+
+function getNextWeekPrep(month) {
+  const preps = {
+    4: [{name:'수박·오이·호박·참외 모종 구입', detail:'5/9~10 주말 정식 예정 · 금요일 미리 구입'}],
+    5: [{name:'머루콩 파종 준비', detail:'씨앗 확인 · 호미·삽 점검'}, {name:'생강 씨생강 구입', detail:'토종10+개량20 · 지온 18°C 확인'}],
+    6: [{name:'동부 씨앗 구입', detail:'마늘 수확 후 즉시 파종 · 검정동부 권장'}],
+    7: [{name:'조류망 점검', detail:'수박 열매 그물망 긴장도 확인'}, {name:'병해 약제 준비', detail:'살균제·살충제 잔량 확인'}],
+    8: [{name:'배추 모종 발아 준비', detail:'8월 하순 실내 발아'}, {name:'김장무 씨앗 확인', detail:'8/20 파종 준비'}],
+    9: [{name:'마늘 씨마늘 구입', detail:'한지형 · 10월 파종 준비'}],
+    10: [{name:'월동 멀칭 자재 준비', detail:'짚·부직포 · 다년생 이랑 피복'}],
+  };
+  return preps[month] || [];
+}
+
+function renderTip(month) {
+  const tips = {
+    5: {title:'5월 핵심 팁', text:'★ 파종 후 멀칭이 수확량을 결정합니다\n건조한 날이 많으면 비닐 or 짚 멀칭 즉시 실시\n고구마 모종은 흐린 날 저녁에 심어야 활착률↑'},
+    6: {title:'6월 핵심 팁', text:'장마 전 잡초 대규모 제거가 핵심입니다\n마늘 수확 후 동부는 즉시 파종 (한계일 주의)\n장마 직전 살균제 1회 살포 — 역병 예방'},
+    7: {title:'7월 핵심 팁', text:'폭염일 오전 6~9시 작업 후 귀가 원칙\n집중호우 전날 덩굴·지지대 반드시 보강\n수박 착과 후 포기당 1개만 남기기'},
+    8: {title:'8월 핵심 팁', text:'8/20 김장무 파종 날짜는 절대 엄수\n수박은 8/20 이전 전량 수확 완료 필수\n폭염 연속 → 오전 6~8시 집중 작업'},
+    9: {title:'9월 핵심 팁', text:'양파 정식은 비온 후 2~3일 맑은 날이 최적\n생강은 첫서리 전 수확 — 야간기온 보며 결정\n태풍 예보시 덩굴 보강 후 대피'},
+    10: {title:'10월 핵심 팁', text:'고구마·생강은 야간 5°C 이하 전주에 수확\n마늘 파종은 비온 후 3~4일 촉촉할때 최적\n콩류 꼬투리 70%이상 마른날 맑은날 수확'},
+  };
+  const tip = tips[month];
+  const box = document.getElementById('tipBox');
+  if (tip) {
+    box.innerHTML = `<div class="tip-box"><div class="tip-title">💡 ${tip.title}</div><div class="tip-text">${tip.text.replace(/\n/g,'<br>')}</div></div>`;
+  }
+}
+
+function toggleTask(key, el) {
+  checkedTasks[key] = !checkedTasks[key];
+  if (!checkedTasks[key]) delete checkedTasks[key];
+  localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
+  renderTasks();
+}
+
+// ── D-day 렌더 ────────────────────────────────────────
+function renderDDay() {
+  const ddayData = getDDayData();
+  const harvestData = getHarvestData();
+
+  function buildGrid(data) {
+    return data.map(d => {
+      const days = daysUntil(...d.date);
+      const label = days < 0 ? '완료' : days === 0 ? '오늘!' : `D-${days}`;
+      const sub = `${d.date[1]}/${d.date[2]}`;
+      return `<div class="dday-item ${d.cls}">
+        <div class="dday-label">${d.label}</div>
+        <div class="dday-crop">${d.crop}</div>
+        <div class="dday-num">${label}</div>
+        <div class="dday-sub">${sub}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('ddayGrid').innerHTML = buildGrid(ddayData);
+  document.getElementById('harvestGrid').innerHTML = buildGrid(harvestData);
+}
+
+// ── 이랑 현황 렌더 ───────────────────────────────────
+function renderIrang() {
+  const month = getMonthNum();
+  const data = getIrangData(month);
+  const statusLabel = {active:'생육중', harvest:'수확중', prepare:'준비중', wait:'대기중'};
+  const statusClass = {active:'status-active', harvest:'status-harvest', prepare:'status-prepare', wait:'status-wait'};
+  document.getElementById('irangList').innerHTML = data.map(d =>
+    `<div class="irang-item" style="background:${d.color};border-left-color:${d.border}">
+      <div class="irang-zone">${d.zone}</div>
+      <div class="irang-name">${d.name}</div>
+      <div class="irang-crops">${d.crops.replace(/\n/g,'<br>')}</div>
+      <span class="irang-status ${statusClass[d.status]}">${statusLabel[d.status]}</span>
+    </div>`
+  ).join('');
+}
+
+// ── 월별 일정 렌더 ───────────────────────────────────
+function renderMonthly() {
+  const months = [
+    {num:5, label:'5월', color:'#1B5E20', emoji:'🌱'},
+    {num:6, label:'6월', color:'#E65100', emoji:'☀️'},
+    {num:7, label:'7월', color:'#C62828', emoji:'🌧️'},
+    {num:8, label:'8월', color:'#854F0B', emoji:'🌡️'},
+    {num:9, label:'9월', color:'#1565C0', emoji:'🍂'},
+    {num:10, label:'10월', color:'#6A1B9A', emoji:'🍁'},
+  ];
+  const curMonth = getMonthNum();
+  document.getElementById('monthlyList').innerHTML = months.map(m => {
+    const tasks = getMonthlyTasks(m.num);
+    const isCurrent = m.num === curMonth;
+    return `<div class="month-item card">
+      <div class="month-header" style="background:${m.color}20" onclick="toggleMonth(${m.num})">
+        <div class="month-header-left">
+          <span>${m.emoji}</span>
+          <span style="color:${m.color};font-weight:700">${m.label}</span>
+          ${isCurrent ? '<span style="background:'+m.color+';color:white;font-size:10px;padding:2px 8px;border-radius:10px">이번달</span>' : ''}
+        </div>
+        <span class="month-arrow" id="arr-${m.num}" ${isCurrent?'style="transform:rotate(90deg)"':''}>▶</span>
+      </div>
+      <div class="month-body ${isCurrent?'open':''}" id="body-${m.num}">
+        ${tasks.map(t =>
+          `<div class="month-task ${t.urgent?'urgent':''}">${t.name} — <span style="color:#9E9E9E">${t.loc}</span></div>`
+        ).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleMonth(num) {
+  const body = document.getElementById(`body-${num}`);
+  const arr = document.getElementById(`arr-${num}`);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  arr.style.transform = isOpen ? '' : 'rotate(90deg)';
+}
+
+// ── 탭 전환 ──────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(`sec-${id}`).classList.add('active');
+  const tabMap = {today:0, dday:1, irang:2, monthly:3, weather:4, grow:5};
+  document.querySelectorAll('.tab')[tabMap[id]]?.classList.add('active');
+  document.querySelectorAll('.nav-item')[tabMap[id]]?.classList.add('active');
+}
+
+
+// ── 생육일수 기능 ─────────────────────────────────────
+let plants = JSON.parse(localStorage.getItem('plants') || '[]');
+
+function togglePlantForm() {
+  const form = document.getElementById('plantForm');
+  form.classList.toggle('open');
+  if (form.classList.contains('open')) {
+    // 오늘 날짜로 초기화
+    const t = new Date(2026,3,29);
+    const dd = t.toISOString().split('T')[0];
+    document.getElementById('fDate').value = dd;
+    document.getElementById('fNote').value = '';
+  }
+}
+
+document.getElementById('fCrop').addEventListener('change', function() {
+  const isCustom = this.value.startsWith('직접입력');
+  document.getElementById('customRow').style.display = isCustom ? 'block' : 'none';
+});
+
+function savePlant() {
+  const sel = document.getElementById('fCrop').value;
+  const parts = sel.split('|');
+  let name, emoji, loc, totalDays;
+  if (parts[0] === '직접입력') {
+    name = document.getElementById('fCustomName').value.trim() || '작물';
+    emoji = '🌱'; loc = '직접입력'; totalDays = 120;
+  } else {
+    [name, emoji, loc, totalDays] = parts;
+    totalDays = parseInt(totalDays) || 120;
+  }
+  const dateVal = document.getElementById('fDate').value;
+  const note = document.getElementById('fNote').value.trim();
+  if (!dateVal) { alert('날짜를 선택하세요'); return; }
+  const id = Date.now().toString();
+  plants.push({ id, name, emoji, loc, dateStr: dateVal, totalDays, note });
+  localStorage.setItem('plants', JSON.stringify(plants));
+  togglePlantForm();
+  renderGrow();
+}
+
+function deletePlant(id) {
+  if (!confirm('삭제할까요?')) return;
+  plants = plants.filter(p => p.id !== id);
+  localStorage.setItem('plants', JSON.stringify(plants));
+  renderGrow();
+}
+
+function getStage(days, total) {
+  const pct = days / total;
+  if (days <= 7)   return {cls:'stage-seed',   label:'씨앗·발아전', icon:'🌰'};
+  if (days <= 21)  return {cls:'stage-sprout', label:'발아·초기',  icon:'🌱'};
+  if (days <= 60)  return {cls:'stage-grow',   label:'생육중',     icon:'🌿'};
+  if (days <= 90)  return {cls:'stage-flower', label:'개화기',     icon:'🌸'};
+  if (days <= 120) return {cls:'stage-fruit',  label:'착과기',     icon:'🍉'};
+  return {cls:'stage-harvest', label:'수확기', icon:'✂️'};
+}
+
+function getProgressColor(days, total) {
+  const pct = days / total;
+  if (pct < 0.3) return '#66BB6A';
+  if (pct < 0.6) return '#FFA726';
+  if (pct < 0.9) return '#E65100';
+  return '#C62828';
+}
+
+function renderGrow() {
+  const list = document.getElementById('growList');
+  const subtitle = document.getElementById('growSubtitle');
+  if (!plants.length) {
+    list.innerHTML = `<div class="grow-empty">
+      <div class="grow-empty-icon">🌰</div>
+      <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
+      <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
+    </div>`;
+    subtitle.textContent = '심은 작물이 없습니다';
+    return;
+  }
+
+  // 경과일 기준 정렬 (오래된 것 먼저)
+  const sorted = [...plants].sort((a,b) => a.dateStr.localeCompare(b.dateStr));
+  subtitle.textContent = `${plants.length}종 관리 중`;
+
+  list.innerHTML = sorted.map(p => {
+    const planted = new Date(p.dateStr);
+    const today = new Date(2026,3,29);
+    const elapsed = Math.round((today - planted) / 86400000);
+    const remaining = Math.max(0, p.totalDays - elapsed);
+    const pct = Math.min(100, Math.round(elapsed / p.totalDays * 100));
+    const stage = getStage(elapsed, p.totalDays);
+    const barColor = getProgressColor(elapsed, p.totalDays);
+    const plantedFmt = p.dateStr.replace(/-/g, '/').slice(5); // MM/DD
+    const harvestMsg = remaining > 0
+      ? `수확까지 약 <strong>${remaining}일</strong> 남음`
+      : `<span style="color:var(--red);font-weight:700">수확 시기 도달!</span>`;
+    return `<div class="grow-item">
+      <div class="grow-emoji">${stage.icon}</div>
+      <div class="grow-info">
+        <div class="grow-name">${p.name}</div>
+        <span class="grow-loc">${p.loc}</span>
+        <div class="grow-date">
+          심은날: ${plantedFmt} &nbsp;·&nbsp; ${harvestMsg}
+          ${p.note ? `<br><span style="color:#9E9E9E">${p.note}</span>` : ''}
+        </div>
+        <span class="grow-stage ${stage.cls}">${stage.label}</span>
+        <div class="grow-progress-wrap">
+          <div class="grow-progress-bar" style="width:${pct}%;background:${barColor}"></div>
+        </div>
+      </div>
+      <div class="grow-right">
+        <div class="grow-days">${elapsed}</div>
+        <div class="grow-days-label">일째</div>
+        <button class="grow-delete" onclick="deletePlant('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── 전체 렌더 ────────────────────────────────────────
+function renderAll() {
+  renderWeatherAlert();
+  renderTasks();
+  renderDDay();
+  renderIrang();
+  renderMonthly();
+  renderGrow();
+}
+
+// ── 초기 실행 ────────────────────────────────────────
+renderAll();
+</script>
+</body>
+</html>
