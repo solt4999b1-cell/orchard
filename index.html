@@ -4648,124 +4648,196 @@ async function loadPruningWeather() {
   const btn   = document.getElementById('weatherRefreshBtn');
   if (!body) return;
 
-  // 오늘 날짜 표시
   const d = REAL_TODAY;
   const dayNames = ['일','월','화','수','목','금','토'];
   const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${dayNames[d.getDay()]})`;
   if (title) title.textContent = `${dateStr} 전정 — 날씨 및 핵심 원칙`;
   if (btn) btn.textContent = '⏳ 로딩중...';
   body.innerHTML = `<div style="text-align:center;padding:16px;color:#9E9E9E">
-    <div style="font-size:20px">🌤️</div>
+    <div style="font-size:24px">🌤️</div>
     <div style="font-size:12px;margin-top:6px">날씨 불러오는 중...</div></div>`;
 
-  // 풍향 변환
   function vec2dir(deg) {
     const dirs = ['북','북북동','북동','동북동','동','동남동','남동','남남동',
                   '남','남남서','남서','서남서','서','서북서','북서','북북서'];
     return dirs[Math.round(deg / 22.5) % 16];
   }
 
+  // WMO 코드 → 상세 날씨 정보
+  function wmo2info(code) {
+    if (code === 0)  return {icon:'☀️', label:'맑음',       bg:'#FFFDE7', tc:'#F57F17'};
+    if (code === 1)  return {icon:'🌤️', label:'대체로 맑음', bg:'#FFFDE7', tc:'#F57F17'};
+    if (code === 2)  return {icon:'⛅',  label:'구름 많음',  bg:'#ECEFF1', tc:'#546E7A'};
+    if (code === 3)  return {icon:'☁️', label:'흐림',       bg:'#ECEFF1', tc:'#546E7A'};
+    if (code === 45) return {icon:'🌫️', label:'안개',       bg:'#ECEFF1', tc:'#546E7A'};
+    if (code === 48) return {icon:'🌫️', label:'짙은 안개 (서리 안개)', bg:'#ECEFF1', tc:'#455A64'};
+    if (code === 51) return {icon:'🌦️', label:'이슬비 (약)',  bg:'#E3F2FD', tc:'#1565C0'};
+    if (code === 53) return {icon:'🌦️', label:'이슬비 (보통)', bg:'#E3F2FD', tc:'#1565C0'};
+    if (code === 55) return {icon:'🌧️', label:'이슬비 (강)',  bg:'#E3F2FD', tc:'#0D47A1'};
+    if (code === 61) return {icon:'🌧️', label:'비 (약)',     bg:'#E3F2FD', tc:'#1565C0'};
+    if (code === 63) return {icon:'🌧️', label:'비 (보통)',   bg:'#BBDEFB', tc:'#0D47A1'};
+    if (code === 65) return {icon:'🌧️', label:'비 (강)',     bg:'#90CAF9', tc:'#0D47A1'};
+    if (code === 71) return {icon:'❄️', label:'눈 (약)',     bg:'#E8F5E9', tc:'#1B5E20'};
+    if (code === 73) return {icon:'❄️', label:'눈 (보통)',   bg:'#C8E6C9', tc:'#1B5E20'};
+    if (code === 75) return {icon:'❄️', label:'눈 (강)',     bg:'#A5D6A7', tc:'#1B5E20'};
+    if (code === 77) return {icon:'🌨️', label:'싸락눈',      bg:'#E8F5E9', tc:'#2E7D32'};
+    if (code === 80) return {icon:'🌦️', label:'소나기 (약)', bg:'#E3F2FD', tc:'#1565C0'};
+    if (code === 81) return {icon:'🌧️', label:'소나기 (보통)',bg:'#BBDEFB', tc:'#0D47A1'};
+    if (code === 82) return {icon:'⛈️', label:'강한 소나기', bg:'#90CAF9', tc:'#0D47A1'};
+    if (code === 85) return {icon:'🌨️', label:'눈 소나기',   bg:'#E8F5E9', tc:'#2E7D32'};
+    if (code === 95) return {icon:'⛈️', label:'뇌우',        bg:'#FFEBEE', tc:'#C62828'};
+    if (code === 96) return {icon:'⛈️', label:'뇌우+우박',   bg:'#FFEBEE', tc:'#C62828'};
+    if (code === 99) return {icon:'⛈️', label:'강한 뇌우+우박',bg:'#FFEBEE',tc:'#B71C1C'};
+    return {icon:'🌤️', label:'맑음', bg:'#FFFDE7', tc:'#F57F17'};
+  }
+
+  // 서리 위험 평가
+  function frostRisk(minTemp) {
+    if (minTemp <= 0)  return {level:'⚠️ 서리 위험!', bg:'#FFEBEE', tc:'#C62828', tip:'절단면·신초 동해 주의'};
+    if (minTemp <= 3)  return {level:'🟡 서리 주의',  bg:'#FFF3E0', tc:'#E65100', tip:'새벽 기온 확인 필요'};
+    return null;
+  }
+
+  // 안개 평가
+  function fogInfo(wcode, humidity) {
+    const isFog = (wcode === 45 || wcode === 48);
+    if (isFog) return {warn:true,  msg:'⚠ 안개 — 약제 살포 효과 없음', bg:'#ECEFF1', tc:'#455A64'};
+    if (humidity >= 90) return {warn:false, msg:'💧 고습도 — 안개 발생 가능', bg:'#E3F2FD', tc:'#1565C0'};
+    return null;
+  }
+
   try {
-    // Open-Meteo — 화성시 남양읍 좌표, 한국 기상 데이터
     const url = 'https://api.open-meteo.com/v1/forecast'
       + '?latitude=37.1994&longitude=126.8316'
       + '&daily=temperature_2m_max,temperature_2m_min,'
       + 'precipitation_probability_max,windspeed_10m_max,'
-      + 'winddirection_10m_dominant,weathercode'
-      + '&hourly=precipitation_probability,windspeed_10m,temperature_2m'
+      + 'winddirection_10m_dominant,weathercode,'
+      + 'precipitation_sum,snowfall_sum,et0_fao_evapotranspiration'
+      + '&hourly=relativehumidity_2m,dewpoint_2m,visibility,freezinglevel_height'
       + '&current_weather=true'
       + '&timezone=Asia%2FSeoul&forecast_days=1';
 
     const res  = await fetch(url);
-    if (!res.ok) throw new Error('날씨 서버 응답 오류');
+    if (!res.ok) throw new Error('서버 오류 ' + res.status);
     const data = await res.json();
 
-    const curr  = data.current_weather;
-    const daily = data.daily;
+    const curr    = data.current_weather;
+    const daily   = data.daily;
+    const hourly  = data.hourly;
 
     const maxTemp  = Math.round(daily.temperature_2m_max[0]);
     const minTemp  = Math.round(daily.temperature_2m_min[0]);
-    const windKmh  = daily.windspeed_10m_max[0];
-    const windMs   = (windKmh / 3.6).toFixed(1);
+    const windMs   = (daily.windspeed_10m_max[0] / 3.6).toFixed(1);
     const rainPct  = daily.precipitation_probability_max[0];
-    const windDeg  = daily.winddirection_10m_dominant[0];
-    const windDir  = vec2dir(windDeg);
+    const windDir  = vec2dir(daily.winddirection_10m_dominant[0]);
     const wcode    = daily.weathercode[0];
+    const precip   = daily.precipitation_sum[0];       // mm
+    const snowfall = daily.snowfall_sum[0];             // cm
     const curTemp  = Math.round(curr.temperature);
     const curWind  = (curr.windspeed / 3.6).toFixed(1);
 
-    // WMO 날씨코드 → 아이콘
-    const wIcon = wcode === 0 ? '☀️'
-      : wcode <= 2 ? '🌤️' : wcode === 3 ? '☁️'
-      : wcode <= 48 ? '🌫️' : wcode <= 55 ? '🌦️'
-      : wcode <= 65 ? '🌧️' : wcode <= 75 ? '❄️'
-      : wcode <= 82 ? '🌦️' : '⛈️';
+    // 시간별 평균 습도 (오전 6~18시)
+    const humHours = hourly.relativehumidity_2m.slice(6, 18);
+    const avgHum   = Math.round(humHours.reduce((a,b)=>a+b,0) / humHours.length);
 
-    // 전정 조건 평가
-    let tempBg, tempTc, tempCond;
+    // 최저 시정 (오전 6~18시)
+    const visHours = hourly.visibility ? hourly.visibility.slice(6, 18) : [];
+    const minVis   = visHours.length ? Math.min(...visHours) : 999999;
+
+    // 날씨 정보
+    const winfo  = wmo2info(wcode);
+    const frost  = frostRisk(minTemp);
+    const fog    = fogInfo(wcode, avgHum);
+
+    // 추가 기상 알림 생성
+    const alerts = [];
+    if (frost)       alerts.push(frost);
+    if (fog)         alerts.push(fog);
+    if (snowfall > 0) alerts.push({level:`❄️ 적설 ${snowfall.toFixed(1)}cm`, bg:'#E8F5E9', tc:'#1B5E20', tip:'노지 작업 주의'});
+    if (precip > 10)  alerts.push({level:`🌧️ 강수량 ${precip.toFixed(1)}mm`, bg:'#E3F2FD', tc:'#1565C0', tip:'작업 취소 고려'});
+    if (minVis < 500) alerts.push({level:`🌫️ 시정 ${(minVis/1000).toFixed(1)}km — 짙은 안개`, bg:'#ECEFF1', tc:'#455A64', tip:'약제 살포 금지'});
+
+    // 전정 조건
+    let tempBg='#E3F2FD', tempTc='#1565C0', tempCond='전정 가능';
     if      (maxTemp >= 15) { tempBg='#E8F5E9'; tempTc='#1B5E20'; tempCond='전정 최적 ✅'; }
-    else if (maxTemp >= 10) { tempBg='#E3F2FD'; tempTc='#1565C0'; tempCond='전정 가능 ✅'; }
-    else                    { tempBg='#FFF3E0'; tempTc='#E65100'; tempCond='⚠ 기온 낮음 주의'; }
+    else if (maxTemp < 10)  { tempBg='#FFF3E0'; tempTc='#E65100'; tempCond='⚠ 기온 낮음'; }
 
-    let windBg, windTc, windCond;
-    if      (windMs >= 10) { windBg='#FFEBEE'; windTc='#C62828'; windCond='⚠ 강풍 — 절단면 건조'; }
-    else if (windMs >= 5)  { windBg='#FFF3E0'; windTc='#E65100'; windCond='바람 보통 — 가능'; }
-    else                   { windBg='#E8F5E9'; windTc='#1B5E20'; windCond='바람 약함 ✅'; }
+    let windBg='#E8F5E9', windTc='#1B5E20', windCond='작업 양호 ✅';
+    if      (windMs >= 10) { windBg='#FFEBEE'; windTc='#C62828'; windCond='⚠ 강풍 주의'; }
+    else if (windMs >= 5)  { windBg='#FFF3E0'; windTc='#E65100'; windCond='바람 보통'; }
 
     let rainBg='#E8F5E9', rainTc='#1B5E20';
     if      (rainPct >= 70) { rainBg='#FFEBEE'; rainTc='#C62828'; }
     else if (rainPct >= 40) { rainBg='#FFF3E0'; rainTc='#E65100'; }
-    const rainMsg = rainPct >= 70 ? `${rainPct}% ⚠` : `${rainPct}% ✅`;
 
     body.innerHTML = `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <!-- 날씨 상태 메인 배지 -->
+      <div style="background:${winfo.bg};border-radius:10px;padding:12px 14px;
+        margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:40px;line-height:1">${winfo.icon}</div>
+        <div>
+          <div style="font-size:18px;font-weight:800;color:${winfo.tc}">${winfo.label}</div>
+          <div style="font-size:11px;color:${winfo.tc};opacity:0.85;margin-top:2px">
+            현재 ${curTemp}°C · 풍속 ${curWind}m/s · 습도 ${avgHum}%
+          </div>
+        </div>
+      </div>
+
+      <!-- 4분할 기상 정보 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px">
         <div style="background:${tempBg};border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:${tempTc};font-weight:700">최고기온 ${wIcon}</div>
-          <div style="font-size:28px;font-weight:800;color:${tempTc}">${maxTemp}°C</div>
+          <div style="font-size:10px;color:${tempTc};font-weight:700">최고 / 최저기온</div>
+          <div style="font-size:22px;font-weight:800;color:${tempTc}">${maxTemp}° / ${minTemp}°</div>
           <div style="font-size:10px;color:${tempTc}">${tempCond}</div>
         </div>
         <div style="background:${windBg};border-radius:8px;padding:10px;text-align:center">
-          <div style="font-size:11px;color:${windTc};font-weight:700">최대풍속</div>
+          <div style="font-size:10px;color:${windTc};font-weight:700">최대풍속</div>
           <div style="font-size:20px;font-weight:800;color:${windTc}">${windDir} ${windMs}m/s</div>
           <div style="font-size:10px;color:${windTc}">${windCond}</div>
         </div>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div style="background:#F5F5F5;border-radius:8px;padding:8px;text-align:center">
-          <div style="font-size:11px;color:#546E7A;font-weight:700">최저기온</div>
-          <div style="font-size:20px;font-weight:800;color:#37474F">${minTemp}°C</div>
-        </div>
         <div style="background:${rainBg};border-radius:8px;padding:8px;text-align:center">
-          <div style="font-size:11px;color:${rainTc};font-weight:700">강수확률</div>
-          <div style="font-size:18px;font-weight:800;color:${rainTc}">${rainMsg}</div>
+          <div style="font-size:10px;color:${rainTc};font-weight:700">강수확률 / 강수량</div>
+          <div style="font-size:18px;font-weight:800;color:${rainTc}">${rainPct}%${precip>0?' · '+precip.toFixed(1)+'mm':''}</div>
+        </div>
+        <div style="background:#F5F5F5;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#546E7A;font-weight:700">습도 / 일교차</div>
+          <div style="font-size:18px;font-weight:800;color:#37474F">${avgHum}% / ${maxTemp-minTemp}°C</div>
         </div>
       </div>
-      <div style="background:#F5F5F5;border-radius:8px;padding:8px;margin-bottom:8px;
-        display:flex;justify-content:space-around;text-align:center">
+
+      <!-- 적설 표시 (눈이 올 경우) -->
+      ${snowfall > 0 ? `
+      <div style="background:#E8F5E9;border-radius:8px;padding:9px 12px;margin-bottom:8px;
+        display:flex;align-items:center;gap:8px">
+        <span style="font-size:22px">❄️</span>
         <div>
-          <div style="font-size:10px;color:#9E9E9E;font-weight:700">현재기온</div>
-          <div style="font-size:16px;font-weight:800;color:#37474F">${curTemp}°C</div>
+          <div style="font-size:12px;font-weight:700;color:#1B5E20">적설 예보 ${snowfall.toFixed(1)}cm</div>
+          <div style="font-size:11px;color:#2E7D32">노지 전정 작업 시 미끄럼 주의</div>
         </div>
-        <div>
-          <div style="font-size:10px;color:#9E9E9E;font-weight:700">현재풍속</div>
-          <div style="font-size:16px;font-weight:800;color:#37474F">${curWind}m/s</div>
+      </div>` : ''}
+
+      <!-- 기상 알림 (서리·안개·강수 등) -->
+      ${alerts.map(a => `
+      <div style="background:${a.bg};border-radius:8px;padding:9px 12px;margin-bottom:7px;
+        display:flex;align-items:center;gap:8px">
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:${a.tc}">${a.level}</div>
+          ${a.tip ? `<div style="font-size:11px;color:${a.tc};opacity:0.9;margin-top:2px">${a.tip}</div>` : ''}
         </div>
-        <div>
-          <div style="font-size:10px;color:#9E9E9E;font-weight:700">일교차</div>
-          <div style="font-size:16px;font-weight:800;color:#37474F">${maxTemp-minTemp}°C</div>
-        </div>
-      </div>
+      </div>`).join('')}
+
+      <!-- 오늘 전정 원칙 -->
       <div style="background:#E8F5E9;border-radius:8px;padding:10px">
-        <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:4px">오늘 전정 핵심 원칙</div>
+        <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:5px">오늘 전정 핵심 원칙</div>
         <div style="font-size:11px;color:#2E7D32;line-height:2.0">
           ① 강전정 금지 — 식재 직후 어린 묘목, 약전정만<br>
           ② 절단면 처리 필수 — 모든 절단 즉시 톱신페이스트<br>
-          ③ 기온 ${maxTemp}°C ${maxTemp>=10 ? '✅ 작업 가능 (10시 이후)' : '⚠ 낮음 — 오후 작업 권장'}<br>
-          ④ 풍속 ${windMs}m/s ${parseFloat(windMs)>=7 ? '⚠ 강풍 — 절단면 건조 주의' : '— 작업 양호'}
+          ③ 기온 ${maxTemp}°C ${maxTemp>=10?'✅ 작업 가능 (10시 이후)':'⚠ 낮음 — 오후 권장'}<br>
+          ④ 풍속 ${windMs}m/s ${parseFloat(windMs)>=7?'⚠ 강풍 — 절단면 건조 주의':'— 작업 양호'}${wcode===45||wcode===48?'<br>⑤ 안개 — 약제 살포 금지':''}
         </div>
       </div>
       <div style="font-size:10px;color:#BDBDBD;text-align:right;margin-top:6px">
-        화성시 남양읍 (37.1994°N 126.8316°E) · 방금 갱신
+        화성시 남양읍 · 방금 갱신
       </div>`;
 
     if (btn) btn.textContent = '🔄 날씨갱신';
@@ -4789,6 +4861,7 @@ async function loadPruningWeather() {
     if (btn) btn.textContent = '🔄 날씨갱신';
   }
 }
+
 
 
 
