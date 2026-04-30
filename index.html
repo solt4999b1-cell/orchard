@@ -696,7 +696,8 @@
   <div class="tab" onclick="showTab('dday')">⏰ D-day</div>
   <div class="tab" onclick="showTab('irang')">🌱 이랑 현황</div>
   <div class="tab" onclick="showTab('monthly')">📅 월별 일정</div>
-  <div class="tab" onclick="showTab('weather')">🌤️ 날씨 대응</div>
+  <div class="tab" onclick="showTab('wxlive')">🌡️ 날씨</div>
+  <div class="tab" onclick="showTab('pest')">🐛 병해충·시비</div>
   <div class="tab" onclick="showTab('pruning')">✂️ 전정 가이드</div>
   <div class="tab" onclick="showTab('grow')">🌿 생육일수</div>
   <div class="tab" onclick="showTab('guide')">📷 재배 그림</div>
@@ -903,81 +904,152 @@
     <div id="monthlyList"></div>
   </div>
 
+  <!-- 🌡️ 날씨 섹션 -->
+  <div class="section" id="sec-wxlive">
+    <div class="section-title">오늘 날씨 + 14일 장기예보 — 화성시 남양읍</div>
+
+    <!-- 날씨 카드 (헤더 버튼 포함) -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🌡️</span>
+        <div>
+          <div class="card-title" id="wxlive-date">날씨 정보</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">화성시 남양읍 신외리</div>
+        </div>
+      </div>
+      <!-- 버튼 행 -->
+      <div style="display:flex;gap:8px;padding:0 16px 12px">
+        <button onclick="loadWeatherMain()" id="wxRefreshBtn"
+          style="flex:1;background:var(--green-pale);border:1.5px solid var(--green);
+          color:var(--green-dark);border-radius:8px;padding:9px;
+          font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          🔄 현재날씨 갱신
+        </button>
+        <button onclick="toggleWeatherForecast()"
+          style="flex:1;background:#E3F2FD;border:1.5px solid #1565C0;
+          color:#1565C0;border-radius:8px;padding:9px;
+          font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
+          📅 14일 예보
+        </button>
+      </div>
+      <!-- 현재 날씨 바디 -->
+      <div class="card-body" id="wxliveBody">
+        <div style="text-align:center;padding:20px;color:#9E9E9E">
+          <div style="font-size:28px">🌤️</div>
+          <div style="font-size:13px;margin-top:8px">날씨갱신 버튼을 눌러주세요</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 14일 장기예보 패널 (기본 숨김) -->
+    <div id="wxForecastPanel" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📅</span>
+          <div>
+            <div class="card-title">14일 장기예보</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">탭하면 상세보기 · 주말 강조</div>
+          </div>
+          <button onclick="toggleWeatherForecast()"
+            style="background:#FFEBEE;border:none;color:#C62828;border-radius:8px;
+            padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+            font-family:inherit">닫기 ✕</button>
+        </div>
+        <div class="card-body" id="wxForecastBody">
+          <div style="text-align:center;padding:16px;color:#9E9E9E">
+            <div style="font-size:20px">📅</div>
+            <div style="font-size:12px;margin-top:6px">예보 불러오는 중...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <!-- ⑤ 날씨 대응 -->
-  <div class="section" id="sec-weather">
-    <div class="section-title">날씨별 작업 대응</div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">🚫</span>
-        <span class="card-title">작업 취소 기준</span>
-        <span class="card-badge badge-red">안전 최우선</span>
+  <div class="section" id="sec-pest">
+    <div class="section-title">병해충·시비 — 내 과수원 작물 기준</div>
+
+    <!-- 상단 버튼 2개 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="loadPestInfo()" id="pestRefreshBtn"
+        style="flex:1;background:var(--green-pale);border:1.5px solid var(--green);
+        color:var(--green-dark);border-radius:8px;padding:10px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🔄 오늘 병해충·시비
+      </button>
+      <button onclick="togglePestCalendar()"
+        style="flex:1;background:#FFF3E0;border:1.5px solid #E65100;
+        color:#E65100;border-radius:8px;padding:10px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📅 월별 방제·시비력
+      </button>
+    </div>
+
+    <!-- 실시간 결과 패널 (버튼 클릭 전 숨김) -->
+    <div id="pestLivePanel" style="display:none">
+      <!-- 날씨 기반 병해충 위험도 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🔬</span>
+          <div>
+            <div class="card-title" id="pestDateTitle">오늘 병해충 위험도</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">기상 조건 × 내 작물 교차 분석</div>
+          </div>
+        </div>
+        <div id="pestLiveBody"></div>
       </div>
-      <div class="card-body">
-        <div class="task-item">
-          <div class="task-info">
-            <div class="task-name">집중호우 예보</div>
-            <div class="task-detail">시간당 30mm↑ or 일강수 80mm↑</div>
-            <div class="task-urgent">전면 취소 — 배수로 점검만</div>
+
+      <!-- 오늘 시비 작업 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🌱</span>
+          <div>
+            <div class="card-title" id="fertDateTitle">오늘 시비 작업</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">내 작물 월별 시비 스케줄</div>
           </div>
         </div>
-        <div class="task-item">
-          <div class="task-info">
-            <div class="task-name">폭염경보 (35°C↑)</div>
-            <div class="task-detail">오전 6~9시만 작업 / 오후 전면 금지</div>
-            <div class="task-urgent">열사병 위험 — 혼자 작업 특히 주의</div>
-          </div>
-        </div>
-        <div class="task-item">
-          <div class="task-info">
-            <div class="task-name">강풍 (10m/s↑)</div>
-            <div class="task-detail">모종 정식·파종 금지</div>
-            <div class="task-urgent">지지대 보강 후 귀가</div>
-          </div>
-        </div>
-        <div class="task-item">
-          <div class="task-info">
-            <div class="task-name">안개 짙음</div>
-            <div class="task-detail">오전 작업 대기 — 약제 살포 금지</div>
-            <div class="task-location">오후 10시 이후 작업 권장</div>
-          </div>
-        </div>
-        <div class="task-item">
-          <div class="task-info">
-            <div class="task-name">서리 예보 (야간 0°C↓)</div>
-            <div class="task-detail">전날 고구마·생강·모과 긴급 수확</div>
-            <div class="task-urgent">10월말 서리 전 완료 필수</div>
-          </div>
-        </div>
+        <div id="fertLiveBody"></div>
       </div>
     </div>
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">🌦️</span>
-        <span class="card-title">비올 때 실내 대체 작업</span>
-        <span class="card-badge badge-blue">대안</span>
-      </div>
-      <div class="card-body">
-        <div class="task-item">
-          <div class="task-info"><div class="task-name">수확물 건조·저장</div><div class="task-detail">그늘에서 2~3일 건조 후 저장</div></div>
+
+    <!-- 월별 방제·시비력 패널 -->
+    <div id="pestCalendarPanel" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">📅</span>
+          <div>
+            <div class="card-title">월별 방제·시비력</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">내 과수원 작물 기준</div>
+          </div>
+          <button onclick="togglePestCalendar()"
+            style="background:#FFEBEE;border:none;color:#C62828;border-radius:8px;
+            padding:5px 10px;font-size:11px;font-weight:700;cursor:pointer;
+            font-family:inherit">닫기 ✕</button>
         </div>
-        <div class="task-item">
-          <div class="task-info"><div class="task-name">도구 점검·손질</div><div class="task-detail">전정가위 소독·날카롭게 갈기</div></div>
-        </div>
-        <div class="task-item">
-          <div class="task-info"><div class="task-name">다음 주 계획 수립</div><div class="task-detail">구입 물품·작업 순서 정리</div></div>
-        </div>
-        <div class="task-item">
-          <div class="task-info"><div class="task-name">씨앗·모종 구입 준비</div><div class="task-detail">온라인 주문 or 농자재 마트 방문</div></div>
-        </div>
+        <div class="card-body" id="pestCalBody"></div>
       </div>
     </div>
-    <div class="tip-box">
-      <div class="tip-title">📱 날씨 확인 방법</div>
-      <div class="tip-text">
-        기상청 날씨누리(weather.go.kr) → 동네예보 → 화성시 남양읍 신외리<br>
-        또는 기상청 앱 → 시간별 예보 → 강수확률·풍속·최고기온 확인<br><br>
-        <strong>화성시 농업기술센터: 031-369-6120</strong><br>
-        지역 병해충·특보 무료 안내
+
+    <!-- 문의처 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">☎️</span>
+        <div><div class="card-title">문의 및 신고</div></div>
+      </div>
+      <div class="card-body">
+        <div class="task-item"><div class="task-info">
+          <div class="task-name">화성시 농업기술센터</div>
+          <div class="task-detail">031-369-6120 · 병해충 발생 무료 진단</div>
+        </div></div>
+        <div class="task-item"><div class="task-info">
+          <div class="task-name">농촌진흥청 병해충 신고</div>
+          <div class="task-detail">1833-8572 · 돌발병해충 신고</div>
+        </div></div>
+        <div class="task-item"><div class="task-info">
+          <div class="task-name">농약 안전정보시스템</div>
+          <div class="task-detail">psis.rda.go.kr · 등록 농약·안전사용기준</div>
+        </div></div>
       </div>
     </div>
   </div>
@@ -1385,36 +1457,6 @@
   <!-- ⑧ 전정 가이드 -->
   <div class="section" id="sec-pruning">
 
-    <!-- 날씨 및 핵심 원칙 (오늘 날짜·실시간 날씨) -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">☀️</span>
-        <div>
-          <div class="card-title" id="pruningDateTitle">전정 작업 — 날씨 및 핵심 원칙</div>
-          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">화성시 새솔동 · 묘목 37종</div>
-        </div>
-        <button onclick="loadPruningWeather()" id="weatherRefreshBtn"
-          style="background:var(--green-pale);border:1.5px solid var(--green);
-          color:var(--green-dark);border-radius:8px;padding:5px 10px;
-          font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
-          🔄 날씨갱신
-        </button>
-      </div>
-      <div class="card-body" id="pruningWeatherBody">
-        <div style="text-align:center;padding:20px;color:#9E9E9E">
-          <div style="font-size:24px">🌤️</div>
-          <div style="font-size:13px;margin-top:8px">날씨 불러오는 중...</div>
-        </div>
-      </div>
-    </div>
-
-    <div style="display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap">
-      <button onclick="filterPruning('all')"    id="pf-all"    style="flex:1;min-width:60px;padding:7px 4px;border-radius:8px;border:1.5px solid #2E7D32;background:#2E7D32;color:white;font-size:11px;font-weight:700;cursor:pointer">전체</button>
-      <button onclick="filterPruning('ok')"     id="pf-ok"     style="flex:1;min-width:60px;padding:7px 4px;border-radius:8px;border:1.5px solid #C8E6C9;background:white;color:#1B5E20;font-size:11px;font-weight:700;cursor:pointer">✅ 가능</button>
-      <button onclick="filterPruning('urgent')" id="pf-urgent" style="flex:1;min-width:60px;padding:7px 4px;border-radius:8px;border:1.5px solid #FFCDD2;background:white;color:#C62828;font-size:11px;font-weight:700;cursor:pointer">⚡ 지금당장</button>
-      <button onclick="filterPruning('warn')"   id="pf-warn"   style="flex:1;min-width:60px;padding:7px 4px;border-radius:8px;border:1.5px solid #FFE0B2;background:white;color:#E65100;font-size:11px;font-weight:700;cursor:pointer">⚠️ 주의</button>
-      <button onclick="filterPruning('bad')"    id="pf-bad"    style="flex:1;min-width:60px;padding:7px 4px;border-radius:8px;border:1.5px solid #FFCDD2;background:white;color:#C62828;font-size:11px;font-weight:700;cursor:pointer">❌ 금지</button>
-    </div>
 
 
     <!-- 가나다순 묘목 목록 -->
@@ -2724,9 +2766,13 @@
     <div class="nav-icon">📅</div>
     <div class="nav-label">월별일정</div>
   </div>
-  <div class="nav-item" onclick="showTab('weather')">
-    <div class="nav-icon">🌤️</div>
-    <div class="nav-label">날씨대응</div>
+  <div class="nav-item" onclick="showTab('wxlive')">
+    <div class="nav-icon">🌡️</div>
+    <div class="nav-label">날씨</div>
+  </div>
+  <div class="nav-item" onclick="showTab('pest')">
+    <div class="nav-icon">🐛</div>
+    <div class="nav-label">병해충·시비</div>
   </div>
   <div class="nav-item" onclick="showTab('pruning')">
     <div class="nav-icon">✂️</div>
@@ -2972,7 +3018,7 @@ function getDateTasks(selDate) {
   // ── 7월 ─────────────────────────────────────────────────
   if (m === 7) {
     // 폭염 경고 (7월 전체)
-    tasks.push({id:id('p0'), name:'⚠️ 폭염 주의 — 오전 6~9시만 작업',
+    tasks.push({id:id('p0'), name:'⚠️ 폭염 주의 — 오전 6~9시만 작업', judge:'warn',
       detail:'33°C↑ 예보시 오전 작업만 · 오후 전면 금지 · 수분 충분히', loc:'전체', urgent:true});
 
     tasks.push({id:id('p1'), name:'블랙베리·복분자 수확',
@@ -2997,7 +3043,7 @@ function getDateTasks(selDate) {
 
   // ── 8월 ─────────────────────────────────────────────────
   if (m === 8) {
-    tasks.push({id:id('ag0'), name:'⚠️ 폭염 — 오전 6~8시·저녁 17~19시만',
+    tasks.push({id:id('ag0'), name:'⚠️ 폭염 — 오전 6~8시·저녁 17~19시만', judge:'warn',
       detail:'8월 연속폭염 · 열사병 위험 · 혼자 작업 특히 주의', loc:'전체', urgent:true});
 
     if (day <= 19) {
@@ -3174,12 +3220,25 @@ function renderTasks() {
   list.innerHTML = tasks.map(t => {
     const key  = todayKey + '-' + t.id;
     const done = checkedTasks[key];
+    // judge 배지 설정
+    const j = t.judge || (t.urgent ? 'urgent' : 'ok');
+    const judgeMap = {
+      ok:     {label:'✅ 가능',   bg:'#E8F5E9', tc:'#1B5E20'},
+      urgent: {label:'⚡ 지금당장', bg:'#FFEBEE', tc:'#C62828'},
+      warn:   {label:'⚠️ 주의',   bg:'#FFF3E0', tc:'#E65100'},
+      bad:    {label:'❌ 금지',   bg:'#FFEBEE', tc:'#C62828'},
+    };
+    const jd = judgeMap[j] || judgeMap.ok;
     return `<div class="task-item">
       <div class="task-check ${done?'done':''}" onclick="toggleTask('${key}',this)"></div>
       <div class="task-info">
-        <div class="task-name ${done?'done':''}">${t.name}</div>
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:2px">
+          <span class="task-name ${done?'done':''}" style="flex:1;min-width:0">${t.name}</span>
+          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
+            background:${jd.bg};color:${jd.tc};white-space:nowrap;flex-shrink:0">${jd.label}</span>
+        </div>
         <div class="task-detail">${t.detail}</div>
-        <div class="${t.urgent?'task-urgent':'task-location'}">${t.loc}</div>
+        <div class="task-location">${t.loc}</div>
       </div>
     </div>`;
   }).join('') || '<div style="text-align:center;padding:30px 16px;color:#9E9E9E"><div style="font-size:32px">✅</div><div style="font-size:14px;margin-top:8px">이 날은 등록된 작업이 없습니다</div></div>';
@@ -3463,14 +3522,20 @@ function toggleMonth(num) {
 }
 
 // ── 탭 전환 ──────────────────────────────────────────
+let wxAutoLoaded = false;
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`sec-${id}`).classList.add('active');
-  const tabMap = {today:0, search:1, dday:2, irang:3, monthly:4, weather:5, pruning:6, grow:7, guide:8};
+  document.getElementById(`sec-${id}`)?.classList.add('active');
+  const tabMap = {today:0, search:1, dday:2, irang:3, monthly:4, wxlive:5, pest:6, pruning:7, grow:8, guide:9};
   document.querySelectorAll('.tab')[tabMap[id]]?.classList.add('active');
   document.querySelectorAll('.nav-item')[tabMap[id]]?.classList.add('active');
+  // 날씨 탭 진입 시 자동 로드
+  if (id === 'wxlive' && !wxAutoLoaded) {
+    wxAutoLoaded = true;
+    loadWeatherMain();
+  }
 }
 
 
@@ -4862,6 +4927,986 @@ async function loadPruningWeather() {
   }
 }
 
+
+
+
+
+// ── 14일 장기예보 ─────────────────────────────────────────
+let forecastLoaded = false;
+
+function toggleForecast() {
+  const panel = document.getElementById('forecastPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen && !forecastLoaded) loadForecast();
+  if (!isOpen) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function loadForecast() {
+  const body = document.getElementById('forecastBody');
+  if (!body) return;
+
+  function vec2dir(deg) {
+    const dirs = ['북','북북동','북동','동북동','동','동남동','남동','남남동',
+                  '남','남남서','남서','서남서','서','서북서','북서','북북서'];
+    return dirs[Math.round(deg / 22.5) % 16];
+  }
+
+  function wmo2icon(code) {
+    if (code === 0)  return '☀️';
+    if (code <= 2)   return '🌤️';
+    if (code === 3)  return '☁️';
+    if (code <= 48)  return '🌫️';
+    if (code <= 55)  return '🌦️';
+    if (code <= 67)  return '🌧️';
+    if (code <= 77)  return '❄️';
+    if (code <= 82)  return '🌦️';
+    return '⛈️';
+  }
+
+  function wmo2label(code) {
+    if (code === 0)  return '맑음';
+    if (code === 1)  return '대체로 맑음';
+    if (code === 2)  return '구름 많음';
+    if (code === 3)  return '흐림';
+    if (code === 45 || code === 48) return '안개';
+    if (code <= 55)  return '이슬비';
+    if (code <= 65)  return '비';
+    if (code <= 67)  return '진눈깨비';
+    if (code <= 77)  return '눈';
+    if (code <= 82)  return '소나기';
+    if (code <= 99)  return '뇌우';
+    return '맑음';
+  }
+
+  // 작업 적합도 평가
+  function workScore(maxT, minT, windMs, rainPct, snowfall) {
+    if (rainPct >= 70 || snowfall > 0.5) return {label:'작업 불가', bg:'#FFEBEE', tc:'#C62828', bar:0};
+    if (rainPct >= 40) return {label:'작업 주의', bg:'#FFF3E0', tc:'#E65100', bar:30};
+    if (maxT < 5)      return {label:'기온 낮음', bg:'#FFF3E0', tc:'#E65100', bar:30};
+    if (windMs >= 10)  return {label:'강풍 주의', bg:'#FFF3E0', tc:'#E65100', bar:40};
+    if (maxT >= 10 && maxT < 15) return {label:'작업 가능', bg:'#E3F2FD', tc:'#1565C0', bar:65};
+    if (maxT >= 15 && maxT < 30) return {label:'작업 최적', bg:'#E8F5E9', tc:'#1B5E20', bar:100};
+    if (maxT >= 30)    return {label:'폭염 주의', bg:'#FFF3E0', tc:'#E65100', bar:40};
+    return {label:'작업 가능', bg:'#E3F2FD', tc:'#1565C0', bar:65};
+  }
+
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast'
+      + '?latitude=37.1994&longitude=126.8316'
+      + '&daily=temperature_2m_max,temperature_2m_min,'
+      + 'precipitation_probability_max,windspeed_10m_max,'
+      + 'winddirection_10m_dominant,weathercode,'
+      + 'precipitation_sum,snowfall_sum,uv_index_max'
+      + '&timezone=Asia%2FSeoul&forecast_days=14';
+
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('서버 오류');
+    const data = await res.json();
+    const daily = data.daily;
+    const N = daily.time.length;
+
+    const dayNames = ['일','월','화','수','목','금','토'];
+
+    // 월별 농사 핵심 작업
+    const monthWork = {
+      4:  '다래·으름 점검 · 유실수 개화 확인',
+      5:  '수박·오이·참외 정식 · 머루콩 파종 · 생강 심기',
+      6:  '마늘·양파 수확 · 동부 파종 · 장마 전 방제',
+      7:  '블랙베리 수확 · 수박 착과 · 병해 방제',
+      8:  '수박 수확(8/20전) · 김장무 파종(8/20)',
+      9:  '양파 정식 · 생강 수확 준비 · 배추 정식',
+      10: '고구마·생강 수확 · 마늘 파종',
+      11: '콩류 수확 · 배추 수확 · 유실수 전정 준비',
+    };
+
+    let html = '';
+
+    // 주차별 그룹핑
+    let weekGroup = -1;
+    for (let i = 0; i < N; i++) {
+      const dateStr = daily.time[i];
+      const dt      = new Date(dateStr + 'T00:00:00');
+      const dow     = dt.getDay();
+      const month   = dt.getMonth() + 1;
+      const mday    = dt.getDate();
+      const isWeekend = (dow === 0 || dow === 6);
+
+      const maxT  = Math.round(daily.temperature_2m_max[i]);
+      const minT  = Math.round(daily.temperature_2m_min[i]);
+      const windKmh = daily.windspeed_10m_max[i];
+      const windMs  = (windKmh / 3.6).toFixed(1);
+      const rainPct = daily.precipitation_probability_max[i];
+      const windDir = vec2dir(daily.winddirection_10m_dominant[i]);
+      const wcode   = daily.weathercode[i];
+      const precip  = daily.precipitation_sum[i] || 0;
+      const snow    = daily.snowfall_sum[i] || 0;
+      const wicon   = wmo2icon(wcode);
+      const wlabel  = wmo2label(wcode);
+      const score   = workScore(maxT, minT, parseFloat(windMs), rainPct, snow);
+
+      // 오늘 여부
+      const todayDt = new Date(); todayDt.setHours(0,0,0,0);
+      const isToday = dt.getTime() === todayDt.getTime();
+
+      // 주말 배경 강조
+      const rowBg = isToday ? '#E8F5E9' : isWeekend ? '#FFF9C4' : 'white';
+      const rowBorder = isToday ? '2px solid #2E7D32' : isWeekend ? '1.5px solid #F9A825' : '1px solid #F0F0F0';
+
+      // 서리 경고
+      const frostWarn = minT <= 0 ? ' ❄️서리' : minT <= 3 ? ' 🟡서리주의' : '';
+
+      html += `
+        <div onclick="toggleFcDetail(${i})"
+          style="background:${rowBg};border:${rowBorder};border-radius:10px;
+          padding:11px 12px;margin-bottom:6px;cursor:pointer">
+          <div style="display:flex;align-items:center;gap:8px">
+            <!-- 날짜 -->
+            <div style="width:52px;flex-shrink:0">
+              <div style="font-size:${isToday?'13px':'12px'};font-weight:${isToday?'800':'700'};
+                color:${isWeekend?(dow===0?'#C62828':'#1565C0'):'#37474F'}">
+                ${isToday?'오늘 ':''}${month}/${mday}(${dayNames[dow]})
+              </div>
+            </div>
+            <!-- 날씨 아이콘 -->
+            <div style="font-size:22px;flex-shrink:0">${wicon}</div>
+            <!-- 기온 -->
+            <div style="flex-shrink:0;text-align:center;min-width:54px">
+              <span style="font-size:15px;font-weight:800;color:#C62828">${maxT}°</span>
+              <span style="font-size:13px;color:#9E9E9E"> / </span>
+              <span style="font-size:13px;font-weight:600;color:#1565C0">${minT}°</span>
+              <div style="font-size:9px;color:#9E9E9E">${frostWarn}</div>
+            </div>
+            <!-- 강수확률 -->
+            <div style="flex-shrink:0;text-align:center;min-width:36px">
+              <div style="font-size:10px;color:#9E9E9E">강수</div>
+              <div style="font-size:13px;font-weight:700;
+                color:${rainPct>=70?'#C62828':rainPct>=40?'#E65100':'#9E9E9E'}">${rainPct}%</div>
+            </div>
+            <!-- 작업 적합도 -->
+            <div style="flex:1;text-align:right">
+              <span style="font-size:10px;font-weight:700;
+                background:${score.bg};color:${score.tc};
+                padding:3px 8px;border-radius:10px">${score.label}</span>
+            </div>
+          </div>
+          <!-- 상세 (기본 숨김) -->
+          <div id="fc-detail-${i}" style="display:none;margin-top:10px;
+            padding-top:8px;border-top:1px solid #E0E0E0">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#546E7A">
+              <div>🌤 날씨: <b style="color:#37474F">${wlabel}</b></div>
+              <div>💨 풍속: <b style="color:#37474F">${windDir} ${windMs}m/s</b></div>
+              <div>🌧 강수량: <b style="color:#37474F">${precip>0?precip.toFixed(1)+'mm':'없음'}</b></div>
+              <div>❄️ 적설: <b style="color:#37474F">${snow>0?snow.toFixed(1)+'cm':'없음'}</b></div>
+            </div>
+            ${monthWork[month] ? `
+            <div style="margin-top:7px;background:#E8F5E9;border-radius:6px;padding:6px 8px;
+              font-size:11px;color:#1B5E20">
+              🌱 ${month}월 주요 작업: ${monthWork[month]}
+            </div>` : ''}
+          </div>
+        </div>`;
+    }
+
+    // 범례
+    html += `
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;font-size:10px">
+        <span style="background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:10px;font-weight:700">작업 최적</span>
+        <span style="background:#E3F2FD;color:#1565C0;padding:3px 8px;border-radius:10px;font-weight:700">작업 가능</span>
+        <span style="background:#FFF3E0;color:#E65100;padding:3px 8px;border-radius:10px;font-weight:700">작업 주의</span>
+        <span style="background:#FFEBEE;color:#C62828;padding:3px 8px;border-radius:10px;font-weight:700">작업 불가</span>
+        <span style="background:#FFF9C4;color:#854F0B;padding:3px 8px;border-radius:10px;font-weight:700">🟡 주말</span>
+      </div>
+      <div style="font-size:10px;color:#BDBDBD;margin-top:8px;text-align:right">
+        화성시 남양읍 · 14일 예보 · 탭하면 상세보기
+      </div>`;
+
+    body.innerHTML = html;
+    forecastLoaded = true;
+
+  } catch(err) {
+    body.innerHTML = `<div style="text-align:center;padding:20px;color:#C62828">
+      <div style="font-size:13px;font-weight:700">⚠ 장기예보를 불러올 수 없습니다</div>
+      <div style="font-size:11px;margin-top:6px">인터넷 연결 확인 후 다시 시도하세요</div>
+      <button onclick="forecastLoaded=false;loadForecast()"
+        style="margin-top:10px;background:#E3F2FD;border:none;color:#1565C0;
+        border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;
+        cursor:pointer;font-family:inherit">🔄 다시 시도</button>
+    </div>`;
+  }
+}
+
+function toggleFcDetail(i) {
+  const el = document.getElementById('fc-detail-' + i);
+  if (!el) return;
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+
+// ── 날씨 섹션 전용 함수 ───────────────────────────────────
+let wxForecastLoaded = false;
+
+// 현재 날씨 (날씨 탭용 — loadPruningWeather 재사용)
+async function loadWeatherMain() {
+  const btn  = document.getElementById('wxRefreshBtn');
+  const body = document.getElementById('wxliveBody');
+  const dateEl = document.getElementById('wxlive-date');
+  if (!body) return;
+
+  const d = REAL_TODAY;
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${dayNames[d.getDay()]})`;
+  if (dateEl) dateEl.textContent = dateStr + ' 날씨';
+  if (btn) btn.textContent = '⏳ 로딩중...';
+  body.innerHTML = `<div style="text-align:center;padding:16px;color:#9E9E9E">
+    <div style="font-size:24px">🌤️</div>
+    <div style="font-size:12px;margin-top:6px">날씨 불러오는 중...</div></div>`;
+
+  function vec2dir(deg) {
+    const dirs=['북','북북동','북동','동북동','동','동남동','남동','남남동',
+                '남','남남서','남서','서남서','서','서북서','북서','북북서'];
+    return dirs[Math.round(deg/22.5)%16];
+  }
+  function wmo2info(code) {
+    if(code===0)  return{icon:'☀️',label:'맑음',bg:'#FFFDE7',tc:'#F57F17'};
+    if(code===1)  return{icon:'🌤️',label:'대체로 맑음',bg:'#FFFDE7',tc:'#F57F17'};
+    if(code===2)  return{icon:'⛅',label:'구름 많음',bg:'#ECEFF1',tc:'#546E7A'};
+    if(code===3)  return{icon:'☁️',label:'흐림',bg:'#ECEFF1',tc:'#546E7A'};
+    if(code===45) return{icon:'🌫️',label:'안개',bg:'#ECEFF1',tc:'#546E7A'};
+    if(code===48) return{icon:'🌫️',label:'짙은 안개(서리안개)',bg:'#ECEFF1',tc:'#455A64'};
+    if(code<=55)  return{icon:'🌦️',label:`이슬비${code===51?' (약)':code===53?' (보통)':' (강)'}`,bg:'#E3F2FD',tc:'#1565C0'};
+    if(code<=65)  return{icon:'🌧️',label:`비${code===61?' (약)':code===63?' (보통)':' (강)'}`,bg:'#BBDEFB',tc:'#0D47A1'};
+    if(code<=75)  return{icon:'❄️',label:`눈${code===71?' (약)':code===73?' (보통)':' (강)'}`,bg:'#E8F5E9',tc:'#1B5E20'};
+    if(code===77) return{icon:'🌨️',label:'싸락눈',bg:'#E8F5E9',tc:'#2E7D32'};
+    if(code<=82)  return{icon:'🌦️',label:'소나기',bg:'#E3F2FD',tc:'#1565C0'};
+    if(code===95) return{icon:'⛈️',label:'뇌우',bg:'#FFEBEE',tc:'#C62828'};
+    if(code>=96)  return{icon:'⛈️',label:'뇌우+우박',bg:'#FFEBEE',tc:'#B71C1C'};
+    return{icon:'🌤️',label:'맑음',bg:'#FFFDE7',tc:'#F57F17'};
+  }
+  function frostRisk(minT){
+    if(minT<=0)  return{level:'⚠️ 서리 위험!',bg:'#FFEBEE',tc:'#C62828',tip:'절단면·신초 동해 주의'};
+    if(minT<=3)  return{level:'🟡 서리 주의',bg:'#FFF3E0',tc:'#E65100',tip:'새벽 기온 확인 필요'};
+    return null;
+  }
+  function fogInfo(wcode,hum){
+    if(wcode===45||wcode===48) return{warn:true,msg:'⚠ 안개 — 약제 살포 효과 없음',bg:'#ECEFF1',tc:'#455A64'};
+    if(hum>=90) return{warn:false,msg:'💧 고습도 — 안개 발생 가능',bg:'#E3F2FD',tc:'#1565C0'};
+    return null;
+  }
+
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast'
+      +'?latitude=37.1994&longitude=126.8316'
+      +'&daily=temperature_2m_max,temperature_2m_min,'
+      +'precipitation_probability_max,windspeed_10m_max,'
+      +'winddirection_10m_dominant,weathercode,'
+      +'precipitation_sum,snowfall_sum'
+      +'&hourly=relativehumidity_2m,visibility'
+      +'&current_weather=true'
+      +'&timezone=Asia%2FSeoul&forecast_days=1';
+
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('서버오류');
+    const data=await res.json();
+    const curr=data.current_weather, daily=data.daily, hourly=data.hourly;
+
+    const maxT  = Math.round(daily.temperature_2m_max[0]);
+    const minT  = Math.round(daily.temperature_2m_min[0]);
+    const windMs= (daily.windspeed_10m_max[0]/3.6).toFixed(1);
+    const rainPct=daily.precipitation_probability_max[0];
+    const windDir=vec2dir(daily.winddirection_10m_dominant[0]);
+    const wcode = daily.weathercode[0];
+    const precip= daily.precipitation_sum[0]||0;
+    const snow  = daily.snowfall_sum[0]||0;
+    const curT  = Math.round(curr.temperature);
+    const curW  = (curr.windspeed/3.6).toFixed(1);
+    const humH  = hourly.relativehumidity_2m.slice(6,18);
+    const avgHum= Math.round(humH.reduce((a,b)=>a+b,0)/humH.length);
+    const visH  = hourly.visibility?hourly.visibility.slice(6,18):[];
+    const minVis= visH.length?Math.min(...visH):999999;
+
+    const winfo = wmo2info(wcode);
+    const frost = frostRisk(minT);
+    const fog   = fogInfo(wcode,avgHum);
+    const alerts= [];
+    if(frost)       alerts.push(frost);
+    if(fog)         alerts.push(fog);
+    if(snow>0)      alerts.push({level:`❄️ 적설 ${snow.toFixed(1)}cm`,bg:'#E8F5E9',tc:'#1B5E20',tip:'노지 작업 주의'});
+    if(precip>10)   alerts.push({level:`🌧️ 강수 ${precip.toFixed(1)}mm`,bg:'#E3F2FD',tc:'#1565C0',tip:'작업 취소 고려'});
+    if(minVis<500)  alerts.push({level:`🌫️ 시정 ${(minVis/1000).toFixed(1)}km`,bg:'#ECEFF1',tc:'#455A64',tip:'약제 살포 금지'});
+
+    let tBg='#E3F2FD',tTc='#1565C0',tCnd='전정 가능';
+    if(maxT>=15){tBg='#E8F5E9';tTc='#1B5E20';tCnd='전정 최적 ✅';}
+    else if(maxT<10){tBg='#FFF3E0';tTc='#E65100';tCnd='⚠ 기온 낮음';}
+    let wBg='#E8F5E9',wTc='#1B5E20',wCnd='작업 양호 ✅';
+    if(windMs>=10){wBg='#FFEBEE';wTc='#C62828';wCnd='⚠ 강풍 주의';}
+    else if(windMs>=5){wBg='#FFF3E0';wTc='#E65100';wCnd='바람 보통';}
+    let rBg='#E8F5E9',rTc='#1B5E20';
+    if(rainPct>=70){rBg='#FFEBEE';rTc='#C62828';}
+    else if(rainPct>=40){rBg='#FFF3E0';rTc='#E65100';}
+
+    body.innerHTML = `
+      <div style="background:${winfo.bg};border-radius:10px;padding:12px 14px;
+        margin-bottom:8px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:44px;line-height:1">${winfo.icon}</div>
+        <div>
+          <div style="font-size:20px;font-weight:800;color:${winfo.tc}">${winfo.label}</div>
+          <div style="font-size:12px;color:${winfo.tc};opacity:0.85;margin-top:3px">
+            현재 ${curT}°C · 풍속 ${curW}m/s · 습도 ${avgHum}%
+          </div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:8px">
+        <div style="background:${tBg};border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:${tTc};font-weight:700">최고 / 최저</div>
+          <div style="font-size:24px;font-weight:800;color:${tTc}">${maxT}° / ${minT}°</div>
+          <div style="font-size:10px;color:${tTc}">${tCnd}</div>
+        </div>
+        <div style="background:${wBg};border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:10px;color:${wTc};font-weight:700">최대풍속</div>
+          <div style="font-size:20px;font-weight:800;color:${wTc}">${windDir} ${windMs}m/s</div>
+          <div style="font-size:10px;color:${wTc}">${wCnd}</div>
+        </div>
+        <div style="background:${rBg};border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:${rTc};font-weight:700">강수확률 / 강수량</div>
+          <div style="font-size:18px;font-weight:800;color:${rTc}">${rainPct}%${precip>0?' · '+precip.toFixed(1)+'mm':''}</div>
+        </div>
+        <div style="background:#F5F5F5;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:#546E7A;font-weight:700">습도 / 일교차</div>
+          <div style="font-size:18px;font-weight:800;color:#37474F">${avgHum}% / ${maxT-minT}°C</div>
+        </div>
+      </div>
+      ${snow>0?`<div style="background:#E8F5E9;border-radius:8px;padding:9px 12px;margin-bottom:8px;display:flex;align-items:center;gap:8px"><span style="font-size:22px">❄️</span><div><div style="font-size:12px;font-weight:700;color:#1B5E20">적설 ${snow.toFixed(1)}cm</div><div style="font-size:11px;color:#2E7D32">미끄럼 주의</div></div></div>`:''}
+      ${alerts.map(a=>`<div style="background:${a.bg};border-radius:8px;padding:9px 12px;margin-bottom:7px"><div style="font-size:12px;font-weight:700;color:${a.tc}">${a.level}</div>${a.tip?`<div style="font-size:11px;color:${a.tc};opacity:0.9;margin-top:2px">${a.tip}</div>`:''}</div>`).join('')}
+      <div style="font-size:10px;color:#BDBDBD;text-align:right;margin-top:4px">
+        화성시 남양읍 (37.1994°N 126.8316°E) · 방금 갱신
+      </div>`;
+    if(btn) btn.textContent='🔄 현재날씨 갱신';
+  } catch(err) {
+    body.innerHTML=`<div style="background:#FFEBEE;border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:13px;color:#C62828;font-weight:700">⚠ 날씨를 불러올 수 없습니다</div>
+      <div style="font-size:11px;color:#E53935;margin-top:4px">인터넷 연결 확인 후 다시 시도하세요</div></div>`;
+    if(btn) btn.textContent='🔄 현재날씨 갱신';
+  }
+}
+
+function toggleWeatherForecast() {
+  const panel = document.getElementById('wxForecastPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen && !wxForecastLoaded) loadWeatherForecast();
+  if (!isOpen) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+async function loadWeatherForecast() {
+  const body = document.getElementById('wxForecastBody');
+  if (!body) return;
+
+  function vec2dir(deg){const dirs=['북','북북동','북동','동북동','동','동남동','남동','남남동','남','남남서','남서','서남서','서','서북서','북서','북북서'];return dirs[Math.round(deg/22.5)%16];}
+  function wmo2icon(c){return c===0?'☀️':c<=2?'🌤️':c===3?'☁️':c<=48?'🌫️':c<=55?'🌦️':c<=67?'🌧️':c<=77?'❄️':c<=82?'🌦️':'⛈️';}
+  function wmo2label(c){return c===0?'맑음':c===1?'대체로 맑음':c===2?'구름 많음':c===3?'흐림':c<=48?'안개':c<=55?'이슬비':c<=65?'비':c<=67?'진눈깨비':c<=77?'눈':c<=82?'소나기':'뇌우';}
+  function workScore(maxT,minT,windMs,rainPct,snow){
+    if(rainPct>=70||snow>0.5) return{label:'작업 불가',bg:'#FFEBEE',tc:'#C62828'};
+    if(rainPct>=40) return{label:'작업 주의',bg:'#FFF3E0',tc:'#E65100'};
+    if(maxT<5) return{label:'기온 낮음',bg:'#FFF3E0',tc:'#E65100'};
+    if(windMs>=10) return{label:'강풍 주의',bg:'#FFF3E0',tc:'#E65100'};
+    if(maxT>=15&&maxT<30) return{label:'작업 최적',bg:'#E8F5E9',tc:'#1B5E20'};
+    if(maxT>=10) return{label:'작업 가능',bg:'#E3F2FD',tc:'#1565C0'};
+    if(maxT>=30) return{label:'폭염 주의',bg:'#FFF3E0',tc:'#E65100'};
+    return{label:'작업 가능',bg:'#E3F2FD',tc:'#1565C0'};
+  }
+
+  const monthWork={4:'다래·으름 점검·유실수 개화',5:'수박·오이·참외 정식·머루콩 파종',6:'마늘·양파 수확·동부 파종',7:'블랙베리 수확·수박 착과 관리',8:'수박 수확(8/20전)·김장무 파종',9:'양파 정식·생강 수확 준비',10:'고구마·생강 수확·마늘 파종',11:'콩류·배추 수확·유실수 전정 준비'};
+  const dayNames=['일','월','화','수','목','금','토'];
+
+  try {
+    const url='https://api.open-meteo.com/v1/forecast?latitude=37.1994&longitude=126.8316'
+      +'&daily=temperature_2m_max,temperature_2m_min,precipitation_probability_max,'
+      +'windspeed_10m_max,winddirection_10m_dominant,weathercode,precipitation_sum,snowfall_sum'
+      +'&timezone=Asia%2FSeoul&forecast_days=14';
+    const res=await fetch(url);
+    if(!res.ok) throw new Error('서버오류');
+    const data=await res.json();
+    const daily=data.daily;
+    let html='';
+    for(let i=0;i<daily.time.length;i++){
+      const dt=new Date(daily.time[i]+'T00:00:00');
+      const dow=dt.getDay();
+      const m=dt.getMonth()+1, md=dt.getDate();
+      const maxT=Math.round(daily.temperature_2m_max[i]);
+      const minT=Math.round(daily.temperature_2m_min[i]);
+      const windMs=(daily.windspeed_10m_max[i]/3.6).toFixed(1);
+      const rainPct=daily.precipitation_probability_max[i];
+      const windDir=vec2dir(daily.winddirection_10m_dominant[i]);
+      const wcode=daily.weathercode[i];
+      const precip=daily.precipitation_sum[i]||0;
+      const snow=daily.snowfall_sum[i]||0;
+      const score=workScore(maxT,minT,parseFloat(windMs),rainPct,snow);
+      const todayDt=new Date();todayDt.setHours(0,0,0,0);
+      const isToday=dt.getTime()===todayDt.getTime();
+      const isWE=dow===0||dow===6;
+      const rowBg=isToday?'#E8F5E9':isWE?'#FFF9C4':'white';
+      const rowBorder=isToday?'2px solid #2E7D32':isWE?'1.5px solid #F9A825':'1px solid #F0F0F0';
+      const frostW=minT<=0?' ❄️서리':minT<=3?' 🟡서리주의':'';
+      html+=`<div onclick="toggleWxDetail(${i})" style="background:${rowBg};border:${rowBorder};border-radius:10px;padding:11px 12px;margin-bottom:6px;cursor:pointer">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:60px;flex-shrink:0"><div style="font-size:${isToday?'13px':'12px'};font-weight:${isToday?'800':'700'};color:${dow===0?'#C62828':dow===6?'#1565C0':'#37474F'}">${isToday?'오늘 ':''}${m}/${md}(${dayNames[dow]})</div></div>
+          <div style="font-size:22px;flex-shrink:0">${wmo2icon(wcode)}</div>
+          <div style="flex-shrink:0;text-align:center;min-width:54px">
+            <span style="font-size:15px;font-weight:800;color:#C62828">${maxT}°</span>
+            <span style="font-size:12px;color:#9E9E9E"> / </span>
+            <span style="font-size:13px;font-weight:600;color:#1565C0">${minT}°${frostW}</span>
+          </div>
+          <div style="flex-shrink:0;text-align:center;min-width:36px">
+            <div style="font-size:10px;color:#9E9E9E">강수</div>
+            <div style="font-size:13px;font-weight:700;color:${rainPct>=70?'#C62828':rainPct>=40?'#E65100':'#9E9E9E'}">${rainPct}%</div>
+          </div>
+          <div style="flex:1;text-align:right"><span style="font-size:10px;font-weight:700;background:${score.bg};color:${score.tc};padding:3px 8px;border-radius:10px">${score.label}</span></div>
+        </div>
+        <div id="wx-detail-${i}" style="display:none;margin-top:10px;padding-top:8px;border-top:1px solid #E0E0E0">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:11px;color:#546E7A">
+            <div>🌤 날씨: <b style="color:#37474F">${wmo2label(wcode)}</b></div>
+            <div>💨 풍속: <b style="color:#37474F">${windDir} ${windMs}m/s</b></div>
+            <div>🌧 강수량: <b style="color:#37474F">${precip>0?precip.toFixed(1)+'mm':'없음'}</b></div>
+            <div>❄️ 적설: <b style="color:#37474F">${snow>0?snow.toFixed(1)+'cm':'없음'}</b></div>
+          </div>
+          ${monthWork[m]?`<div style="margin-top:7px;background:#E8F5E9;border-radius:6px;padding:6px 8px;font-size:11px;color:#1B5E20">🌱 ${m}월 주요 작업: ${monthWork[m]}</div>`:''}
+        </div>
+      </div>`;
+    }
+    html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;font-size:10px">
+      <span style="background:#E8F5E9;color:#1B5E20;padding:3px 8px;border-radius:10px;font-weight:700">작업 최적</span>
+      <span style="background:#E3F2FD;color:#1565C0;padding:3px 8px;border-radius:10px;font-weight:700">작업 가능</span>
+      <span style="background:#FFF3E0;color:#E65100;padding:3px 8px;border-radius:10px;font-weight:700">작업 주의</span>
+      <span style="background:#FFEBEE;color:#C62828;padding:3px 8px;border-radius:10px;font-weight:700">작업 불가</span>
+      <span style="background:#FFF9C4;color:#854F0B;padding:3px 8px;border-radius:10px;font-weight:700">🟡 주말</span>
+    </div>
+    <div style="font-size:10px;color:#BDBDBD;margin-top:6px;text-align:right">화성시 남양읍 · 14일 예보</div>`;
+    body.innerHTML=html;
+    wxForecastLoaded=true;
+  } catch(err) {
+    body.innerHTML=`<div style="text-align:center;padding:20px;color:#C62828">
+      <div style="font-size:13px;font-weight:700">⚠ 장기예보를 불러올 수 없습니다</div>
+      <button onclick="wxForecastLoaded=false;loadWeatherForecast()" style="margin-top:10px;background:#E3F2FD;border:none;color:#1565C0;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 다시 시도</button></div>`;
+  }
+}
+
+function toggleWxDetail(i){
+  const el=document.getElementById('wx-detail-'+i);
+  if(el) el.style.display=el.style.display==='none'?'block':'none';
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 병해충·시비 통합 시스템 — 내 작물 기준
+// ══════════════════════════════════════════════════════════
+
+// ── 내 작물 병해충 매핑 ───────────────────────────────────
+// {작물그룹: {pests:[병해충명...], notes:설명}}
+const myPlantPests = {
+  '다래·으름·키위': {
+    emoji:'🍇', plants:['다래 일세','다래 레몬프레시','다래 참다래(키위)','다래 용성2호','으름 토종','으름 슈퍼대실','으름 백화대실','으름 홍화대실'],
+    pests:['진딧물','응애','흰가루병','회색곰팡이병'],
+    peak_months:[4,5,6,9,10]
+  },
+  '블랙베리·복분자': {
+    emoji:'🫐', plants:['블랙베리(슈퍼복분자)','복분자'],
+    pests:['진딧물','응애','회색곰팡이병','탄저병'],
+    peak_months:[5,6,7,8]
+  },
+  '사과 3종': {
+    emoji:'🍎', plants:['나가노신구 사과','돌고 사과','아리수 사과'],
+    pests:['진딧물','응애','탄저병','복숭아심식나방','흰가루병'],
+    peak_months:[5,6,7,8,9]
+  },
+  '살구 5종': {
+    emoji:'🍑', plants:['백살구','B360살구','대천황살구(킹코트)','킹코트살구(하코트)','하코드살구'],
+    pests:['진딧물','복숭아심식나방','탄저병','흰가루병'],
+    peak_months:[5,6,7]
+  },
+  '매실 2종': {
+    emoji:'🌸', plants:['남고 매실','노천 매실'],
+    pests:['진딧물','응애','흰가루병'],
+    peak_months:[4,5,6,9]
+  },
+  '무화과 4종': {
+    emoji:'🍈', plants:['무화과 시카고하디','무화과 롱다우트','무화과 바나네','무화과 피코튬'],
+    pests:['응애','진딧물','역병'],
+    peak_months:[6,7,8]
+  },
+  '블루베리': {
+    emoji:'🫐', plants:['블루베리 패트리오트'],
+    pests:['진딧물','회색곰팡이병'],
+    peak_months:[5,6,7]
+  },
+  '헤이즐넛·모과·마르멜로·앵두·머루포도·바이오체리': {
+    emoji:'🌰', plants:['헤이즐넛 바르셀로나','헤이즐넛 초거대향','모과(대실모과)','마르멜로(서양모과)','앵두(대홍앵)','머루포도(MBA)','바이오체리'],
+    pests:['진딧물','응애','흰가루병'],
+    peak_months:[5,6,7,8]
+  },
+  '수박·단호박·접목수박': {
+    emoji:'🍉', plants:['블랙망고수박','애플수박','자몽애플수박','흑피애플미니꼬꼬마수박①','흑피애플미니꼬꼬마수박②','애플미니꼬꼬마수박①','애플미니꼬꼬마수박②','보우짱 단호박①','보우짱 단호박②','접목수박','망고수박①','망고수박②','망고수박③','복수박①','복수박②','접목애플수박①','접목애플수박②'],
+    pests:['역병','탄저병','흰가루병','진딧물','노린재'],
+    peak_months:[6,7,8]
+  },
+  '오이·쿠카멜론·호박': {
+    emoji:'🥒', plants:['백다다기오이','쿠카멜론①','쿠카멜론②','애호박①','애호박②','맷돌호박①','맷돌호박②'],
+    pests:['역병','흰가루병','진딧물','응애'],
+    peak_months:[5,6,7,8]
+  },
+  '참외 5종': {
+    emoji:'🍈', plants:['망고참외','꿀참외','개구리참외','베타카로틴참외','사과참외'],
+    pests:['역병','흰가루병','진딧물'],
+    peak_months:[6,7,8]
+  },
+  '콩류(머루콩·선비잡이콩·동부)': {
+    emoji:'🫘', plants:['머루콩','선비잡이콩','동부(마늘 후작)'],
+    pests:['노린재','진딧물'],
+    peak_months:[7,8,9]
+  },
+  '고구마·감자·생강': {
+    emoji:'🍠', plants:['고구마','감자(봄재배)','토종생강','개량생강'],
+    pests:['역병'],
+    peak_months:[7,8]
+  },
+  '마늘·양파·배추·무': {
+    emoji:'🧄', plants:['마늘(3이랑)','마늘(2이랑 후작)','양파','양파(6이랑)','배추(가을)','김장무'],
+    pests:['진딧물'],
+    peak_months:[9,10,11]
+  },
+};
+
+// ── 내 작물 시비 스케줄 ───────────────────────────────────
+// {월: [{group, plants, work, detail, fertilizer, amount, timing, caution}]}
+const myFertSchedule = {
+  3: [
+    {group:'전체 과수', emoji:'🌳',
+     work:'밑거름 (기비)',
+     detail:'낙엽 후 동면에서 깨어나기 전 — 뿌리 흡수력 최고',
+     fertilizer:'퇴비+복합비료(N:P:K=8:8:8)',
+     amount:'퇴비 5~10kg/주 · 복합비료 100~200g/주',
+     timing:'3월 초순 발아 전',
+     caution:'질소 과다 금지 — 도장지 유발'}
+  ],
+  4: [
+    {group:'사과·살구·매실', emoji:'🍎🍑🌸',
+     work:'개화기 엽면시비',
+     detail:'꽃 피기 직전 붕소 살포 — 결실율 향상',
+     fertilizer:'붕소(요산나트륨) 0.3% 수용액',
+     amount:'엽면 골고루 살포',
+     timing:'개화 3~5일 전',
+     caution:'개화 중 살포 금지 — 화분 손상'},
+    {group:'다래·으름·키위', emoji:'🍇🌿',
+     work:'질소 추비 1차',
+     detail:'신초 발생기 — 덩굴 생장 촉진',
+     fertilizer:'요소(N 46%) 수용액 0.3%',
+     amount:'주당 물 5L 관주',
+     timing:'4월 중순 새순 5~10cm',
+     caution:'과다 시 도장지 발생'}
+  ],
+  5: [
+    {group:'수박·참외·오이·호박', emoji:'🍉🍈🥒',
+     work:'정식 밑거름',
+     detail:'정식 1주 전 두둑에 기비 시용',
+     fertilizer:'완숙 퇴비+복합비료',
+     amount:'퇴비 2kg/㎡ · 복합비료 50g/㎡',
+     timing:'정식 7~10일 전',
+     caution:'미숙 퇴비 사용 금지 — 뿌리 손상'},
+    {group:'블랙베리·복분자', emoji:'🫐',
+     work:'결실비료',
+     detail:'착과 시작 전 칼륨 보강',
+     fertilizer:'황산칼륨(K₂O 50%)',
+     amount:'주당 30~50g 토양 시용',
+     timing:'5월 하순 꽃눈 형성기',
+     caution:'염화칼륨 사용 금지 — 염분 피해'},
+    {group:'블루베리', emoji:'🫐',
+     work:'산성비료 시용',
+     detail:'pH 4.5~5.5 유지 필수',
+     fertilizer:'황산암모늄(유안) — 산성화 효과',
+     amount:'주당 50~80g',
+     timing:'5월 초 신초 발생기',
+     caution:'일반 복합비료 금지 — pH 상승'}
+  ],
+  6: [
+    {group:'수박·참외·오이', emoji:'🍉🍈🥒',
+     work:'착과 후 추비',
+     detail:'착과 확인 후 10일 이내 시용',
+     fertilizer:'복합비료(N:P:K=6:6:12) 칼륨 강화형',
+     amount:'포기당 20~30g 또는 관주',
+     timing:'착과 후 7~10일',
+     caution:'착과 전 질소 과다 금지 — 착과 불량'},
+    {group:'사과·살구', emoji:'🍎🍑',
+     work:'적과 후 칼슘 엽면시비',
+     detail:'과실 비대기 칼슘 부족 예방',
+     fertilizer:'염화칼슘 0.3~0.5% 수용액',
+     amount:'엽면 골고루 2~3회 반복',
+     timing:'적과 후 ~ 7월 중순',
+     caution:'고온 한낮 살포 금지 — 약해'}
+  ],
+  7: [
+    {group:'수박·단호박·호박', emoji:'🍉🎃',
+     work:'수확 전 비료 중단',
+     detail:'수확 2~3주 전 모든 비료 중단',
+     fertilizer:'중단',
+     amount:'—',
+     timing:'수확 예정일 20일 전',
+     caution:'비료 지속 시 당도 저하·저장성 불량'},
+    {group:'블랙베리·복분자', emoji:'🫐',
+     work:'수확 후 추비',
+     detail:'수확 직후 이듬해 꽃눈 분화 준비',
+     fertilizer:'복합비료(8:8:8)',
+     amount:'주당 50~100g',
+     timing:'수확 종료 직후',
+     caution:'질소 과다 시 월동 불량'}
+  ],
+  8: [
+    {group:'전체 채소 후작 준비', emoji:'🥬',
+     work:'토양 개량',
+     detail:'마늘·양파·배추 파종 전 토양 pH 교정',
+     fertilizer:'고토석회(산성토양 교정)',
+     amount:'10~20kg/3.3㎡',
+     timing:'8월 중순 (파종 2~3주 전)',
+     caution:'석회 후 2주 이내 파종·시비 금지'},
+    {group:'사과 3종', emoji:'🍎',
+     work:'칼리 추비',
+     detail:'과실 성숙기 당도·착색 향상',
+     fertilizer:'황산칼륨',
+     amount:'주당 50~80g',
+     timing:'8월 상순',
+     caution:'질소 추가 금지 — 과실 비대 저해'}
+  ],
+  9: [
+    {group:'마늘·양파', emoji:'🧄🧅',
+     work:'파종·정식 기비',
+     detail:'밭 전면 살포 후 경운 혼화',
+     fertilizer:'퇴비+복합비료(8:8:8)',
+     amount:'퇴비 2kg/㎡ · 복합비료 80g/㎡',
+     timing:'파종·정식 7~10일 전',
+     caution:'질소 과다 시 구 비대 불량'},
+    {group:'배추', emoji:'🥬',
+     work:'정식 후 추비',
+     detail:'활착 후 1~2주 간격 2~3회',
+     fertilizer:'요소(N) 또는 복합비료',
+     amount:'포기당 5~10g',
+     timing:'정식 2주 후 ~ 결구 전',
+     caution:'결구기 질소 과다 시 속 잎 썩음'}
+  ],
+  10: [
+    {group:'전체 과수', emoji:'🌳',
+     work:'가을 밑거름 준비',
+     detail:'낙엽 전 인산·칼륨 흡수 극대화',
+     fertilizer:'용성인비+황산칼륨',
+     amount:'인산 100g/주 · 칼륨 50g/주',
+     timing:'10월 중순 낙엽 전',
+     caution:'질소 금지 — 월동 불량 원인'},
+    {group:'헤이즐넛', emoji:'🌰',
+     work:'수확 후 추비',
+     detail:'수확 직후 이듬해 결실 준비',
+     fertilizer:'복합비료(8:8:8)',
+     amount:'주당 100~150g',
+     timing:'수확 종료 직후',
+     caution:''}
+  ],
+  11: [
+    {group:'전체 과수', emoji:'🌳',
+     work:'유기물 퇴비 기비',
+     detail:'낙엽 후 ~ 토양 동결 전',
+     fertilizer:'완숙 퇴비',
+     amount:'5~10kg/주 수관 하부 토양 혼입',
+     timing:'11월 낙엽 완료 후',
+     caution:'미숙 퇴비 사용 금지'},
+    {group:'마늘·양파 월동', emoji:'🧄🧅',
+     work:'월동 비료',
+     detail:'동해 방지 및 이른 봄 생육 준비',
+     fertilizer:'복합비료 소량',
+     amount:'20g/㎡ 표면 시용',
+     timing:'11월 하순 본격 동결 전',
+     caution:'과다 시 동해 심화'}
+  ],
+  12: [],
+  1: [],
+  2: [
+    {group:'전체 과수 준비', emoji:'🌳',
+     work:'기비 계획 수립',
+     detail:'3월 발아 전 시용할 비료 준비',
+     fertilizer:'퇴비·복합비료 구입 준비',
+     amount:'—',
+     timing:'2월 중순까지',
+     caution:''}
+  ],
+};
+
+// 병해충 상세 데이터
+const pestDetail = {
+  '흰가루병':   {emoji:'🍃',type:'곰팡이',symptom:'흰 가루 → 황변·낙엽',control:'훼나리몰·트리플록시스트로빈',risk_temp:[12,25],risk_hum:60,bg:'#F3E5F5',tc:'#6A1B9A'},
+  '역병':       {emoji:'🌿',type:'난균류',symptom:'줄기 기부 갈변 → 시들음',control:'메탈락실·포세틸알루미늄',risk_temp:[23,32],risk_hum:80,bg:'#E8F5E9',tc:'#1B5E20'},
+  '탄저병':     {emoji:'🍎',type:'곰팡이',symptom:'과실 갈색 반점 → 썩음',control:'이프로디온·테부코나졸',risk_temp:[22,30],risk_hum:75,bg:'#FFEBEE',tc:'#C62828'},
+  '진딧물':     {emoji:'🐛',type:'해충', symptom:'새순 집단 기생 → 황변',control:'이미다클로프리드·아세타미프리드',risk_temp:[18,26],risk_hum:0,bg:'#FFF9C4',tc:'#854F0B'},
+  '응애':       {emoji:'🕷️',type:'해충',symptom:'잎 흰 반점·황변·거미줄',control:'밀베멕틴·클로르페나피르',risk_temp:[28,40],risk_hum:0,bg:'#FFF3E0',tc:'#E65100'},
+  '노린재':     {emoji:'🦂',type:'해충',symptom:'과실·종실 흡즙 → 기형',control:'에토펜프록스·람다사이할로트린',risk_temp:[25,38],risk_hum:0,bg:'#E8F5E9',tc:'#2E7D32'},
+  '복숭아심식나방':{emoji:'🦋',type:'해충',symptom:'과실 속 굴식·낙과',control:'디아지논·클로르피리포스',risk_temp:[18,28],risk_hum:0,bg:'#FCE4EC',tc:'#C2185B'},
+  '회색곰팡이병':{emoji:'🍇',type:'곰팡이',symptom:'꽃·과실에 잿빛 곰팡이',control:'이프로디온·사이프로디닐',risk_temp:[12,22],risk_hum:85,bg:'#ECEFF1',tc:'#455A64'},
+};
+
+// 월별 방제·시비력 (통합)
+const pestCalendar = {
+  3:  [{work:'밑거름(기비)',     fert:'퇴비+복합비료 전체 과수·채소밭', type:'시비'},
+       {work:'월동 병해충 방제', fert:'기계유 유제 · 석회유황합제',      type:'방제'}],
+  4:  [{work:'개화기 엽면시비',  fert:'붕소 0.3% — 사과·살구·매실',      type:'시비'},
+       {work:'진딧물 1차 방제',  fert:'이미다클로프리드 — 전체',         type:'방제'},
+       {work:'다래·으름 질소 추비',fert:'요소 0.3% 관주',               type:'시비'}],
+  5:  [{work:'정식 기비',        fert:'퇴비+복합비료 — 수박·참외·오이',   type:'시비'},
+       {work:'블루베리 산성비료', fert:'황산암모늄 — pH 유지',            type:'시비'},
+       {work:'블랙베리 칼리비료', fert:'황산칼륨',                       type:'시비'},
+       {work:'장마 전 방제 준비',fert:'살균제·살충제 재고 확인',          type:'방제'}],
+  6:  [{work:'착과 후 추비',     fert:'칼륨강화 복합비료 — 수박·참외',    type:'시비'},
+       {work:'칼슘 엽면시비',    fert:'염화칼슘 0.3% — 사과·살구',       type:'시비'},
+       {work:'역병·탄저병 방제', fert:'살균제 — 장마 직전 필수',         type:'방제'},
+       {work:'흰가루병 방제',    fert:'수박·오이·참외 — 트리플록시스트로빈',type:'방제'}],
+  7:  [{work:'수확 전 비료 중단',fert:'수박·단호박 — 수확 20일 전 중단', type:'시비'},
+       {work:'블랙베리 수확 후 추비',fert:'복합비료',                    type:'시비'},
+       {work:'응애·노린재 방제', fert:'밀베멕틴·에토펜프록스',           type:'방제'},
+       {work:'장마 후 긴급 방제',fert:'살균제 24시간 내 살포',           type:'방제'}],
+  8:  [{work:'사과 칼리 추비',   fert:'황산칼륨 — 당도·착색 향상',       type:'시비'},
+       {work:'토양 석회 교정',   fert:'고토석회 — 마늘·배추 파종 전',    type:'시비'},
+       {work:'탄저병 방제',      fert:'수박·살구 수확 전',               type:'방제'}],
+  9:  [{work:'마늘·양파 기비',   fert:'퇴비+복합비료',                  type:'시비'},
+       {work:'배추 추비',        fert:'요소 — 정식 2주 후 ~ 결구 전',    type:'시비'},
+       {work:'가을 진딧물 방제', fert:'아세타미프리드',                  type:'방제'}],
+  10: [{work:'과수 가을 기비',   fert:'용성인비+황산칼륨',              type:'시비'},
+       {work:'헤이즐넛 추비',    fert:'복합비료 — 수확 후',             type:'시비'},
+       {work:'낙엽 전 방제',     fert:'구리 수화제',                    type:'방제'}],
+  11: [{work:'유기물 퇴비 기비', fert:'완숙 퇴비 전체 과수',            type:'시비'},
+       {work:'마늘·양파 월동 비료',fert:'복합비료 소량',                type:'시비'},
+       {work:'월동 해충 방제',   fert:'기계유 유제',                    type:'방제'}],
+  12: [{work:'방제 장비·비료 계획',fert:'연간 계획 수립',               type:'계획'}],
+  1:  [{work:'비료 재고 파악',   fert:'3월 기비용 구입 준비',           type:'계획'}],
+  2:  [{work:'동계 방제',        fert:'석회유황합제',                   type:'방제'},
+       {work:'기비 준비',        fert:'퇴비·복합비료 구입',             type:'시비'}],
+};
+
+async function loadPestInfo() {
+  const panel   = document.getElementById('pestLivePanel');
+  const pestEl  = document.getElementById('pestLiveBody');
+  const fertEl  = document.getElementById('fertLiveBody');
+  const dateEl  = document.getElementById('pestDateTitle');
+  const fdateEl = document.getElementById('fertDateTitle');
+  const btn     = document.getElementById('pestRefreshBtn');
+  if (!panel) return;
+
+  // 패널 표시
+  panel.style.display = 'block';
+
+  const d = REAL_TODAY;
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const month    = d.getMonth() + 1;
+  const dateStr  = `${d.getMonth()+1}월 ${d.getDate()}일(${dayNames[d.getDay()]})`;
+  if (dateEl)  dateEl.textContent  = `${dateStr} 병해충 위험도`;
+  if (fdateEl) fdateEl.textContent = `${dateStr} 시비 작업`;
+  if (btn) btn.textContent = '⏳ 분석 중...';
+
+  if (pestEl) pestEl.innerHTML = `<div style="text-align:center;padding:20px;color:#9E9E9E">
+    <div style="font-size:24px">🔬</div><div style="font-size:12px;margin-top:6px">날씨 분석 중...</div></div>`;
+
+  // ── 시비 먼저 표시 (날씨 불필요) ────────────────────────
+  const todayFerts = myFertSchedule[month] || [];
+  if (fertEl) {
+    if (todayFerts.length === 0) {
+      fertEl.innerHTML = `<div style="text-align:center;padding:20px;color:#9E9E9E">
+        <div style="font-size:28px">✅</div>
+        <div style="font-size:13px;margin-top:8px">${month}월은 주요 시비 작업이 없습니다</div></div>`;
+    } else {
+      let fHtml = '';
+      todayFerts.forEach(f => {
+        fHtml += `
+          <div style="border-left:3px solid #2E7D32;padding:10px 12px;margin-bottom:8px;
+            background:#F9FBE7;border-radius:0 8px 8px 0">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+              <span style="font-size:20px">${f.emoji}</span>
+              <div>
+                <div style="font-size:13px;font-weight:700;color:#1B5E20">${f.work}</div>
+                <div style="font-size:10px;color:#558B2F">${f.group}</div>
+              </div>
+            </div>
+            <div style="font-size:11px;color:#37474F;line-height:1.8">
+              📋 내용: ${f.detail}<br>
+              💊 비료: <b>${f.fertilizer}</b>${f.amount !== '—' ? `<br>📏 용량: ${f.amount}` : ''}<br>
+              ⏰ 시기: ${f.timing}
+              ${f.caution ? `<br>⚠️ 주의: <span style="color:#E65100">${f.caution}</span>` : ''}
+            </div>
+          </div>`;
+      });
+      fertEl.innerHTML = fHtml;
+    }
+  }
+
+  // ── 날씨 데이터로 병해충 위험도 분석 ────────────────────
+  try {
+    const url = 'https://api.open-meteo.com/v1/forecast'
+      + '?latitude=37.1994&longitude=126.8316'
+      + '&daily=temperature_2m_max,temperature_2m_min,'
+      + 'precipitation_probability_max,precipitation_sum,windspeed_10m_max'
+      + '&hourly=relativehumidity_2m'
+      + '&timezone=Asia%2FSeoul&forecast_days=1';
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('날씨 오류');
+    const data = await res.json();
+    const daily = data.daily, hourly = data.hourly;
+
+    const maxTemp = daily.temperature_2m_max[0];
+    const minTemp = daily.temperature_2m_min[0];
+    const rainPct = daily.precipitation_probability_max[0];
+    const precip  = daily.precipitation_sum[0] || 0;
+    const windMs  = (daily.windspeed_10m_max[0]/3.6).toFixed(1);
+    const humH    = hourly.relativehumidity_2m.slice(6,18);
+    const avgHum  = Math.round(humH.reduce((a,b)=>a+b,0)/humH.length);
+
+    // 내 작물 그룹 × 병해충 교차 분석
+    const groupRisks = [];
+
+    for (const [group, info] of Object.entries(myPlantPests)) {
+      const inSeason = info.peak_months.includes(month);
+      const groupPestResults = [];
+
+      for (const pestName of info.pests) {
+        const p = pestDetail[pestName];
+        if (!p) continue;
+
+        let score = 0;
+        const reasons = [];
+
+        if (maxTemp >= p.risk_temp[0] && maxTemp <= p.risk_temp[1] + 5) {
+          score += 2; reasons.push(`기온${Math.round(maxTemp)}°C`);
+        }
+        if (p.risk_hum > 0 && avgHum >= p.risk_hum) {
+          score += 2; reasons.push(`습도${avgHum}%`);
+        }
+        if (p.risk_hum > 0 && precip > 5) {
+          score += 1; reasons.push(`강수${precip.toFixed(1)}mm`);
+        }
+        if (inSeason) score += 1;
+
+        if (score >= 1) {
+          let level, lBg, lTc;
+          if      (score >= 5) { level='🔴 높음'; lBg='#FFEBEE'; lTc='#C62828'; }
+          else if (score >= 3) { level='🟡 보통'; lBg='#FFF3E0'; lTc='#E65100'; }
+          else                 { level='🟢 낮음'; lBg='#E8F5E9'; lTc='#1B5E20'; }
+          groupPestResults.push({pestName, p, score, level, lBg, lTc, reasons});
+        }
+      }
+
+      if (groupPestResults.length > 0) {
+        const maxScore = Math.max(...groupPestResults.map(r => r.score));
+        groupPestResults.sort((a,b) => b.score - a.score);
+        groupRisks.push({group, info, pests: groupPestResults, maxScore, inSeason});
+      }
+    }
+
+    groupRisks.sort((a,b) => b.maxScore - a.maxScore);
+
+    // 요약
+    const highCount = groupRisks.filter(g => g.maxScore >= 5).length;
+    const midCount  = groupRisks.filter(g => g.maxScore >= 3 && g.maxScore < 5).length;
+    let sumBg='#E8F5E9',sumTc='#1B5E20',sumMsg='오늘 내 작물 병해충 위험 낮음 ✅';
+    if (highCount >= 1) { sumBg='#FFEBEE'; sumTc='#C62828'; sumMsg=`🔴 ${highCount}개 작물군 높은 위험 — 즉시 방제 검토`; }
+    else if (midCount >= 2) { sumBg='#FFF3E0'; sumTc='#E65100'; sumMsg=`🟡 ${midCount}개 작물군 주의 필요`; }
+
+    let html = `
+      <div style="background:${sumBg};border-radius:10px;padding:12px 14px;margin-bottom:10px">
+        <div style="font-size:14px;font-weight:800;color:${sumTc}">${sumMsg}</div>
+        <div style="font-size:11px;color:${sumTc};opacity:0.85;margin-top:3px">
+          ${Math.round(maxTemp)}°C · 습도${avgHum}% · 강수${rainPct}% · ${month}월 기준
+        </div>
+      </div>`;
+
+    if (groupRisks.length === 0) {
+      html += `<div style="text-align:center;padding:20px;color:#9E9E9E">
+        <div style="font-size:32px">✅</div>
+        <div style="font-size:14px;margin-top:8px">오늘은 내 작물의 병해충 위험이 낮습니다</div></div>`;
+    } else {
+      groupRisks.forEach(g => {
+        const topScore = g.pests[0].score;
+        const gBg = topScore>=5?'#FFF0F0':topScore>=3?'#FFFBF0':'#F0FFF4';
+        const gBorder = topScore>=5?'#C62828':topScore>=3?'#E65100':'#2E7D32';
+        html += `
+          <div style="background:${gBg};border-left:3px solid ${gBorder};
+            border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:800;color:#37474F;margin-bottom:6px">
+              ${g.info.emoji} ${g.group}
+              ${g.inSeason?'<span style="font-size:10px;background:#FFEBEE;color:#C62828;padding:2px 7px;border-radius:10px;margin-left:6px;font-weight:700">⚠ 최성기</span>':''}
+            </div>
+            ${g.pests.map(r=>`
+              <div style="display:flex;align-items:flex-start;gap:8px;
+                padding:6px 8px;background:white;border-radius:8px;margin-bottom:5px">
+                <span style="font-size:18px;flex-shrink:0">${r.p.emoji}</span>
+                <div style="flex:1;min-width:0">
+                  <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                    <span style="font-size:12px;font-weight:700;color:${r.p.tc}">${r.pestName}</span>
+                    <span style="font-size:10px;background:${r.lBg};color:${r.lTc};
+                      padding:2px 8px;border-radius:10px;font-weight:700">${r.level}</span>
+                    <span style="font-size:10px;color:#9E9E9E">${r.reasons.join('·')}</span>
+                  </div>
+                  <div style="font-size:11px;color:#546E7A;margin-top:3px">
+                    🔬 ${r.p.symptom} &nbsp;|&nbsp; 💊 ${r.p.control}
+                  </div>
+                </div>
+              </div>`).join('')}
+          </div>`;
+      });
+    }
+
+    if (pestEl) pestEl.innerHTML = html;
+    if (btn) btn.textContent = '🔄 오늘 병해충·시비';
+
+  } catch(err) {
+    if (pestEl) pestEl.innerHTML = `<div style="background:#FFF3E0;border-radius:8px;padding:12px;text-align:center">
+      <div style="font-size:12px;color:#E65100;font-weight:700">⚠ 날씨 연결 실패 — 병해충 분석 불가</div>
+      <div style="font-size:11px;color:#E65100;margin-top:4px">시비 정보는 위에서 확인하세요</div></div>`;
+    if (btn) btn.textContent = '🔄 오늘 병해충·시비';
+  }
+}
+
+let pestCalLoaded = false;
+function togglePestCalendar() {
+  const panel = document.getElementById('pestCalendarPanel');
+  if (!panel) return;
+  const isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : 'block';
+  if (!isOpen && !pestCalLoaded) { renderPestCalendar(); pestCalLoaded = true; }
+  if (!isOpen) panel.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+function renderPestCalendar() {
+  const body = document.getElementById('pestCalBody');
+  if (!body) return;
+  const curMonth = REAL_TODAY.getMonth() + 1;
+  const mNames   = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  let html = '';
+  for (let m = 1; m <= 12; m++) {
+    const works = pestCalendar[m] || [];
+    if (works.length === 0) continue;
+    const isCur = m === curMonth;
+    const typeColors = {시비:{bg:'#E8F5E9',tc:'#1B5E20'}, 방제:{bg:'#FFEBEE',tc:'#C62828'}, 계획:{bg:'#E3F2FD',tc:'#1565C0'}};
+    html += `
+      <div style="background:${isCur?'#F1F8E9':'#FAFAFA'};border-radius:10px;
+        padding:10px 12px;margin-bottom:8px;border-left:3px solid ${isCur?'#2E7D32':'#E0E0E0'}">
+        <div style="font-size:13px;font-weight:700;color:${isCur?'#1B5E20':'#37474F'};margin-bottom:8px">
+          ${mNames[m-1]}${isCur?' ← 이번달':''}
+        </div>
+        ${works.map(w => {
+          const tc = typeColors[w.type] || {bg:'#F5F5F5',tc:'#757575'};
+          return `<div style="display:flex;gap:8px;margin-bottom:6px;align-items:flex-start">
+            <span style="font-size:10px;font-weight:700;background:${tc.bg};color:${tc.tc};
+              padding:2px 8px;border-radius:10px;white-space:nowrap;flex-shrink:0">${w.type} ${w.work}</span>
+            <span style="font-size:11px;color:#546E7A;line-height:1.5">${w.fert}</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
+  body.innerHTML = html;
+}
 
 
 
