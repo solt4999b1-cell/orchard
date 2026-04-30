@@ -1385,40 +1385,25 @@
   <!-- ⑧ 전정 가이드 -->
   <div class="section" id="sec-pruning">
 
-    <!-- 날씨 및 핵심 원칙 -->
+    <!-- 날씨 및 핵심 원칙 (오늘 날짜·실시간 날씨) -->
     <div class="card">
       <div class="card-header">
         <span class="card-icon">☀️</span>
         <div>
-          <div class="card-title">4월 11일 전정 — 날씨 및 핵심 원칙</div>
+          <div class="card-title" id="pruningDateTitle">전정 작업 — 날씨 및 핵심 원칙</div>
           <div style="font-size:11px;color:#9E9E9E;margin-top:2px">화성시 새솔동 · 묘목 37종</div>
         </div>
+        <button onclick="loadPruningWeather()" id="weatherRefreshBtn"
+          style="background:var(--green-pale);border:1.5px solid var(--green);
+          color:var(--green-dark);border-radius:8px;padding:5px 10px;
+          font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+          🔄 날씨갱신
+        </button>
       </div>
-      <div class="card-body">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
-          <div style="background:#E3F2FD;border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:11px;color:#1565C0;font-weight:700">최고기온</div>
-            <div style="font-size:22px;font-weight:800;color:#1565C0">11°C</div>
-            <div style="font-size:10px;color:#1565C0">전정 조건 간신히 충족</div>
-          </div>
-          <div style="background:#FFF3E0;border-radius:8px;padding:10px;text-align:center">
-            <div style="font-size:11px;color:#E65100;font-weight:700">바람</div>
-            <div style="font-size:18px;font-weight:800;color:#E65100">북서 8~9m/s</div>
-            <div style="font-size:10px;color:#E65100">⚠ 절단면 건조 주의</div>
-          </div>
-        </div>
-        <div style="background:#FFEBEE;border-radius:8px;padding:10px;margin-bottom:8px">
-          <div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:6px">⚡ 지금 당장! 적아(눈따기) 필수</div>
-          <div style="font-size:12px;color:#C62828">모과나무(대실모과) · 서양모과나무(마르멜로) — 발아 직후 지금이 마지막 기회!</div>
-        </div>
-        <div style="background:#E8F5E9;border-radius:8px;padding:10px">
-          <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:4px">핵심 원칙 4가지</div>
-          <div style="font-size:11px;color:#2E7D32;line-height:1.8">
-            ① 강전정 금지 — 식재 7~21일차 어린 묘목, 약전정만<br>
-            ② 절단면 처리 필수 — 모든 절단 즉시 톱신페이스트 도포<br>
-            ③ 오전 10시 이후 시작 — 기온 10°C 이상 확인<br>
-            ④ 강풍 대비 — 절단면 빠른 건조 우려 시 방향 조정
-          </div>
+      <div class="card-body" id="pruningWeatherBody">
+        <div style="text-align:center;padding:20px;color:#9E9E9E">
+          <div style="font-size:24px">🌤️</div>
+          <div style="font-size:13px;margin-top:8px">날씨 불러오는 중...</div>
         </div>
       </div>
     </div>
@@ -4655,6 +4640,158 @@ function scrollToPruningList() {
   const el = document.getElementById('pruningListCard');
   if (el) el.scrollIntoView({behavior:'smooth', block:'start'});
 }
+
+// ── 전정 가이드 날씨 (Open-Meteo 무료 API) ──────────────────
+async function loadPruningWeather() {
+  const body  = document.getElementById('pruningWeatherBody');
+  const title = document.getElementById('pruningDateTitle');
+  const btn   = document.getElementById('weatherRefreshBtn');
+  if (!body) return;
+
+  // 오늘 날짜 표시
+  const d = REAL_TODAY;
+  const dayNames = ['일','월','화','수','목','금','토'];
+  const dateStr = `${d.getFullYear()}년 ${d.getMonth()+1}월 ${d.getDate()}일(${dayNames[d.getDay()]})`;
+  if (title) title.textContent = `${dateStr} 전정 — 날씨 및 핵심 원칙`;
+  if (btn) btn.textContent = '⏳ 로딩중...';
+  body.innerHTML = `<div style="text-align:center;padding:16px;color:#9E9E9E">
+    <div style="font-size:20px">🌤️</div>
+    <div style="font-size:12px;margin-top:6px">날씨 불러오는 중...</div></div>`;
+
+  // 풍향 변환
+  function vec2dir(deg) {
+    const dirs = ['북','북북동','북동','동북동','동','동남동','남동','남남동',
+                  '남','남남서','남서','서남서','서','서북서','북서','북북서'];
+    return dirs[Math.round(deg / 22.5) % 16];
+  }
+
+  try {
+    // Open-Meteo — 화성시 남양읍 좌표, 한국 기상 데이터
+    const url = 'https://api.open-meteo.com/v1/forecast'
+      + '?latitude=37.1994&longitude=126.8316'
+      + '&daily=temperature_2m_max,temperature_2m_min,'
+      + 'precipitation_probability_max,windspeed_10m_max,'
+      + 'winddirection_10m_dominant,weathercode'
+      + '&hourly=precipitation_probability,windspeed_10m,temperature_2m'
+      + '&current_weather=true'
+      + '&timezone=Asia%2FSeoul&forecast_days=1';
+
+    const res  = await fetch(url);
+    if (!res.ok) throw new Error('날씨 서버 응답 오류');
+    const data = await res.json();
+
+    const curr  = data.current_weather;
+    const daily = data.daily;
+
+    const maxTemp  = Math.round(daily.temperature_2m_max[0]);
+    const minTemp  = Math.round(daily.temperature_2m_min[0]);
+    const windKmh  = daily.windspeed_10m_max[0];
+    const windMs   = (windKmh / 3.6).toFixed(1);
+    const rainPct  = daily.precipitation_probability_max[0];
+    const windDeg  = daily.winddirection_10m_dominant[0];
+    const windDir  = vec2dir(windDeg);
+    const wcode    = daily.weathercode[0];
+    const curTemp  = Math.round(curr.temperature);
+    const curWind  = (curr.windspeed / 3.6).toFixed(1);
+
+    // WMO 날씨코드 → 아이콘
+    const wIcon = wcode === 0 ? '☀️'
+      : wcode <= 2 ? '🌤️' : wcode === 3 ? '☁️'
+      : wcode <= 48 ? '🌫️' : wcode <= 55 ? '🌦️'
+      : wcode <= 65 ? '🌧️' : wcode <= 75 ? '❄️'
+      : wcode <= 82 ? '🌦️' : '⛈️';
+
+    // 전정 조건 평가
+    let tempBg, tempTc, tempCond;
+    if      (maxTemp >= 15) { tempBg='#E8F5E9'; tempTc='#1B5E20'; tempCond='전정 최적 ✅'; }
+    else if (maxTemp >= 10) { tempBg='#E3F2FD'; tempTc='#1565C0'; tempCond='전정 가능 ✅'; }
+    else                    { tempBg='#FFF3E0'; tempTc='#E65100'; tempCond='⚠ 기온 낮음 주의'; }
+
+    let windBg, windTc, windCond;
+    if      (windMs >= 10) { windBg='#FFEBEE'; windTc='#C62828'; windCond='⚠ 강풍 — 절단면 건조'; }
+    else if (windMs >= 5)  { windBg='#FFF3E0'; windTc='#E65100'; windCond='바람 보통 — 가능'; }
+    else                   { windBg='#E8F5E9'; windTc='#1B5E20'; windCond='바람 약함 ✅'; }
+
+    let rainBg='#E8F5E9', rainTc='#1B5E20';
+    if      (rainPct >= 70) { rainBg='#FFEBEE'; rainTc='#C62828'; }
+    else if (rainPct >= 40) { rainBg='#FFF3E0'; rainTc='#E65100'; }
+    const rainMsg = rainPct >= 70 ? `${rainPct}% ⚠` : `${rainPct}% ✅`;
+
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="background:${tempBg};border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:${tempTc};font-weight:700">최고기온 ${wIcon}</div>
+          <div style="font-size:28px;font-weight:800;color:${tempTc}">${maxTemp}°C</div>
+          <div style="font-size:10px;color:${tempTc}">${tempCond}</div>
+        </div>
+        <div style="background:${windBg};border-radius:8px;padding:10px;text-align:center">
+          <div style="font-size:11px;color:${windTc};font-weight:700">최대풍속</div>
+          <div style="font-size:20px;font-weight:800;color:${windTc}">${windDir} ${windMs}m/s</div>
+          <div style="font-size:10px;color:${windTc}">${windCond}</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div style="background:#F5F5F5;border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:11px;color:#546E7A;font-weight:700">최저기온</div>
+          <div style="font-size:20px;font-weight:800;color:#37474F">${minTemp}°C</div>
+        </div>
+        <div style="background:${rainBg};border-radius:8px;padding:8px;text-align:center">
+          <div style="font-size:11px;color:${rainTc};font-weight:700">강수확률</div>
+          <div style="font-size:18px;font-weight:800;color:${rainTc}">${rainMsg}</div>
+        </div>
+      </div>
+      <div style="background:#F5F5F5;border-radius:8px;padding:8px;margin-bottom:8px;
+        display:flex;justify-content:space-around;text-align:center">
+        <div>
+          <div style="font-size:10px;color:#9E9E9E;font-weight:700">현재기온</div>
+          <div style="font-size:16px;font-weight:800;color:#37474F">${curTemp}°C</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#9E9E9E;font-weight:700">현재풍속</div>
+          <div style="font-size:16px;font-weight:800;color:#37474F">${curWind}m/s</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:#9E9E9E;font-weight:700">일교차</div>
+          <div style="font-size:16px;font-weight:800;color:#37474F">${maxTemp-minTemp}°C</div>
+        </div>
+      </div>
+      <div style="background:#E8F5E9;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:4px">오늘 전정 핵심 원칙</div>
+        <div style="font-size:11px;color:#2E7D32;line-height:2.0">
+          ① 강전정 금지 — 식재 직후 어린 묘목, 약전정만<br>
+          ② 절단면 처리 필수 — 모든 절단 즉시 톱신페이스트<br>
+          ③ 기온 ${maxTemp}°C ${maxTemp>=10 ? '✅ 작업 가능 (10시 이후)' : '⚠ 낮음 — 오후 작업 권장'}<br>
+          ④ 풍속 ${windMs}m/s ${parseFloat(windMs)>=7 ? '⚠ 강풍 — 절단면 건조 주의' : '— 작업 양호'}
+        </div>
+      </div>
+      <div style="font-size:10px;color:#BDBDBD;text-align:right;margin-top:6px">
+        화성시 남양읍 (37.1994°N 126.8316°E) · 방금 갱신
+      </div>`;
+
+    if (btn) btn.textContent = '🔄 날씨갱신';
+
+  } catch(err) {
+    console.error('날씨 오류:', err);
+    body.innerHTML = `
+      <div style="background:#FFEBEE;border-radius:8px;padding:12px;margin-bottom:10px;text-align:center">
+        <div style="font-size:13px;color:#C62828;font-weight:700">⚠ 날씨를 불러올 수 없습니다</div>
+        <div style="font-size:11px;color:#E53935;margin-top:4px">인터넷 연결 확인 후 🔄 날씨갱신을 눌러주세요</div>
+      </div>
+      <div style="background:#E8F5E9;border-radius:8px;padding:10px">
+        <div style="font-size:11px;font-weight:700;color:#1B5E20;margin-bottom:4px">전정 핵심 원칙</div>
+        <div style="font-size:11px;color:#2E7D32;line-height:1.9">
+          ① 강전정 금지 — 식재 직후 어린 묘목, 약전정만<br>
+          ② 절단면 처리 필수 — 모든 절단 즉시 톱신페이스트<br>
+          ③ 오전 10시 이후 시작 — 기온 10°C 이상 확인<br>
+          ④ 강풍 대비 — 절단면 빠른 건조 우려 시 방향 조정
+        </div>
+      </div>`;
+    if (btn) btn.textContent = '🔄 날씨갱신';
+  }
+}
+
+
+
 // 토스트 메시지
 function showToast(msg) {
   let t = document.getElementById('toastMsg');
@@ -4695,6 +4832,8 @@ function renderAll() {
 
 // ── 초기 실행 ────────────────────────────────────────
 function initApp() {
+  // 전정 가이드 날씨 자동 로드
+  loadPruningWeather();
   // fCrop 변경 이벤트 (생육일수 탭 직접입력 선택)
   const fCrop = document.getElementById('fCrop');
   if (fCrop) {
