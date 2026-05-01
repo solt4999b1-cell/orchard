@@ -847,6 +847,12 @@
   <div class="section active" id="sec-today">
     <div id="weatherAlertBox"></div>
     <div class="section-title" id="todayTitle"></div>
+    <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="font-size:11px;background:#F1F8E9;color:#33691E;
+        padding:3px 10px;border-radius:12px;font-weight:600">🌱 시비 자동 포함</span>
+      <span style="font-size:11px;background:#FFF8E1;color:#E65100;
+        padding:3px 10px;border-radius:12px;font-weight:600">🐛 이달 병해충 주의 자동 포함</span>
+    </div>
     <div id="dateNavRow" style="display:flex;gap:6px;margin-bottom:10px">
       <button onclick="prevDay()" style="flex:1;padding:8px;border-radius:8px;border:1.5px solid #E0E0E0;background:white;color:#37474F;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">◀ 전날</button>
       <button onclick="goToday()" style="flex:2;padding:8px;border-radius:8px;border:1.5px solid var(--green);background:var(--green-pale);color:var(--green-dark);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">📅 오늘로</button>
@@ -984,6 +990,20 @@
         font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
         📅 월별 방제·시비력
       </button>
+    </div>
+
+    <!-- 보유비료 안내 카드 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🏪</span>
+        <div>
+          <div class="card-title">📦 보유비료 5종 — 용량 안내</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">이달 사용 가능 보유비료 · 용량 표시</div>
+        </div>
+      </div>
+      <div class="card-body" id="nhFertBody">
+        <div id="nhFertList"></div>
+      </div>
     </div>
 
     <!-- 실시간 결과 패널 (버튼 클릭 전 숨김) -->
@@ -3140,6 +3160,75 @@ function getDateTasks(selDate) {
     }
   }
 
+
+  // ── 이달의 시비 작업 자동 추가 ──────────────────────────
+  if (typeof myFertSchedule !== 'undefined') {
+    const fertsThisMonth = myFertSchedule[m] || [];
+    fertsThisMonth.forEach((f, fi) => {
+      // 농협 비료 연계: 이 작업에 맞는 비료 찾기
+      const nhMatched = [];
+      if (typeof nhFertilizers !== 'undefined') {
+        for (const [fname, finfo] of Object.entries(nhFertilizers)) {
+          if (!finfo.months.includes(m)) continue;
+          // 그룹 작물과 교차 확인
+          const gWords = f.group.split(/[·,·\s]+/);
+          const matched = finfo.crops.some(c =>
+            gWords.some(g => g.includes(c.split(' ')[0]) || c.includes(g))
+          );
+          if (matched) nhMatched.push(fname);
+        }
+      }
+      // 대표 비료 1개 강조 + 나머지 보조 표시
+      let nhStr = '';
+      if (nhMatched.length) {
+        // priority 기준 정렬
+        const sortedNh = [...nhMatched].sort((a,b) =>
+          (nhFertilizers[a]?.priority||9) - (nhFertilizers[b]?.priority||9)
+        );
+        const top = sortedNh[0];
+        const fi  = nhFertilizers[top];
+        const amtShort = fi ? fi.amount.split('·')[0].trim() : '';
+        nhStr = `⭐ ${top}(${amtShort})`;
+        if (sortedNh.length > 1) {
+          const rest = sortedNh.slice(1).join('·');
+          nhStr += ` 외 ${sortedNh.length-1}종(${rest})`;
+        }
+      }
+      tasks.push({
+        id:     id('fert_' + fi),
+        name:   '🌱 시비: ' + f.work,
+        detail: f.fertilizer + (f.amount !== '—' ? ' · ' + f.amount : '')
+                + (f.caution ? ' ⚠ ' + f.caution : ''),
+        loc:    f.group,
+        urgent: false,
+        judge:  'fert',
+        timing: f.timing,
+        nhFert: nhStr,
+      });
+    });
+  }
+
+  // ── 이달의 주요 병해충 경보 자동 추가 ────────────────────
+  if (typeof myPlantPests !== 'undefined') {
+    const warned = new Set();
+    for (const [group, info] of Object.entries(myPlantPests)) {
+      if (!info.peak_months.includes(m)) continue;
+      info.pests.forEach((pestName, pi) => {
+        if (warned.has(pestName)) return;
+        warned.add(pestName);
+        const p = (typeof pestDetail !== 'undefined') ? pestDetail[pestName] : null;
+        tasks.push({
+          id:     id('pest_' + pestName.replace(/[^a-z가-힣]/gi,'')),
+          name:   '🐛 병해충 주의: ' + pestName,
+          detail: p ? p.symptom + ' · 방제: ' + p.control : '이달 발생 주의',
+          loc:    info.emoji + ' ' + group,
+          urgent: false,
+          judge:  'pest',
+        });
+      });
+    }
+  }
+
   return tasks;
 }
 
@@ -3223,12 +3312,21 @@ function renderTasks() {
     // judge 배지 설정
     const j = t.judge || (t.urgent ? 'urgent' : 'ok');
     const judgeMap = {
-      ok:     {label:'✅ 가능',   bg:'#E8F5E9', tc:'#1B5E20'},
+      ok:     {label:'✅ 가능',    bg:'#E8F5E9', tc:'#1B5E20'},
       urgent: {label:'⚡ 지금당장', bg:'#FFEBEE', tc:'#C62828'},
       warn:   {label:'⚠️ 주의',   bg:'#FFF3E0', tc:'#E65100'},
       bad:    {label:'❌ 금지',   bg:'#FFEBEE', tc:'#C62828'},
+      fert:   {label:'🌱 시비',   bg:'#F1F8E9', tc:'#33691E'},
+      pest:   {label:'🐛 병해충', bg:'#FFF8E1', tc:'#E65100'},
     };
     const jd = judgeMap[j] || judgeMap.ok;
+    const isPestFert = (j === 'pest' || j === 'fert');
+    const linkBtn = isPestFert
+      ? `<button onclick="showTab('pest')" style="font-size:10px;background:white;
+          border:1px solid ${jd.tc};color:${jd.tc};border-radius:6px;
+          padding:2px 8px;cursor:pointer;font-family:inherit;font-weight:600;
+          white-space:nowrap;flex-shrink:0">→ 상세</button>`
+      : '';
     return `<div class="task-item">
       <div class="task-check ${done?'done':''}" onclick="toggleTask('${key}',this)"></div>
       <div class="task-info">
@@ -3236,9 +3334,15 @@ function renderTasks() {
           <span class="task-name ${done?'done':''}" style="flex:1;min-width:0">${t.name}</span>
           <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;
             background:${jd.bg};color:${jd.tc};white-space:nowrap;flex-shrink:0">${jd.label}</span>
+          ${linkBtn}
         </div>
         <div class="task-detail">${t.detail}</div>
-        <div class="task-location">${t.loc}</div>
+        <div class="task-location">${t.loc}${t.timing ? ' · ⏰ ' + t.timing : ''}</div>
+        ${t.nhFert ? `<div style="margin-top:5px">
+          <span style="font-size:10px;background:#1565C0;color:white;
+            border-radius:6px 0 0 6px;padding:3px 7px;font-weight:700">🏪 최우선비료</span><span style="font-size:10px;background:#E3F2FD;color:#1565C0;
+            border-radius:0 6px 6px 0;padding:3px 8px;font-weight:600">${t.nhFert}</span>
+          </div>` : ''}
       </div>
     </div>`;
   }).join('') || '<div style="text-align:center;padding:30px 16px;color:#9E9E9E"><div style="font-size:32px">✅</div><div style="font-size:14px;margin-top:8px">이 날은 등록된 작업이 없습니다</div></div>';
@@ -3535,6 +3639,10 @@ function showTab(id) {
   if (id === 'wxlive' && !wxAutoLoaded) {
     wxAutoLoaded = true;
     loadWeatherMain();
+  }
+  // 병해충·시비 탭 진입 시 비료 현황 렌더
+  if (id === 'pest') {
+    renderNhFertList();
   }
 }
 
@@ -5480,6 +5588,106 @@ const myPlantPests = {
 
 // ── 내 작물 시비 스케줄 ───────────────────────────────────
 // {월: [{group, plants, work, detail, fertilizer, amount, timing, caution}]}
+
+// ── 농협 구입 비료 5종 ────────────────────────────────────
+// 우선순위 기준:
+// priority 1 = ⭐⭐⭐ 최우선 (이 작물·이 시기 전용)
+// priority 2 = ⭐⭐ 권장 (적합하지만 범용)
+// priority 3 = ⭐ 보조 (대체 사용 가능)
+// 우선순위 결정 로직: 전용도(crops 수 적을수록) × 시기 적합도
+const nhFertilizers = {
+  '단한번비료': {
+    priority: 1,
+    npk:     'N22-P9-K9 완효성',
+    type:    '완효성 기비',
+    feature: '1회 시용으로 1작기 전체 · 완효성 코팅 질소',
+    crops:   ['수박','참외','오이','호박','고구마','감자','배추','무'],
+    months:  [4,5,6],
+    timing:  '정식·파종 전 기비 1회',
+    amount:  '3.3㎡당 130~200g · 뿌리에 직접 닿지 않게',
+    caution: '추비 불필요 · 과수목 사용 비권장',
+    color:   '#E8F5E9', tc: '#1B5E20',
+  },
+  '엔케이플러스': {
+    priority: 1,
+    npk:     'N17-P0-K17 (인산 없음)',
+    type:    '착과·결실기 추비',
+    feature: '인산 없이 질소·칼리만 — 과실 비대·당도 향상',
+    crops:   ['사과','살구','매실','블랙베리','복분자','수박','참외','마늘','양파'],
+    months:  [5,6,7,8,9],
+    timing:  '착과 확인 후 ~ 과실 비대기',
+    amount:  '과수 주당 30~50g · 채소 포기당 10~20g',
+    caution: '기비 단독 사용 금지 · 인산 별도 보충 필요',
+    color:   '#E3F2FD', tc: '#1565C0',
+  },
+  '원예맞춤고추비료': {
+    priority: 1,
+    npk:     'N12-P6-K12 + Ca·Mg',
+    type:    '착과 후 2~3회 분시',
+    feature: '칼슘·마그네슘 포함 — 과실 비대·착색·내병성 강화',
+    crops:   ['수박','참외','오이','호박','사과','살구'],
+    months:  [5,6,7,8],
+    timing:  '착과 후 ~ 수확 전 · 2~3회 나눠 시용',
+    amount:  '포기당 20~30g · 3.3㎡당 100g',
+    caution: '고온 건조 시 시용 금지 · 비 오기 전날 시용 권장',
+    color:   '#FFF3E0', tc: '#E65100',
+  },
+  '일회만비료': {
+    priority: 2,
+    npk:     'N21-P9-K9 완효성코팅',
+    type:    '완효성 기비',
+    feature: '완효성 코팅 3~4개월 지속 · 단기 채소 전용',
+    crops:   ['배추','무','감자','고구마','양파','마늘','선비잡이콩','머루콩','동부'],
+    months:  [3,4,8,9,10],
+    timing:  '파종·정식 전 기비 1회 · 3.3㎡당 160~200g',
+    amount:  '10a당 40~50kg',
+    caution: '과채류 장기 재배 부적합 · 추비 불필요',
+    color:   '#F3E5F5', tc: '#6A1B9A',
+  },
+  '슈퍼복합비료': {
+    priority: 3,
+    npk:     'N21-P17-K17 균형형',
+    type:    '범용 기비·추비',
+    feature: '질소·인산·칼리 균형 — 과수·채소 모두 사용 가능',
+    crops:   ['사과','살구','매실','헤이즐넛','모과','마르멜로','앵두','머루포도',
+              '바이오체리','수박','참외','오이','호박','배추','무','감자','고구마',
+              '양파','마늘','콩류'],
+    months:  [3,4,5,8,9,10,11],
+    timing:  '기비: 파종·정식 전 / 추비: 생육 중기',
+    amount:  '기비 10a당 30~40kg · 추비 포기당 10~20g',
+    caution: '⚠ 블루베리 절대 사용 금지(pH 상승) · 과다 시 염류 집적',
+    color:   '#ECEFF1', tc: '#37474F',
+  },
+};
+
+// 날짜·작물 기반 오늘 사용 가능 비료 목록 반환 (우선순위 정렬)
+function getTodayFertilizers(month, cropNames) {
+  const result = [];
+  for (const [fname, finfo] of Object.entries(nhFertilizers)) {
+    if (!finfo.months.includes(month)) continue;
+    const matched = finfo.crops.filter(c =>
+      cropNames.some(p => p.includes(c) || c.includes(p.split(' ')[0]))
+    );
+    if (matched.length > 0) {
+      result.push({...finfo, fname, matched});
+    }
+  }
+  // 우선순위 정렬 (1→2→3)
+  result.sort((a,b) => (a.priority||9) - (b.priority||9));
+  return result;
+}
+
+// 비료 목록에서 대표 비료 1개 선정
+function getRepresentativeFert(fertList) {
+  if (!fertList.length) return null;
+  // priority 1 중 매칭 작물 가장 많은 것
+  const p1 = fertList.filter(f => f.priority === 1);
+  if (p1.length) {
+    return p1.sort((a,b) => b.matched.length - a.matched.length)[0];
+  }
+  return fertList[0]; // 없으면 첫 번째
+}
+
 const myFertSchedule = {
   3: [
     {group:'전체 과수', emoji:'🌳',
@@ -5640,20 +5848,20 @@ const myFertSchedule = {
 
 // 병해충 상세 데이터
 const pestDetail = {
-  '흰가루병':   {emoji:'🍃',type:'곰팡이',symptom:'흰 가루 → 황변·낙엽',control:'훼나리몰·트리플록시스트로빈',risk_temp:[12,25],risk_hum:60,bg:'#F3E5F5',tc:'#6A1B9A'},
-  '역병':       {emoji:'🌿',type:'난균류',symptom:'줄기 기부 갈변 → 시들음',control:'메탈락실·포세틸알루미늄',risk_temp:[23,32],risk_hum:80,bg:'#E8F5E9',tc:'#1B5E20'},
-  '탄저병':     {emoji:'🍎',type:'곰팡이',symptom:'과실 갈색 반점 → 썩음',control:'이프로디온·테부코나졸',risk_temp:[22,30],risk_hum:75,bg:'#FFEBEE',tc:'#C62828'},
-  '진딧물':     {emoji:'🐛',type:'해충', symptom:'새순 집단 기생 → 황변',control:'이미다클로프리드·아세타미프리드',risk_temp:[18,26],risk_hum:0,bg:'#FFF9C4',tc:'#854F0B'},
-  '응애':       {emoji:'🕷️',type:'해충',symptom:'잎 흰 반점·황변·거미줄',control:'밀베멕틴·클로르페나피르',risk_temp:[28,40],risk_hum:0,bg:'#FFF3E0',tc:'#E65100'},
-  '노린재':     {emoji:'🦂',type:'해충',symptom:'과실·종실 흡즙 → 기형',control:'에토펜프록스·람다사이할로트린',risk_temp:[25,38],risk_hum:0,bg:'#E8F5E9',tc:'#2E7D32'},
-  '복숭아심식나방':{emoji:'🦋',type:'해충',symptom:'과실 속 굴식·낙과',control:'디아지논·클로르피리포스',risk_temp:[18,28],risk_hum:0,bg:'#FCE4EC',tc:'#C2185B'},
-  '회색곰팡이병':{emoji:'🍇',type:'곰팡이',symptom:'꽃·과실에 잿빛 곰팡이',control:'이프로디온·사이프로디닐',risk_temp:[12,22],risk_hum:85,bg:'#ECEFF1',tc:'#455A64'},
+  '흰가루병':   {emoji:'🍃',type:'곰팡이',symptom:'흰 가루 → 황변·낙엽',control:'훼나리몰(훼나리몰수화제)·트리플록시스트로빈(플린트수화제·로만스액상수화제)',risk_temp:[12,25],risk_hum:60,bg:'#F3E5F5',tc:'#6A1B9A'},
+  '역병':       {emoji:'🌿',type:'난균류',symptom:'줄기 기부 갈변 → 시들음',control:'메탈락실(리도밀골드수화제·메타실수화제)·포세틸알루미늄(알리에테수화제)',risk_temp:[23,32],risk_hum:80,bg:'#E8F5E9',tc:'#1B5E20'},
+  '탄저병':     {emoji:'🍎',type:'곰팡이',symptom:'과실 갈색 반점 → 썩음',control:'이프로디온(로브랄수화제)·테부코나졸(실바코액상수화제)',risk_temp:[22,30],risk_hum:75,bg:'#FFEBEE',tc:'#C62828'},
+  '진딧물':     {emoji:'🐛',type:'해충', symptom:'새순 집단 기생 → 황변',control:'이미다클로프리드(코니도수화제·가우초수화제)·아세타미프리드(모스피란수화제·아타라수화제)',risk_temp:[18,26],risk_hum:0,bg:'#FFF9C4',tc:'#854F0B'},
+  '응애':       {emoji:'🕷️',type:'해충',symptom:'잎 흰 반점·황변·거미줄',control:'밀베멕틴(밀베녹수화제)·클로르페나피르(렘페이지액상수화제)',risk_temp:[28,40],risk_hum:0,bg:'#FFF3E0',tc:'#E65100'},
+  '노린재':     {emoji:'🦂',type:'해충',symptom:'과실·종실 흡즙 → 기형',control:'에토펜프록스(트레본유제)·람다사이할로트린(카라테수화제)',risk_temp:[25,38],risk_hum:0,bg:'#E8F5E9',tc:'#2E7D32'},
+  '복숭아심식나방':{emoji:'🦋',type:'해충',symptom:'과실 속 굴식·낙과',control:'디아지논(다이아톤유제)·클로르피리포스(더스반유제)',risk_temp:[18,28],risk_hum:0,bg:'#FCE4EC',tc:'#C2185B'},
+  '회색곰팡이병':{emoji:'🍇',type:'곰팡이',symptom:'꽃·과실에 잿빛 곰팡이',control:'이프로디온(로브랄수화제)·사이프로디닐(스위치입상수화제)',risk_temp:[12,22],risk_hum:85,bg:'#ECEFF1',tc:'#455A64'},
 };
 
 // 월별 방제·시비력 (통합)
 const pestCalendar = {
   3:  [{work:'밑거름(기비)',     fert:'퇴비+복합비료 전체 과수·채소밭', type:'시비'},
-       {work:'월동 병해충 방제', fert:'기계유 유제 · 석회유황합제',      type:'방제'}],
+       {work:'월동 병해충 방제', fert:'기계유유제(클린유) · 석회유황합제',      type:'방제'}],
   4:  [{work:'개화기 엽면시비',  fert:'붕소 0.3% — 사과·살구·매실',      type:'시비'},
        {work:'진딧물 1차 방제',  fert:'이미다클로프리드 — 전체',         type:'방제'},
        {work:'다래·으름 질소 추비',fert:'요소 0.3% 관주',               type:'시비'}],
@@ -5664,7 +5872,7 @@ const pestCalendar = {
   6:  [{work:'착과 후 추비',     fert:'칼륨강화 복합비료 — 수박·참외',    type:'시비'},
        {work:'칼슘 엽면시비',    fert:'염화칼슘 0.3% — 사과·살구',       type:'시비'},
        {work:'역병·탄저병 방제', fert:'살균제 — 장마 직전 필수',         type:'방제'},
-       {work:'흰가루병 방제',    fert:'수박·오이·참외 — 트리플록시스트로빈',type:'방제'}],
+       {work:'흰가루병 방제',    fert:'수박·오이·참외 — 플린트수화제(트리플록시스트로빈)',type:'방제'}],
   7:  [{work:'수확 전 비료 중단',fert:'수박·단호박 — 수확 20일 전 중단', type:'시비'},
        {work:'블랙베리 수확 후 추비',fert:'복합비료',                    type:'시비'},
        {work:'응애·노린재 방제', fert:'밀베멕틴·에토펜프록스',           type:'방제'},
@@ -5677,10 +5885,10 @@ const pestCalendar = {
        {work:'가을 진딧물 방제', fert:'아세타미프리드',                  type:'방제'}],
   10: [{work:'과수 가을 기비',   fert:'용성인비+황산칼륨',              type:'시비'},
        {work:'헤이즐넛 추비',    fert:'복합비료 — 수확 후',             type:'시비'},
-       {work:'낙엽 전 방제',     fert:'구리 수화제',                    type:'방제'}],
+       {work:'낙엽 전 방제',     fert:'코사이드수화제(동수화제)',                    type:'방제'}],
   11: [{work:'유기물 퇴비 기비', fert:'완숙 퇴비 전체 과수',            type:'시비'},
        {work:'마늘·양파 월동 비료',fert:'복합비료 소량',                type:'시비'},
-       {work:'월동 해충 방제',   fert:'기계유 유제',                    type:'방제'}],
+       {work:'월동 해충 방제',   fert:'기계유유제(클린유)',                    type:'방제'}],
   12: [{work:'방제 장비·비료 계획',fert:'연간 계획 수립',               type:'계획'}],
   1:  [{work:'비료 재고 파악',   fert:'3월 기비용 구입 준비',           type:'계획'}],
   2:  [{work:'동계 방제',        fert:'석회유황합제',                   type:'방제'},
@@ -5733,6 +5941,29 @@ async function loadPestInfo() {
             <div style="font-size:11px;color:#37474F;line-height:1.8">
               📋 내용: ${f.detail}<br>
               💊 비료: <b>${f.fertilizer}</b>${f.amount !== '—' ? `<br>📏 용량: ${f.amount}` : ''}<br>
+              ${(() => {
+                if (typeof nhFertilizers === 'undefined') return '';
+                const nhM = [];
+                for (const [fn, fi] of Object.entries(nhFertilizers)) {
+                  if (!fi.months.includes(month)) continue;
+                  const gw = f.group.split(/[·,·\s]+/);
+                  if (fi.crops.some(c => gw.some(g => g.includes(c.split(' ')[0])||c.includes(g))))
+                    nhM.push(fn);
+                }
+                return nhM.length
+                  ? `<span style="display:inline-block;margin-top:3px;font-size:10px;
+                      background:#E3F2FD;color:#1565C0;padding:2px 8px;border-radius:8px;
+                      font-weight:700">🏪 보유비료: ${(() => {
+                      const sorted = [...nhM].sort((a,b)=>(nhFertilizers[a]?.priority||9)-(nhFertilizers[b]?.priority||9));
+                      const top = sorted[0];
+                      const fi = nhFertilizers[top];
+                      const amt = fi ? fi.amount.split('·')[0].trim() : '';
+                      const topStr = '⭐ ' + top + '(' + amt + ')';
+                      const rest = sorted.slice(1).join('·');
+                      return sorted.length > 1 ? topStr + ' 외 ' + (sorted.length-1) + '종(' + rest + ')' : topStr;
+                    })()}</span><br>`
+                  : '';
+              })()}
               ⏰ 시기: ${f.timing}
               ${f.caution ? `<br>⚠️ 주의: <span style="color:#E65100">${f.caution}</span>` : ''}
             </div>
@@ -5910,6 +6141,94 @@ function renderPestCalendar() {
 
 
 
+
+// ── 보유비료 현황 렌더 ───────────────────────────────────
+function renderNhFertList() {
+  const el = document.getElementById('nhFertList');
+  if (!el || typeof nhFertilizers === 'undefined') return;
+  const month = REAL_TODAY.getMonth() + 1;
+
+  let html = '';
+  for (const [fname, f] of Object.entries(nhFertilizers)) {
+    const active = f.months.includes(month);
+    const border = active ? `2px solid ${f.tc}` : '1px solid #E0E0E0';
+    const bg     = active ? f.color : '#FAFAFA';
+    const tcCol  = active ? f.tc    : '#9E9E9E';
+
+    // 이달 내 작물 매칭
+    const allMyPlantNames = typeof allPlants !== 'undefined'
+      ? allPlants.map(p => p.name) : [];
+    const matched = f.crops.filter(c =>
+      allMyPlantNames.some(p => p.includes(c.split(' ')[0]) || c.includes(p.split(' ')[0]))
+    ).slice(0, 4);
+
+    html += `
+      <div style="border:${border};background:${bg};border-radius:10px;
+        padding:11px 13px;margin-bottom:8px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+          <div style="flex:1">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:4px">
+              <span style="font-size:13px;font-weight:800;color:${tcCol}">${fname}</span>
+              <span style="font-size:10px;background:${active?f.color:'#F5F5F5'};
+                color:${tcCol};padding:2px 8px;border-radius:10px;font-weight:700">
+                ${f.type}</span>
+              ${active
+                ? (f.priority===1
+                    ? `<span style="font-size:10px;background:#C62828;color:white;
+                        padding:2px 9px;border-radius:10px;font-weight:700">⭐ 최우선 사용</span>`
+                    : f.priority===2
+                      ? `<span style="font-size:10px;background:#E65100;color:white;
+                          padding:2px 9px;border-radius:10px;font-weight:700">⭐⭐ 권장</span>`
+                      : `<span style="font-size:10px;background:#FFF3E0;color:#E65100;
+                          padding:2px 9px;border-radius:10px;font-weight:700">보조 사용</span>`)
+                : `<span style="font-size:10px;background:#F5F5F5;color:#9E9E9E;
+                    padding:2px 8px;border-radius:10px">이달 미사용(${f.months.join('·')}월)</span>`}
+            </div>
+            <div style="font-size:11px;font-weight:600;color:${tcCol};margin-bottom:3px">
+              📊 ${f.npk}
+            </div>
+            <div style="font-size:11px;color:#546E7A;margin-bottom:4px">${f.feature}</div>
+            ${matched.length > 0 ? `
+            <div style="font-size:10px;color:${tcCol};font-weight:600">
+              🌱 내 작물 적용: ${matched.join(' · ')}${matched.length < f.crops.length ? ' 외' : ''}
+            </div>` : ''}
+            <div style="background:white;border-radius:6px;padding:7px 10px;margin-top:7px;
+              font-size:11px;color:#37474F;line-height:1.9">
+              📏 <b style="color:${tcCol}">용량: ${f.amount}</b><br>
+              ⏰ 시기: ${f.timing}<br>
+              ${f.caution ? `⚠️ <span style="color:#E65100">${f.caution}</span>` : ''}
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+  el.innerHTML = html;
+}
+
+
+// ── 농협 농약 성분 → 제품명 매핑 ────────────────────────────
+const nhPesticideMap = {
+  '훼나리몰':         '훼나리몰수화제',
+  '트리플록시스트로빈': '플린트수화제',
+  '메탈락실':         '리도밀골드수화제',
+  '포세틸알루미늄':   '알리에테수화제',
+  '이프로디온':       '로브랄수화제',
+  '테부코나졸':       '실바코액상수화제',
+  '사이프로디닐':     '스위치입상수화제',
+  '이미다클로프리드': '코니도수화제',
+  '아세타미프리드':   '모스피란수화제',
+  '에토펜프록스':     '트레본유제',
+  '람다사이할로트린': '카라테수화제',
+  '밀베멕틴':         '밀베녹수화제',
+  '클로르페나피르':   '렘페이지액상수화제',
+  '디아지논':         '다이아톤유제',
+  '클로르피리포스':   '더스반유제',
+  '페녹시카브':       '인사이터액상수화제',
+  '보르도액':         '보르도액(동수화제)',
+  '기계유':           '기계유유제(클린유)',
+  '석회유황합제':     '석회유황합제',
+};
+
 // 토스트 메시지
 function showToast(msg) {
   let t = document.getElementById('toastMsg');
@@ -5961,6 +6280,8 @@ function initApp() {
       if (row) row.style.display = isCustom ? 'block' : 'none';
     });
   }
+  // 보유비료 현황 렌더
+  renderNhFertList();
   // 날씨 모드 초기 UI 반영
   if (weatherMode === 'normal') {
     const btnD = document.getElementById('btnDrought');
