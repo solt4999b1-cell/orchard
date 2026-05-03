@@ -693,6 +693,7 @@
 <div class="tab-bar">
   <div class="tab active" onclick="showTab('today')">📋 오늘 작업</div>
   <div class="tab" onclick="showTab('search')">🔍 검색·이동</div>
+  <div class="tab" onclick="showTab('supply')">🧪 농자재</div>
   <div class="tab" onclick="showTab('dday')">⏰ D-day</div>
   <div class="tab" onclick="showTab('irang')">🌱 이랑 현황</div>
   <div class="tab" onclick="showTab('monthly')">📅 월별 일정</div>
@@ -701,6 +702,7 @@
   <div class="tab" onclick="showTab('pruning')">✂️ 전정 가이드</div>
   <div class="tab" onclick="showTab('grow')">🌿 생육일수</div>
   <div class="tab" onclick="showTab('guide')">📷 재배 그림</div>
+  <div class="tab" onclick="showTab('sheet')">📊 기록장</div>
 </div>
 
 <!-- 컨텐츠 -->
@@ -877,7 +879,212 @@
     <div id="tipBox"></div>
   </div>
 
-  <!-- ② D-day -->
+
+  <!-- 🧪 농자재 관리 -->
+  <div class="section" id="sec-supply">
+    <div class="section-title">농자재 관리 — 비료·농약·친환경</div>
+
+    <!-- ① 구글 시트 연동 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">📊</span>
+        <div>
+          <div class="card-title">구글 시트 연동 (LayoutData)</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">공동 기록 · 실시간 데이터 불러오기</div>
+        </div>
+        <button onclick="loadGoogleSheet()" id="sheetLoadBtn"
+          style="background:#1565C0;color:white;border:none;border-radius:8px;
+          padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+          🔄 불러오기
+        </button>
+      </div>
+      <div class="card-body" id="sheetBody">
+        <div style="font-size:11px;color:#9E9E9E;text-align:center;padding:12px">
+          🔄 버튼을 눌러 구글 시트 데이터를 불러오세요
+        </div>
+      </div>
+    </div>
+
+    <!-- ② 농자재 입력 카드 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🧪</span>
+        <div>
+          <div class="card-title">보유 농자재 입력</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">비료·농약·친환경 · 적용 묘목·작물 지정</div>
+        </div>
+        <button onclick="toggleSupplyForm()"
+          style="background:var(--green);color:white;border:none;border-radius:8px;
+          padding:7px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">
+          + 추가
+        </button>
+      </div>
+
+      <!-- 입력 폼 -->
+      <div id="supplyForm" style="display:none;padding:0 14px 14px">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">종류 *</div>
+            <select id="supplyType" style="width:100%;padding:9px;border-radius:8px;
+              border:1.5px solid #E0E0E0;font-size:13px;font-family:inherit;background:white">
+              <option value="비료">🌱 비료</option>
+              <option value="농약">🧪 농약</option>
+              <option value="친환경">🌿 친환경 농약</option>
+              <option value="기타">📦 기타 자재</option>
+            </select>
+          </div>
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">제품명 *</div>
+            <input type="text" id="supplyName" placeholder="예: 리도밀골드수화제"
+              style="width:100%;padding:9px;border-radius:8px;border:1.5px solid #E0E0E0;
+              font-size:13px;font-family:inherit;box-sizing:border-box">
+          </div>
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">성분·효능</div>
+            <input type="text" id="supplyIngredient" placeholder="예: 메탈락실·역병 방제"
+              style="width:100%;padding:9px;border-radius:8px;border:1.5px solid #E0E0E0;
+              font-size:13px;font-family:inherit;box-sizing:border-box">
+          </div>
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">보유량</div>
+            <input type="text" id="supplyAmount" placeholder="예: 500g 2봉"
+              style="width:100%;padding:9px;border-radius:8px;border:1.5px solid #E0E0E0;
+              font-size:13px;font-family:inherit;box-sizing:border-box">
+          </div>
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">구입 시기</div>
+            <select id="supplyPurchaseTime" style="width:100%;padding:9px;border-radius:8px;
+              border:1.5px solid #E0E0E0;font-size:13px;font-family:inherit;background:white">
+              <option value="보유중">보유중</option>
+              <option value="2월구입">2월 20일 구입 예정</option>
+              <option value="8월구입">8월 20일 구입 예정</option>
+              <option value="필요시">필요시 구입</option>
+            </select>
+          </div>
+
+          <div>
+            <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:4px">사용 월</div>
+            <input type="text" id="supplyMonths" placeholder="예: 5·6·7"
+              style="width:100%;padding:9px;border-radius:8px;border:1.5px solid #E0E0E0;
+              font-size:13px;font-family:inherit;box-sizing:border-box">
+          </div>
+
+        </div>
+
+        <!-- 적용 묘목·작물 선택 -->
+        <div style="margin-bottom:8px">
+          <div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:6px">
+            적용 묘목·작물 <span style="font-weight:400;color:#9E9E9E">(선택 — 다중 선택 가능)</span>
+          </div>
+          <!-- 빠른 선택 버튼 -->
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+            <button onclick="selectAllCrops()" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #2E7D32;background:var(--green-pale);color:#1B5E20;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">전체 선택</button>
+            <button onclick="selectCropGroup('유실수')" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#546E7A;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🌳 유실수만</button>
+            <button onclick="selectCropGroup('채소')" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#546E7A;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">🥬 채소만</button>
+            <button onclick="selectCropGroup('1구역')" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#546E7A;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">1구역</button>
+            <button onclick="selectCropGroup('2구역')" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#546E7A;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">2구역</button>
+            <button onclick="selectCropGroup('온실')" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#546E7A;
+              font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">온실</button>
+            <button onclick="clearCropSelect()" style="padding:5px 10px;border-radius:16px;
+              border:1.5px solid #E0E0E0;background:white;color:#9E9E9E;
+              font-size:11px;cursor:pointer;font-family:inherit">초기화</button>
+          </div>
+          <!-- 작물 체크박스 목록 -->
+          <div id="cropCheckList" style="max-height:200px;overflow-y:auto;
+            border:1.5px solid #E0E0E0;border-radius:8px;padding:8px">
+          </div>
+          <div id="selectedCropCount" style="font-size:11px;color:#2E7D32;
+            font-weight:600;margin-top:4px"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <button onclick="saveSupply()"
+            style="padding:12px;background:var(--green-dark);color:white;border:none;
+            border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">
+            ✅ 저장
+          </button>
+          <button onclick="toggleSupplyForm()"
+            style="padding:12px;background:white;color:#9E9E9E;
+            border:1.5px solid #E0E0E0;border-radius:8px;font-size:14px;
+            cursor:pointer;font-family:inherit">취소</button>
+        </div>
+      </div>
+
+      <!-- 보유 목록 -->
+      <div id="supplyList"></div>
+    </div>
+
+    <!-- ③ 전체 묘목·작물 적용 버튼 카드 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🚀</span>
+        <div>
+          <div class="card-title">전체 묘목·작물 농자재 적용</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">입력된 농자재를 전체 작물에 자동 매칭</div>
+        </div>
+      </div>
+      <div style="padding:0 14px 14px">
+        <div style="background:#E8F5E9;border-radius:8px;padding:10px;margin-bottom:10px;
+          font-size:11px;color:#2E7D32;line-height:1.8">
+          📋 적용 결과: 각 묘목·작물별로 사용 가능한 비료·농약이 자동으로 매칭됩니다<br>
+          📅 오늘 작업 탭에도 이달 사용 가능한 농자재가 연동됩니다
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+          <button onclick="applySupplyToAll('all')"
+            style="padding:12px;background:#1B5E20;color:white;border:none;
+            border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            🌱 전체 작물 적용
+          </button>
+          <button onclick="applySupplyToAll('유실수')"
+            style="padding:12px;background:#2E7D32;color:white;border:none;
+            border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            🌳 유실수만 적용
+          </button>
+          <button onclick="applySupplyToAll('채소')"
+            style="padding:12px;background:#388E3C;color:white;border:none;
+            border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            🥬 채소만 적용
+          </button>
+          <button onclick="applySupplyToAll('이달')"
+            style="padding:12px;background:#1565C0;color:white;border:none;
+            border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+            📅 이달 사용분만
+          </button>
+        </div>
+        <!-- 적용 결과 -->
+        <div id="applyResult" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- ④ 구입 계획 카드 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="card-icon">🛒</span>
+        <div>
+          <div class="card-title">구입 계획</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">2/20·8/20 구입 예정 목록</div>
+        </div>
+      </div>
+      <div class="card-body" id="purchasePlanBody"></div>
+    </div>
+  </div>
+
   <div class="section" id="sec-dday">
     <div class="section-title">파종·정식·수확 한계일</div>
     <div class="card">
@@ -1210,269 +1417,670 @@
 
   <!-- ⑦ 재배 그림 -->
   <div class="section" id="sec-guide">
-    <div class="section-title">재배 가이드 그림</div>
+    <div class="section-title">재배 그림 — 품종별 순치기·착과 가이드</div>
 
-    <!-- ① 고랑⑪ 접목수박 유인 상세 그림 -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">🍉</span>
-        <div>
-          <div class="card-title">고랑⑪ 접목수박 — 기둥 유인 + 고랑⑩ 지면 안착</div>
-          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">①정식 → ②기둥상승 → ③아들덩굴 고랑⑩방향 → ④지면안착 → ⑤조류망</div>
+    <!-- 작물 선택 탭 -->
+    <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;
+      scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px">
+      <button onclick="showGuide('watermelon')" id="gtab-watermelon"
+        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #2E7D32;
+        background:#2E7D32;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍉 수박</button>
+      <button onclick="showGuide('melon')" id="gtab-melon"
+        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
+        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍈 참외</button>
+      <button onclick="showGuide('cucumber')" id="gtab-cucumber"
+        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
+        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🥒 오이</button>
+      <button onclick="showGuide('pumpkin')" id="gtab-pumpkin"
+        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
+        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎃 호박</button>
+      <button onclick="showGuide('graft')" id="gtab-graft"
+        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
+        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍉 접목수박</button>
+    </div>
+
+    <!-- ════ 수박 ════ -->
+    <div id="guide-watermelon">
+      <!-- 품종별 비교표 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🍉</span>
+          <div>
+            <div class="card-title">수박 8품종 — 순치기·착과 위치 비교</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">품종마다 착과 절위 다름 · 아들줄기 2개 유인</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <!-- 품종별 카드 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+            <div style="background:#E8F5E9;border-radius:8px;padding:10px;border-left:3px solid #2E7D32">
+              <div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px">블랙망고수박</div>
+              <div style="font-size:11px;color:#2E7D32;line-height:1.8">
+                • 어미줄기 <b>5~6절 적심</b><br>
+                • 아들줄기 2개 선발<br>
+                • <b>15~18절</b> 착과<br>
+                • 소형(5~7kg)
+              </div>
+            </div>
+            <div style="background:#E8F5E9;border-radius:8px;padding:10px;border-left:3px solid #2E7D32">
+              <div style="font-size:12px;font-weight:800;color:#1B5E20;margin-bottom:4px">애플수박</div>
+              <div style="font-size:11px;color:#2E7D32;line-height:1.8">
+                • 어미줄기 <b>5~6절 적심</b><br>
+                • 아들줄기 2개 선발<br>
+                • <b>12~15절</b> 착과<br>
+                • 소형(2~4kg)
+              </div>
+            </div>
+            <div style="background:#FFF9C4;border-radius:8px;padding:10px;border-left:3px solid #F9A825">
+              <div style="font-size:12px;font-weight:800;color:#854F0B;margin-bottom:4px">자몽애플수박</div>
+              <div style="font-size:11px;color:#854F0B;line-height:1.8">
+                • 어미줄기 <b>5~6절 적심</b><br>
+                • 아들줄기 2개 선발<br>
+                • <b>12~15절</b> 착과<br>
+                • 소형(2~3kg)
+              </div>
+            </div>
+            <div style="background:#E3F2FD;border-radius:8px;padding:10px;border-left:3px solid #1565C0">
+              <div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:4px">흑피애플미니꼬꼬마①②</div>
+              <div style="font-size:11px;color:#1565C0;line-height:1.8">
+                • 어미줄기 <b>4~5절 적심</b><br>
+                • 아들줄기 2~3개<br>
+                • <b>10~13절</b> 착과<br>
+                • 극소형(1~2kg)
+              </div>
+            </div>
+            <div style="background:#E3F2FD;border-radius:8px;padding:10px;border-left:3px solid #1565C0">
+              <div style="font-size:12px;font-weight:800;color:#1565C0;margin-bottom:4px">애플미니꼬꼬마①②</div>
+              <div style="font-size:11px;color:#1565C0;line-height:1.8">
+                • 어미줄기 <b>4~5절 적심</b><br>
+                • 아들줄기 2~3개<br>
+                • <b>10~13절</b> 착과<br>
+                • 극소형(1~2kg)
+              </div>
+            </div>
+            <div style="background:#FFEBEE;border-radius:8px;padding:10px;border-left:3px solid #C62828">
+              <div style="font-size:12px;font-weight:800;color:#C62828;margin-bottom:4px">복수박①② / 망고수박①②③</div>
+              <div style="font-size:11px;color:#C62828;line-height:1.8">
+                • 어미줄기 <b>5~6절 적심</b><br>
+                • 아들줄기 2개 선발<br>
+                • <b>15~20절</b> 착과<br>
+                • 중형(5~8kg)
+              </div>
+            </div>
+          </div>
+          <!-- 핵심 공통 원칙 -->
+          <div style="background:#1B5E20;border-radius:10px;padding:12px 14px;color:white">
+            <div style="font-size:13px;font-weight:800;margin-bottom:8px">🍉 수박 순치기 공통 원칙</div>
+            <div style="font-size:12px;line-height:2.0">
+              ① 어미줄기 적심 → 아들줄기 2개 선발 (소형은 3개 가능)<br>
+              ② 아들줄기의 손자줄기 모두 제거 (착과절 이전)<br>
+              ③ 포기당 <b>1개 열매만</b> 착과 — 2개 이상 시 품질↓<br>
+              ④ 착과 후 10~14일 = 열매 크기 달걀만할 때 1개 선택
+            </div>
+          </div>
         </div>
       </div>
-      <div style="padding:0 8px 14px;overflow-x:auto">
-        <svg width="100%" viewBox="0 0 640 500" style="min-width:300px;display:block">
-          <rect width="640" height="500" fill="#FAFAFA"/>
-          <!-- 제목 -->
-          <text x="320" y="22" text-anchor="middle" font-size="13" font-weight="700" fill="#1A237E" font-family="Apple SD Gothic Neo,sans-serif">1이랑 11고랑 배치 (남→북)</text>
-          <!-- 고랑①~⑨ -->
-          <rect x="20" y="30" width="370" height="38" rx="4" fill="#EEEEEE" stroke="#CCC" stroke-width="0.5"/>
-          <text x="205" y="53" text-anchor="middle" font-size="12" fill="#AAAAAA" font-family="Apple SD Gothic Neo,sans-serif">①~⑨ 수박·단호박 천장유인</text>
-          <!-- 고랑⑩ -->
-          <rect x="392" y="28" width="90" height="42" rx="3" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
-          <text x="437" y="47" text-anchor="middle" font-size="13" font-weight="700" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">⑩</text>
-          <text x="437" y="62" text-anchor="middle" font-size="10" fill="#633806" font-family="Apple SD Gothic Neo,sans-serif">열매 공간</text>
-          <!-- 고랑⑪ -->
-          <rect x="486" y="26" width="134" height="46" rx="4" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2.5"/>
-          <text x="553" y="46" text-anchor="middle" font-size="14" font-weight="700" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">⑪</text>
-          <text x="553" y="62" text-anchor="middle" font-size="10" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">접목수박 정식</text>
-          <!-- 거리 눈금 -->
-          <line x1="20" y1="78" x2="620" y2="78" stroke="#CCC" stroke-width="0.5"/>
-          <text x="20"  y="90" text-anchor="middle" font-size="10" fill="#999" font-family="Apple SD Gothic Neo,sans-serif">0m</text>
-          <text x="392" y="90" text-anchor="middle" font-size="10" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">18m</text>
-          <text x="486" y="90" text-anchor="middle" font-size="10" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">20m</text>
-          <text x="620" y="90" text-anchor="middle" font-size="10" fill="#999" font-family="Apple SD Gothic Neo,sans-serif">22m</text>
-          <!-- 측면도 제목 -->
-          <text x="320" y="114" text-anchor="middle" font-size="12" font-weight="700" fill="#37474F" font-family="Apple SD Gothic Neo,sans-serif">측면도 — 기둥 유인 + 지면 열매 + 조류망</text>
-          <!-- 구역 배경 -->
-          <rect x="160" y="124" width="278" height="296" rx="5" fill="#FFF9C4" fill-opacity="0.35" stroke="#F9A825" stroke-width="1" stroke-dasharray="6 3"/>
-          <text x="299" y="142" text-anchor="middle" font-size="11" font-weight="700" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">고랑⑩ (덩굴·열매 공간)</text>
-          <rect x="442" y="124" width="178" height="296" rx="5" fill="#E8F5E9" fill-opacity="0.4" stroke="#2E7D32" stroke-width="1.5"/>
-          <text x="531" y="142" text-anchor="middle" font-size="11" font-weight="700" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">고랑⑪ (모종)</text>
-          <!-- 기둥 -->
-          <rect x="600" y="130" width="14" height="280" rx="3" fill="#888" opacity="0.4"/>
-          <text x="622" y="148" font-size="10" fill="#888" font-family="Apple SD Gothic Neo,sans-serif">기둥</text>
-          <!-- 천장 와이어 -->
-          <line x1="100" y1="136" x2="607" y2="136" stroke="#999" stroke-width="2" opacity="0.35"/>
-          <text x="88" y="140" text-anchor="end" font-size="10" fill="#888" font-family="Apple SD Gothic Neo,sans-serif">천장</text>
-          <!-- 지면 -->
-          <rect x="80" y="384" width="530" height="18" rx="3" fill="#D7CCC8" opacity="0.55"/>
-          <text x="345" y="397" text-anchor="middle" font-size="10" fill="#795548" font-family="Apple SD Gothic Neo,sans-serif">지면</text>
-          <!-- 모종 -->
-          <circle cx="531" cy="381" r="12" fill="#388E3C" stroke="#1B5E20" stroke-width="2"/>
-          <text x="531" y="385" text-anchor="middle" font-size="10" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">모</text>
-          <text x="531" y="403" text-anchor="middle" font-size="10" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">접목수박</text>
-          <!-- 어미덩굴 상승 -->
-          <path d="M531 370 Q592 320 604 255 Q607 195 606 136" fill="none" stroke="#2E7D32" stroke-width="3.5" stroke-linecap="round"/>
-          <!-- 클립 -->
-          <rect x="590" y="268" width="28" height="8" rx="4" fill="#E65100" opacity="0.9"/>
-          <rect x="590" y="328" width="28" height="8" rx="4" fill="#E65100" opacity="0.9"/>
-          <rect x="590" y="358" width="28" height="8" rx="4" fill="#E65100" opacity="0.9"/>
-          <text x="626" y="275" font-size="10" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">클립</text>
-          <text x="636" y="218" font-size="10" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">어미↑</text>
-          <!-- 아들덩굴 -->
-          <path d="M604 278 Q555 300 505 330 Q468 350 428 368 Q400 378 372 382" fill="none" stroke="#66BB6A" stroke-width="3" stroke-linecap="round"/>
-          <polygon points="372,382 387,371 384,387" fill="#66BB6A"/>
-          <!-- 착과 위치 -->
-          <circle cx="488" cy="343" r="8" fill="#8BC34A" opacity="0.6" stroke="#558B2F" stroke-width="1.5"/>
-          <text x="474" y="328" text-anchor="middle" font-size="10" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">착과</text>
-          <text x="474" y="340" text-anchor="middle" font-size="10" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">15~20절</text>
-          <text x="155" y="295" text-anchor="end" font-size="10" fill="#388E3C" font-family="Apple SD Gothic Neo,sans-serif">아들덩굴</text>
-          <text x="155" y="307" text-anchor="end" font-size="10" fill="#558B2F" font-family="Apple SD Gothic Neo,sans-serif">고랑⑩방향↙</text>
-          <!-- 수박 열매 -->
-          <ellipse cx="308" cy="382" rx="48" ry="30" fill="#2E7D32" opacity="0.85"/>
-          <ellipse cx="308" cy="382" rx="36" ry="22" fill="#4CAF50" opacity="0.65"/>
-          <text x="308" y="380" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">접목수박</text>
-          <text x="308" y="393" text-anchor="middle" font-size="10" fill="white" font-family="Apple SD Gothic Neo,sans-serif">5~8kg</text>
-          <!-- 조류망 -->
-          <ellipse cx="308" cy="380" rx="60" ry="38" fill="none" stroke="#1565C0" stroke-width="2" stroke-dasharray="5 3" opacity="0.75"/>
-          <line x1="278" y1="370" x2="338" y2="370" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <line x1="274" y1="381" x2="342" y2="381" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <line x1="278" y1="392" x2="338" y2="392" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <line x1="300" y1="342" x2="300" y2="418" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <line x1="312" y1="342" x2="312" y2="418" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <line x1="324" y1="342" x2="324" y2="418" stroke="#1565C0" stroke-width="0.8" stroke-dasharray="4 4" opacity="0.5"/>
-          <text x="156" y="358" text-anchor="end" font-size="10" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">조류망</text>
-          <line x1="158" y1="362" x2="250" y2="373" stroke="#1565C0" stroke-width="0.7" stroke-dasharray="3 2" opacity="0.6"/>
-          <!-- 방향 레이블 -->
-          <text x="248" y="416" text-anchor="middle" font-size="11" font-weight="700" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">← 남쪽 고랑⑩</text>
-          <text x="531" y="420" text-anchor="middle" font-size="11" font-weight="700" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">북쪽 고랑⑪ →</text>
-          <!-- 단계 번호 -->
-          <circle cx="531" cy="360" r="12" fill="#1B5E20"/>
-          <text x="531" y="364" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">①</text>
-          <circle cx="607" cy="258" r="12" fill="#E65100"/>
-          <text x="607" y="262" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">②</text>
-          <circle cx="548" cy="308" r="12" fill="#558B2F"/>
-          <text x="548" y="312" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">③</text>
-          <circle cx="378" cy="352" r="12" fill="#1565C0"/>
-          <text x="378" y="356" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">④</text>
-          <circle cx="252" cy="350" r="12" fill="#1565C0"/>
-          <text x="252" y="354" text-anchor="middle" font-size="11" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">⑤</text>
-          <!-- 화살표 -->
-          <line x1="531" y1="440" x2="308" y2="440" stroke="#66BB6A" stroke-width="2.5"/>
-          <polygon points="308,440 323,433 323,447" fill="#66BB6A"/>
-          <text x="420" y="455" text-anchor="middle" font-size="11" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">아들덩굴 유인 방향 (⑪→⑩)</text>
-          <!-- 요약 -->
-          <rect x="20" y="470" width="600" height="22" rx="4" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1"/>
-          <text x="320" y="485" text-anchor="middle" font-size="11" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">①정식 → ②기둥상승(클립) → ③아들덩굴 고랑⑩ → ④지면안착 → ⑤조류망덮기</text>
-        </svg>
+
+      <!-- SVG 삽화 (큰 폰트) -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">✂️</span>
+          <div><div class="card-title">수박 순치기 단계별 삽화</div></div>
+        </div>
+        <div style="padding:0 0 14px;overflow-x:auto">
+          <svg width="100%" viewBox="0 0 420 600" style="min-width:320px;display:block;font-family:'Apple SD Gothic Neo',sans-serif">
+            <rect width="420" height="600" fill="#FAFAFA"/>
+            <!-- 제목 -->
+            <rect x="0" y="0" width="420" height="44" rx="0" fill="#1B5E20"/>
+            <text x="210" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="white">수박 순치기 · 착과 위치</text>
+
+            <!-- 단계1: 어미줄기 -->
+            <rect x="10" y="52" width="400" height="36" rx="6" fill="#E8F5E9"/>
+            <text x="20" y="75" font-size="15" font-weight="800" fill="#1B5E20">① 어미줄기 — 5~6절에서 적심</text>
+
+            <!-- 어미줄기 그림 -->
+            <line x1="70" y1="96" x2="70" y2="200" stroke="#4CAF50" stroke-width="6" stroke-linecap="round"/>
+            <!-- 절 표시 -->
+            <text x="30" y="120" font-size="13" fill="#2E7D32" font-weight="700">1절</text>
+            <line x1="50" y1="116" x2="70" y2="116" stroke="#A5D6A7" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <text x="30" y="145" font-size="13" fill="#2E7D32" font-weight="700">2절</text>
+            <line x1="50" y1="141" x2="70" y2="141" stroke="#A5D6A7" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <text x="30" y="170" font-size="13" fill="#2E7D32" font-weight="700">3절</text>
+            <line x1="50" y1="166" x2="70" y2="166" stroke="#A5D6A7" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <text x="30" y="195" font-size="13" fill="#2E7D32" font-weight="700">4절</text>
+            <line x1="50" y1="191" x2="70" y2="191" stroke="#A5D6A7" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <!-- 5~6절 적심 -->
+            <text x="30" y="220" font-size="13" fill="#C62828" font-weight="700">5절</text>
+            <line x1="50" y1="216" x2="70" y2="216" stroke="#EF9A9A" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <!-- 가위 -->
+            <text x="78" y="210" font-size="20">✂️</text>
+            <text x="108" y="208" font-size="13" fill="#C62828" font-weight="700">← 적심(소형:4~5절/중형:5~6절)</text>
+            <!-- 적심 표시 -->
+            <line x1="40" y1="222" x2="120" y2="222" stroke="#C62828" stroke-width="3" stroke-dasharray="8 3"/>
+            <text x="130" y="226" font-size="13" fill="#C62828" font-weight="700">절단</text>
+
+            <!-- 단계2 -->
+            <rect x="10" y="238" width="400" height="36" rx="6" fill="#E3F2FD"/>
+            <text x="20" y="261" font-size="15" font-weight="800" fill="#1565C0">② 아들줄기 2개 선발 · 유인</text>
+
+            <!-- 아들줄기 분지 -->
+            <line x1="70" y1="282" x2="70" y2="320" stroke="#4CAF50" stroke-width="5" stroke-linecap="round"/>
+            <line x1="70" y1="295" x2="160" y2="330" stroke="#66BB6A" stroke-width="4" stroke-linecap="round"/>
+            <line x1="70" y1="295" x2="190" y2="340" stroke="#66BB6A" stroke-width="4" stroke-linecap="round"/>
+            <text x="165" y="326" font-size="13" fill="#1565C0" font-weight="700">아들줄기①</text>
+            <text x="195" y="342" font-size="13" fill="#1565C0" font-weight="700">아들줄기②</text>
+            <text x="82" y="292" font-size="12" fill="#C62828" font-weight="700">여기서 분지</text>
+
+            <!-- 단계3 -->
+            <rect x="10" y="358" width="400" height="36" rx="6" fill="#FFF9C4"/>
+            <text x="20" y="381" font-size="15" font-weight="800" fill="#854F0B">③ 착과 절위 — 품종별 다름!</text>
+
+            <!-- 착과 위치 비교 -->
+            <line x1="70" y1="402" x2="70" y2="480" stroke="#66BB6A" stroke-width="4" stroke-linecap="round"/>
+
+            <!-- 소형 착과 -->
+            <circle cx="115" cy="420" r="18" fill="#1565C0" opacity="0.85"/>
+            <text x="115" y="416" text-anchor="middle" font-size="12" fill="white" font-weight="700">소형</text>
+            <text x="115" y="430" text-anchor="middle" font-size="11" fill="white">10~13절</text>
+            <line x1="70" y1="420" x2="97" y2="420" stroke="#90CAF9" stroke-width="2"/>
+            <text x="140" y="423" font-size="12" fill="#1565C0" font-weight="600">꼬꼬마·미니</text>
+
+            <!-- 중소형 착과 -->
+            <circle cx="115" cy="448" r="18" fill="#2E7D32" opacity="0.85"/>
+            <text x="115" y="444" text-anchor="middle" font-size="12" fill="white" font-weight="700">중소</text>
+            <text x="115" y="458" text-anchor="middle" font-size="11" fill="white">12~15절</text>
+            <line x1="70" y1="448" x2="97" y2="448" stroke="#A5D6A7" stroke-width="2"/>
+            <text x="140" y="451" font-size="12" fill="#1B5E20" font-weight="600">애플·자몽애플</text>
+
+            <!-- 중형 착과 -->
+            <circle cx="115" cy="476" r="18" fill="#C62828" opacity="0.85"/>
+            <text x="115" y="472" text-anchor="middle" font-size="12" fill="white" font-weight="700">중형</text>
+            <text x="115" y="486" text-anchor="middle" font-size="11" fill="white">15~20절</text>
+            <line x1="70" y1="476" x2="97" y2="476" stroke="#EF9A9A" stroke-width="2"/>
+            <text x="140" y="479" font-size="12" fill="#C62828" font-weight="600">복수박·망고수박·블랙망고</text>
+
+            <!-- 단계4 -->
+            <rect x="10" y="500" width="400" height="36" rx="6" fill="#FFEBEE"/>
+            <text x="20" y="523" font-size="15" font-weight="800" fill="#C62828">④ 착과 후 — 포기당 1개만!</text>
+            <text x="20" y="549" font-size="13" fill="#C62828">착과 후 달걀 크기일 때 1개 선택 · 나머지 제거</text>
+            <text x="20" y="568" font-size="13" fill="#C62828">2개 이상 착과 유지 시 → 모두 품질 저하 ⚠</text>
+            <text x="20" y="587" font-size="12" fill="#9E9E9E">접목수박(고랑⑪→⑩)은 📷 접목수박 그림 탭 참고</text>
+          </svg>
+        </div>
       </div>
     </div>
 
-    <!-- ② 순치기 착과 위치 비교 -->
-    <div class="card">
-      <div class="card-header">
-        <span class="card-icon">✂️</span>
-        <div>
-          <div class="card-title">순치기 착과 위치 비교 — 4작물</div>
-          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">오이·참외·수박·호박 착과 위치와 순치기 방법 비교</div>
+    <!-- ════ 참외 ════ -->
+    <div id="guide-melon" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🍈</span>
+          <div>
+            <div class="card-title">참외 5품종 — 3단계 순치기</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">손자줄기 착과 · 가장 복잡한 관리</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="background:#FFEBEE;border-radius:8px;padding:10px;margin-bottom:10px">
+            <div style="font-size:13px;font-weight:800;color:#C62828;margin-bottom:6px">⚠ 참외는 손자줄기에서 착과!</div>
+            <div style="font-size:12px;color:#C62828;line-height:1.8">
+              어미줄기 → 아들줄기 → <b>손자줄기</b>에서 착과<br>
+              총 3단계 관리 필요 — 가장 복잡
+            </div>
+          </div>
+          <!-- 품종별 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="background:#FFF9C4;border-radius:8px;padding:10px;border-left:3px solid #F9A825">
+              <div style="font-size:12px;font-weight:800;color:#854F0B">망고참외·꿀참외</div>
+              <div style="font-size:11px;color:#854F0B;line-height:1.8;margin-top:4px">
+                • 어미 <b>4~5절 적심</b><br>
+                • 아들 <b>12~15절 적심</b><br>
+                • 손자줄기 착과<br>
+                • 1포기 4~6개
+              </div>
+            </div>
+            <div style="background:#FFF9C4;border-radius:8px;padding:10px;border-left:3px solid #F9A825">
+              <div style="font-size:12px;font-weight:800;color:#854F0B">개구리·베타카로틴·사과참외</div>
+              <div style="font-size:11px;color:#854F0B;line-height:1.8;margin-top:4px">
+                • 어미 <b>4~5절 적심</b><br>
+                • 아들 <b>10~12절 적심</b><br>
+                • 손자줄기 착과<br>
+                • 1포기 4~6개
+              </div>
+            </div>
+          </div>
+          <div style="background:#1B5E20;border-radius:10px;padding:12px 14px;color:white">
+            <div style="font-size:13px;font-weight:800;margin-bottom:8px">🍈 참외 3단계 관리</div>
+            <div style="font-size:12px;line-height:2.0">
+              ① 어미줄기 4~5절 적심 → 아들줄기 발생<br>
+              ② 아들줄기 10~15절 적심 → 손자줄기 발생<br>
+              ③ 손자줄기에 착과 → 착과 후 2~3절 적심<br>
+              ④ 1포기 4~6개 착과 유지 (과다 시 솎기)
+            </div>
+          </div>
         </div>
       </div>
-      <div style="padding:0 8px 14px;overflow-x:auto">
-        <svg width="100%" viewBox="0 0 640 560" style="min-width:300px;display:block">
-          <rect width="640" height="560" fill="#FAFAFA"/>
-          <text x="320" y="24" text-anchor="middle" font-size="13" font-weight="700" fill="#1A237E" font-family="Apple SD Gothic Neo,sans-serif">박과 4작물 순치기 착과 위치 비교</text>
-          <rect x="20" y="32" width="600" height="24" rx="5" fill="#E8F5E9"/>
-          <text x="320" y="48" text-anchor="middle" font-size="11" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">복잡도: 오이★ &lt; 호박★★ &lt; 수박★★★ &lt; 참외★★★★★</text>
-          <!-- 오이 (좌상) -->
-          <rect x="15" y="64" width="148" height="220" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1.5"/>
-          <text x="89" y="82" text-anchor="middle" font-size="13" font-weight="700" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">오이</text>
-          <text x="89" y="96" text-anchor="middle" font-size="10" fill="#388E3C" font-family="Apple SD Gothic Neo,sans-serif">어미줄기 직접 착과</text>
-          <line x1="89" y1="262" x2="89" y2="108" stroke="#2E7D32" stroke-width="3.5" stroke-linecap="round"/>
-          <ellipse cx="106" cy="146" rx="11" ry="17" fill="#66BB6A" opacity="0.85"/>
-          <ellipse cx="106" cy="180" rx="11" ry="17" fill="#66BB6A" opacity="0.85"/>
-          <ellipse cx="106" cy="214" rx="11" ry="17" fill="#66BB6A" opacity="0.85"/>
-          <ellipse cx="106" cy="248" rx="11" ry="17" fill="#66BB6A" opacity="0.85"/>
-          <line x1="67" y1="150" x2="74" y2="144" stroke="#C62828" stroke-width="1.5"/>
-          <line x1="74" y1="150" x2="67" y2="144" stroke="#C62828" stroke-width="1.5"/>
-          <line x1="67" y1="184" x2="74" y2="178" stroke="#C62828" stroke-width="1.5"/>
-          <line x1="74" y1="184" x2="67" y2="178" stroke="#C62828" stroke-width="1.5"/>
-          <text x="56" y="197" text-anchor="middle" font-size="9" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">곁순제거</text>
-          <rect x="20" y="276" width="138" height="8" rx="3" fill="#C8E6C9"/>
-          <text x="89" y="283" text-anchor="middle" font-size="9" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">★ 가장 단순</text>
-          <!-- 참외 (우상) -->
-          <rect x="173" y="64" width="148" height="220" rx="6" fill="#FFF3E0" stroke="#E65100" stroke-width="1.5"/>
-          <text x="247" y="82" text-anchor="middle" font-size="13" font-weight="700" fill="#BF360C" font-family="Apple SD Gothic Neo,sans-serif">참외</text>
-          <text x="247" y="96" text-anchor="middle" font-size="10" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">손자줄기 착과(3단계)</text>
-          <line x1="247" y1="262" x2="247" y2="164" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
-          <line x1="238" y1="162" x2="256" y2="151" stroke="#C62828" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="256" y1="162" x2="238" y2="151" stroke="#C62828" stroke-width="2.5" stroke-linecap="round"/>
-          <text x="262" y="156" font-size="9" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">어미적심</text>
-          <path d="M247 194 Q215 189 193 189" fill="none" stroke="#66BB6A" stroke-width="2.5"/>
-          <path d="M247 194 Q278 189 300 189" fill="none" stroke="#66BB6A" stroke-width="2.5"/>
-          <line x1="187" y1="187" x2="196" y2="179" stroke="#E65100" stroke-width="2"/>
-          <line x1="196" y1="187" x2="187" y2="179" stroke="#E65100" stroke-width="2"/>
-          <line x1="294" y1="187" x2="303" y2="179" stroke="#E65100" stroke-width="2"/>
-          <line x1="303" y1="187" x2="294" y2="179" stroke="#E65100" stroke-width="2"/>
-          <line x1="193" y1="189" x2="193" y2="228" stroke="#FFCC80" stroke-width="2"/>
-          <line x1="300" y1="189" x2="300" y2="228" stroke="#FFCC80" stroke-width="2"/>
-          <ellipse cx="193" cy="238" rx="14" ry="10" fill="#FFA726" opacity="0.9"/>
-          <ellipse cx="300" cy="238" rx="14" ry="10" fill="#FFA726" opacity="0.9"/>
-          <text x="193" y="241" text-anchor="middle" font-size="8" fill="white" font-family="Apple SD Gothic Neo,sans-serif">참외</text>
-          <text x="300" y="241" text-anchor="middle" font-size="8" fill="white" font-family="Apple SD Gothic Neo,sans-serif">참외</text>
-          <text x="193" y="256" text-anchor="middle" font-size="9" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">손자줄기</text>
-          <text x="300" y="256" text-anchor="middle" font-size="9" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">손자줄기</text>
-          <rect x="178" y="276" width="138" height="8" rx="3" fill="#FFE0B2"/>
-          <text x="247" y="283" text-anchor="middle" font-size="9" fill="#BF360C" font-family="Apple SD Gothic Neo,sans-serif">★★★★★ 가장 복잡</text>
-          <!-- 수박 (좌하) -->
-          <rect x="15" y="298" width="148" height="230" rx="6" fill="#E3F2FD" stroke="#1565C0" stroke-width="1.5"/>
-          <text x="89" y="316" text-anchor="middle" font-size="13" font-weight="700" fill="#0C447C" font-family="Apple SD Gothic Neo,sans-serif">수박</text>
-          <text x="89" y="330" text-anchor="middle" font-size="10" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">아들줄기 15~20절</text>
-          <line x1="89" y1="498" x2="89" y2="398" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
-          <line x1="80" y1="396" x2="98" y2="385" stroke="#C62828" stroke-width="2.5" stroke-linecap="round"/>
-          <line x1="98" y1="396" x2="80" y2="385" stroke="#C62828" stroke-width="2.5" stroke-linecap="round"/>
-          <text x="104" y="390" font-size="9" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">적심(5~6절)</text>
-          <path d="M89 426 Q54 420 27 450 Q20 460 20 488" fill="none" stroke="#66BB6A" stroke-width="2.5"/>
-          <path d="M89 426 Q126 420 152 450 Q158 460 158 488" fill="none" stroke="#66BB6A" stroke-width="2.5"/>
-          <text x="28" y="418" font-size="9" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">아들①</text>
-          <text x="136" y="418" font-size="9" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">아들②</text>
-          <circle cx="26" cy="488" r="16" fill="#2E7D32" opacity="0.85"/>
-          <circle cx="154" cy="488" r="16" fill="#2E7D32" opacity="0.85"/>
-          <text x="26"  y="492" text-anchor="middle" font-size="9" fill="white" font-family="Apple SD Gothic Neo,sans-serif">🍉</text>
-          <text x="154" y="492" text-anchor="middle" font-size="9" fill="white" font-family="Apple SD Gothic Neo,sans-serif">🍉</text>
-          <text x="26"  y="512" text-anchor="middle" font-size="9" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">15~20절</text>
-          <text x="154" y="512" text-anchor="middle" font-size="9" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">15~20절</text>
-          <rect x="20" y="520" width="138" height="8" rx="3" fill="#BBDEFB"/>
-          <text x="89" y="527" text-anchor="middle" font-size="9" fill="#0C447C" font-family="Apple SD Gothic Neo,sans-serif">★★★ 아들줄기 2개</text>
-          <!-- 호박 (우하) -->
-          <rect x="173" y="298" width="148" height="230" rx="6" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="1.5"/>
-          <text x="247" y="316" text-anchor="middle" font-size="13" font-weight="700" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">호박</text>
-          <text x="247" y="330" text-anchor="middle" font-size="10" fill="#6A1B9A" font-family="Apple SD Gothic Neo,sans-serif">품종별 착과위치 다름</text>
-          <line x1="247" y1="498" x2="247" y2="343" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
-          <ellipse cx="264" cy="385" rx="16" ry="11" fill="#8BC34A" opacity="0.85"/>
-          <ellipse cx="264" cy="416" rx="16" ry="11" fill="#8BC34A" opacity="0.85"/>
-          <ellipse cx="264" cy="447" rx="16" ry="11" fill="#8BC34A" opacity="0.85"/>
-          <text x="288" y="389" font-size="9" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">애호박직착</text>
-          <path d="M247 468 Q216 470 195 488" fill="none" stroke="#CE93D8" stroke-width="2"/>
-          <ellipse cx="188" cy="493" rx="18" ry="12" fill="#7B1FA2" opacity="0.65"/>
-          <text x="188" y="514" text-anchor="middle" font-size="9" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">맷돌·단호박</text>
-          <text x="188" y="525" text-anchor="middle" font-size="9" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">(아들줄기)</text>
-          <rect x="178" y="530" width="138" height="8" rx="3" fill="#E1BEE7"/>
-          <text x="247" y="537" text-anchor="middle" font-size="9" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">★★ 품종별 다름</text>
-          <!-- 비교표 (우측) -->
-          <rect x="332" y="64" width="295" height="474" rx="6" fill="white" stroke="#E0E0E0" stroke-width="1"/>
-          <rect x="332" y="64" width="295" height="24" rx="6" fill="#37474F"/>
-          <text x="479" y="80" text-anchor="middle" font-size="12" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">착과 위치 비교표</text>
-          <rect x="333" y="88" width="293" height="18" fill="#ECEFF1"/>
-          <text x="380" y="100" text-anchor="middle" font-size="10" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">작물</text>
-          <text x="465" y="100" text-anchor="middle" font-size="10" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">착과 위치</text>
-          <text x="572" y="100" text-anchor="middle" font-size="10" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">복잡도</text>
-          <line x1="415" y1="88" x2="415" y2="538" stroke="#E0E0E0" stroke-width="0.5"/>
-          <line x1="530" y1="88" x2="530" y2="538" stroke="#E0E0E0" stroke-width="0.5"/>
-          <!-- 행들 -->
-          <rect x="333" y="106" width="293" height="36" fill="#E8F5E9" fill-opacity="0.5"/>
-          <text x="374" y="120" text-anchor="middle" font-size="11" font-weight="700" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">오이·쿠카멜론</text>
-          <text x="472" y="116" text-anchor="middle" font-size="10" fill="#212121" font-family="Apple SD Gothic Neo,sans-serif">어미줄기 직접</text>
-          <text x="472" y="130" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">곁순 제거만</text>
-          <text x="572" y="124" text-anchor="middle" font-size="13" fill="#2E7D32" font-family="Apple SD Gothic Neo,sans-serif">★</text>
-          <rect x="333" y="142" width="293" height="48" fill="#FFF3E0" fill-opacity="0.5"/>
-          <text x="374" y="156" text-anchor="middle" font-size="11" font-weight="700" fill="#BF360C" font-family="Apple SD Gothic Neo,sans-serif">참외 5종</text>
-          <text x="374" y="170" text-anchor="middle" font-size="9" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">망고·꿀·개구리등</text>
-          <text x="472" y="157" text-anchor="middle" font-size="10" fill="#212121" font-family="Apple SD Gothic Neo,sans-serif">손자줄기 착과</text>
-          <text x="472" y="170" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">어미→아들→손자</text>
-          <text x="472" y="182" text-anchor="middle" font-size="9" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">3단계 필수</text>
-          <text x="572" y="168" text-anchor="middle" font-size="13" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">★★★★★</text>
-          <rect x="333" y="190" width="293" height="58" fill="#E3F2FD" fill-opacity="0.5"/>
-          <text x="374" y="204" text-anchor="middle" font-size="11" font-weight="700" fill="#0C447C" font-family="Apple SD Gothic Neo,sans-serif">수박 8종</text>
-          <text x="374" y="218" text-anchor="middle" font-size="9" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">블랙망고·애플등</text>
-          <text x="472" y="209" text-anchor="middle" font-size="10" fill="#212121" font-family="Apple SD Gothic Neo,sans-serif">아들줄기 착과</text>
-          <text x="472" y="222" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">15~20절 착과</text>
-          <text x="472" y="236" text-anchor="middle" font-size="9" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">포기당 1개 필수</text>
-          <text x="572" y="224" text-anchor="middle" font-size="13" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">★★★</text>
-          <rect x="333" y="248" width="293" height="48" fill="#FFEBEE" fill-opacity="0.5"/>
-          <text x="374" y="262" text-anchor="middle" font-size="11" font-weight="700" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">접목수박</text>
-          <text x="374" y="276" text-anchor="middle" font-size="9" fill="#E53935" font-family="Apple SD Gothic Neo,sans-serif">고랑⑪→⑩ 5~8kg</text>
-          <text x="472" y="263" text-anchor="middle" font-size="10" fill="#212121" font-family="Apple SD Gothic Neo,sans-serif">기둥→지면 유인</text>
-          <text x="472" y="276" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">조류망 필수</text>
-          <text x="572" y="270" text-anchor="middle" font-size="13" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">★★★★</text>
-          <rect x="333" y="296" width="293" height="58" fill="#F3E5F5" fill-opacity="0.5"/>
-          <text x="374" y="310" text-anchor="middle" font-size="11" font-weight="700" fill="#4A148C" font-family="Apple SD Gothic Neo,sans-serif">호박류</text>
-          <text x="374" y="324" text-anchor="middle" font-size="9" fill="#6A1B9A" font-family="Apple SD Gothic Neo,sans-serif">애호박·맷돌·보우짱</text>
-          <text x="472" y="310" text-anchor="middle" font-size="10" fill="#212121" font-family="Apple SD Gothic Neo,sans-serif">품종별 다름</text>
-          <text x="472" y="323" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">애호박≒오이</text>
-          <text x="472" y="336" text-anchor="middle" font-size="9" fill="#546E7A" font-family="Apple SD Gothic Neo,sans-serif">맷돌≒수박</text>
-          <text x="572" y="322" text-anchor="middle" font-size="13" fill="#6A1B9A" font-family="Apple SD Gothic Neo,sans-serif">★★</text>
-          <!-- 핵심 요약 -->
-          <rect x="333" y="362" width="293" height="176" rx="4" fill="#F5F5F5"/>
-          <text x="479" y="380" text-anchor="middle" font-size="11" font-weight="700" fill="#37474F" font-family="Apple SD Gothic Neo,sans-serif">핵심 순치기 시기 (정식 후)</text>
-          <rect x="340" y="388" width="278" height="16" rx="3" fill="#E8F5E9"/>
-          <text x="479" y="399" text-anchor="middle" font-size="10" fill="#1B5E20" font-family="Apple SD Gothic Neo,sans-serif">오이·애호박: 7일째 / 쿠카멜론: 7일째</text>
-          <rect x="340" y="406" width="278" height="16" rx="3" fill="#E3F2FD"/>
-          <text x="479" y="417" text-anchor="middle" font-size="10" fill="#1565C0" font-family="Apple SD Gothic Neo,sans-serif">수박 소형: 12~15일 / 중형: 15일째</text>
-          <rect x="340" y="424" width="278" height="16" rx="3" fill="#FFEBEE"/>
-          <text x="479" y="435" text-anchor="middle" font-size="10" fill="#C62828" font-family="Apple SD Gothic Neo,sans-serif">접목수박: 18일째 / 맷돌호박: 18일째</text>
-          <rect x="340" y="442" width="278" height="16" rx="3" fill="#FFF3E0"/>
-          <text x="479" y="453" text-anchor="middle" font-size="10" fill="#E65100" font-family="Apple SD Gothic Neo,sans-serif">참외: 어미(4~5절)→아들(12~15절) 2회</text>
-          <rect x="340" y="460" width="278" height="16" rx="3" fill="#FFF9C4"/>
-          <text x="479" y="471" text-anchor="middle" font-size="10" fill="#854F0B" font-family="Apple SD Gothic Neo,sans-serif">보우짱단호박: 18일째 아들줄기 유인</text>
-          <rect x="340" y="482" width="278" height="38" rx="4" fill="#1B5E20"/>
-          <text x="479" y="498" text-anchor="middle" font-size="10" font-weight="700" fill="white" font-family="Apple SD Gothic Neo,sans-serif">착과 후: 포기당 1개 열매만 남기기</text>
-          <text x="479" y="513" text-anchor="middle" font-size="10" fill="#A5D6A7" font-family="Apple SD Gothic Neo,sans-serif">수박·접목수박·단호박 — 2개 이상 착과 시 품질↓</text>
-        </svg>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">✂️</span>
+          <div><div class="card-title">참외 순치기 삽화</div></div>
+        </div>
+        <div style="padding:0 0 14px">
+          <svg width="100%" viewBox="0 0 420 500" style="display:block;font-family:'Apple SD Gothic Neo',sans-serif">
+            <rect width="420" height="500" fill="#FAFAFA"/>
+            <rect x="0" y="0" width="420" height="44" rx="0" fill="#E65100"/>
+            <text x="210" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="white">참외 3단계 순치기</text>
+
+            <!-- 어미줄기 -->
+            <text x="20" y="68" font-size="14" font-weight="800" fill="#E65100">① 어미줄기 4~5절 적심</text>
+            <line x1="60" y1="80" x2="60" y2="165" stroke="#FF7043" stroke-width="6" stroke-linecap="round"/>
+            <text x="20" y="103" font-size="13" fill="#BF360C" font-weight="700">1절</text>
+            <text x="20" y="127" font-size="13" fill="#BF360C" font-weight="700">2절</text>
+            <text x="20" y="151" font-size="13" fill="#BF360C" font-weight="700">3절</text>
+            <text x="20" y="171" font-size="13" fill="#C62828" font-weight="800">4~5절 ✂️</text>
+            <line x1="20" y1="178" x2="140" y2="178" stroke="#C62828" stroke-width="3" stroke-dasharray="8 3"/>
+            <text x="148" y="182" font-size="13" fill="#C62828" font-weight="700">적심</text>
+
+            <!-- 아들줄기 -->
+            <text x="20" y="210" font-size="14" font-weight="800" fill="#E65100">② 아들줄기 10~15절 적심</text>
+            <line x1="60" y1="220" x2="250" y2="240" stroke="#FFA726" stroke-width="5" stroke-linecap="round"/>
+            <text x="255" y="237" font-size="13" fill="#E65100" font-weight="700">아들줄기</text>
+            <text x="255" y="253" font-size="12" fill="#E65100">10~15절 ✂️</text>
+            <circle cx="245" cy="239" r="7" fill="#C62828"/>
+            <text x="150" y="233" font-size="12" fill="#E65100" font-weight="600">10~15절</text>
+
+            <!-- 손자줄기 착과 -->
+            <text x="20" y="285" font-size="14" font-weight="800" fill="#E65100">③ 손자줄기 → 착과!</text>
+            <line x1="60" y1="295" x2="60" y2="370" stroke="#FF7043" stroke-width="5" stroke-linecap="round"/>
+            <line x1="60" y1="320" x2="160" y2="340" stroke="#FFCC02" stroke-width="4" stroke-linecap="round"/>
+            <line x1="60" y1="345" x2="170" y2="365" stroke="#FFCC02" stroke-width="4" stroke-linecap="round"/>
+            <ellipse cx="190" cy="340" rx="25" ry="16" fill="#FFA726" opacity="0.9"/>
+            <text x="190" y="337" text-anchor="middle" font-size="12" fill="white" font-weight="700">착과</text>
+            <text x="190" y="350" text-anchor="middle" font-size="11" fill="white">손자줄기</text>
+            <ellipse cx="205" cy="366" rx="25" ry="16" fill="#FFA726" opacity="0.9"/>
+            <text x="205" y="363" text-anchor="middle" font-size="12" fill="white" font-weight="700">착과</text>
+            <text x="205" y="376" text-anchor="middle" font-size="11" fill="white">손자줄기</text>
+
+            <!-- 주의 -->
+            <rect x="10" y="400" width="400" height="85" rx="8" fill="#FFF3E0" stroke="#E65100" stroke-width="1.5"/>
+            <text x="20" y="422" font-size="14" font-weight="800" fill="#E65100">④ 포기당 4~6개 착과 유지</text>
+            <text x="20" y="443" font-size="13" fill="#BF360C">• 손자줄기 착과 후 2~3절 더 자라면 적심</text>
+            <text x="20" y="462" font-size="13" fill="#BF360C">• 아들줄기 끝에서도 착과 가능 (품종별 차이)</text>
+            <text x="20" y="481" font-size="13" fill="#BF360C">• 착과 과다 시 솎아서 4~6개 유지</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 오이 ════ -->
+    <div id="guide-cucumber" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🥒</span>
+          <div>
+            <div class="card-title">오이·쿠카멜론 — 어미줄기 직접 착과</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">가장 단순 · 곁순만 제거</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="background:#E8F5E9;border-radius:8px;padding:10px;border-left:3px solid #2E7D32">
+              <div style="font-size:12px;font-weight:800;color:#1B5E20">백다다기오이</div>
+              <div style="font-size:11px;color:#2E7D32;line-height:1.8;margin-top:4px">
+                • 어미줄기에서 직접 착과<br>
+                • 곁순 <b>즉시 제거</b><br>
+                • <b>기둥 수직 유인</b><br>
+                • 1마디 1개 착과
+              </div>
+            </div>
+            <div style="background:#E8F5E9;border-radius:8px;padding:10px;border-left:3px solid #2E7D32">
+              <div style="font-size:12px;font-weight:800;color:#1B5E20">쿠카멜론①②</div>
+              <div style="font-size:11px;color:#2E7D32;line-height:1.8;margin-top:4px">
+                • 어미줄기에서 착과<br>
+                • 곁순 <b>2~3절 남기고 적심</b><br>
+                • <b>기둥 수직 유인</b><br>
+                • 포도송이형 착과
+              </div>
+            </div>
+          </div>
+          <div style="background:#1B5E20;border-radius:10px;padding:12px 14px;color:white">
+            <div style="font-size:13px;font-weight:800;margin-bottom:8px">🥒 오이 관리 핵심</div>
+            <div style="font-size:12px;line-height:2.0">
+              ① 어미줄기 기둥에 수직 유인 (클립 20~30cm 간격)<br>
+              ② 곁순은 즉시 제거 (백다다기) 또는 2~3절 후 적심<br>
+              ③ 아래쪽 잎 황변 시 제거 → 통풍 개선<br>
+              ④ 수확: 착과 후 7~10일 (너무 크면 씨앗 발달)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">✂️</span>
+          <div><div class="card-title">오이 순치기 삽화</div></div>
+        </div>
+        <div style="padding:0 0 14px">
+          <svg width="100%" viewBox="0 0 420 460" style="display:block;font-family:'Apple SD Gothic Neo',sans-serif">
+            <rect width="420" height="460" fill="#FAFAFA"/>
+            <rect x="0" y="0" width="420" height="44" rx="0" fill="#2E7D32"/>
+            <text x="210" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="white">오이·쿠카멜론 순치기</text>
+
+            <!-- 기둥 -->
+            <rect x="58" y="55" width="12" height="350" rx="4" fill="#888" opacity="0.4"/>
+            <text x="78" y="72" font-size="13" fill="#888" font-weight="600">기둥 (수직 유인)</text>
+
+            <!-- 어미줄기 -->
+            <line x1="64" y1="400" x2="64" y2="60" stroke="#2E7D32" stroke-width="6" stroke-linecap="round"/>
+
+            <!-- 클립 -->
+            <rect x="52" y="130" width="24" height="8" rx="4" fill="#E65100" opacity="0.8"/>
+            <rect x="52" y="200" width="24" height="8" rx="4" fill="#E65100" opacity="0.8"/>
+            <rect x="52" y="270" width="24" height="8" rx="4" fill="#E65100" opacity="0.8"/>
+            <rect x="52" y="340" width="24" height="8" rx="4" fill="#E65100" opacity="0.8"/>
+            <text x="82" y="138" font-size="12" fill="#E65100" font-weight="700">클립 고정</text>
+
+            <!-- 착과 위치 -->
+            <ellipse cx="100" cy="150" rx="22" ry="14" fill="#66BB6A" opacity="0.85"/>
+            <text x="100" y="147" text-anchor="middle" font-size="12" fill="white" font-weight="700">오이</text>
+            <text x="100" y="160" text-anchor="middle" font-size="11" fill="white">착과</text>
+            <line x1="64" y1="150" x2="78" y2="150" stroke="#A5D6A7" stroke-width="2"/>
+
+            <ellipse cx="100" cy="220" rx="22" ry="14" fill="#66BB6A" opacity="0.85"/>
+            <text x="100" y="217" text-anchor="middle" font-size="12" fill="white" font-weight="700">오이</text>
+            <text x="100" y="230" text-anchor="middle" font-size="11" fill="white">착과</text>
+            <line x1="64" y1="220" x2="78" y2="220" stroke="#A5D6A7" stroke-width="2"/>
+
+            <!-- 곁순 제거 -->
+            <line x1="64" y1="180" x2="130" y2="175" stroke="#EF9A9A" stroke-width="3" stroke-dasharray="6 3"/>
+            <text x="135" y="179" font-size="13" fill="#C62828" font-weight="700">✂️ 곁순 즉시 제거</text>
+            <line x1="64" y1="250" x2="130" y2="245" stroke="#EF9A9A" stroke-width="3" stroke-dasharray="6 3"/>
+            <text x="135" y="249" font-size="13" fill="#C62828" font-weight="700">✂️ 곁순 제거</text>
+
+            <!-- 쿠카멜론 차이 -->
+            <rect x="10" y="375" width="400" height="72" rx="8" fill="#E3F2FD" stroke="#1565C0" stroke-width="1.5"/>
+            <text x="20" y="396" font-size="14" font-weight="800" fill="#1565C0">🥒 쿠카멜론 차이점</text>
+            <text x="20" y="416" font-size="13" fill="#1565C0">• 곁순을 2~3절 남기고 적심 (완전 제거 아님)</text>
+            <text x="20" y="436" font-size="13" fill="#1565C0">• 곁순에서도 착과 → 포도송이형 수확</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 호박 ════ -->
+    <div id="guide-pumpkin" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🎃</span>
+          <div>
+            <div class="card-title">호박 4품종 — 품종별 착과 위치 다름</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">애호박≒오이 · 맷돌·보우짱≒수박 방식</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+            <div style="background:#F3E5F5;border-radius:8px;padding:10px;border-left:3px solid #6A1B9A">
+              <div style="font-size:12px;font-weight:800;color:#4A148C">애호박①②</div>
+              <div style="font-size:11px;color:#6A1B9A;line-height:1.8;margin-top:4px">
+                • <b>어미줄기 직접 착과</b><br>
+                • 오이와 동일 방식<br>
+                • 곁순 제거<br>
+                • 착과 후 7~10일 수확
+              </div>
+            </div>
+            <div style="background:#F3E5F5;border-radius:8px;padding:10px;border-left:3px solid #6A1B9A">
+              <div style="font-size:12px;font-weight:800;color:#4A148C">맷돌호박①②</div>
+              <div style="font-size:11px;color:#6A1B9A;line-height:1.8;margin-top:4px">
+                • 어미줄기 <b>5절 적심</b><br>
+                • 아들줄기 2개 유인<br>
+                • <b>10~15절</b> 착과<br>
+                • 중형(3~5kg)
+              </div>
+            </div>
+            <div style="background:#EDE7F6;border-radius:8px;padding:10px;border-left:3px solid #6A1B9A;grid-column:1/-1">
+              <div style="font-size:12px;font-weight:800;color:#4A148C">보우짱 단호박①②</div>
+              <div style="font-size:11px;color:#6A1B9A;line-height:1.8;margin-top:4px">
+                • 어미줄기 <b>5절 적심</b> → 아들줄기 2~3개<br>
+                • <b>아들줄기 15~18절</b> 착과 (수박과 유사)<br>
+                • 포기당 2~3개 착과 가능 (단호박은 소형)<br>
+                • 고랑⑨ 유인 후 지면 착과
+              </div>
+            </div>
+          </div>
+          <div style="background:#4A148C;border-radius:10px;padding:12px 14px;color:white">
+            <div style="font-size:13px;font-weight:800;margin-bottom:8px">🎃 호박 핵심 비교</div>
+            <div style="font-size:12px;line-height:2.0">
+              애호박: 어미줄기 직착 (오이형) · 기둥 수직 유인<br>
+              맷돌: 어미 5절 적심 → 아들 10~15절 착과<br>
+              보우짱: 어미 5절 적심 → 아들 15~18절 착과<br>
+              ⚠ 맷돌·보우짱 2개 이상 착과 → 품질 저하
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- SVG 삽화 -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">✂️</span>
+          <div><div class="card-title">호박 품종별 순치기 삽화</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">애호박·맷돌·보우짱 비교</div></div>
+        </div>
+        <div style="padding:0 0 14px">
+          <svg width="100%" viewBox="0 0 420 580" style="display:block;font-family:'Apple SD Gothic Neo',sans-serif">
+            <rect width="420" height="580" fill="#FAFAFA"/>
+            <!-- 헤더 -->
+            <rect x="0" y="0" width="420" height="44" fill="#4A148C"/>
+            <text x="210" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="white">호박 품종별 순치기 비교</text>
+
+            <!-- ─── 애호박 (왼쪽) ─── -->
+            <rect x="8" y="52" width="124" height="32" rx="6" fill="#E8EAF6"/>
+            <text x="70" y="72" text-anchor="middle" font-size="14" font-weight="800" fill="#4A148C">애호박①②</text>
+            <!-- 기둥 -->
+            <rect x="67" y="90" width="8" height="260" rx="3" fill="#9E9E9E" opacity="0.4"/>
+            <!-- 어미줄기 수직 -->
+            <line x1="71" y1="340" x2="71" y2="95" stroke="#7E57C2" stroke-width="6" stroke-linecap="round"/>
+            <!-- 클립 -->
+            <rect x="60" y="160" width="22" height="7" rx="3" fill="#E65100" opacity="0.8"/>
+            <rect x="60" y="220" width="22" height="7" rx="3" fill="#E65100" opacity="0.8"/>
+            <rect x="60" y="280" width="22" height="7" rx="3" fill="#E65100" opacity="0.8"/>
+            <!-- 착과 (어미줄기 직접) -->
+            <ellipse cx="105" cy="168" rx="22" ry="13" fill="#7E57C2" opacity="0.85"/>
+            <text x="105" y="165" text-anchor="middle" font-size="11" fill="white" font-weight="700">애호박</text>
+            <text x="105" y="177" text-anchor="middle" font-size="10" fill="white">직접착과</text>
+            <ellipse cx="105" cy="228" rx="22" ry="13" fill="#7E57C2" opacity="0.85"/>
+            <text x="105" y="225" text-anchor="middle" font-size="11" fill="white" font-weight="700">애호박</text>
+            <text x="105" y="237" text-anchor="middle" font-size="10" fill="white">직접착과</text>
+            <!-- 곁순 제거 -->
+            <line x1="71" y1="196" x2="110" y2="193" stroke="#EF9A9A" stroke-width="2.5" stroke-dasharray="5 2"/>
+            <text x="18" y="196" font-size="11" fill="#C62828" font-weight="600">✂️곁순</text>
+            <text x="18" y="209" font-size="11" fill="#C62828" font-weight="600">제거</text>
+            <!-- 레이블 -->
+            <rect x="8" y="354" width="124" height="52" rx="6" fill="#EDE7F6"/>
+            <text x="70" y="372" text-anchor="middle" font-size="12" font-weight="700" fill="#4A148C">오이와 동일!</text>
+            <text x="70" y="388" text-anchor="middle" font-size="11" fill="#6A1B9A">어미줄기 직접</text>
+            <text x="70" y="401" text-anchor="middle" font-size="11" fill="#6A1B9A">7~10일 수확</text>
+
+            <!-- ─── 맷돌호박 (가운데) ─── -->
+            <rect x="148" y="52" width="124" height="32" rx="6" fill="#E8F5E9"/>
+            <text x="210" y="72" text-anchor="middle" font-size="14" font-weight="800" fill="#1B5E20">맷돌호박①②</text>
+            <!-- 어미줄기 -->
+            <line x1="172" y1="340" x2="172" y2="90" stroke="#4CAF50" stroke-width="5" stroke-linecap="round"/>
+            <!-- 5절 적심 -->
+            <line x1="148" y1="215" x2="260" y2="215" stroke="#C62828" stroke-width="2.5" stroke-dasharray="7 3"/>
+            <text x="155" y="210" font-size="12" fill="#C62828" font-weight="700">✂️ 5절 적심</text>
+            <!-- 아들줄기 분지 -->
+            <path d="M172 215 Q215 220 255 240 Q268 248 272 270" fill="none" stroke="#66BB6A" stroke-width="4" stroke-linecap="round"/>
+            <path d="M172 215 Q200 230 220 260 Q228 278 230 300" fill="none" stroke="#81C784" stroke-width="4" stroke-linecap="round"/>
+            <text x="266" y="258" font-size="12" fill="#1565C0" font-weight="600">아들①</text>
+            <text x="224" y="290" font-size="12" fill="#1565C0" font-weight="600">아들②</text>
+            <!-- 착과 위치 (10~15절) -->
+            <circle cx="270" cy="308" r="20" fill="#2E7D32" opacity="0.85"/>
+            <text x="270" y="305" text-anchor="middle" font-size="11" fill="white" font-weight="700">착과</text>
+            <text x="270" y="318" text-anchor="middle" font-size="10" fill="white">10~15절</text>
+            <circle cx="230" cy="330" r="20" fill="#2E7D32" opacity="0.85"/>
+            <text x="230" y="327" text-anchor="middle" font-size="11" fill="white" font-weight="700">착과</text>
+            <text x="230" y="340" text-anchor="middle" font-size="10" fill="white">10~15절</text>
+            <!-- 레이블 -->
+            <rect x="148" y="354" width="124" height="52" rx="6" fill="#E8F5E9"/>
+            <text x="210" y="372" text-anchor="middle" font-size="12" font-weight="700" fill="#1B5E20">맷돌호박</text>
+            <text x="210" y="388" text-anchor="middle" font-size="11" fill="#2E7D32">어미5절→아들</text>
+            <text x="210" y="401" text-anchor="middle" font-size="11" fill="#2E7D32">10~15절착과</text>
+
+            <!-- ─── 보우짱 단호박 (오른쪽) ─── -->
+            <rect x="288" y="52" width="124" height="32" rx="6" fill="#FFF9C4"/>
+            <text x="350" y="68" text-anchor="middle" font-size="13" font-weight="800" fill="#854F0B">보우짱 단호박</text>
+            <text x="350" y="80" text-anchor="middle" font-size="11" fill="#854F0B">①②</text>
+            <!-- 어미줄기 -->
+            <line x1="310" y1="340" x2="310" y2="90" stroke="#FFA726" stroke-width="5" stroke-linecap="round"/>
+            <!-- 5절 적심 -->
+            <line x1="288" y1="205" x2="412" y2="205" stroke="#C62828" stroke-width="2.5" stroke-dasharray="7 3"/>
+            <text x="294" y="200" font-size="12" fill="#C62828" font-weight="700">✂️ 5절 적심</text>
+            <!-- 아들줄기 2~3개 -->
+            <path d="M310 205 Q360 220 390 260 Q400 278 402 310" fill="none" stroke="#FFB74D" stroke-width="4" stroke-linecap="round"/>
+            <path d="M310 205 Q340 230 360 268 Q365 285 366 310" fill="none" stroke="#FFA726" stroke-width="4" stroke-linecap="round"/>
+            <text x="396" y="295" font-size="11" fill="#854F0B" font-weight="600">아들①</text>
+            <text x="360" y="298" font-size="11" fill="#854F0B" font-weight="600">아들②</text>
+            <!-- 착과 (15~18절) — 지면 안착 -->
+            <ellipse cx="400" cy="338" rx="24" ry="14" fill="#F57F17" opacity="0.85"/>
+            <text x="400" y="335" text-anchor="middle" font-size="11" fill="white" font-weight="700">단호박</text>
+            <text x="400" y="347" text-anchor="middle" font-size="10" fill="white">15~18절</text>
+            <ellipse cx="365" cy="338" rx="24" ry="14" fill="#F57F17" opacity="0.85"/>
+            <text x="365" y="335" text-anchor="middle" font-size="11" fill="white" font-weight="700">단호박</text>
+            <text x="365" y="347" text-anchor="middle" font-size="10" fill="white">15~18절</text>
+            <!-- 지면 -->
+            <rect x="288" y="344" width="124" height="8" rx="3" fill="#D7CCC8" opacity="0.5"/>
+            <text x="350" y="350" text-anchor="middle" font-size="10" fill="#795548">지면 안착</text>
+            <!-- 레이블 -->
+            <rect x="288" y="354" width="124" height="52" rx="6" fill="#FFF9C4"/>
+            <text x="350" y="372" text-anchor="middle" font-size="12" font-weight="700" fill="#854F0B">보우짱단호박</text>
+            <text x="350" y="388" text-anchor="middle" font-size="11" fill="#854F0B">어미5절→아들</text>
+            <text x="350" y="401" text-anchor="middle" font-size="11" fill="#854F0B">15~18절지면</text>
+
+            <!-- 하단 핵심 비교 -->
+            <rect x="8" y="416" width="404" height="155" rx="8" fill="#F3E5F5" stroke="#6A1B9A" stroke-width="1.5"/>
+            <text x="210" y="436" text-anchor="middle" font-size="14" font-weight="800" fill="#4A148C">⚠ 호박 품종별 핵심 차이</text>
+            <rect x="16" y="444" width="120" height="18" rx="4" fill="#EDE7F6"/>
+            <text x="76" y="457" text-anchor="middle" font-size="12" fill="#4A148C" font-weight="700">애호박</text>
+            <rect x="150" y="444" width="120" height="18" rx="4" fill="#E8F5E9"/>
+            <text x="210" y="457" text-anchor="middle" font-size="12" fill="#1B5E20" font-weight="700">맷돌호박</text>
+            <rect x="284" y="444" width="120" height="18" rx="4" fill="#FFF9C4"/>
+            <text x="344" y="457" text-anchor="middle" font-size="12" fill="#854F0B" font-weight="700">보우짱단호박</text>
+            <text x="76"  y="480" text-anchor="middle" font-size="12" fill="#4A148C">어미줄기 직착</text>
+            <text x="210" y="480" text-anchor="middle" font-size="12" fill="#1B5E20">아들 10~15절</text>
+            <text x="344" y="480" text-anchor="middle" font-size="12" fill="#854F0B">아들 15~18절</text>
+            <text x="76"  y="498" text-anchor="middle" font-size="12" fill="#4A148C">곁순 즉시제거</text>
+            <text x="210" y="498" text-anchor="middle" font-size="12" fill="#1B5E20">포기당 1~2개</text>
+            <text x="344" y="498" text-anchor="middle" font-size="12" fill="#854F0B">포기당 2~3개</text>
+            <text x="76"  y="516" text-anchor="middle" font-size="12" fill="#4A148C">7~10일 수확</text>
+            <text x="210" y="516" text-anchor="middle" font-size="12" fill="#1B5E20">지면 착과</text>
+            <text x="344" y="516" text-anchor="middle" font-size="12" fill="#854F0B">지면 안착</text>
+            <text x="76"  y="534" text-anchor="middle" font-size="12" fill="#4A148C">기둥 수직유인</text>
+            <text x="210" y="534" text-anchor="middle" font-size="12" fill="#1B5E20">덩굴 지면유인</text>
+            <text x="344" y="534" text-anchor="middle" font-size="12" fill="#854F0B">덩굴 지면유인</text>
+            <text x="210" y="558" text-anchor="middle" font-size="12" fill="#C62828" font-weight="700">⚠ 맷돌·보우짱 2개 이상 착과 시 품질 저하!</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════ 접목수박 ════ -->
+    <div id="guide-graft" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-icon">🍉</span>
+          <div>
+            <div class="card-title">고랑⑪ 접목수박 — 기둥유인·⑩고랑 안착</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">기둥 상승 → 아들줄기 고랑⑩방향 → 지면 안착</div>
+          </div>
+        </div>
+        <div style="padding:0 0 14px;overflow-x:auto">
+          <svg width="100%" viewBox="0 0 420 580" style="min-width:320px;display:block;font-family:'Apple SD Gothic Neo',sans-serif">
+            <rect width="420" height="580" fill="#FAFAFA"/>
+            <rect x="0" y="0" width="420" height="44" rx="0" fill="#1B5E20"/>
+            <text x="210" y="28" text-anchor="middle" font-size="17" font-weight="800" fill="white">접목수박 — 고랑⑪→⑩ 유인</text>
+
+            <!-- 고랑 레이아웃 -->
+            <rect x="10" y="52" width="188" height="36" rx="6" fill="#FFF9C4" stroke="#F9A825" stroke-width="2"/>
+            <text x="104" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="#854F0B">고랑⑩ (열매 공간)</text>
+            <rect x="222" y="52" width="188" height="36" rx="6" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+            <text x="316" y="74" text-anchor="middle" font-size="15" font-weight="800" fill="#1B5E20">고랑⑪ (정식)</text>
+
+            <!-- 기둥 -->
+            <rect x="390" y="96" width="12" height="330" rx="4" fill="#888" opacity="0.35"/>
+            <text x="358" y="112" font-size="13" fill="#888" font-weight="600">기둥</text>
+
+            <!-- 지면 -->
+            <rect x="10" y="432" width="400" height="16" rx="4" fill="#D7CCC8" opacity="0.6"/>
+            <text x="210" y="444" text-anchor="middle" font-size="13" fill="#795548" font-weight="600">지 면</text>
+
+            <!-- 모종 -->
+            <circle cx="316" cy="428" r="18" fill="#388E3C" stroke="#1B5E20" stroke-width="2.5"/>
+            <text x="316" y="424" text-anchor="middle" font-size="13" font-weight="800" fill="white">모</text>
+            <text x="316" y="438" text-anchor="middle" font-size="11" fill="white">종</text>
+            <text x="316" y="460" text-anchor="middle" font-size="13" fill="#1B5E20" font-weight="700">접목수박 정식</text>
+
+            <!-- 단계 번호 -->
+            <circle cx="316" cy="410" r="14" fill="#1B5E20"/>
+            <text x="316" y="414" text-anchor="middle" font-size="13" font-weight="800" fill="white">①</text>
+
+            <!-- 어미줄기 상승 -->
+            <path d="M316 412 Q380 360 394 290 Q396 220 396 105" fill="none" stroke="#2E7D32" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="396" cy="380" r="7" fill="#E65100" opacity="0.8"/>
+            <circle cx="396" cy="320" r="7" fill="#E65100" opacity="0.8"/>
+            <circle cx="396" cy="250" r="7" fill="#E65100" opacity="0.8"/>
+            <text x="360" y="376" text-anchor="end" font-size="13" fill="#E65100" font-weight="700">클립</text>
+
+            <!-- 단계2 -->
+            <circle cx="396" cy="200" r="14" fill="#E65100"/>
+            <text x="396" y="204" text-anchor="middle" font-size="13" font-weight="800" fill="white">②</text>
+            <text x="350" y="198" text-anchor="end" font-size="13" fill="#2E7D32" font-weight="700">어미줄기↑</text>
+            <text x="350" y="213" text-anchor="end" font-size="12" fill="#2E7D32">기둥 타고 상승</text>
+
+            <!-- 아들줄기 → 고랑⑩ -->
+            <path d="M396 290 Q340 310 260 340 Q200 360 160 400 Q130 418 104 428" fill="none" stroke="#66BB6A" stroke-width="5" stroke-linecap="round"/>
+            <polygon points="104,428 122,416 118,432" fill="#66BB6A"/>
+
+            <!-- 단계3 -->
+            <circle cx="270" cy="316" r="14" fill="#558B2F"/>
+            <text x="270" y="320" text-anchor="middle" font-size="13" font-weight="800" fill="white">③</text>
+            <text x="254" y="304" text-anchor="middle" font-size="13" fill="#2E7D32" font-weight="700">아들줄기</text>
+            <text x="254" y="318" text-anchor="middle" font-size="12" fill="#2E7D32">고랑⑩방향</text>
+
+            <!-- 착과 -->
+            <circle cx="170" cy="390" r="12" fill="#8BC34A" opacity="0.7" stroke="#558B2F" stroke-width="1.5"/>
+            <text x="170" y="388" text-anchor="middle" font-size="11" fill="white" font-weight="700">착과</text>
+            <text x="170" y="400" text-anchor="middle" font-size="10" fill="white">15~20절</text>
+            <text x="140" y="376" font-size="12" fill="#2E7D32" font-weight="600">착과절</text>
+
+            <!-- 수박 열매 -->
+            <ellipse cx="104" cy="428" rx="52" ry="30" fill="#2E7D32" opacity="0.8"/>
+            <text x="104" y="424" text-anchor="middle" font-size="13" font-weight="800" fill="white">접목수박</text>
+            <text x="104" y="438" text-anchor="middle" font-size="12" fill="white">5~8kg</text>
+
+            <!-- 조류망 -->
+            <ellipse cx="104" cy="428" rx="66" ry="42" fill="none" stroke="#1565C0" stroke-width="2.5" stroke-dasharray="6 3" opacity="0.75"/>
+            <text x="50" y="400" text-anchor="middle" font-size="13" fill="#1565C0" font-weight="700">조류망</text>
+
+            <!-- 단계4 -->
+            <circle cx="56" cy="416" r="14" fill="#1565C0"/>
+            <text x="56" y="420" text-anchor="middle" font-size="13" font-weight="800" fill="white">④</text>
+
+            <!-- 방향 화살표 -->
+            <line x1="316" y1="490" x2="104" y2="490" stroke="#66BB6A" stroke-width="3"/>
+            <polygon points="104,490 120,483 120,497" fill="#66BB6A"/>
+            <text x="210" y="506" text-anchor="middle" font-size="14" fill="#1B5E20" font-weight="700">아들줄기 유인 방향 (⑪→⑩)</text>
+
+            <!-- 요약 -->
+            <rect x="10" y="518" width="400" height="52" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="1.5"/>
+            <text x="210" y="538" text-anchor="middle" font-size="13" fill="#1B5E20" font-weight="700">①정식 → ②기둥상승(클립) → ③아들줄기⑩방향</text>
+            <text x="210" y="558" text-anchor="middle" font-size="13" fill="#1B5E20" font-weight="700">→ ④지면안착 · 조류망 씌우기</text>
+          </svg>
+        </div>
       </div>
     </div>
   </div>
+
 
   <!-- ⑧ 전정 가이드 -->
   <div class="section" id="sec-pruning">
@@ -2762,6 +3370,94 @@
 
   </div>
 
+  <!-- 📊 구글시트 기록장 -->
+  <div class="section" id="sec-sheet">
+    <div class="section-title">📊 기록장 — LayoutData 시트</div>
+
+    <!-- 버튼 행 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <button onclick="loadSheetData()" id="sheetRefreshBtn"
+        style="flex:1;background:var(--green-pale);border:1.5px solid var(--green);
+        color:var(--green-dark);border-radius:8px;padding:10px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        🔄 시트 불러오기
+      </button>
+      <button onclick="openAddRecord()"
+        style="flex:1;background:#E3F2FD;border:1.5px solid #1565C0;
+        color:#1565C0;border-radius:8px;padding:10px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        ✏️ 기록 추가
+      </button>
+      <button onclick="openSheet()"
+        style="flex:1;background:#F3E5F5;border:1.5px solid #6A1B9A;
+        color:#6A1B9A;border-radius:8px;padding:10px;
+        font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">
+        📄 시트 열기
+      </button>
+    </div>
+
+    <!-- 검색 -->
+    <div class="search-wrap" style="margin-bottom:10px">
+      <input type="search" class="search-input" id="sheetSearch"
+        placeholder="🔍 데이터 검색..."
+        oninput="renderSheetTable()"
+        autocomplete="off">
+    </div>
+
+    <!-- 시트 데이터 -->
+    <div class="card">
+      <div class="card-body" id="sheetBody">
+        <div style="text-align:center;padding:24px;color:#9E9E9E">
+          <div style="font-size:28px">📊</div>
+          <div style="font-size:13px;margin-top:8px">🔄 버튼을 눌러 시트 데이터를 불러오세요</div>
+          <div style="font-size:11px;color:#BDBDBD;margin-top:4px">LayoutData 시트 자동 로드</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 임시 저장 기록 -->
+    <div class="card" id="pendingCard" style="display:none">
+      <div class="card-header">
+        <span class="card-icon">📝</span>
+        <div>
+          <div class="card-title">임시 저장 기록</div>
+          <div style="font-size:11px;color:#9E9E9E;margin-top:2px">시트에 직접 입력 후 동기화 필요</div>
+        </div>
+        <button onclick="openSheet()" style="background:#E8F5E9;border:1.5px solid var(--green);
+          color:var(--green-dark);border-radius:8px;padding:5px 10px;font-size:11px;
+          font-weight:700;cursor:pointer;font-family:inherit">시트에 입력</button>
+      </div>
+      <div class="card-body" id="pendingList"></div>
+    </div>
+  </div>
+
+  <!-- 행 상세 모달 -->
+  <div class="modal-overlay" id="rowDetailModal" onclick="closeRowDetail()">
+    <div class="modal-sheet" style="max-height:70vh">
+      <div class="modal-handle"></div>
+      <div class="modal-title">행 상세 보기</div>
+      <div id="rowDetailContent" style="overflow-y:auto;max-height:50vh"></div>
+      <div class="modal-actions" style="margin-top:12px">
+        <button class="modal-cancel" style="flex:1" onclick="closeRowDetail()">닫기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 기록 추가 모달 -->
+  <div class="modal-overlay" id="addRecordModal" onclick="closeAddRecord(event)">
+    <div class="modal-sheet" style="max-height:80vh;overflow-y:auto">
+      <div class="modal-handle"></div>
+      <div class="modal-title">✏️ 기록 추가</div>
+      <div class="modal-sub">LayoutData 시트에 추가할 내용을 입력하세요</div>
+      <div id="addRecordForm"></div>
+      <div class="modal-actions">
+        <button class="modal-save" onclick="saveRecord()">✅ 임시 저장</button>
+        <button class="modal-cancel" onclick="closeAddRecord()">취소</button>
+      </div>
+    </div>
+  </div>
+
+
 </div><!-- /content --></div><!-- /content -->
 
 <!-- 하단 네비게이션 -->
@@ -2773,6 +3469,10 @@
   <div class="nav-item" onclick="showTab('search')">
     <div class="nav-icon">🔍</div>
     <div class="nav-label">검색·이동</div>
+  </div>
+  <div class="nav-item" onclick="showTab('supply')">
+    <div class="nav-icon">🧪</div>
+    <div class="nav-label">농자재</div>
   </div>
   <div class="nav-item" onclick="showTab('dday')">
     <div class="nav-icon">⏰</div>
@@ -2805,6 +3505,10 @@
   <div class="nav-item" onclick="showTab('guide')">
     <div class="nav-icon">📷</div>
     <div class="nav-label">재배그림</div>
+  </div>
+  <div class="nav-item" onclick="showTab('sheet')">
+    <div class="nav-icon">📊</div>
+    <div class="nav-label">기록장</div>
   </div>
 </div>
 
@@ -3161,6 +3865,11 @@ function getDateTasks(selDate) {
   }
 
 
+  // ── 보유 농자재 구입 알림 추가 ──────────────────────────
+  if (typeof getSupplyTasksForMonth !== 'undefined') {
+    getSupplyTasksForMonth(m, day).forEach(t => tasks.push(t));
+  }
+
   // ── 이달의 시비 작업 자동 추가 ──────────────────────────
   if (typeof myFertSchedule !== 'undefined') {
     const fertsThisMonth = myFertSchedule[m] || [];
@@ -3195,7 +3904,7 @@ function getDateTasks(selDate) {
         }
       }
       tasks.push({
-        id:     id('fert_' + fi),
+        id:     id('fert' + fi),
         name:   '🌱 시비: ' + f.work,
         detail: f.fertilizer + (f.amount !== '—' ? ' · ' + f.amount : '')
                 + (f.caution ? ' ⚠ ' + f.caution : ''),
@@ -3218,7 +3927,7 @@ function getDateTasks(selDate) {
         warned.add(pestName);
         const p = (typeof pestDetail !== 'undefined') ? pestDetail[pestName] : null;
         tasks.push({
-          id:     id('pest_' + pestName.replace(/[^a-z가-힣]/gi,'')),
+          id:     id('pest' + pestName.replace(/[^a-z가-힣]/gi,'')),
           name:   '🐛 병해충 주의: ' + pestName,
           detail: p ? p.symptom + ' · 방제: ' + p.control : '이달 발생 주의',
           loc:    info.emoji + ' ' + group,
@@ -3306,9 +4015,31 @@ function renderTasks() {
   const todayKey = toYMD(SELECTED_DATE);
   if (!list) return;
 
-  list.innerHTML = tasks.map(t => {
+  // 선택 날짜 외 7일 이상 지난 체크 자동 정리
+  const cutoff = new Date(SELECTED_DATE);
+  cutoff.setDate(cutoff.getDate() - 7);
+  const cutoffStr = toYMD(cutoff);
+  Object.keys(checkedTasks).forEach(k => {
+    const datePart = k.substring(0, 10); // YYYY-MM-DD
+    if (datePart < cutoffStr) delete checkedTasks[k];
+  });
+  localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
+
+  // 완료된 반복 작업(월 기반) 제외 옵션
+  const monthKey = todayKey.slice(0,7);
+  const visibleTasks = tasks.filter(t => {
+    const k1 = todayKey + '-' + t.id;
+    const k2 = monthKey + '-' + t.id;
+    // 날짜 특화 task(id에 날짜 포함)는 항상 표시
+    return true; // 모두 표시하되 완료 표시만 유지
+  });
+  const doneCount = tasks.filter(t => {
+    return checkedTasks[todayKey+'-'+t.id] || checkedTasks[monthKey+'-'+t.id];
+  }).length;
+  list.innerHTML = visibleTasks.map(t => {
     const key  = todayKey + '-' + t.id;
-    const done = checkedTasks[key];
+    const monthKey2 = todayKey.slice(0,7);
+    const done = checkedTasks[key] || checkedTasks[monthKey2 + '-' + t.id];
     // judge 배지 설정
     const j = t.judge || (t.urgent ? 'urgent' : 'ok');
     const judgeMap = {
@@ -3347,12 +4078,11 @@ function renderTasks() {
     </div>`;
   }).join('') || '<div style="text-align:center;padding:30px 16px;color:#9E9E9E"><div style="font-size:32px">✅</div><div style="font-size:14px;margin-top:8px">이 날은 등록된 작업이 없습니다</div></div>';
 
-  const total = tasks.length;
-  const done  = tasks.filter(t => checkedTasks[todayKey+'-'+t.id]).length;
+  const total = visibleTasks.length;
   const badge = document.getElementById('taskCountBadge');
   const prog  = document.getElementById('progressFill');
   if (badge) badge.textContent = total + '개';
-  if (prog)  prog.style.width  = total ? (done/total*100)+'%' : '0%';
+  if (prog)  prog.style.width  = total ? (doneCount/total*100)+'%' : '0%';
 
   const month = getMonthNum();
   const next  = getNextWeekPrep(month);
@@ -3373,7 +4103,28 @@ function toggleTask(key, el) {
   checkedTasks[key] = !checkedTasks[key];
   if (!checkedTasks[key]) delete checkedTasks[key];
   localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
-  renderTasks();
+  // 완료 상태 즉시 UI 반영 (renderTasks 대신 직접 처리 — 깜빡임 방지)
+  const taskItem = el.closest ? el.closest('.task-item') : el.parentElement;
+  el.classList.toggle('done', !!checkedTasks[key]);
+  const nameEl = taskItem?.querySelector('.task-name');
+  if (nameEl) nameEl.classList.toggle('done', !!checkedTasks[key]);
+  updateTaskProgress();
+}
+
+function updateTaskProgress() {
+  const tasks    = getDateTasks(SELECTED_DATE);
+  const todayKey = toYMD(SELECTED_DATE);
+  const monthKey = todayKey.slice(0,7); // YYYY-MM
+  const total = tasks.length;
+  const done  = tasks.filter(t => {
+    const k1 = todayKey + '-' + t.id;
+    const k2 = monthKey + '-' + t.id;
+    return checkedTasks[k1] || checkedTasks[k2];
+  }).length;
+  const badge = document.getElementById('taskCountBadge');
+  const prog  = document.getElementById('progressFill');
+  if (badge) badge.textContent = total + '개';
+  if (prog)  prog.style.width  = total ? (done/total*100)+'%' : '0%';
 }
 
 // ── D-day 데이터 ─────────────────────────────────────────
@@ -3626,13 +4377,27 @@ function toggleMonth(num) {
 }
 
 // ── 탭 전환 ──────────────────────────────────────────
+// ── 전체 렌더 ────────────────────────────────────────────
+function renderAll() {
+  updateDateUI();
+  renderWeatherAlert();
+  renderTasks();
+  renderDDay();
+  renderIrang();
+  renderMonthly();
+  renderGrow();
+  renderPruningList();
+  renderPruneChecklist();
+  initSearch();
+}
+
 let wxAutoLoaded = false;
 function showTab(id) {
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`sec-${id}`)?.classList.add('active');
-  const tabMap = {today:0, search:1, dday:2, irang:3, monthly:4, wxlive:5, pest:6, pruning:7, grow:8, guide:9};
+  const tabMap = {today:0, search:1, supply:2, dday:3, irang:4, monthly:5, wxlive:6, pest:7, pruning:8, grow:9, guide:10, sheet:10};
   document.querySelectorAll('.tab')[tabMap[id]]?.classList.add('active');
   document.querySelectorAll('.nav-item')[tabMap[id]]?.classList.add('active');
   // 날씨 탭 진입 시 자동 로드
@@ -3643,6 +4408,12 @@ function showTab(id) {
   // 병해충·시비 탭 진입 시 비료 현황 렌더
   if (id === 'pest') {
     renderNhFertList();
+  }
+  // 구글시트 탭 진입 시 자동 로드
+  if (id === 'sheet' && !sheetAutoLoaded) {
+    sheetAutoLoaded = true;
+    loadSheetData();
+    renderPendingList();
   }
 }
 
@@ -6229,6 +7000,613 @@ const nhPesticideMap = {
   '석회유황합제':     '석회유황합제',
 };
 
+
+// ── 재배 그림 탭 전환 ────────────────────────────────────
+const guideNames = ['watermelon','melon','cucumber','pumpkin','graft'];
+function showGuide(name) {
+  guideNames.forEach(n => {
+    const el  = document.getElementById('guide-' + n);
+    const btn = document.getElementById('gtab-' + n);
+    if (!el || !btn) return;
+    const active = n === name;
+    el.style.display    = active ? 'block' : 'none';
+    btn.style.background= active ? '#1B5E20' : 'white';
+    btn.style.color     = active ? 'white'   : '#757575';
+    btn.style.borderColor= active ? '#1B5E20' : '#E0E0E0';
+  });
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 구글 스프레드시트 LayoutData 연동
+// ══════════════════════════════════════════════════════════
+const SHEET_ID = '1pyDZYEFqc7pI8TDetG6ZKNOf0SVfFaf6vycRFy6G8dk';
+const SHEET_GID = '1101833178';
+const SHEET_NAME = 'LayoutData';
+
+let gsheetData = [];   // 불러온 데이터 캐시
+let gsheetHeaders = []; // 헤더 행
+
+// 읽기: 공개 CSV export API
+async function loadSheetData() {
+  const btn  = document.getElementById('sheetRefreshBtn');
+  const body = document.getElementById('sheetBody');
+  if (btn) btn.textContent = '⏳ 불러오는 중...';
+  if (body) body.innerHTML = '<div style="text-align:center;padding:20px;color:#9E9E9E">데이터 불러오는 중...</div>';
+
+  try {
+    // gviz/tq: 공개 공유 시트에서 JSON 형태로 읽기
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${SHEET_GID}`;
+    const res  = await fetch(url);
+    const text = await res.text();
+
+    // gviz 응답은 /*O_o*/\ngoogle.visualization.Query.setResponse({...}) 형태
+    const jsonStr = text.replace(/^[^{]*/, '').replace(/\);?\s*$/, '');
+    const obj = JSON.parse(jsonStr);
+    const table = obj.table;
+
+    // 헤더 추출
+    gsheetHeaders = table.cols.map(c => c.label || c.id);
+    // 데이터 행 추출
+    gsheetData = table.rows.map(row =>
+      row.c.map(cell => cell ? (cell.v !== null && cell.v !== undefined ? String(cell.v) : '') : '')
+    );
+
+    renderSheetTable();
+    if (btn) btn.textContent = '🔄 새로고침';
+
+  } catch(err) {
+    console.error('시트 읽기 오류:', err);
+    if (body) body.innerHTML = `
+      <div style="background:#FFEBEE;border-radius:8px;padding:14px;text-align:center">
+        <div style="font-size:13px;color:#C62828;font-weight:700">⚠ 시트를 불러올 수 없습니다</div>
+        <div style="font-size:11px;color:#E53935;margin-top:4px">
+          스프레드시트가 "링크 있는 모든 사용자" 공개 설정인지 확인하세요
+        </div>
+        <button onclick="loadSheetData()" style="margin-top:10px;background:#E3F2FD;border:none;
+          color:#1565C0;border-radius:8px;padding:8px 16px;font-size:12px;font-weight:700;
+          cursor:pointer;font-family:inherit">🔄 다시 시도</button>
+      </div>`;
+    if (btn) btn.textContent = '🔄 새로고침';
+  }
+}
+
+// 테이블 렌더링
+function renderSheetTable() {
+  const body = document.getElementById('sheetBody');
+  if (!body) return;
+
+  if (!gsheetData.length) {
+    body.innerHTML = '<div style="text-align:center;padding:20px;color:#9E9E9E">데이터가 없습니다</div>';
+    return;
+  }
+
+  // 검색 필터
+  const q = (document.getElementById('sheetSearch')?.value || '').toLowerCase();
+  const filtered = q
+    ? gsheetData.filter(row => row.some(cell => cell.toLowerCase().includes(q)))
+    : gsheetData;
+
+  const total = gsheetData.length;
+  const shown = filtered.length;
+
+  let html = `<div style="font-size:11px;color:#9E9E9E;margin-bottom:8px">
+    전체 ${total}행 중 ${shown}행 표시</div>`;
+
+  // 테이블 (가로 스크롤)
+  html += `<div style="overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:8px;border:1px solid #E0E0E0">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;min-width:${Math.max(gsheetHeaders.length * 90, 300)}px">
+      <thead>
+        <tr style="background:#1B5E20;position:sticky;top:0">
+          ${gsheetHeaders.map(h =>
+            `<th style="padding:8px 10px;color:white;font-weight:700;text-align:left;
+              white-space:nowrap">${h}</th>`
+          ).join('')}
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.map((row, ri) => `
+          <tr style="background:${ri%2===0?'white':'#F9FBE7'}" onclick="showRowDetail(${ri})">
+            ${row.map(cell =>
+              `<td style="padding:7px 10px;border-bottom:1px solid #F0F0F0;
+                white-space:nowrap;cursor:pointer">${cell||'—'}</td>`
+            ).join('')}
+          </tr>`
+        ).join('')}
+      </tbody>
+    </table>
+  </div>`;
+
+  body.innerHTML = html;
+}
+
+// 행 상세 보기
+function showRowDetail(rowIdx) {
+  const body   = document.getElementById('sheetBody');
+  const q      = (document.getElementById('sheetSearch')?.value || '').toLowerCase();
+  const filtered = q
+    ? gsheetData.filter(row => row.some(cell => cell.toLowerCase().includes(q)))
+    : gsheetData;
+  const row    = filtered[rowIdx];
+  if (!row) return;
+
+  const detail = gsheetHeaders.map((h,i) => `
+    <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F0F0F0;align-items:flex-start">
+      <span style="font-size:11px;font-weight:700;color:#1B5E20;min-width:90px;flex-shrink:0">${h}</span>
+      <span style="font-size:12px;color:#37474F;flex:1">${row[i]||'—'}</span>
+    </div>`).join('');
+
+  document.getElementById('rowDetailContent').innerHTML = detail;
+  document.getElementById('rowDetailModal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeRowDetail() {
+  document.getElementById('rowDetailModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+// 기록 추가 (Apps Script Web App 경유)
+// ⚠ 쓰기는 Google Apps Script 배포 URL이 필요
+// 현재는 로컬 임시 저장 후 시트 URL로 안내
+let pendingEntries = JSON.parse(localStorage.getItem('sheetPending') || '[]');
+
+function openAddRecord() {
+  const modal = document.getElementById('addRecordModal');
+  if (!modal) return;
+  // 헤더 기반으로 입력 폼 동적 생성
+  const form = document.getElementById('addRecordForm');
+  if (form && gsheetHeaders.length) {
+    form.innerHTML = gsheetHeaders.map((h,i) =>
+      `<div class="modal-field">
+        <div class="modal-label">${h}</div>
+        <input type="text" class="modal-text" id="rec_${i}"
+          placeholder="${h} 입력..." autocomplete="off">
+      </div>`
+    ).join('');
+  } else if (form) {
+    form.innerHTML = `<div style="text-align:center;padding:16px;color:#9E9E9E">
+      먼저 시트 데이터를 불러오세요</div>`;
+  }
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeAddRecord(e) {
+  if (e && e.target !== document.getElementById('addRecordModal')) return;
+  document.getElementById('addRecordModal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function saveRecord() {
+  if (!gsheetHeaders.length) {
+    showToast('먼저 시트 데이터를 불러오세요');
+    return;
+  }
+  const entry = {};
+  let hasData = false;
+  gsheetHeaders.forEach((h,i) => {
+    const val = document.getElementById('rec_'+i)?.value.trim() || '';
+    entry[h] = val;
+    if (val) hasData = true;
+  });
+  entry['_timestamp'] = new Date().toISOString().slice(0,19).replace('T',' ');
+
+  if (!hasData) { showToast('⚠ 최소 한 개 이상 입력하세요'); return; }
+
+  pendingEntries.push(entry);
+  localStorage.setItem('sheetPending', JSON.stringify(pendingEntries));
+
+  document.getElementById('addRecordModal').classList.remove('open');
+  document.body.style.overflow = '';
+  renderPendingList();
+  showToast('✅ 임시 저장 완료 (시트에 직접 입력 후 동기화 필요)');
+}
+
+function renderPendingList() {
+  const el = document.getElementById('pendingList');
+  if (!el) return;
+  const card = document.getElementById('pendingCard');
+  if (card) card.style.display = pendingEntries.length ? 'block' : 'none';
+  if (!pendingEntries.length) return;
+
+  el.innerHTML = pendingEntries.map((e,i) => {
+    const preview = Object.entries(e)
+      .filter(([k]) => !k.startsWith('_'))
+      .slice(0,3)
+      .map(([k,v]) => v ? `${k}: ${v}` : '')
+      .filter(Boolean).join(' · ');
+    return `<div style="padding:8px 0;border-bottom:1px solid #F0F0F0;
+      display:flex;align-items:flex-start;justify-content:space-between;gap:8px">
+      <div>
+        <div style="font-size:11px;color:#1B5E20;font-weight:600">${e._timestamp}</div>
+        <div style="font-size:12px;color:#37474F;margin-top:2px">${preview}</div>
+      </div>
+      <button onclick="deletePending(${i})" style="background:#FFEBEE;border:none;color:#C62828;
+        border-radius:6px;padding:4px 8px;font-size:11px;cursor:pointer;font-family:inherit;
+        flex-shrink:0">삭제</button>
+    </div>`;
+  }).join('');
+}
+
+function deletePending(i) {
+  pendingEntries.splice(i,1);
+  localStorage.setItem('sheetPending', JSON.stringify(pendingEntries));
+  renderPendingList();
+  showToast('🗑️ 임시 기록 삭제');
+}
+
+function openSheet() {
+  window.open('https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit#gid=${SHEET_GID}', '_blank');
+}
+
+let sheetAutoLoaded = false;
+
+// ══════════════════════════════════════════════════════════
+// 농자재 관리 시스템 v2 — 작물 지정 + 전체 적용
+// ══════════════════════════════════════════════════════════
+
+let mySupplies = JSON.parse(localStorage.getItem('mySupplies') || '[]');
+
+// 기본 보유비료 5종 초기화
+function initDefaultSupplies() {
+  if (mySupplies.length === 0) {
+    const defaults = [
+      {id:'s1',type:'비료',name:'단한번비료',ingredient:'N22-P9-K9 완효성',amount:'보유중',
+       purchaseTime:'보유중',months:'4·5·6',
+       crops:['수박','참외','오이','호박','고구마','감자','배추','무'],addedDate:''},
+      {id:'s2',type:'비료',name:'엔케이플러스',ingredient:'N17-K17 착과추비',amount:'보유중',
+       purchaseTime:'보유중',months:'5·6·7·8·9',
+       crops:['사과','살구','매실','블랙베리','복분자','수박','참외','마늘','양파'],addedDate:''},
+      {id:'s3',type:'비료',name:'원예맞춤고추비료',ingredient:'N12-P6-K12+Ca·Mg',amount:'보유중',
+       purchaseTime:'보유중',months:'5·6·7·8',
+       crops:['수박','참외','오이','호박','사과','살구'],addedDate:''},
+      {id:'s4',type:'비료',name:'일회만비료',ingredient:'N21-P9-K9 완효성',amount:'보유중',
+       purchaseTime:'보유중',months:'3·4·8·9·10',
+       crops:['배추','무','감자','고구마','양파','마늘','선비잡이콩','머루콩','동부'],addedDate:''},
+      {id:'s5',type:'비료',name:'슈퍼복합비료',ingredient:'N21-P17-K17 균형형',amount:'보유중',
+       purchaseTime:'보유중',months:'3·4·5·8·9·10·11',
+       crops:['사과','살구','매실','헤이즐넛','모과','마르멜로','앵두','머루포도',
+               '바이오체리','수박','참외','오이','호박','배추','무','감자',
+               '고구마','양파','마늘'],addedDate:''},
+    ];
+    mySupplies = defaults;
+    localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
+  }
+}
+
+// ── 작물 체크박스 렌더 ──────────────────────────────────────
+function renderCropCheckList() {
+  const el = document.getElementById('cropCheckList');
+  if (!el || typeof allPlants === 'undefined') return;
+
+  // 이랑별 그룹핑
+  const groups = {};
+  allPlants.forEach(p => {
+    const key = p.zone + ' ' + p.irang;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+
+  let html = '';
+  for (const [gkey, plants] of Object.entries(groups)) {
+    html += `<div style="font-size:11px;font-weight:700;color:#546E7A;
+      padding:4px 0;border-bottom:1px solid #F0F0F0;margin-bottom:4px">${gkey}</div>`;
+    plants.forEach(p => {
+      html += `<label style="display:flex;align-items:center;gap:7px;
+        padding:4px 0;cursor:pointer;font-size:12px;color:#37474F">
+        <input type="checkbox" value="${p.id}" data-name="${p.name}"
+          data-cat="${p.cat}" data-zone="${p.zone}"
+          onchange="updateSelectedCount()"
+          style="width:16px;height:16px;cursor:pointer">
+        <span>${p.emoji} ${p.name}</span>
+        <span style="font-size:10px;color:#9E9E9E">(${p.irang})</span>
+      </label>`;
+    });
+  }
+  el.innerHTML = html;
+}
+
+function selectAllCrops() {
+  document.querySelectorAll('#cropCheckList input[type=checkbox]')
+    .forEach(cb => cb.checked = true);
+  updateSelectedCount();
+}
+
+function clearCropSelect() {
+  document.querySelectorAll('#cropCheckList input[type=checkbox]')
+    .forEach(cb => cb.checked = false);
+  updateSelectedCount();
+}
+
+function selectCropGroup(group) {
+  document.querySelectorAll('#cropCheckList input[type=checkbox]')
+    .forEach(cb => {
+      const cat  = cb.getAttribute('data-cat');
+      const zone = cb.getAttribute('data-zone');
+      cb.checked = (cat === group || zone === group);
+    });
+  updateSelectedCount();
+}
+
+function updateSelectedCount() {
+  const count = document.querySelectorAll('#cropCheckList input:checked').length;
+  const el    = document.getElementById('selectedCropCount');
+  if (el) el.textContent = count > 0 ? `✅ ${count}개 작물 선택됨` : '';
+}
+
+function getSelectedCropNames() {
+  return Array.from(document.querySelectorAll('#cropCheckList input:checked'))
+    .map(cb => cb.getAttribute('data-name'));
+}
+
+// ── 농자재 저장 ────────────────────────────────────────────
+function toggleSupplyForm() {
+  const form = document.getElementById('supplyForm');
+  if (!form) return;
+  const opening = form.style.display === 'none';
+  form.style.display = opening ? 'block' : 'none';
+  if (opening) renderCropCheckList();
+}
+
+function saveSupply() {
+  const type   = document.getElementById('supplyType')?.value || '';
+  const name   = document.getElementById('supplyName')?.value.trim() || '';
+  const ingr   = document.getElementById('supplyIngredient')?.value.trim() || '';
+  const amount = document.getElementById('supplyAmount')?.value.trim() || '';
+  const ptime  = document.getElementById('supplyPurchaseTime')?.value || '보유중';
+  const months = document.getElementById('supplyMonths')?.value.trim() || '';
+  const cropNames = getSelectedCropNames();
+
+  if (!name) { showToast('⚠ 제품명을 입력하세요'); return; }
+
+  const entry = {
+    id: Date.now().toString(),
+    type, name, ingredient: ingr, amount, purchaseTime: ptime,
+    months, crops: cropNames, addedDate: toYMD(REAL_TODAY),
+  };
+  mySupplies.push(entry);
+  localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
+
+  // 폼 초기화
+  ['supplyName','supplyIngredient','supplyAmount','supplyMonths']
+    .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  clearCropSelect();
+  document.getElementById('supplyForm').style.display = 'none';
+
+  renderSupplyList();
+  renderPurchasePlan();
+  showToast(`✅ ${name} 저장 완료 (적용 작물: ${cropNames.length}개)`);
+}
+
+function deleteSupply(id) {
+  const s = mySupplies.find(x=>x.id===id);
+  if (!s || !confirm(`"${s.name}" 삭제할까요?`)) return;
+  mySupplies = mySupplies.filter(x=>x.id!==id);
+  localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
+  renderSupplyList();
+  renderPurchasePlan();
+  showToast('🗑️ 삭제 완료');
+}
+
+// ── 농자재 목록 렌더 ──────────────────────────────────────
+function renderSupplyList() {
+  const el = document.getElementById('supplyList');
+  if (!el) return;
+  if (!mySupplies.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#9E9E9E">+ 버튼으로 농자재를 추가하세요</div>';
+    return;
+  }
+
+  const typeIcon = {비료:'🌱',농약:'🧪',친환경:'🌿',기타:'📦'};
+  const typeBg   = {비료:'#E8F5E9',농약:'#FFEBEE',친환경:'#E8F5E9',기타:'#ECEFF1'};
+  const typeTc   = {비료:'#1B5E20',농약:'#C62828',친환경:'#2E7D32',기타:'#546E7A'};
+  const ptBg = {'보유중':'#E8F5E9','2월구입':'#E3F2FD','8월구입':'#FFF3E0','필요시':'#F5F5F5'};
+  const ptTc = {'보유중':'#1B5E20','2월구입':'#1565C0','8월구입':'#E65100','필요시':'#9E9E9E'};
+
+  // 종류별 그룹
+  const typeOrder = ['비료','농약','친환경','기타'];
+  const groups = {};
+  typeOrder.forEach(t => { groups[t] = mySupplies.filter(s=>s.type===t); });
+
+  let html = '';
+  typeOrder.forEach(type => {
+    const items = groups[type];
+    if (!items.length) return;
+    html += `<div style="background:${typeBg[type]||'#F5F5F5'};padding:7px 14px;
+      font-size:12px;font-weight:700;color:${typeTc[type]||'#546E7A'}">
+      ${typeIcon[type]||'📦'} ${type} ${items.length}종</div>`;
+    items.forEach(s => {
+      const cropStr = s.crops?.length
+        ? s.crops.slice(0,3).join('·') + (s.crops.length>3?` 외 ${s.crops.length-3}종`:'')
+        : '전체';
+      html += `
+        <div style="padding:11px 14px;border-bottom:1px solid #F5F5F5">
+          <div style="display:flex;align-items:flex-start;gap:8px">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:4px">
+                <span style="font-size:13px;font-weight:700;color:#212121">${s.name}</span>
+                <span style="font-size:10px;background:${ptBg[s.purchaseTime]||'#F5F5F5'};
+                  color:${ptTc[s.purchaseTime]||'#9E9E9E'};padding:2px 8px;
+                  border-radius:10px;font-weight:700">${s.purchaseTime}</span>
+                ${s.months?`<span style="font-size:10px;background:#F3E5F5;color:#6A1B9A;
+                  padding:2px 8px;border-radius:10px;font-weight:600">${s.months}월</span>`:''}
+              </div>
+              ${s.ingredient?`<div style="font-size:11px;color:#546E7A;margin-bottom:2px">📊 ${s.ingredient}</div>`:''}
+              <div style="font-size:11px;color:#1B5E20">🌱 적용: ${cropStr}</div>
+              ${s.amount?`<div style="font-size:11px;color:#37474F;margin-top:2px">📦 ${s.amount}</div>`:''}
+            </div>
+            <button onclick="deleteSupply('${s.id}')"
+              style="background:#FFEBEE;border:none;color:#C62828;border-radius:8px;
+              padding:5px 10px;font-size:11px;cursor:pointer;font-family:inherit;
+              font-weight:600;flex-shrink:0;white-space:nowrap">삭제</button>
+          </div>
+        </div>`;
+    });
+  });
+  el.innerHTML = html;
+}
+
+// ── 전체 묘목·작물 농자재 적용 ────────────────────────────
+function applySupplyToAll(mode) {
+  const resultEl = document.getElementById('applyResult');
+  if (!resultEl) return;
+
+  const month = REAL_TODAY.getMonth() + 1;
+
+  // 필터링
+  let supplies = [...mySupplies];
+  if (mode === '이달') {
+    supplies = supplies.filter(s => {
+      if (!s.months) return true;
+      const ms = s.months.split(/[·,·\s]+/).map(Number);
+      return ms.includes(month);
+    });
+  } else if (mode === '유실수' || mode === '채소') {
+    // 적용 작물이 해당 카테고리를 포함하는 것만
+    supplies = supplies.filter(s => {
+      if (!s.crops?.length) return true;
+      return typeof allPlants !== 'undefined' &&
+        allPlants.some(p => p.cat === mode && s.crops.includes(p.name));
+    });
+  }
+
+  if (!supplies.length) {
+    resultEl.style.display = 'block';
+    resultEl.innerHTML = `<div style="background:#FFF3E0;border-radius:8px;padding:12px;
+      text-align:center;color:#E65100">⚠ 해당 조건의 농자재가 없습니다</div>`;
+    return;
+  }
+
+  // 작물 × 농자재 매칭
+  const plantList = typeof allPlants !== 'undefined' ? allPlants : [];
+  let targets = plantList;
+  if (mode === '유실수') targets = plantList.filter(p=>p.cat==='유실수');
+  if (mode === '채소')   targets = plantList.filter(p=>p.cat==='채소');
+
+  // 매칭 결과 생성
+  const matchResult = {};
+  targets.forEach(plant => {
+    const matched = supplies.filter(s => {
+      if (!s.crops?.length) return true; // 지정 없으면 전체 적용
+      return s.crops.some(c => plant.name.includes(c) || c.includes(plant.name.split(' ')[0]));
+    });
+    if (matched.length) matchResult[plant.name] = matched;
+  });
+
+  const typeIcon = {비료:'🌱',농약:'🧪',친환경:'🌿',기타:'📦'};
+
+  let html = `
+    <div style="background:#E8F5E9;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:700;color:#1B5E20">
+        ✅ 적용 완료 — ${Object.keys(matchResult).length}개 작물 매칭
+      </div>
+      <div style="font-size:11px;color:#2E7D32;margin-top:3px">
+        총 ${supplies.length}종 농자재 · ${mode==='이달'?month+'월 기준':mode} 적용
+      </div>
+    </div>`;
+
+  // 이랑별 표시
+  const zoneOrder = ['1구역','사이구역','2구역','온실'];
+  const byZone = {};
+  Object.entries(matchResult).forEach(([pname, slist]) => {
+    const plant = plantList.find(p=>p.name===pname);
+    if (!plant) return;
+    const zk = plant.zone;
+    if (!byZone[zk]) byZone[zk] = [];
+    byZone[zk].push({plant, supplies: slist});
+  });
+
+  zoneOrder.forEach(zone => {
+    const items = byZone[zone];
+    if (!items?.length) return;
+    html += `<div style="background:#37474F;color:white;padding:7px 12px;
+      font-size:12px;font-weight:700;border-radius:6px 6px 0 0;margin-top:8px">
+      ${zone} (${items.length}개 작물)</div>`;
+    items.forEach(({plant, supplies: slist}) => {
+      const tags = slist.map(s =>
+        `<span style="font-size:10px;background:${s.type==='비료'?'#E8F5E9':s.type==='농약'?'#FFEBEE':'#E8F5E9'};
+          color:${s.type==='비료'?'#1B5E20':s.type==='농약'?'#C62828':'#2E7D32'};
+          padding:2px 7px;border-radius:8px;font-weight:700">
+          ${typeIcon[s.type]||'📦'}${s.name}</span>`
+      ).join(' ');
+      html += `<div style="padding:8px 12px;border-bottom:1px solid #F0F0F0;background:white">
+        <div style="font-size:12px;font-weight:700;color:#37474F;margin-bottom:4px">
+          ${plant.emoji} ${plant.name}
+          <span style="font-size:10px;color:#9E9E9E;font-weight:400">(${plant.irang})</span>
+        </div>
+        <div style="display:flex;gap:4px;flex-wrap:wrap">${tags}</div>
+      </div>`;
+    });
+  });
+
+  // 적용 결과 저장 (오늘 작업 연계용)
+  localStorage.setItem('supplyApplyResult', JSON.stringify({
+    date: toYMD(REAL_TODAY), mode, count: Object.keys(matchResult).length,
+    supplies: supplies.map(s=>({name:s.name,type:s.type}))
+  }));
+
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = html;
+  resultEl.scrollIntoView({behavior:'smooth', block:'start'});
+  showToast(`✅ ${Object.keys(matchResult).length}개 작물에 농자재 적용 완료`);
+}
+
+// ── 구입 계획 렌더 ─────────────────────────────────────────
+function renderPurchasePlan() {
+  const el = document.getElementById('purchasePlanBody');
+  if (!el) return;
+  const plan2 = mySupplies.filter(s=>s.purchaseTime==='2월구입');
+  const plan8 = mySupplies.filter(s=>s.purchaseTime==='8월구입');
+  const planN = mySupplies.filter(s=>s.purchaseTime==='필요시');
+
+  let html = '';
+  const renderGroup = (title, items, bg, tc) => {
+    if (!items.length) return;
+    html += `<div style="background:${bg};border-radius:8px;padding:10px 12px;margin-bottom:8px">
+      <div style="font-size:13px;font-weight:700;color:${tc};margin-bottom:6px">${title}</div>
+      ${items.map(s=>`
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;color:${tc}">• ${s.name}</span>
+          ${s.ingredient?`<span style="font-size:11px;color:${tc};opacity:0.75">(${s.ingredient})</span>`:''}
+          ${s.crops?.length?`<span style="font-size:10px;color:${tc};opacity:0.7">
+            적용:${s.crops.slice(0,2).join('·')}${s.crops.length>2?'..':''}</span>`:''}
+        </div>`).join('')}
+    </div>`;
+  };
+  renderGroup('📅 2월 20일 구입 예정', plan2, '#E3F2FD', '#1565C0');
+  renderGroup('📅 8월 20일 구입 예정', plan8, '#FFF3E0', '#E65100');
+  renderGroup('🛒 필요시 구입', planN, '#F5F5F5', '#546E7A');
+  el.innerHTML = html || '<div style="text-align:center;padding:12px;color:#9E9E9E">구입 계획 없음</div>';
+}
+
+function getSupplyTasksForMonth(month, day) {
+  const tasks = [];
+  const id = n => `${month}${String(day).padStart(2,'0')}_sup_${n}`;
+  if (month === 2 && day >= 15 && day <= 25) {
+    const plan2 = mySupplies.filter(s=>s.purchaseTime==='2월구입');
+    if (plan2.length) tasks.push({
+      id:id('feb'), name:`🛒 2월 20일 구입 예정 — ${plan2.length}종`,
+      detail:plan2.map(s=>s.name).join('·'), loc:'🧪 농자재 탭 확인',
+      urgent:day>=18, judge:day>=18?'urgent':'warn',
+    });
+  }
+  if (month === 8 && day >= 15 && day <= 25) {
+    const plan8 = mySupplies.filter(s=>s.purchaseTime==='8월구입');
+    if (plan8.length) tasks.push({
+      id:id('aug'), name:`🛒 8월 20일 구입 예정 — ${plan8.length}종`,
+      detail:plan8.map(s=>s.name).join('·'), loc:'🧪 농자재 탭 확인',
+      urgent:day>=18, judge:day>=18?'urgent':'warn',
+    });
+  }
+  return tasks;
+}
+
+function initSupply() {
+  initDefaultSupplies();
+  renderSupplyList();
+  renderPurchasePlan();
+}
 // 토스트 메시지
 function showToast(msg) {
   let t = document.getElementById('toastMsg');
@@ -6238,40 +7616,98 @@ function showToast(msg) {
     t.style.cssText = 'position:fixed;bottom:90px;left:50%;transform:translateX(-50%);'
       + 'background:#212121;color:white;padding:10px 20px;border-radius:20px;'
       + 'font-size:13px;font-weight:600;z-index:1000;opacity:0;transition:opacity 0.3s;'
-      + 'white-space:nowrap;pointer-events:none';
+      + 'white-space:nowrap;pointer-events:none;max-width:80vw;text-align:center';
     document.body.appendChild(t);
   }
   t.textContent = msg;
   t.style.opacity = '1';
-  setTimeout(() => { t.style.opacity = '0'; }, 2000);
+  setTimeout(() => { t.style.opacity = '0'; }, 2500);
 }
 
-// 검색 탭 진입 시 초기 렌더
-function initSearch() {
-  renderSearchResults('', '전체');
-  renderChangeLog();
-  renderBackupList();
+// ── 초기 실행 ────────────────────────────────────────────
+// ── 구글 시트 연동 ───────────────────────────────────────
+
+async function loadGoogleSheet() {
+  const btn  = document.getElementById('sheetLoadBtn');
+  const body = document.getElementById('sheetBody');
+  if (!body) return;
+  if (btn) btn.textContent = '⏳ 불러오는 중...';
+  body.innerHTML = `<div style="text-align:center;padding:16px;color:#9E9E9E">
+    <div style="font-size:20px">📊</div>
+    <div style="font-size:12px;margin-top:6px">구글 시트 연결 중...</div></div>`;
+
+  const csvUrl   = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${SHEET_GID}`;
+  const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(csvUrl)}`;
+
+  try {
+    const res = await fetch(proxyUrl, {cache:'no-cache'});
+    if (!res.ok) throw new Error('프록시 응답 오류: ' + res.status);
+    const json = await res.json();
+    const csv  = json.contents;
+    if (!csv || csv.includes('Sign in')) throw new Error('시트가 비공개 상태입니다.\n구글 시트 공유 → "링크 있는 모든 사용자" → 뷰어로 설정해 주세요.');
+
+    function parseCSVRow(row) {
+      const result = []; let current = '', inQuotes = false;
+      for (let i=0; i<row.length; i++) {
+        if (row[i]==='"') { if(inQuotes&&row[i+1]==='"'){current+='"';i++;}else inQuotes=!inQuotes; }
+        else if (row[i]===','&&!inQuotes) { result.push(current.trim()); current=''; }
+        else current+=row[i];
+      }
+      result.push(current.trim());
+      return result;
+    }
+
+    const lines   = csv.split('\n').filter(l=>l.trim());
+    const headers = parseCSVRow(lines[0]);
+    const rows    = lines.slice(1).map(l=>parseCSVRow(l)).filter(r=>r.some(c=>c));
+    if (!rows.length) throw new Error('데이터가 없습니다.');
+
+    body.innerHTML = `
+      <div style="background:#E8F5E9;border-radius:8px;padding:8px 12px;margin-bottom:10px;
+        display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-size:12px;font-weight:700;color:#1B5E20">✅ LayoutData 연동 성공</div>
+          <div style="font-size:10px;color:#2E7D32;margin-top:2px">${rows.length}행 · ${headers.length}열</div>
+        </div>
+        <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}"
+          target="_blank" style="background:#1565C0;color:white;border-radius:6px;
+          padding:5px 12px;font-size:11px;font-weight:700;text-decoration:none">↗ 시트 열기</a>
+      </div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch">
+        <table style="border-collapse:collapse;font-size:12px;min-width:100%">
+          <tr style="background:#1B5E20">
+            ${headers.map(h=>`<th style="padding:7px 10px;color:white;text-align:left;
+              white-space:nowrap;font-weight:700">${h||'-'}</th>`).join('')}
+          </tr>
+          ${rows.slice(0,50).map((row,i)=>`
+          <tr style="background:${i%2===0?'white':'#F9F9F9'}">
+            ${headers.map((_,ci)=>`<td style="padding:6px 10px;border-bottom:1px solid #E0E0E0;
+              white-space:nowrap">${row[ci]||'-'}</td>`).join('')}
+          </tr>`).join('')}
+        </table>
+      </div>
+      ${rows.length>50?`<div style="font-size:11px;color:#9E9E9E;text-align:center;margin-top:6px">총 ${rows.length}행 중 50행 표시</div>`:''}`;
+    if (btn) btn.textContent = '🔄 불러오기';
+
+  } catch(err) {
+    body.innerHTML = `
+      <div style="background:#FFEBEE;border-radius:10px;padding:14px">
+        <div style="font-size:13px;font-weight:700;color:#C62828;margin-bottom:6px">⚠ 연결 실패</div>
+        <div style="font-size:11px;color:#E53935;line-height:1.8;white-space:pre-line;margin-bottom:10px">${err.message}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onclick="loadGoogleSheet()" style="flex:1;min-width:100px;padding:9px;background:#1B5E20;
+            color:white;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">🔄 다시 시도</button>
+          <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}/edit?gid=${SHEET_GID}"
+            target="_blank" style="flex:1;min-width:100px;display:block;text-align:center;padding:9px;
+            background:#E3F2FD;color:#1565C0;border-radius:8px;font-size:12px;font-weight:700;text-decoration:none">↗ 시트 직접 열기</a>
+        </div>
+      </div>`;
+    if (btn) btn.textContent = '🔄 불러오기';
+  }
 }
 
-// ── 전체 렌더 ────────────────────────────────────────
-function renderAll() {
-  updateDateUI();
-  renderWeatherAlert();
-  renderTasks();
-  renderDDay();
-  renderIrang();
-  renderMonthly();
-  renderGrow();
-  renderPruningList();
-  renderPruneChecklist();
-  initSearch();
-}
-
-// ── 초기 실행 ────────────────────────────────────────
-function initApp() {
-  // 전정 가이드 날씨 자동 로드
-  loadPruningWeather();
-  // fCrop 변경 이벤트 (생육일수 탭 직접입력 선택)
+window.addEventListener('DOMContentLoaded', function() {
+  // fCrop 이벤트
   const fCrop = document.getElementById('fCrop');
   if (fCrop) {
     fCrop.addEventListener('change', function() {
@@ -6280,18 +7716,19 @@ function initApp() {
       if (row) row.style.display = isCustom ? 'block' : 'none';
     });
   }
-  // 보유비료 현황 렌더
-  renderNhFertList();
-  // 날씨 모드 초기 UI 반영
+  // 날씨 모드 초기화
   if (weatherMode === 'normal') {
     const btnD = document.getElementById('btnDrought');
     const btnN = document.getElementById('btnNormal');
     if (btnD) btnD.classList.remove('active');
     if (btnN) btnN.classList.add('active');
   }
+  // 보유 농자재 초기화
+  initDefaultSupplies();
+  // 전체 렌더
   renderAll();
-}
-window.addEventListener('DOMContentLoaded', initApp);
+});
+
 </script>
 </body>
 </html>
