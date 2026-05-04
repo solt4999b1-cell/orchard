@@ -996,7 +996,15 @@
   <!-- ① 오늘 작업 -->
   <div class="section active" id="sec-today">
     <div id="weatherAlertBox"></div>
-    <div class="section-title" id="todayTitle"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="section-title" id="todayTitle" style="margin-bottom:0"></div>
+      <button onclick="toggleHideDone()" id="hideDoneBtn"
+        style="background:#F5F5F5;border:1.5px solid #E0E0E0;color:#546E7A;
+        border-radius:8px;padding:5px 10px;font-size:11px;font-weight:700;
+        cursor:pointer;font-family:inherit;white-space:nowrap">
+        ✅ 완료 숨기기
+      </button>
+    </div>
     <div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
       <span style="font-size:11px;background:#F1F8E9;color:#33691E;
         padding:3px 10px;border-radius:12px;font-weight:600">🌱 시비 자동 포함</span>
@@ -1825,28 +1833,22 @@
   <div class="section" id="sec-guide">
     <div class="section-title">재배 그림 — 품종별 순치기·착과 가이드</div>
 
-    <!-- 작물 선택 탭 -->
-    <div style="display:flex;gap:6px;margin-bottom:14px;overflow-x:auto;
-      scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px">
-      <button onclick="showGuide('watermelon')" id="gtab-watermelon"
-        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #2E7D32;
-        background:#2E7D32;color:white;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍉 수박</button>
-      <button onclick="showGuide('melon')" id="gtab-melon"
-        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
-        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍈 참외</button>
-      <button onclick="showGuide('cucumber')" id="gtab-cucumber"
-        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
-        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🥒 오이</button>
-      <button onclick="showGuide('pumpkin')" id="gtab-pumpkin"
-        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
-        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🎃 호박</button>
-      <button onclick="showGuide('graft')" id="gtab-graft"
-        style="flex:0 0 auto;padding:9px 16px;border-radius:20px;border:1.5px solid #E0E0E0;
-        background:white;color:#757575;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">🍉 접목수박</button>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px">
+        <button onclick="showGuide('watermelon')" id="gtab-watermelon" style="padding:8px 14px;border-radius:16px;border:2px solid #2E7D32;background:#2E7D32;color:white;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🍉 수박</button>
+        <button onclick="showGuide('tomato')" id="gtab-tomato" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🍅 토마토</button>
+        <button onclick="showGuide('melon')" id="gtab-melon" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🍈 참외</button>
+        <button onclick="showGuide('cucumber')" id="gtab-cucumber" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🥒 오이</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button onclick="showGuide('pumpkin')" id="gtab-pumpkin" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🎃 호박</button>
+        <button onclick="showGuide('graft')" id="gtab-graft" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🍉 접목수박</button>
+        <button onclick="showGuide('graft_melon')" id="gtab-graft_melon" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🍈 접목참외</button>
+        <button onclick="showGuide('graft_pumpkin')" id="gtab-graft_pumpkin" style="padding:8px 14px;border-radius:16px;border:1.5px solid #E0E0E0;background:white;color:#546E7A;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap">🎃 접목호박</button>
+      </div>
     </div>
 
-    <!-- ════ 수박 ════ -->
-    <div id="guide-watermelon">
+    <div id="guide-watermelon" style="display:none">
       <!-- 품종별 비교표 -->
       <div class="card">
         <div class="card-header">
@@ -2014,9 +2016,189 @@
           </svg>
         </div>
       </div>
+    
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 수박 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px;text-align:center;background:#A5D6A7;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">노지</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">순치기</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700;font-size:9px;white-space:nowrap">시작</td><td style="padding:4px 2px;text-align:center;background:#F9A825;color:white;font-weight:700;font-size:9px;white-space:nowrap">✂️매주</td><td style="padding:4px 2px;text-align:center;background:#F9A825;color:white;font-weight:700;font-size:9px;white-space:nowrap">✂️매주</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">착과·수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFCCBC;color:#BF360C;font-weight:700;font-size:9px;white-space:nowrap">🌸착과</td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🍉수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700;font-size:9px;white-space:nowrap">마무리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충 및 방제</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 덩굴마름병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">장마 후 줄기 갈변<br>테부코나졸 초기 방제<br>통풍·배수 관리</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">건조 시 잎 흰가루<br>수화유황 500배<br>고온기 예방 위주</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">4~5월 생육 초기<br>코니도·모스피란<br>개화기 살포 절대 금지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦟 총채벌레</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">고온건조 시 발생<br>스피노사드·코니도<br>꽃 속 방제 어려움</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료(N22) 10a당 40~60kg 전층 시비</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 확인 후 NK+(N17-K17) 포기당 20~30g</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">6월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">과실 비대기 황산칼륨 50g/주 — 당도 향상</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 전 질소 과다 금지 — 착과 불량 원인</td></tr></table></div>
     </div>
 
-    <!-- ════ 참외 ════ -->
+    <div
+    </div>
+
+    <div id="guide-tomato" style="display:none">
+      <!-- 품종별 특성표 -->
+      <div style="background:#FFF3E0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">🍅 품종별 특성 비교</div>
+        <div style="overflow-x:auto">
+          <table style="border-collapse:collapse;font-size:11px;width:100%;min-width:380px">
+            <tr style="background:#E65100;color:white">
+              <th style="padding:6px 8px;text-align:left">품종</th>
+              <th style="padding:6px 8px;text-align:center">과중</th>
+              <th style="padding:6px 8px;text-align:center">화방당 착과</th>
+              <th style="padding:6px 8px;text-align:center">특징</th>
+            </tr>
+            <tr style="background:#FFF8E1">
+              <td style="padding:6px 8px;font-weight:700">🍅 방울토마토</td>
+              <td style="padding:6px 8px;text-align:center">10~20g</td>
+              <td style="padding:6px 8px;text-align:center">20~30개</td>
+              <td style="padding:6px 8px">고당도·고수확, 1줄기 재배</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px;font-weight:700">🫒 대추방울토마토</td>
+              <td style="padding:6px 8px;text-align:center">15~25g</td>
+              <td style="padding:6px 8px;text-align:center">8~12개</td>
+              <td style="padding:6px 8px">육질 단단, 열과 적음</td>
+            </tr>
+            <tr style="background:#FFF8E1">
+              <td style="padding:6px 8px;font-weight:700">🔴 완숙토마토</td>
+              <td style="padding:6px 8px;text-align:center">150~250g</td>
+              <td style="padding:6px 8px;text-align:center">4~6개</td>
+              <td style="padding:6px 8px">생식·가공 겸용</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px;font-weight:700">⚫ 흑토마토</td>
+              <td style="padding:6px 8px;text-align:center">20~30g</td>
+              <td style="padding:6px 8px;text-align:center">10~15개</td>
+              <td style="padding:6px 8px">안토시아닌 풍부, 달콤 새콤</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- 순치기 SVG -->
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:10px">✂️ 순치기 (곁순 제거) — 1줄기 재배</div>
+        <svg viewBox="0 0 340 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:380px;display:block;margin:0 auto">
+          <rect width="340" height="300" fill="#F9FBF9" rx="8"/>
+          <!-- 지지대 -->
+          <line x1="122" y1="290" x2="122" y2="15" stroke="#795548" stroke-width="2" stroke-dasharray="6,4" opacity="0.5"/>
+          <!-- 주줄기 -->
+          <line x1="110" y1="285" x2="110" y2="18" stroke="#2E7D32" stroke-width="6" stroke-linecap="round"/>
+          <!-- 생장점 -->
+          <ellipse cx="110" cy="24" rx="14" ry="9" fill="#A5D6A7"/>
+          <text x="110" y="28" font-size="9" fill="#1B5E20" font-weight="700" text-anchor="middle">생장점</text>
+          <!-- 제1화방 -->
+          <path d="M110 260 Q80 248 65 235 Q80 240 92 250 Q102 256 110 258" fill="#4CAF50" opacity="0.8"/>
+          <path d="M110 242 Q140 230 155 218 Q142 224 132 233 Q122 240 110 240" fill="#4CAF50" opacity="0.8"/>
+          <circle cx="97" cy="232" r="5" fill="#FF5722"/>
+          <circle cx="89" cy="240" r="5" fill="#FF5722"/>
+          <circle cx="84" cy="231" r="4" fill="#FF5722"/>
+          <text x="62" y="255" font-size="9" fill="#E64A19" font-weight="700">제1화방</text>
+          <!-- 제2화방 -->
+          <path d="M110 200 Q80 188 65 175 Q80 181 92 190 Q102 196 110 198" fill="#4CAF50" opacity="0.8"/>
+          <path d="M110 182 Q140 170 155 158 Q142 164 132 173 Q122 180 110 180" fill="#4CAF50" opacity="0.8"/>
+          <circle cx="95" cy="172" r="5" fill="#FF5722"/>
+          <circle cx="87" cy="180" r="5" fill="#FF5722"/>
+          <text x="62" y="195" font-size="9" fill="#E64A19" font-weight="700">제2화방</text>
+          <!-- 제3화방 -->
+          <path d="M110 140 Q80 128 65 115 Q80 121 92 130 Q102 136 110 138" fill="#66BB6A" opacity="0.8"/>
+          <path d="M110 122 Q140 110 155 98 Q142 104 132 113 Q122 120 110 120" fill="#66BB6A" opacity="0.8"/>
+          <circle cx="95" cy="112" r="4" fill="#FFC107" stroke="#FF8F00" stroke-width="1.5"/>
+          <circle cx="87" cy="120" r="4" fill="#FFC107" stroke="#FF8F00" stroke-width="1.5"/>
+          <text x="62" y="137" font-size="9" fill="#E65100" font-weight="700">제3화방(개화)</text>
+          <!-- 곁순 1 — 제거 대상 -->
+          <path d="M110 222 Q138 211 151 201 Q144 205 137 212 Q128 218 110 220" fill="#FFCDD2" opacity="0.9"/>
+          <line x1="138" y1="205" x2="150" y2="213" stroke="#C62828" stroke-width="2.5"/>
+          <line x1="150" y1="205" x2="138" y2="213" stroke="#C62828" stroke-width="2.5"/>
+          <text x="152" y="203" font-size="9" fill="#C62828" font-weight="700">✕곁순</text>
+          <!-- 곁순 2 — 제거 대상 -->
+          <path d="M110 162 Q138 151 151 141 Q144 145 137 152 Q128 158 110 160" fill="#FFCDD2" opacity="0.9"/>
+          <line x1="137" y1="145" x2="149" y2="153" stroke="#C62828" stroke-width="2.5"/>
+          <line x1="149" y1="145" x2="137" y2="153" stroke="#C62828" stroke-width="2.5"/>
+          <text x="151" y="143" font-size="9" fill="#C62828" font-weight="700">✕곁순</text>
+          <!-- 범례 박스 -->
+          <rect x="185" y="18" width="142" height="118" fill="white" rx="6" stroke="#E0E0E0"/>
+          <text x="195" y="36" font-size="10" font-weight="700" fill="#37474F">범례</text>
+          <line x1="195" y1="40" x2="318" y2="40" stroke="#E0E0E0" stroke-width="1"/>
+          <line x1="195" y1="54" x2="213" y2="54" stroke="#2E7D32" stroke-width="4"/>
+          <text x="217" y="58" font-size="10" fill="#37474F">주줄기 (1줄기)</text>
+          <circle cx="203" cy="73" r="5" fill="#FF5722"/>
+          <text x="212" y="77" font-size="10" fill="#37474F">착과 화방</text>
+          <circle cx="203" cy="92" r="4" fill="#FFC107" stroke="#FF8F00" stroke-width="1.5"/>
+          <text x="212" y="96" font-size="10" fill="#37474F">개화 예정</text>
+          <rect x="196" y="105" width="16" height="9" fill="#FFCDD2" rx="2"/>
+          <text x="216" y="113" font-size="10" fill="#C62828" font-weight="700">곁순 (제거)</text>
+          <text x="256" y="282" font-size="9" fill="#9E9E9E" text-anchor="middle">잎자루와 줄기 사이 곁순 제거</text>
+        </svg>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:11px">
+          <div style="background:#E8F5E9;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#1B5E20;margin-bottom:5px">✅ 순치기 요령</div>
+            <div style="color:#2E7D32;line-height:1.9">• 5~7mm일 때 손으로 꺾기<br>• 맑은 날 오전 작업<br>• 1줄기 유지 (방울토마토)<br>• 잎자루 사이 곁순 제거</div>
+          </div>
+          <div style="background:#FFEBEE;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#C62828;margin-bottom:5px">❌ 주의사항</div>
+            <div style="color:#E53935;line-height:1.9">• 화방(꽃대) 제거 금지<br>• 비 올 때 작업 금지<br>• 늦게 제거 시 상처 큼<br>• 도구 사용 시 소독 필수</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 착과·재배 일정 -->
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 재배 일정</div>
+        <div style="overflow-x:auto">
+          <table style="border-collapse:collapse;font-size:10px;width:100%;min-width:340px">
+            <tr style="background:#E65100;color:white">
+              <th style="padding:5px 6px;text-align:left">단계</th>
+              <th style="padding:5px 4px;text-align:center">3월</th>
+              <th style="padding:5px 4px;text-align:center">4월</th>
+              <th style="padding:5px 4px;text-align:center">5월</th>
+              <th style="padding:5px 4px;text-align:center">6월</th>
+              <th style="padding:5px 4px;text-align:center">7월</th>
+              <th style="padding:5px 4px;text-align:center">8월</th>
+            </tr>
+            <tr style="background:#FFF8E1">
+              <td style="padding:5px 6px;font-weight:700">육묘·정식</td>
+              <td style="padding:5px 4px;text-align:center;background:#E8F5E9;color:#1B5E20;font-weight:700">🌱육묘</td>
+              <td style="padding:5px 4px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700">🌿정식</td>
+              <td style="padding:5px 4px"></td><td style="padding:5px 4px"></td>
+              <td style="padding:5px 4px"></td><td style="padding:5px 4px"></td>
+            </tr>
+            <tr>
+              <td style="padding:5px 6px;font-weight:700">순치기</td>
+              <td style="padding:5px 4px"></td>
+              <td style="padding:5px 4px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700">시작</td>
+              <td style="padding:5px 4px;text-align:center;background:#F9A825;color:white;font-weight:700">매주</td>
+              <td style="padding:5px 4px;text-align:center;background:#F9A825;color:white;font-weight:700">매주</td>
+              <td style="padding:5px 4px;text-align:center;background:#FFB300;color:white;font-weight:700">매주</td>
+              <td style="padding:5px 4px"></td>
+            </tr>
+            <tr style="background:#FFF8E1">
+              <td style="padding:5px 6px;font-weight:700">개화·수확</td>
+              <td style="padding:5px 4px"></td><td style="padding:5px 4px"></td>
+              <td style="padding:5px 4px;text-align:center;background:#FFCCBC;color:#BF360C;font-weight:700">🌸개화</td>
+              <td style="padding:5px 4px;text-align:center;background:#FF7043;color:white;font-weight:700">🍅수확</td>
+              <td style="padding:5px 4px;text-align:center;background:#E53935;color:white;font-weight:700">최성기</td>
+              <td style="padding:5px 4px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700">마무리</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- 병해충 -->
+      <div style="background:#FFEBEE;border-radius:10px;padding:12px">
+        <div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px">
+          <div style="background:white;border-radius:8px;padding:8px">
+            <div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 역병</div>
+            <div style="color:#546E7A;line-height:1.7">장마·과습 시 발생<br>리도밀골드 예방 살포<br>배수로 관리 필수</div>
+          </div>
+          <div style="background:white;border-radius:8px;padding:8px">
+            <div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div>
+            <div style="color:#546E7A;line-height:1.7">건조 시 발생<br>수화유황·탄산수소칼륨<br>조기 발견 시 즉시 제거</div>
+          </div>
+          <div style="background:white;border-radius:8px;padding:8px">
+            <div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div>
+            <div style="color:#546E7A;line-height:1.7">생육 초기 발생<br>코니도·모스피란<br>개화기 살포 금지</div>
+          </div>
+          <div style="background:white;border-radius:8px;padding:8px">
+            <div style="font-weight:700;color:#E53935;margin-bottom:3px">💧 열과</div>
+            <div style="color:#546E7A;line-height:1.7">수분 불균일 시 발생<br>짚·비닐 멀칭으로 예방<br>염화칼슘 엽면시비</div>
+          </div>
+        </div>
+      </div>
+
+    
+      <div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">4월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 또는 고추·오이 전용비료 10a당 40~50kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5~6월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 확인 후 NK+ 포기당 15~20g, 2~3회 분시</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">6~7월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">황산칼륨 포기당 20~30g — 당도·착색·열과 방지</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">칼슘 엽면</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">염화칼슘 0.3% 수용액 — 열과·배꼽썩음 예방</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 전 질소 과다 금지 — 도장·착과 불량</td></tr></table></div>
+    </div>
+
     <div id="guide-melon" style="display:none">
       <div class="card">
         <div class="card-header">
@@ -2117,9 +2299,13 @@
           </svg>
         </div>
       </div>
+    
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 참외 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px;text-align:center;background:#A5D6A7;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">노지</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">순치기</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700;font-size:9px;white-space:nowrap">아들덩굴</td><td style="padding:4px 2px;text-align:center;background:#F9A825;color:white;font-weight:700;font-size:9px;white-space:nowrap">손자덩굴</td><td style="padding:4px 2px;text-align:center;background:#FFB300;color:white;font-weight:700;font-size:9px;white-space:nowrap">착과유지</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🍈수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700;font-size:9px;white-space:nowrap">마무리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충 및 방제</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 역병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">장마·과습 시 발생<br>리도밀골드 예방 살포<br>배수로 정비 필수</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">건조 시 잎 흰가루<br>수화유황 500배<br>예방 위주</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">생육 초기 발생<br>모스피란 2,000배<br>개화기 살포 금지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 노균병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">잎 황색 병반<br>리도밀골드 1,000배<br>장마 전 예방</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 10a당 40~50kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">손자덩굴 착과 후 NK+ 포기당 20g</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">6~7월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">황산칼륨으로 당도·착색 향상</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 전 질소 과다 시 덩굴만 무성해짐</td></tr></table></div>
     </div>
 
-    <!-- ════ 오이 ════ -->
+<div
+    </div>
+
     <div id="guide-cucumber" style="display:none">
       <div class="card">
         <div class="card-header">
@@ -2212,9 +2398,13 @@
           </svg>
         </div>
       </div>
+    
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 오이 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿봄정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700;font-size:9px;white-space:nowrap">가을정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFCCBC;color:#BF360C;font-weight:700;font-size:9px;white-space:nowrap">🥒봄수확</td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">여름</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#81C784;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">가을</td><td style="padding:4px 2px;text-align:center;background:#A5D6A7;color:#2E7D32;font-weight:700;font-size:9px;white-space:nowrap">마무리</td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">1차</td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">2차</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">가을기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충 및 방제</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">건조·고온 시 발생<br>수화유황·훼나리몰<br>초기 방제가 핵심</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🕷️ 응애</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">고온건조기 집중 발생<br>밀베녹 1,500배<br>잎 뒤 꼼꼼히 살포</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 역병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">장마·과습 시 발생<br>리도밀골드 예방<br>배수·통풍 관리</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">연중 발생 주의<br>코니도 2,000배<br>잎 뒤 확인 후 방제</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">단한번비료 10a당 50kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5~6월 추비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">NK+ 포기당 15~20g, 3~4회 분시</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">고온기 주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">35°C↑ 시비 중단, 이른 아침 소량</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">가을 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">8월 가을정식 전 복합비료 재충전</td></tr></table></div>
     </div>
 
-    <!-- ════ 호박 ════ -->
+<div
+    </div>
+
     <div id="guide-pumpkin" style="display:none">
       <div class="card">
         <div class="card-header">
@@ -2388,9 +2578,13 @@
           </svg>
         </div>
       </div>
+    
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 호박 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px;text-align:center;background:#A5D6A7;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">노지</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🎃수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#FFB300;color:#37474F;font-weight:700;font-size:9px;white-space:nowrap">단호박</td><td style="padding:4px 2px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700;font-size:9px;white-space:nowrap">마무리</td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충 및 방제</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">7~9월 집중 발생<br>수화유황·플린트수화제<br>고온건조 예방 위주</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 덩굴마름병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">줄기 갈변·고사<br>테부코나졸 초기 방제<br>상처 부위 도포</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🕷️ 응애</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">잎 뒤 흰 반점<br>밀베녹 1,500배<br>고온건조기 주 1회</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 노린재</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">7~8월 과실 가해<br>트레본유제 저녁 방제<br>방충망 활용</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3~4월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 10a당 50~60kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 확인 후 NK+ 포기당 25~30g</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">7월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">단호박 비대기 황산칼륨 — 당도·색깔</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">단호박 주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">수확 3주 전 시비 중단 — 저장성 향상</td></tr></table></div>
     </div>
 
-    <!-- ════ 접목수박 ════ -->
+<div
+    </div>
+
     <div id="guide-graft" style="display:none">
       <div class="card">
         <div class="card-header">
@@ -2484,11 +2678,156 @@
           </svg>
         </div>
       </div>
+
+  
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 접목수박 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">접목·정식</td><td style="padding:4px 2px;text-align:center;background:#E8F5E9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">접목묘</td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">기둥유인</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700;font-size:9px;white-space:nowrap">기둥고정</td><td style="padding:4px 2px;text-align:center;background:#F9A825;color:white;font-weight:700;font-size:9px;white-space:nowrap">기둥상승</td><td style="padding:4px 2px;text-align:center;background:#FFB300;color:#37474F;font-weight:700;font-size:9px;white-space:nowrap">안착</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">착과·수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFCCBC;color:#BF360C;font-weight:700;font-size:9px;white-space:nowrap">🌸착과</td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🍉수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충 및 방제</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 덩굴마름병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">접목 부위 주의<br>테부코나졸 초기 방제<br>접목 부위 흙 접촉 금지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 탄저병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">과실 수확기 발생<br>로브랄수화제<br>수확 7일 전 중지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">호박대목 통해 유입<br>코니도·모스피란<br>개화기 살포 금지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 역병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">장마 집중 발생<br>리도밀골드 장마 전 예방<br>배수로 정비 필수</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 10a당 50kg — 정식 2주 전</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 착과 후</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">NK+ 포기당 25~30g — 착과 확인 즉시</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">6월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">황산칼륨 주당 50~80g — 당도·착색 향상</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">접목 주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">접목 부위가 흙에 닿으면 대목 발근 주의</td></tr></table></div>
     </div>
+
+    <div id="guide-graft_melon" style="display:none">
+      <!-- 접목참외 특성 -->
+      <div style="background:#FFF3E0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">🍈 접목참외 특성</div>
+        <div style="font-size:11px;color:#546E7A;line-height:1.9">
+          • <b>대목:</b> 박(Cucurbita ficifolia) — 내병성·흡비력 강함<br>
+          • <b>접수:</b> 참외 품종 (금싸라기 은천참외 등)<br>
+          • <b>장점:</b> 덩굴쪼김병 원천 차단, 수세 강화, 저온 내성 향상<br>
+          • <b>주의:</b> 대목 발근 시 즉시 제거, 접목 부위 흙 접촉 금지<br>
+          • <b>수형:</b> 아들덩굴 2개 → 손자덩굴에서 착과
+        </div>
+      </div>
+
+      <!-- 접목참외 SVG -->
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:10px">✂️ 접목참외 순치기·착과 구조</div>
+        <svg viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:380px;display:block;margin:0 auto">
+          <rect width="340" height="280" fill="#FFFDE7" rx="8"/>
+          <text x="170" y="22" font-size="12" font-weight="700" fill="#E65100" text-anchor="middle">접목참외 덩굴 구조</text>
+          <!-- 주줄기 -->
+          <line x1="170" y1="260" x2="170" y2="40" stroke="#795548" stroke-width="5" stroke-linecap="round"/>
+          <!-- 접목 부위 -->
+          <ellipse cx="170" cy="245" rx="18" ry="10" fill="#FFCC02" stroke="#E65100" stroke-width="1.5"/>
+          <text x="170" y="249" font-size="8" font-weight="700" fill="#BF360C" text-anchor="middle">접목부위</text>
+          <!-- 아들덩굴 좌 -->
+          <path d="M170 200 Q130 185 105 170 Q118 178 132 188 Q150 196 170 198" fill="none" stroke="#2E7D32" stroke-width="3"/>
+          <line x1="105" y1="170" x2="55" y2="145" stroke="#388E3C" stroke-width="2.5"/>
+          <!-- 아들덩굴 우 -->
+          <path d="M170 200 Q210 185 235 170 Q222 178 208 188 Q190 196 170 198" fill="none" stroke="#2E7D32" stroke-width="3"/>
+          <line x1="235" y1="170" x2="285" y2="145" stroke="#388E3C" stroke-width="2.5"/>
+          <!-- 손자덩굴 착과 좌 -->
+          <line x1="80" y1="157" x2="60" y2="125" stroke="#66BB6A" stroke-width="2"/>
+          <ellipse cx="55" cy="120" rx="12" ry="8" fill="#FFEE58" stroke="#F9A825" stroke-width="1.5"/>
+          <text x="55" y="124" font-size="8" fill="#E65100" font-weight="700" text-anchor="middle">착과</text>
+          <line x1="60" y1="148" x2="38" y2="118" stroke="#66BB6A" stroke-width="2"/>
+          <ellipse cx="33" cy="113" rx="12" ry="8" fill="#FFEE58" stroke="#F9A825" stroke-width="1.5"/>
+          <text x="33" y="117" font-size="8" fill="#E65100" font-weight="700" text-anchor="middle">착과</text>
+          <!-- 손자덩굴 착과 우 -->
+          <line x1="260" y1="157" x2="280" y2="125" stroke="#66BB6A" stroke-width="2"/>
+          <ellipse cx="285" cy="120" rx="12" ry="8" fill="#FFEE58" stroke="#F9A825" stroke-width="1.5"/>
+          <text x="285" y="124" font-size="8" fill="#E65100" font-weight="700" text-anchor="middle">착과</text>
+          <line x1="280" y1="148" x2="302" y2="118" stroke="#66BB6A" stroke-width="2"/>
+          <ellipse cx="307" cy="113" rx="12" ry="8" fill="#FFEE58" stroke="#F9A825" stroke-width="1.5"/>
+          <text x="307" y="117" font-size="8" fill="#E65100" font-weight="700" text-anchor="middle">착과</text>
+          <!-- 불필요 곁순 -->
+          <line x1="170" y1="165" x2="195" y2="148" stroke="#FFCDD2" stroke-width="2"/>
+          <line x1="192" y1="144" x2="200" y2="152" stroke="#C62828" stroke-width="2"/>
+          <line x1="200" y1="144" x2="192" y2="152" stroke="#C62828" stroke-width="2"/>
+          <text x="202" y="142" font-size="8" fill="#C62828" font-weight="700">✕제거</text>
+          <!-- 라벨 -->
+          <text x="145" y="208" font-size="9" fill="#1B5E20" font-weight="700">어미덩굴</text>
+          <text x="70" y="185" font-size="9" fill="#388E3C">아들덩굴(L)</text>
+          <text x="210" y="185" font-size="9" fill="#388E3C">아들덩굴(R)</text>
+          <text x="30" y="108" font-size="9" fill="#E65100" font-weight="700">손자덩굴</text>
+          <text x="280" y="108" font-size="9" fill="#E65100" font-weight="700">손자덩굴</text>
+          <text x="170" y="270" font-size="9" fill="#9E9E9E" text-anchor="middle">손자덩굴 1~2번 마디에 착과 유지</text>
+        </svg>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:11px">
+          <div style="background:#E8F5E9;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#1B5E20;margin-bottom:5px">✅ 핵심 관리</div>
+            <div style="color:#2E7D32;line-height:1.9">• 어미덩굴 본엽 4~5매서 적심<br>• 아들덩굴 2개 유인<br>• 손자덩굴 1~2번 마디 착과<br>• 착과 후 2~3마디서 적심</div>
+          </div>
+          <div style="background:#FFEBEE;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#C62828;margin-bottom:5px">⚠️ 주의</div>
+            <div style="color:#E53935;line-height:1.9">• 대목 새순 즉시 제거<br>• 접목 부위 흙 접촉 금지<br>• 착과 전 강한 시비 금지<br>• 손자덩굴 착과 1개만 유지</div>
+          </div>
+        </div>
+      </div><div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 접목참외 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">접목·정식</td><td style="padding:4px 2px;text-align:center;background:#E8F5E9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">접목묘</td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">순치기·착과</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFF9C4;color:#854F0B;font-weight:700;font-size:9px;white-space:nowrap">아들덩굴</td><td style="padding:4px 2px;text-align:center;background:#F9A825;color:white;font-weight:700;font-size:9px;white-space:nowrap">손자덩굴</td><td style="padding:4px 2px;text-align:center;background:#FFB300;color:white;font-weight:700;font-size:9px;white-space:nowrap">착과</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🍈수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700;font-size:9px;white-space:nowrap">마무리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 덩굴쪼김병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">대목 효과로 대부분 예방<br>접목 부위 관리 철저<br>이상 시 즉시 제거</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">건조·고온 시 발생<br>수화유황 500배<br>예방 위주</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 진딧물</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">생육 초기 발생<br>모스피란 2,000배<br>개화기 살포 금지</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 역병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">장마·과습 시<br>리도밀골드 예방<br>배수 철저</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 10a당 40~50kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">손자덩굴 착과 후 NK+ 포기당 20g</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">6~7월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">황산칼륨으로 당도 향상</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 전 질소 과다 → 덩굴만 무성</td></tr></table></div>
+    </div>
+
+    <div id="guide-graft_pumpkin" style="display:none">
+      <!-- 접목호박 특성 -->
+      <div style="background:#FFF3E0;border-radius:10px;padding:12px 14px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">🎃 접목호박 특성</div>
+        <div style="font-size:11px;color:#546E7A;line-height:1.9">
+          • <b>대목:</b> 신토좌 호박(Cucurbita maxima×C.moschata) — 뿌리 발달 우수<br>
+          • <b>접수:</b> 단호박·애호박·늙은호박 품종<br>
+          • <b>장점:</b> 저온 흡수력 강화, 수세 향상, 역병·덩굴마름병 내성<br>
+          • <b>착과:</b> 주줄기 2~3번 마디부터 착과, 연속 착과 가능<br>
+          • <b>수형:</b> 1줄기 또는 2줄기 유인 재배
+        </div>
+      </div>
+
+      <!-- 접목호박 SVG -->
+      <div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:700;color:#1B5E20;margin-bottom:10px">✂️ 접목호박 착과 위치·순치기</div>
+        <svg viewBox="0 0 340 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:380px;display:block;margin:0 auto">
+          <rect width="340" height="280" fill="#F9FBE7" rx="8"/>
+          <text x="170" y="22" font-size="12" font-weight="700" fill="#E65100" text-anchor="middle">접목호박 착과 위치 가이드</text>
+          <!-- 지지줄 -->
+          <line x1="190" y1="268" x2="190" y2="15" stroke="#795548" stroke-width="2" stroke-dasharray="5,4" opacity="0.5"/>
+          <!-- 주줄기 -->
+          <line x1="170" y1="265" x2="170" y2="18" stroke="#2E7D32" stroke-width="5" stroke-linecap="round"/>
+          <!-- 접목 부위 -->
+          <ellipse cx="170" cy="255" rx="18" ry="9" fill="#FFCC02" stroke="#E65100" stroke-width="1.5"/>
+          <text x="170" y="259" font-size="8" font-weight="700" fill="#BF360C" text-anchor="middle">접목부위</text>
+          <!-- 1번 마디 잎 -->
+          <path d="M170 228 Q140 218 122 205 Q136 212 148 220 Q160 226 170 226" fill="#4CAF50" opacity="0.7"/>
+          <path d="M170 212 Q200 202 218 189 Q204 196 192 204 Q182 210 170 210" fill="#4CAF50" opacity="0.7"/>
+          <text x="100" y="215" font-size="8" fill="#546E7A">1번마디</text>
+          <!-- 2번 마디 — 1차 착과 -->
+          <path d="M170 188 Q138 177 118 163 Q133 170 147 179 Q160 185 170 186" fill="#4CAF50" opacity="0.8"/>
+          <path d="M170 172 Q202 161 222 147 Q207 154 193 163 Q183 169 170 170" fill="#4CAF50" opacity="0.8"/>
+          <!-- 착과 1 -->
+          <ellipse cx="112" cy="160" rx="14" ry="10" fill="#FF8F00" stroke="#E65100" stroke-width="1.5"/>
+          <text x="112" y="164" font-size="8" font-weight="700" fill="white" text-anchor="middle">1차착과</text>
+          <text x="80" y="175" font-size="8" fill="#E65100" font-weight="700">2번마디</text>
+          <!-- 3번 마디 -->
+          <path d="M170 148 Q138 137 118 123 Q133 130 147 139 Q160 145 170 146" fill="#66BB6A" opacity="0.8"/>
+          <path d="M170 132 Q202 121 222 107 Q207 114 193 123 Q183 129 170 130" fill="#66BB6A" opacity="0.8"/>
+          <!-- 착과 2 -->
+          <ellipse cx="112" cy="120" rx="14" ry="10" fill="#FFA000" stroke="#E65100" stroke-width="1.5"/>
+          <text x="112" y="124" font-size="8" font-weight="700" fill="white" text-anchor="middle">2차착과</text>
+          <text x="80" y="135" font-size="8" fill="#E65100" font-weight="700">3번마디</text>
+          <!-- 4번 마디 -->
+          <path d="M170 108 Q140 97 122 83 Q136 90 148 99 Q160 105 170 106" fill="#81C784" opacity="0.8"/>
+          <path d="M170 92 Q200 81 218 67 Q204 74 192 83 Q182 89 170 90" fill="#81C784" opacity="0.8"/>
+          <!-- 착과 예정 -->
+          <ellipse cx="114" cy="80" rx="12" ry="8" fill="#FFF9C4" stroke="#F9A825" stroke-width="1.5"/>
+          <text x="114" y="84" font-size="7" fill="#E65100" text-anchor="middle">착과예정</text>
+          <!-- 생장점 -->
+          <ellipse cx="170" cy="28" rx="14" ry="9" fill="#A5D6A7"/>
+          <text x="170" y="32" font-size="9" fill="#1B5E20" font-weight="700" text-anchor="middle">생장점</text>
+          <!-- 곁순 제거 -->
+          <path d="M170 165 Q196 154 208 144" fill="none" stroke="#FFCDD2" stroke-width="2"/>
+          <line x1="204" y1="140" x2="212" y2="148" stroke="#C62828" stroke-width="2"/>
+          <line x1="212" y1="140" x2="204" y2="148" stroke="#C62828" stroke-width="2"/>
+          <text x="213" y="138" font-size="8" fill="#C62828" font-weight="700">✕곁순</text>
+          <text x="170" y="272" font-size="9" fill="#9E9E9E" text-anchor="middle">2~3번 마디 착과 → 연속 수확 가능</text>
+        </svg>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;font-size:11px">
+          <div style="background:#E8F5E9;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#1B5E20;margin-bottom:5px">✅ 착과 관리</div>
+            <div style="color:#2E7D32;line-height:1.9">• 1번 마디 착과 제거<br>• 2~3번 마디부터 착과<br>• 연속 착과로 생산성 향상<br>• 착과 후 줄기 유인 계속</div>
+          </div>
+          <div style="background:#FFEBEE;border-radius:8px;padding:9px">
+            <div style="font-weight:700;color:#C62828;margin-bottom:5px">⚠️ 주의</div>
+            <div style="color:#E53935;line-height:1.9">• 대목 발근 즉시 제거<br>• 접목 부위 흙 접촉 금지<br>• 과다 착과 시 품질 저하<br>• 단호박 — 과당 4~5개 제한</div>
+          </div>
+        </div>
+      </div><div style="background:white;border:1.5px solid #E0E0E0;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px">📅 화성시 남양읍 접목호박 재배 일정</div><div style="overflow-x:auto;margin-bottom:10px"><table style="border-collapse:collapse;font-size:10px;width:100%;min-width:320px"><tr style="background:#2E7D32;color:white"><th style="padding:5px 6px;text-align:left">단계</th><th style="padding:4px 3px;text-align:center">3월</th><th style="padding:4px 3px;text-align:center">4월</th><th style="padding:4px 3px;text-align:center">5월</th><th style="padding:4px 3px;text-align:center">6월</th><th style="padding:4px 3px;text-align:center">7월</th><th style="padding:4px 3px;text-align:center">8월</th><th style="padding:4px 3px;text-align:center">9월</th><th style="padding:4px 3px;text-align:center">10월</th></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">접목·정식</td><td style="padding:4px 2px;text-align:center;background:#E8F5E9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">접목묘</td><td style="padding:4px 2px;text-align:center;background:#C8E6C9;color:#1B5E20;font-weight:700;font-size:9px;white-space:nowrap">🌿정식</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr><tr style="background:white"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">착과·수확</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#FFCCBC;color:#BF360C;font-weight:700;font-size:9px;white-space:nowrap">🌸착과</td><td style="padding:4px 2px;text-align:center;background:#FF7043;color:white;font-weight:700;font-size:9px;white-space:nowrap">🎃수확</td><td style="padding:4px 2px;text-align:center;background:#E53935;color:white;font-weight:700;font-size:9px;white-space:nowrap">최성기</td><td style="padding:4px 2px;text-align:center;background:#FFB300;color:#37474F;font-weight:700;font-size:9px;white-space:nowrap">단호박</td><td style="padding:4px 2px;text-align:center;background:#EF9A9A;color:#C62828;font-weight:700;font-size:9px;white-space:nowrap">마무리</td><td style="padding:4px 2px"></td></tr><tr style="background:#F1F8E9"><td style="padding:5px 6px;font-weight:700;white-space:nowrap">시비</td><td style="padding:4px 2px;text-align:center;background:#E3F2FD;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">기비</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#BBDEFB;color:#1565C0;font-weight:700;font-size:9px;white-space:nowrap">NK+</td><td style="padding:4px 2px"></td><td style="padding:4px 2px;text-align:center;background:#90CAF9;color:#0D47A1;font-weight:700;font-size:9px;white-space:nowrap">칼리</td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td><td style="padding:4px 2px"></td></tr></table></div></div><div style="background:#FFEBEE;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:8px">⚠️ 주요 병해충</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px"><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🌿 흰가루병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">7~9월 집중 발생<br>수화유황·플린트수화제<br>고온건조 예방 위주</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🦠 덩굴마름병</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">대목 효과로 경감<br>접목 부위 상처 주의<br>테부코나졸 방제</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🕷️ 응애</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">고온건조기 발생<br>밀베녹 1,500배<br>잎 뒤 꼼꼼히</div></div><div style="background:white;border-radius:8px;padding:8px"><div style="font-weight:700;color:#E53935;margin-bottom:3px">🐛 노린재</div><div style="color:#546E7A;line-height:1.7;font-size:10.5px">7~8월 과실 가해<br>트레본유제 저녁 방제<br>방충망 설치</div></div></div></div><div style="background:#E3F2FD;border-radius:10px;padding:12px;margin-bottom:12px"><div style="font-size:12px;font-weight:700;color:#1565C0;margin-bottom:8px">💧 시비 가이드</div><table style="font-size:11px;border-collapse:collapse;width:100%"><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">3~4월 기비</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">완효성 복합비료 10a당 50~60kg</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">5월 NK+</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">착과 확인 후 NK+ 포기당 25~30g</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">7월 칼리</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">단호박 비대기 황산칼륨 — 당도·색깔</td></tr><tr><td style="padding:4px 8px;font-weight:700;color:#1565C0;white-space:nowrap">주의</td><td style="padding:4px 8px;color:#37474F;font-size:10.5px">단호박 수확 3주 전 시비 중단</td></tr></table></div>
+    </div>
+
   </div>
 
-
-  <!-- ⑧ 전정 가이드 -->
   <div class="section" id="sec-pruning">
 
 
@@ -3772,6 +4111,8 @@
       </div>
       </div>
     </div>
+
+
     </div>
 
   </div>
@@ -4075,6 +4416,42 @@ async function syncFromFirebase() {
 // ── 실시간 리스너 (Firestore onSnapshot) ─────────────────
 function startRealtimeSync() {
   if (!_fbReady || !_db) return;
+
+  // 기록장 실시간
+  _db.collection('workLog').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      const data = change.doc.data();
+      if (change.type === 'added') {
+        if (!workLog.some(e => String(e.id) === String(data.id))) {
+          workLog.unshift(data);
+        }
+      } else if (change.type === 'removed') {
+        workLog = workLog.filter(e => String(e.id) !== String(data.id));
+      }
+    });
+    workLog.sort((a,b) => (b.id||0) - (a.id||0));
+    localStorage.setItem('workLog', JSON.stringify(workLog));
+    if (document.getElementById('sec-sheet')?.classList.contains('active')) {
+      renderWorkLog();
+    }
+  }, e => console.warn('workLog listener:', e.message));
+
+  // 완료 체크 실시간
+  _db.collection('checkedTasks').onSnapshot(snap => {
+    snap.docChanges().forEach(change => {
+      const data = change.doc.data();
+      if (change.type === 'added' || change.type === 'modified') {
+        if (data.checked) checkedTasks[data.key] = true;
+        else delete checkedTasks[data.key];
+      } else if (change.type === 'removed') {
+        delete checkedTasks[data.key];
+      }
+    });
+    localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
+    if (document.getElementById('sec-today')?.classList.contains('active')) {
+      renderTasks();
+    }
+  }, e => console.warn('checkedTasks listener:', e.message));
 
   // 농자재 실시간
   _db.collection('supplies').onSnapshot(snap => {
@@ -5377,7 +5754,7 @@ function renderTasks() {
 
   // 선택 날짜 외 7일 이상 지난 체크 자동 정리
   const cutoff = new Date(SELECTED_DATE);
-  cutoff.setDate(cutoff.getDate() - 7);
+  cutoff.setDate(cutoff.getDate() - 30); // 30일간 완료 기록 유지
   const cutoffStr = toYMD(cutoff);
   Object.keys(checkedTasks).forEach(k => {
     const datePart = k.substring(0, 10); // YYYY-MM-DD
@@ -5387,11 +5764,13 @@ function renderTasks() {
 
   // 완료된 반복 작업(월 기반) 제외 옵션
   const monthKey = todayKey.slice(0,7);
+  const hideDone = localStorage.getItem('hideDoneTasks') === 'true';
   const visibleTasks = tasks.filter(t => {
     const k1 = todayKey + '-' + t.id;
     const k2 = monthKey + '-' + t.id;
-    // 날짜 특화 task(id에 날짜 포함)는 항상 표시
-    return true; // 모두 표시하되 완료 표시만 유지
+    const isDone = !!(checkedTasks[k1] || checkedTasks[k2]);
+    if (hideDone && isDone) return false;
+    return true;
   });
   const doneCount = tasks.filter(t => {
     return checkedTasks[todayKey+'-'+t.id] || checkedTasks[monthKey+'-'+t.id];
@@ -5457,6 +5836,20 @@ function renderTasks() {
       </div></div>`).join('');
   }
   renderTip(month);
+}
+
+
+function toggleHideDone() {
+  const cur = localStorage.getItem('hideDoneTasks') === 'true';
+  localStorage.setItem('hideDoneTasks', (!cur).toString());
+  const btn = document.getElementById('hideDoneBtn');
+  if (btn) {
+    btn.textContent = !cur ? '👁 완료 보기' : '✅ 완료 숨기기';
+    btn.style.background   = !cur ? '#E8F5E9' : '#F5F5F5';
+    btn.style.color        = !cur ? '#1B5E20' : '#546E7A';
+    btn.style.borderColor  = !cur ? '#A5D6A7' : '#E0E0E0';
+  }
+  renderTasks();
 }
 
 function toggleTask(key, el) {
@@ -5751,6 +6144,10 @@ function renderAll() {
   renderPruningList();
   renderPruneChecklist();
   initSearch();
+  // 재배 그림 가이드 초기화
+  if (typeof showGuide === 'function') {
+    showGuide('watermelon');
+  }
 }
 
 let wxAutoLoaded = false;
@@ -5778,6 +6175,9 @@ function showTab(id) {
   // 구글시트 탭 진입 시 자동 로드
   if (id === 'irang') {
     renderIrang();
+  }
+  if (id === 'guide') {
+    showGuide('watermelon');
   }
   if (id === 'sheet') {
     renderWorkLog();
@@ -7467,6 +7867,7 @@ async function loadWeatherMain() {
   }
 
   // open-meteo API (forecast_days=7로 충분한 데이터 요청)
+  // 현재날씨 전용 — hourly 제외, forecast_days=3으로 경량화
   const url = 'https://api.open-meteo.com/v1/forecast'
     + '?latitude=37.1994&longitude=126.8316'
     + '&current=temperature_2m,apparent_temperature,weathercode,'
@@ -7474,9 +7875,8 @@ async function loadWeatherMain() {
     + '&daily=temperature_2m_max,temperature_2m_min,weathercode,'
     + 'precipitation_probability_max,precipitation_sum,'
     + 'windspeed_10m_max,winddirection_10m_dominant'
-    + '&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,weathercode'
     + '&timezone=Asia%2FSeoul'
-    + '&forecast_days=7';
+    + '&forecast_days=3';
 
   fetchWithTimeout(url, 10000)
     .then(res => {
@@ -7524,33 +7924,7 @@ async function loadWeatherMain() {
         </div>`;
       }).join('');
 
-      // 오늘 시간별 예보 (6시간 간격)
-      const nowHour = new Date().getHours();
-      const todayDate = toYMD(REAL_TODAY);
-      const hourlyTimes = hourly.time || [];
-      const hourlySlots = [];
-      for (let i = 0; i < hourlyTimes.length && hourlySlots.length < 8; i++) {
-        const t = hourlyTimes[i];
-        if (!t.startsWith(todayDate)) continue;
-        const h = parseInt(t.split('T')[1]);
-        if (h < nowHour - 1) continue;
-        hourlySlots.push({
-          hour: h + '시',
-          temp: Math.round((hourly.temperature_2m||[])[i] ?? 0),
-          rain: (hourly.precipitation_probability||[])[i] ?? 0,
-          wc:   (hourly.weathercode||[])[i] ?? 0,
-        });
-      }
-      const hourlyHtml = hourlySlots.map(s => {
-        const hi = wmo2info(s.wc);
-        return `<div style="flex:0 0 auto;text-align:center;padding:8px 10px;
-          background:white;border-radius:8px;border:1px solid #E0E0E0;min-width:56px">
-          <div style="font-size:10px;color:#9E9E9E">${s.hour}</div>
-          <div style="font-size:18px;margin:3px 0">${hi.icon}</div>
-          <div style="font-size:12px;font-weight:700;color:#212121">${s.temp}°</div>
-          ${s.rain >= 20 ? `<div style="font-size:10px;color:#1565C0">💧${s.rain}%</div>` : ''}
-        </div>`;
-      }).join('');
+      const hourlyHtml = ''; // 시간별 예보는 별도 탭에서 제공
 
       // 농업 알림
       const alerts = [];
@@ -8492,7 +8866,7 @@ const nhPesticideMap = {
 
 
 // ── 재배 그림 탭 전환 ────────────────────────────────────
-const guideNames = ['watermelon','melon','cucumber','pumpkin','graft'];
+const guideNames = ['watermelon','tomato','melon','cucumber','pumpkin','graft','graft_melon','graft_pumpkin'];
 function showGuide(name) {
   guideNames.forEach(n => {
     const el  = document.getElementById('guide-' + n);
@@ -11210,6 +11584,17 @@ window.addEventListener('DOMContentLoaded', function() {
       bar.appendChild(btn);
     });
   })();
+  // 완료 숨기기 버튼 상태 초기화
+  (function() {
+    const hideDone = localStorage.getItem('hideDoneTasks') === 'true';
+    const btn = document.getElementById('hideDoneBtn');
+    if (btn && hideDone) {
+      btn.textContent = '👁 완료 보기';
+      btn.style.background = '#E8F5E9';
+      btn.style.color = '#1B5E20';
+      btn.style.borderColor = '#A5D6A7';
+    }
+  })();
   // 생육기록 날짜 기본값
   const grDate = document.getElementById('grDate');
   if (grDate) grDate.value = toYMD(REAL_TODAY);
@@ -11217,6 +11602,10 @@ window.addEventListener('DOMContentLoaded', function() {
   renderGrowRecords();
   // 전체 렌더
   renderAll();
+  // 재배 그림 초기화 (DOM 완전 로드 후)
+  setTimeout(() => {
+    if (typeof showGuide === 'function') showGuide('watermelon');
+  }, 100);
 });
 
 </script>
