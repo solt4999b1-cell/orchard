@@ -694,23 +694,81 @@
 
 <!-- 탭 -->
 <div class="tab-bar">
-  <div class="tab active" onclick="showTab('today')">📋 오늘 작업</div>
-  <div class="tab" onclick="showTab('search')">🔍 검색·이동</div>
-  <div class="tab" onclick="showTab('supply')">🛒 구입내역</div>
-  <div class="tab" onclick="showTab('dday')">⏰ D-day</div>
-  <div class="tab" onclick="showTab('irang')">🌱 이랑 현황</div>
-  <div class="tab" onclick="showTab('monthly')">📅 월별 일정</div>
-  <div class="tab" onclick="showTab('wxlive')">🌡️ 날씨</div>
-  <div class="tab" onclick="showTab('pest')">🐛 병해충·시비</div>
-  <div class="tab" onclick="showTab('pruning')">✂️ 전정 가이드</div>
-  <div class="tab" onclick="showTab('grow')">🌿 생육일수</div>
-  <div class="tab" onclick="showTab('guide')">📷 재배 그림</div>
-  <div class="tab" onclick="showTab('sheet')">📒 기록장</div>
+  <div class="tab active" id="tab-today" onclick="showTab('today')">📋 오늘 작업</div>
+  <div class="tab" id="tab-search" onclick="showTab('search')">🔍 검색·이동</div>
+  <div class="tab" id="tab-supply" onclick="showTab('supply')">🛒 구입내역</div>
+  <div class="tab" id="tab-dday" onclick="showTab('dday')">⏰ D-day</div>
+  <div class="tab" id="tab-irang" onclick="showTab('irang')">🌱 이랑 현황</div>
+  <div class="tab" id="tab-monthly" onclick="showTab('monthly')">📅 월별 일정</div>
+  <div class="tab" id="tab-wxlive" onclick="showTab('wxlive')">🌡️ 날씨</div>
+  <div class="tab" id="tab-pest" onclick="showTab('pest')">🐛 병해충·시비</div>
+  <div class="tab" id="tab-pruning" onclick="showTab('pruning')">✂️ 전정 가이드</div>
+  <div class="tab" id="tab-grow" onclick="showTab('grow')">🌿 생육일수</div>
+  <div class="tab" id="tab-guide" onclick="showTab('guide')">📷 재배 그림</div>
+  <div class="tab" id="tab-sheet" onclick="showTab('sheet')">📒 기록장</div>
 
 </div>
 
 <!-- 컨텐츠 -->
 <div class="content">
+
+<div class="section" id="sec-sheet">
+    <div class="section-title">📒 작업 기록장</div>
+
+    <!-- 필터 바 -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+      <select id="logFilterMonth"
+        onchange="renderWorkLog()"
+        style="flex:1;min-width:80px;padding:9px;border-radius:8px;
+        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
+        <option value="all">전체 월</option>
+      </select>
+      <select id="logFilterType"
+        onchange="renderWorkLog()"
+        style="flex:1;min-width:90px;padding:9px;border-radius:8px;
+        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
+        <option value="all">전체 유형</option>
+        <option value="일반">일반 작업</option>
+        <option value="시비">🌱 시비</option>
+        <option value="병해충">🐛 병해충</option>
+        <option value="구입">🛒 구입</option>
+      </select>
+      <button onclick="printWorkLogPDF()"
+        style="padding:9px 12px;background:#E8EAF6;border:1.5px solid #3949AB;
+        color:#3949AB;border-radius:8px;font-size:16px;font-weight:700;
+        cursor:pointer;font-family:inherit;white-space:nowrap">
+        🖨️ PDF출력
+      </button>
+      <button onclick="clearWorkLog()"
+        style="padding:9px 14px;background:#FFEBEE;border:1.5px solid #FFCDD2;
+        color:#C62828;border-radius:8px;font-size:16px;font-weight:700;
+        cursor:pointer;font-family:inherit;white-space:nowrap">
+        🗑️ 전체 삭제
+      </button>
+    </div>
+
+    <!-- 기록 통계 -->
+    <div class="card" id="logStats">
+      <div class="card-body" style="display:flex;gap:0;padding:0">
+        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
+          <div style="font-size:22px;font-weight:800;color:#1B5E20" id="logTotalCount">0</div>
+          <div style="font-size:16px;color:#9E9E9E">전체 기록</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
+          <div style="font-size:22px;font-weight:800;color:#1565C0" id="logThisMonth">0</div>
+          <div style="font-size:16px;color:#9E9E9E">이번달</div>
+        </div>
+        <div style="flex:1;text-align:center;padding:12px 0">
+          <div style="font-size:22px;font-weight:800;color:#E65100" id="logStreak">0</div>
+          <div style="font-size:16px;color:#9E9E9E">연속 작업일</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 기록 목록 -->
+    <div id="workLogList"></div>
+  </div>
+
 <div class="section active" id="sec-today">
     <div id="weatherAlertBox"></div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
@@ -2924,7 +2982,7 @@
       <div class="plant-header">
         <span class="card-icon">🌿</span>
         <div>
-          <div class="plant-title">심은 날짜 기록</div>
+          <div class="plant-title">심은 날짜 기록(내폰에만 저장)</div>
           <div class="plant-subtitle">모종·씨앗 정식일 입력 → 경과일 자동 계산</div>
         </div>
       </div>
@@ -3019,7 +3077,7 @@
       <div class="plant-header">
         <span class="card-icon">📊</span>
         <div>
-          <div class="plant-title">생육 현황</div>
+          <div class="plant-title">생육현황(내폰에만 기록)</div>
           <div class="plant-subtitle" id="growSubtitle">심은 작물이 없습니다</div>
         </div>
       </div>
@@ -4099,69 +4157,12 @@
   </div>
 
   
-<div class="section" id="sec-sheet">
-    <div class="section-title">📒 작업 기록장</div>
 
-    <!-- 필터 바 -->
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="logFilterMonth"
-        onchange="renderWorkLog()"
-        style="flex:1;min-width:80px;padding:9px;border-radius:8px;
-        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
-        <option value="all">전체 월</option>
-      </select>
-      <select id="logFilterType"
-        onchange="renderWorkLog()"
-        style="flex:1;min-width:90px;padding:9px;border-radius:8px;
-        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
-        <option value="all">전체 유형</option>
-        <option value="일반">일반 작업</option>
-        <option value="시비">🌱 시비</option>
-        <option value="병해충">🐛 병해충</option>
-        <option value="구입">🛒 구입</option>
-      </select>
-      <button onclick="printWorkLogPDF()"
-        style="padding:9px 12px;background:#E8EAF6;border:1.5px solid #3949AB;
-        color:#3949AB;border-radius:8px;font-size:16px;font-weight:700;
-        cursor:pointer;font-family:inherit;white-space:nowrap">
-        🖨️ PDF출력
-      </button>
-      <button onclick="clearWorkLog()"
-        style="padding:9px 14px;background:#FFEBEE;border:1.5px solid #FFCDD2;
-        color:#C62828;border-radius:8px;font-size:16px;font-weight:700;
-        cursor:pointer;font-family:inherit;white-space:nowrap">
-        🗑️ 전체 삭제
-      </button>
-    </div>
-
-    <!-- 기록 통계 -->
-    <div class="card" id="logStats">
-      <div class="card-body" style="display:flex;gap:0;padding:0">
-        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
-          <div style="font-size:22px;font-weight:800;color:#1B5E20" id="logTotalCount">0</div>
-          <div style="font-size:16px;color:#9E9E9E">전체 기록</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
-          <div style="font-size:22px;font-weight:800;color:#1565C0" id="logThisMonth">0</div>
-          <div style="font-size:16px;color:#9E9E9E">이번달</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 0">
-          <div style="font-size:22px;font-weight:800;color:#E65100" id="logStreak">0</div>
-          <div style="font-size:16px;color:#9E9E9E">연속 작업일</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 기록 목록 -->
-    <div id="workLogList"></div>
-  </div>
-
-  
 </div><!-- /content --></div><!-- /content -->
 
 <!-- 하단 네비게이션 -->
 <div class="bottom-nav">
-  <div class="nav-item active" onclick="showTab('today')">
+  <div class="nav-item active" id="nav-today" onclick="showTab('today')">
     <div class="nav-icon">📋</div>
     <div class="nav-label">오늘작업</div>
   </div>
@@ -4212,6 +4213,9 @@
 
 </div>
 
+
+
+
 <script>
 // ── 전역 상태 ──────────────────────────────────────────
 let weatherMode = localStorage.getItem('weatherMode') || 'drought';
@@ -4243,7 +4247,19 @@ function initFirebase() {
     _fbReady = true;
     console.log('✅ Firebase 초기화 완료');
     updateFirebaseStatus('connected');
-    // 초기화 후 데이터 동기화
+    // workLog만 Firebase에서 로드해서 localStorage에 저장 (renderWorkLog 호출 안 함)
+    _db.collection('workLog').get().then(snap => {
+      const fbLogs = [];
+      snap.forEach(doc => { const d=doc.data(); if(d&&d.id) fbLogs.push(d); });
+      if (fbLogs.length > 0) {
+        const local = JSON.parse(localStorage.getItem('workLog')||'[]');
+        fbLogs.forEach(d => { if(!local.some(e=>String(e.id)===String(d.id))) local.push(d); });
+        local.sort((a,b)=>(b.id||0)-(a.id||0));
+        workLog = local;
+        localStorage.setItem('workLog', JSON.stringify(workLog));
+      }
+    }).catch(()=>{});
+    // 나머지 동기화
     syncFromFirebase();
   } catch(e) {
     _fbError = e.message;
@@ -4304,7 +4320,7 @@ async function fbDeleteLog(id) {
 async function fbLoadLog() {
   if (!_fbReady || !_db) return null;
   try {
-    const snap = await _db.collection('workLog').orderBy('date','desc').get();
+    const snap = await _db.collection('workLog').get();
     return snap.docs.map(d => d.data());
   } catch(e) { console.error('fbLoadLog:', e.message); return null; }
 }
@@ -4367,16 +4383,20 @@ async function syncFromFirebase() {
       for (const s of mySupplies) await fbSaveSupply(s);
     }
 
-    // 기록장
+    // 기록장 - Firebase에서 로드 후 localStorage와 병합 (덮어쓰기 금지)
     const fbLog = await fbLoadLog();
     if (fbLog && fbLog.length > 0) {
-      const existIds = new Set(workLog.map(e => e.id));
-      fbLog.forEach(e => { if (!existIds.has(e.id)) workLog.unshift(e); });
-      workLog.sort((a,b) => b.id - a.id);
+      // localStorage 기존 데이터 유지하면서 병합
+      const localLog = JSON.parse(localStorage.getItem('workLog') || '[]');
+      const merged = [...fbLog];
+      localLog.forEach(e => {
+        if (!merged.some(f => String(f.id) === String(e.id))) merged.push(e);
+      });
+      merged.sort((a,b) => (b.id||0) - (a.id||0));
+      workLog = merged;
       localStorage.setItem('workLog', JSON.stringify(workLog));
-    } else {
-      for (const e of workLog) await fbSaveLog(e);
     }
+    // fbLog가 null이거나 비어도 로컬 데이터 그대로 유지 (덮어쓰기 안 함)
 
     // 완료 작업
     const fbChecked = await fbLoadChecked();
@@ -5775,9 +5795,20 @@ function renderTasks() {
   // 완료된 반복 작업(월 기반) 제외 옵션
   const monthKey = todayKey.slice(0,7);
   const hideDone = localStorage.getItem('hideDoneTasks') === 'true';
+  // workLog 최신 상태 로드 (Firebase 로드 전일 수 있으므로 localStorage 직접 읽기)
+  const _wlForTask = JSON.parse(localStorage.getItem('workLog') || '[]');
+  const todayStr = toYMD(REAL_TODAY);
+  // 오늘 이전에 기록된 작업 이름 목록
+  const loggedNames = new Set(_wlForTask.filter(e => e.date < todayStr).map(e => e.name));
+
   const visibleTasks = tasks.filter(t => {
     const k1 = todayKey + '-' + t.id;
     const k2 = monthKey + '-' + t.id;
+    // workLog에 이미 기록된 작업은 숨김 (오늘 제외)
+    if (loggedNames.has(t.name)) {
+      const todayLogged = workLog.some(e => e.name === t.name && e.date === todayKey);
+      if (!todayLogged) return false; // 어제 이전에 기록됐으면 숨김
+    }
     const isDone = !!(checkedTasks[k1] || checkedTasks[k2]);
     if (hideDone && isDone) return false;
     return true;
@@ -6162,53 +6193,53 @@ function renderAll() {
 
 let wxAutoLoaded = false;
 function showTab(id) {
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.getElementById(`sec-${id}`)?.classList.add('active');
-  const tabMap = {today:0, search:1, supply:2, dday:3, irang:4, monthly:5, wxlive:6, pest:7, pruning:8, grow:9, guide:10, sheet:11};
-  document.querySelectorAll('.tab')[tabMap[id]]?.classList.add('active');
-  document.querySelectorAll('.nav-item')[tabMap[id]]?.classList.add('active');
-  // 날씨 탭 진입 시 자동 로드
-  if (id === 'wxlive' && !wxAutoLoaded) {
-    wxAutoLoaded = true;
-    loadWeatherMain();
-  }
-  // 병해충·시비 탭 진입 시 비료 현황 렌더
-  if (id === 'pest') {
-    renderNhFertList();
-  }
-  if (id === 'supply') {
-    if (typeof initSupply === 'function') initSupply();
-    if (typeof renderRecommendDB === 'function') renderRecommendDB('전체');
-  }
-  // 구글시트 탭 진입 시 자동 로드
-  if (id === 'irang') {
-    renderIrang();
-  }
-  if (id === 'guide') {
-    showGuide('watermelon');
-  }
+  // 직접 id 참조 (querySelectorAll 루프 제거 - iOS 성능)
+  ['today','search','supply','dday','irang','monthly','wxlive','pest','pruning','grow','guide','sheet'].forEach(t => {
+    const s = document.getElementById('sec-' + t);
+    const b = document.getElementById('tab-' + t);
+    const n = document.getElementById('nav-' + t);
+    if (s) s.classList.remove('active');
+    if (b) b.classList.remove('active');
+    if (n) n.classList.remove('active');
+  });
+  const sec = document.getElementById('sec-' + id);
+  const btn = document.getElementById('tab-' + id);
+  const nav = document.getElementById('nav-' + id);
+  if (sec) sec.classList.add('active');
+  if (btn) btn.classList.add('active');
+  if (nav) nav.classList.add('active');
+
+  if (id === 'wxlive' && !wxAutoLoaded) { wxAutoLoaded = true; loadWeatherMain(); }
+  if (id === 'pest')    { renderNhFertList(); }
+  if (id === 'supply')  { if (typeof initSupply==='function') initSupply(); if (typeof renderRecommendDB==='function') renderRecommendDB('전체'); }
+  if (id === 'irang')   { renderIrang(); }
+  if (id === 'guide')   { if (typeof showGuide==='function') showGuide('watermelon'); }
   if (id === 'pruning') {
     renderPruneChecklist();
-    setTimeout(() => {
-      const pd = document.getElementById('pdfIllustDiv');
-      if (pd) pd.style.display = 'block';
-    }, 300);
-  }
-  if (id === 'guide') {
-    if (typeof showGuide === 'function') showGuide('watermelon');
+    setTimeout(() => { const pd=document.getElementById('pdfIllustDiv'); if(pd) pd.style.display='block'; }, 300);
   }
   if (id === 'sheet') {
     const _wl = localStorage.getItem('workLog');
-    if (_wl) { try { workLog = JSON.parse(_wl); } catch(e) {} }
+    if (_wl) { try { workLog = JSON.parse(_wl); } catch(e) { workLog = []; } }
+    else { workLog = []; }
     renderWorkLog();
-    if (!sheetAutoLoaded) {
-      sheetAutoLoaded = true;
-      renderPendingList();
+    if (_fbReady && _db) {
+      _db.collection('workLog').get()
+        .then(snap => {
+          const fbLogs = [];
+          snap.forEach(doc => { const d=doc.data(); if(d&&d.id) fbLogs.push(d); });
+          if (fbLogs.length > 0) {
+            fbLogs.forEach(d => { if(!workLog.some(e=>String(e.id)===String(d.id))) workLog.push(d); });
+            workLog.sort((a,b)=>(b.id||0)-(a.id||0));
+            localStorage.setItem('workLog', JSON.stringify(workLog));
+            renderWorkLog();
+          }
+        }).catch(e => console.warn('workLog load:', e.message));
     }
+    if (!sheetAutoLoaded) { sheetAutoLoaded = true; renderPendingList(); }
   }
 }
+
 
 
 // ── 생육일수 기능 ─────────────────────────────────────
@@ -9613,6 +9644,11 @@ function recordWork(taskName, taskDetail, taskLoc, taskJudge) {
 
 // 기록장 렌더
 function renderWorkLog() {
+  // 항상 localStorage에서 최신 데이터 로드
+  const _saved = localStorage.getItem('workLog');
+  if (_saved) {
+    try { workLog = JSON.parse(_saved); } catch(e) { workLog = []; }
+  }
   const listEl  = document.getElementById('workLogList');
   const totalEl = document.getElementById('logTotalCount');
   const monthEl = document.getElementById('logThisMonth');
@@ -10431,6 +10467,33 @@ h1{font-size:18px;font-weight:700;color:#1B5E20;margin-bottom:4px}
 <div class="sub">출력일: ${new Date().toLocaleDateString('ko-KR')} · 총 ${filtered.length}건</div>
 ${body}
 <`+`script>window.onload=()=>window.print();<\/script>
+
+<!-- ══ 기록장 팝업 ══ -->
+<div id="workLogPopup" style="display:none;position:fixed;top:0;left:0;
+  width:100%;height:100%;z-index:9999;background:white;
+  overflow-y:auto;-webkit-overflow-scrolling:touch">
+
+  <!-- 헤더 -->
+  <div style="position:sticky;top:0;z-index:10;background:#1B5E20;
+    padding:12px 16px;display:flex;align-items:center;gap:10px">
+    <button onclick="closeWorkLogPopup()"
+      style="background:rgba(255,255,255,0.2);border:none;color:white;
+      border-radius:8px;padding:8px 14px;font-size:16px;font-weight:700;
+      cursor:pointer;font-family:inherit;flex-shrink:0">← 닫기</button>
+    <span style="font-size:17px;font-weight:700;color:white">📒 작업 기록장</span>
+    <button onclick="openWorkLogPopup()"
+      style="background:rgba(255,255,255,0.2);border:none;color:white;
+      border-radius:8px;padding:8px 12px;font-size:14px;font-weight:700;
+      cursor:pointer;font-family:inherit;flex-shrink:0;margin-left:auto">🔄</button>
+  </div>
+
+  <!-- 상태 -->
+  <div id="popupStatus" style="background:#FFF9C4;padding:8px 16px;
+    font-size:14px;color:#546E7A;display:none"></div>
+
+  <!-- 내용 -->
+  <div id="popupWorkLogList" style="padding:12px 12px 80px"></div>
+</div>
 </body></html>`;
 
   const w=window.open('','_blank','width=800,height=700');
@@ -11316,6 +11379,127 @@ document.addEventListener('DOMContentLoaded', function() {
   setTimeout(() => initPlantsDB(), 1500);
 });
 
+
+
+// ══ 기록장 팝업 ════════════════════════════════════
+function openWorkLogPopup() {
+  const popup = document.getElementById('workLogPopup');
+  if (!popup) return;
+  popup.style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  renderPopupWorkLog();
+  // Firebase에서도 로드
+  if (typeof _fbReady !== 'undefined' && _fbReady && _db) {
+    _db.collection('workLog').get()
+      .then(snap => {
+        const fbLogs = [];
+        snap.forEach(doc => { const d = doc.data(); if (d && d.id) fbLogs.push(d); });
+        if (fbLogs.length > 0) {
+          let local = [];
+          try { local = JSON.parse(localStorage.getItem('workLog') || '[]'); } catch(e) {}
+          fbLogs.forEach(d => {
+            if (!local.some(e => String(e.id) === String(d.id))) local.push(d);
+          });
+          local.sort((a,b) => (b.id||0) - (a.id||0));
+          workLog = local;
+          localStorage.setItem('workLog', JSON.stringify(workLog));
+          renderPopupWorkLog();
+          const st = document.getElementById('popupStatus');
+          if (st) { st.style.display = 'block'; st.textContent = 'Firebase: ' + fbLogs.length + '건 동기화됨'; }
+        }
+      }).catch(() => {});
+  }
+}
+
+function closeWorkLogPopup() {
+  const popup = document.getElementById('workLogPopup');
+  if (popup) popup.style.display = 'none';
+  document.body.style.overflow = '';
+}
+
+function renderPopupWorkLog() {
+  const el = document.getElementById('popupWorkLogList');
+  if (!el) return;
+
+  // localStorage에서 직접 읽기
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem('workLog') || '[]'); } catch(e) {}
+  logs.sort((a,b) => (b.id||0) - (a.id||0));
+
+  if (!logs.length) {
+    el.innerHTML = '<div style="text-align:center;padding:50px 20px;color:#9E9E9E">'
+      + '<div style="font-size:40px;margin-bottom:12px">📒</div>'
+      + '<div style="font-size:17px">기록된 작업이 없습니다</div>'
+      + '<div style="font-size:14px;margin-top:8px">오늘 작업 탭에서 ✅ 체크하면 기록됩니다</div>'
+      + '</div>';
+    return;
+  }
+
+  const typeIcon  = {'일반':'✅','시비':'🌱','병해충':'🐛','긴급':'⚡','구입':'🛒'};
+  const typeBg    = {'일반':'#E8F5E9','시비':'#F1F8E9','병해충':'#FFF8E1','긴급':'#FFEBEE','구입':'#E3F2FD'};
+  const typeTc    = {'일반':'#1B5E20','시비':'#33691E','병해충':'#E65100','긴급':'#C62828','구입':'#1565C0'};
+  const dayNames  = ['일','월','화','수','목','금','토'];
+
+  const grouped = {};
+  logs.forEach(e => {
+    const d = e.date || '날짜없음';
+    if (!grouped[d]) grouped[d] = [];
+    grouped[d].push(e);
+  });
+
+  const todayStr = toYMD(REAL_TODAY);
+  let h = '';
+  Object.keys(grouped).sort().reverse().forEach(date => {
+    const dt      = new Date(date + 'T00:00:00');
+    const dn      = isNaN(dt.getTime()) ? '' : dayNames[dt.getDay()];
+    const isToday = date === todayStr;
+    const entries = grouped[date];
+    h += `<div style="margin-bottom:12px;border-radius:10px;overflow:hidden;
+      box-shadow:0 1px 6px rgba(0,0,0,0.12)">
+      <div style="background:${isToday?'#1B5E20':'#37474F'};padding:10px 14px;
+        display:flex;align-items:center;justify-content:space-between">
+        <span style="color:white;font-size:16px;font-weight:700">
+          ${isToday?'📌 오늘 — ':''}${date.replace(/-/g,'.')} (${dn})
+        </span>
+        <span style="color:rgba(255,255,255,0.75);font-size:14px">${entries.length}건</span>
+      </div>`;
+    entries.forEach(e => {
+      const icon = typeIcon[e.type] || '✅';
+      const bg   = typeBg[e.type]  || '#E8F5E9';
+      const tc   = typeTc[e.type]  || '#1B5E20';
+      h += `<div style="background:white;padding:12px 14px;border-bottom:1px solid #F5F5F5;
+        display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:22px;flex-shrink:0">${icon}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:17px;font-weight:700;color:#212121;margin-bottom:3px">${e.name||''}</div>
+          ${e.detail?`<div style="font-size:15px;color:#546E7A;margin-bottom:2px">${e.detail}</div>`:''}
+          ${e.loc?`<div style="font-size:13px;color:#9E9E9E">📍 ${e.loc}</div>`:''}
+          <div style="margin-top:5px">
+            <span style="font-size:13px;background:${bg};color:${tc};padding:2px 9px;
+              border-radius:8px;font-weight:700">${e.type||'일반'}</span>
+            <span style="font-size:13px;color:#BDBDBD;margin-left:6px">${e.time||''}</span>
+          </div>
+        </div>
+        <button onclick="deletePopupLog(${e.id})"
+          style="background:none;border:none;color:#BDBDBD;font-size:20px;
+          cursor:pointer;padding:2px 4px;flex-shrink:0">✕</button>
+      </div>`;
+    });
+    h += '</div>';
+  });
+  el.innerHTML = h;
+}
+
+function deletePopupLog(id) {
+  let logs = [];
+  try { logs = JSON.parse(localStorage.getItem('workLog')||'[]'); } catch(e) {}
+  logs = logs.filter(e => String(e.id) !== String(id));
+  localStorage.setItem('workLog', JSON.stringify(logs));
+  workLog = logs;
+  if (typeof fbDeleteLog === 'function') fbDeleteLog(id);
+  renderPopupWorkLog();
+}
+
 function showToast(msg) {
   let t = document.getElementById('toastMsg');
   if (!t) {
@@ -11621,6 +11805,8 @@ window.addEventListener('DOMContentLoaded', function() {
   if (grDate) grDate.value = toYMD(REAL_TODAY);
   // 생육기록 렌더
   renderGrowRecords();
+  // 기록장 렌더 (탭 전환과 무관하게 미리 채움)
+  renderWorkLog();
   // 전체 렌더
   renderAll();
   // 재배 그림 초기화 (DOM 완전 로드 후)
@@ -11654,7 +11840,7 @@ window.addEventListener('DOMContentLoaded', function() {
       <div class="plant-header">
         <span class="card-icon">🌿</span>
         <div>
-          <div class="plant-title">심은 날짜 기록</div>
+          <div class="plant-title">심은 날짜 기록(내폰에만 저장)</div>
           <div class="plant-subtitle">모종·씨앗 정식일 입력 → 경과일 자동 계산</div>
         </div>
       </div>
@@ -11749,7 +11935,7 @@ window.addEventListener('DOMContentLoaded', function() {
       <div class="plant-header">
         <span class="card-icon">📊</span>
         <div>
-          <div class="plant-title">생육 현황</div>
+          <div class="plant-title">생육현황(내폰에만 기록)</div>
           <div class="plant-subtitle" id="growSubtitle">심은 작물이 없습니다</div>
         </div>
       </div>
@@ -12829,62 +13015,7 @@ window.addEventListener('DOMContentLoaded', function() {
   </div>
 
   
-<div class="section" id="sec-sheet">
-    <div class="section-title">📒 작업 기록장</div>
 
-    <!-- 필터 바 -->
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="logFilterMonth"
-        onchange="renderWorkLog()"
-        style="flex:1;min-width:80px;padding:9px;border-radius:8px;
-        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
-        <option value="all">전체 월</option>
-      </select>
-      <select id="logFilterType"
-        onchange="renderWorkLog()"
-        style="flex:1;min-width:90px;padding:9px;border-radius:8px;
-        border:1.5px solid #E0E0E0;font-size:17px;font-family:inherit;background:white">
-        <option value="all">전체 유형</option>
-        <option value="일반">일반 작업</option>
-        <option value="시비">🌱 시비</option>
-        <option value="병해충">🐛 병해충</option>
-        <option value="구입">🛒 구입</option>
-      </select>
-      <button onclick="printWorkLogPDF()"
-        style="padding:9px 12px;background:#E8EAF6;border:1.5px solid #3949AB;
-        color:#3949AB;border-radius:8px;font-size:16px;font-weight:700;
-        cursor:pointer;font-family:inherit;white-space:nowrap">
-        🖨️ PDF출력
-      </button>
-      <button onclick="clearWorkLog()"
-        style="padding:9px 14px;background:#FFEBEE;border:1.5px solid #FFCDD2;
-        color:#C62828;border-radius:8px;font-size:16px;font-weight:700;
-        cursor:pointer;font-family:inherit;white-space:nowrap">
-        🗑️ 전체 삭제
-      </button>
-    </div>
-
-    <!-- 기록 통계 -->
-    <div class="card" id="logStats">
-      <div class="card-body" style="display:flex;gap:0;padding:0">
-        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
-          <div style="font-size:22px;font-weight:800;color:#1B5E20" id="logTotalCount">0</div>
-          <div style="font-size:16px;color:#9E9E9E">전체 기록</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 0;border-right:1px solid #F0F0F0">
-          <div style="font-size:22px;font-weight:800;color:#1565C0" id="logThisMonth">0</div>
-          <div style="font-size:16px;color:#9E9E9E">이번달</div>
-        </div>
-        <div style="flex:1;text-align:center;padding:12px 0">
-          <div style="font-size:22px;font-weight:800;color:#E65100" id="logStreak">0</div>
-          <div style="font-size:16px;color:#9E9E9E">연속 작업일</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 기록 목록 -->
-    <div id="workLogList"></div>
-  </div>
 
   
 </div><!-- /content --></div><!-- /content -->
