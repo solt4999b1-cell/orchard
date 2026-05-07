@@ -2,53 +2,77 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://via.placeholder.com/152/4CAF50/FFFFFF?text=Organic">
-    <title>유기농 250제 암기장</title>
+    <title>유기농 250제</title>
     <style>
-        body { font-family: -apple-system, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .header { text-align: center; margin-bottom: 20px; color: #333; }
-        .progress { font-size: 1.1rem; font-weight: bold; color: #4CAF50; margin-bottom: 10px; }
+        :root { --primary-color: #2e7d32; --accent-color: #fb8c00; --bg-color: #f5f5f7; }
+        body { font-family: -apple-system, system-ui, sans-serif; background: var(--bg-color); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        .card-container { perspective: 1000px; width: 100%; max-width: 400px; height: 300px; margin-bottom: 30px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s; transform-style: preserve-3d; border-radius: 15px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        /* 상단 상태바 */
+        .header { padding: 50px 20px 10px; background: white; text-align: center; border-bottom: 1px solid #ddd; }
+        .progress-text { font-size: 1rem; font-weight: bold; color: var(--primary-color); margin-bottom: 8px; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+        #progress-fill { width: 0%; height: 100%; background: var(--primary-color); transition: width 0.3s ease; }
+
+        /* 카드 영역 */
+        .card-zone { flex: 1; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .card-container { perspective: 1000px; width: 100%; max-width: 360px; height: 420px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+        .card { width: 100%; height: 100%; position: relative; transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1); transform-style: preserve-3d; }
         .card.is-flipped { transform: rotateY(180deg); }
+        .card-face { position: absolute; width: 100%; height: 100%; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px; border-radius: 20px; box-sizing: border-box; text-align: center; font-size: 1.3rem; font-weight: bold; line-height: 1.6; box-shadow: 0 10px 30px rgba(0,0,0,0.1); word-break: keep-all; }
         
-        .card-face { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; border-radius: 15px; font-size: 1.3rem; text-align: center; word-break: keep-all; line-height: 1.5; }
+        .card-front { background: white; color: #333; border: 3px solid var(--primary-color); }
+        .card-back { background: var(--primary-color); color: white; transform: rotateY(180deg); }
         
-        .card-front { background-color: white; color: #333; font-weight: bold; border: 2px solid #4CAF50; }
-        .card-back { background-color: #4CAF50; color: white; transform: rotateY(180deg); font-weight: bold; }
-        
-        .nav-buttons { display: flex; gap: 15px; width: 100%; max-width: 400px; }
-        button { flex: 1; padding: 15px; background-color: #333; color: white; border: none; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
-        button:active { background-color: #555; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
-        
-        .hint { font-size: 0.9rem; color: #777; margin-top: 15px; }
+        .card-label { font-size: 0.8rem; opacity: 0.7; margin-bottom: 15px; text-transform: uppercase; letter-spacing: 2px; }
+
+        /* 하단 컨트롤 */
+        .controls { background: white; padding: 20px 20px 40px; display: grid; grid-template-columns: 1fr 1fr; gap: 15px; border-top: 1px solid #ddd; }
+        .timer-display { grid-column: span 2; text-align: center; font-size: 0.9rem; color: #666; margin-bottom: 5px; font-weight: bold; height: 20px; }
+        button { border: none; border-radius: 12px; font-weight: bold; cursor: pointer; padding: 16px; font-size: 1.05rem; transition: background 0.2s; -webkit-tap-highlight-color: transparent; }
+        button:active { transform: scale(0.98); }
+        .btn-side { background: #f0f0f0; color: #333; }
+        .btn-auto { background: var(--accent-color); color: white; grid-column: span 2; font-size: 1.15rem; }
+        .btn-auto.active { background: #d32f2f; animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.85; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <div class="progress" id="progress">1 / 250</div>
-        <h2>유기농업기능사 핵심 250제</h2>
-    </div>
+<div class="header">
+    <div class="progress-text" id="counter">1 / 250</div>
+    <div class="progress-bar-bg"><div id="progress-fill"></div></div>
+</div>
 
+<div class="card-zone">
+    <!-- 수동 터치로 뒤집는 영역 -->
     <div class="card-container" onclick="flipCard()">
-        <div class="card" id="flashcard">
-            <div class="card-face card-front" id="card-front">질문</div>
-            <div class="card-face card-back" id="card-back">정답</div>
+        <div class="card" id="card">
+            <div class="card-face card-front">
+                <div class="card-label">Question</div>
+                <div id="q-text">질문 불러오는 중...</div>
+            </div>
+            <div class="card-face card-back">
+                <div class="card-label">Answer</div>
+                <div id="a-text">정답 불러오는 중...</div>
+            </div>
         </div>
     </div>
+</div>
 
-    <div class="nav-buttons">
-        <button id="prev-btn" onclick="prevCard()" disabled>이전</button>
-        <button id="next-btn" onclick="nextCard()">다음</button>
-    </div>
-    
-    <div class="hint">💡 카드를 터치하면 정답이 보입니다.</div>
+<div class="controls">
+    <div class="timer-display" id="timer-msg">👆 화면을 터치하면 정답이 보입니다</div>
+    <button class="btn-side" onclick="prev()">이전 문제</button>
+    <button class="btn-side" onclick="next()">다음 문제</button>
+    <button class="btn-auto" id="auto-btn" onclick="toggleAuto()">▶ 10초 자동 모드 시작</button>
+</div>
 
 <script>
     // 유기농업기능사 실기/필답형 대비 핵심 단답 250제
@@ -290,58 +314,91 @@
         ["종자의 휴면을 타파하고 줄기의 비대 성장을 촉진하는 대표적인 식물 호르몬은?", "지베렐린 (Gibberellin)"]
     ];
 
-    // 부족한 번호를 더 채워서 250번까지 진행되도록 반복 숙달 데이터 처리
-    while(data.length < 250) {
-        let randomIndex = Math.floor(Math.random() * 160);
-        data.push([...data[randomIndex]]); // 중요 문제 반복 학습
+     // 학습용 250제로 데이터 채우기 (실제 사용 시 배열에 텍스트를 추가하시면 됩니다)
+    while(questions.length < 250) {
+        questions.push([...questions[Math.floor(Math.random() * 20)]]);
     }
 
     let currentIndex = 0;
-    const flashcard = document.getElementById('flashcard');
-    const front = document.getElementById('card-front');
-    const back = document.getElementById('card-back');
-    const progress = document.getElementById('progress');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
+    let autoInterval = null;
+    let flipTimeout = null;
+    const card = document.getElementById('card');
+    const autoBtn = document.getElementById('auto-btn');
+    const timerMsg = document.getElementById('timer-msg');
 
     function updateCard() {
-        flashcard.classList.remove('is-flipped');
+        // 카드를 앞면으로 초기화
+        card.classList.remove('is-flipped');
         
+        // 카드가 뒤집히는 애니메이션 시간(0.6초)을 고려하여 텍스트 변경
         setTimeout(() => {
-            front.innerText = "Q. " + data[currentIndex][0];
-            back.innerText = "A. " + data[currentIndex][1];
-            progress.innerText = `${currentIndex + 1} / 250`;
-            
-            prevBtn.disabled = currentIndex === 0;
-            nextBtn.innerText = currentIndex === 199 ? '완료' : '다음';
+            document.getElementById('q-text').innerText = questions[currentIndex][0];
+            document.getElementById('a-text').innerText = questions[currentIndex][1];
+            document.getElementById('counter').innerText = `${currentIndex + 1} / 250`;
+            document.getElementById('progress-fill').style.width = `${((currentIndex + 1) / 250) * 100}%`;
         }, 150);
     }
 
-    function flipCard() {
-        flashcard.classList.toggle('is-flipped');
+    // 수동 터치 기능
+    function flipCard() { 
+        card.classList.toggle('is-flipped'); 
     }
 
-    function nextCard() {
-        if (currentIndex < 199) {
-            currentIndex++;
-            updateCard();
+    function next() {
+        currentIndex = (currentIndex + 1) % 250;
+        updateCard();
+    }
+
+    function prev() {
+        currentIndex = (currentIndex - 1 + 250) % 250;
+        updateCard();
+    }
+
+    // 자동 진행 모드 토글
+    function toggleAuto() {
+        if (autoInterval) {
+            // 자동 모드 중지
+            clearInterval(autoInterval);
+            clearTimeout(flipTimeout);
+            autoInterval = null;
+            autoBtn.innerText = "▶ 10초 자동 모드 시작";
+            autoBtn.classList.remove('active');
+            timerMsg.innerText = "👆 화면을 터치하면 정답이 보입니다 (수동 모드)";
         } else {
-            alert('축하합니다! 250제를 모두 학습하셨습니다.');
-            currentIndex = 0;
-            updateCard();
+            // 자동 모드 시작
+            autoBtn.innerText = "■ 자동 모드 정지";
+            autoBtn.classList.add('active');
+            startAutoLogic();
         }
     }
 
-    function prevCard() {
-        if (currentIndex > 0) {
-            currentIndex--;
-            updateCard();
-        }
+    function startAutoLogic() {
+        // 즉시 첫 번째 사이클 시작
+        runCycle();
+
+        // 이후 10초마다 반복
+        autoInterval = setInterval(runCycle, 10000);
     }
 
-    // 초기 로드
+    function runCycle() {
+        // 0초: 문제 노출 상태
+        timerMsg.innerText = "⏳ 5초 후 정답이 공개됩니다...";
+        
+        // 5초 뒤: 카드 자동 뒤집기
+        flipTimeout = setTimeout(() => {
+            card.classList.add('is-flipped');
+            timerMsg.innerText = "⏳ 5초 후 다음 문제로 넘어갑니다.";
+        }, 5000);
+
+        // 10초 뒤: 다음 문제로 이동 (이동은 setInterval 주기에 맞춰지므로 여기선 처리 불필요, 
+        // 단 주기 끝나기 직전에 카드를 넘겨줌)
+        setTimeout(() => {
+            if(autoInterval) next();
+        }, 9800);
+    }
+
+    // 앱 실행 시 첫 문제 로드
     updateCard();
 </script>
-
 </body>
 </html>
