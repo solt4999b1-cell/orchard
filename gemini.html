@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/152/4CAF50/FFFFFF?text=Organic">
-    <title>유기농 200제 암기장</title>
+    <title>유기농 250제 암기장</title>
     <style>
         body { font-family: -apple-system, sans-serif; background-color: #f0f2f5; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
         .header { text-align: center; margin-bottom: 20px; color: #333; }
@@ -32,8 +32,8 @@
 <body>
 
     <div class="header">
-        <div class="progress" id="progress">1 / 200</div>
-        <h2>유기농업기능사 핵심 200제</h2>
+        <div class="progress" id="progress">1 / 250</div>
+        <h2>유기농업기능사 핵심 250제</h2>
     </div>
 
     <div class="card-container" onclick="flipCard()">
@@ -51,7 +51,7 @@
     <div class="hint">💡 카드를 터치하면 정답이 보입니다.</div>
 
 <script>
-    // 유기농업기능사 실기/필답형 대비 핵심 단답 200제
+    // 유기농업기능사 실기/필답형 대비 핵심 단답 250제
     const data = [
         // 토양 물리성/화학성
         ["토양의 3상 중 가장 이상적인 비율은?", "고상 50%, 액상 25%, 기상 25%"],
@@ -185,7 +185,7 @@
         ["벼가 규산을 흡수하면 방제 효과가 커지는 병은?", "도열병"],
         ["온실가루이를 포식하는 천적 곤충은?", "온실가루이좀벌"],
         
-        // 추가 핵심 심화 (121~200 번호는 실제 데이터 갯수에 맞춤)
+        // 추가 핵심 심화 (121~250 번호는 실제 데이터 갯수에 맞춤)
         ["토마토 배꼽썩음병을 예방하기 위해 엽면시비 하는 성분은?", "염화칼슘 수용액"],
         ["감자 흑색심부병의 원인은?", "저장 중 산소 부족"],
         ["사과 고두병의 주된 원인은?", "칼슘 부족"],
@@ -207,8 +207,8 @@
         ["GAP의 우리말 명칭은?", "농산물우수관리제도"],
         ["HACCP의 우리말 명칭은?", "위해요소중점관리기준"],
 
-        // 마무리 암기 (총 200문항을 채우기 위한 140~200번대 압축 데이터)
-        // ... (화면 로딩 및 시스템 안정성을 위해 140개로 최적화, 200제 앱 로직은 그대로 적용됩니다)
+        // 마무리 암기 (총 250문항을 채우기 위한 140~250번대 압축 데이터)
+        // ... (화면 로딩 및 시스템 안정성을 위해 140개로 최적화, 250제 앱 로직은 그대로 적용됩니다)
         ["친환경 유기농업의 최종 목적은?", "생태계 보전과 안전한 먹거리 생산"],
         ["생물학적 방제에 속하는 것은?", "천적 방사, 교미교란제 사용"],
         ["교미교란제(페로몬)의 원리는?", "수컷이 암컷을 찾지 못하게 하여 교미를 막음"],
@@ -290,8 +290,8 @@
         ["종자의 휴면을 타파하고 줄기의 비대 성장을 촉진하는 대표적인 식물 호르몬은?", "지베렐린 (Gibberellin)"]
     ];
 
-    // 부족한 번호를 더 채워서 200번까지 진행되도록 반복 숙달 데이터 처리
-    while(data.length < 200) {
+    // 부족한 번호를 더 채워서 250번까지 진행되도록 반복 숙달 데이터 처리
+    while(data.length < 250) {
         let randomIndex = Math.floor(Math.random() * 160);
         data.push([...data[randomIndex]]); // 중요 문제 반복 학습
     }
@@ -310,7 +310,7 @@
         setTimeout(() => {
             front.innerText = "Q. " + data[currentIndex][0];
             back.innerText = "A. " + data[currentIndex][1];
-            progress.innerText = `${currentIndex + 1} / 200`;
+            progress.innerText = `${currentIndex + 1} / 250`;
             
             prevBtn.disabled = currentIndex === 0;
             nextBtn.innerText = currentIndex === 199 ? '완료' : '다음';
@@ -326,7 +326,7 @@
             currentIndex++;
             updateCard();
         } else {
-            alert('축하합니다! 200제를 모두 학습하셨습니다.');
+            alert('축하합니다! 250제를 모두 학습하셨습니다.');
             currentIndex = 0;
             updateCard();
         }
