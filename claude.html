@@ -6,175 +6,201 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="유기농기능사">
-<title>유기농업기능사 실기 200제</title>
+<title>유기농업기능사 실기 250제</title>
 <style>
-  :root{
-    --green:#2E7D32;--green-l:#43A047;--green-d:#1B5E20;
-    --amber:#F57F17;--amber-l:#FFF8E1;
-    --bg:#F1F8E9;--card:#fff;--text:#1a1a1a;--sub:#555;
-    --radius:16px;--shadow:0 4px 20px rgba(0,0,0,.10);
-    --safe-top: env(safe-area-inset-top);
-    --safe-bot: env(safe-area-inset-bottom);
-  }
-  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
-       background:var(--bg);color:var(--text);min-height:100vh;
-       padding-bottom:calc(80px + var(--safe-bot));}
+:root{
+  --green:#2E7D32;--green-l:#43A047;--green-d:#1B5E20;
+  --amber:#F57F17;--new:#1565C0;--new-l:#E3F2FD;
+  --bg:#F1F8E9;--card:#fff;--text:#1a1a1a;--sub:#666;
+  --radius:16px;--shadow:0 4px 20px rgba(0,0,0,.10);
+  --safe-top:env(safe-area-inset-top);
+  --safe-bot:env(safe-area-inset-bottom);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;
+     background:var(--bg);color:var(--text);min-height:100vh;
+     padding-bottom:calc(80px + var(--safe-bot));}
 
-  /* ── Header ── */
-  .header{background:linear-gradient(135deg,var(--green-d),var(--green-l));
-          color:#fff;padding:calc(var(--safe-top) + 14px) 20px 16px;
-          position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
-  .header h1{font-size:18px;font-weight:700;letter-spacing:-.3px;}
-  .header .sub{font-size:12px;opacity:.85;margin-top:2px;}
+/* ─ Header ─ */
+.header{background:linear-gradient(135deg,var(--green-d),var(--green-l));
+        color:#fff;padding:calc(var(--safe-top)+14px) 20px 14px;
+        position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(0,0,0,.2);}
+.header h1{font-size:18px;font-weight:700;}
+.header .sub{font-size:11px;opacity:.85;margin-top:3px;}
+.dday{background:var(--amber);color:#fff;text-align:center;
+      padding:7px;font-size:13px;font-weight:700;}
+.new-banner{background:var(--new);color:#fff;text-align:center;
+            padding:6px;font-size:11px;font-weight:700;}
 
-  /* ── D-day banner ── */
-  .dday{background:var(--amber);color:#fff;text-align:center;padding:8px;
-        font-size:14px;font-weight:700;letter-spacing:.5px;}
+/* ─ Progress ─ */
+.prog-wrap{padding:12px 16px 6px;background:#fff;border-bottom:1px solid #e0e0e0;}
+.prog-info{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:5px;}
+.prog-track{height:7px;background:#E8F5E9;border-radius:10px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-l));
+           border-radius:10px;transition:width .4s;}
 
-  /* ── Progress bar ── */
-  .prog-wrap{padding:14px 18px 6px;background:#fff;border-bottom:1px solid #e0e0e0;}
-  .prog-info{display:flex;justify-content:space-between;font-size:12px;color:var(--sub);margin-bottom:6px;}
-  .prog-track{height:7px;background:#E8F5E9;border-radius:10px;overflow:hidden;}
-  .prog-fill{height:100%;background:linear-gradient(90deg,var(--green),var(--green-l));
-             border-radius:10px;transition:width .4s ease;}
+/* ─ Stats ─ */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+       padding:10px 12px;background:#fff;border-bottom:1px solid #E8F5E9;}
+.stat-box{background:var(--bg);border-radius:12px;padding:8px;text-align:center;}
+.stat-box .n{font-size:20px;font-weight:800;color:var(--green);}
+.stat-box .n.blue{color:var(--new);}
+.stat-box .l{font-size:9px;color:var(--sub);margin-top:1px;}
 
-  /* ── Tabs ── */
-  .tabs{display:flex;overflow-x:auto;background:#fff;border-bottom:2px solid #E8F5E9;
-        padding:0 8px;scrollbar-width:none;gap:4px;}
-  .tabs::-webkit-scrollbar{display:none;}
-  .tab{flex-shrink:0;padding:10px 14px;font-size:12px;font-weight:600;
-       color:var(--sub);border:none;background:none;cursor:pointer;
-       border-bottom:3px solid transparent;white-space:nowrap;transition:.2s;}
-  .tab.active{color:var(--green);border-bottom-color:var(--green);}
+/* ─ Tabs ─ */
+.tabs{display:flex;overflow-x:auto;background:#fff;border-bottom:2px solid #E8F5E9;
+      padding:0 8px;scrollbar-width:none;gap:4px;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:10px 12px;font-size:11px;font-weight:600;
+     color:var(--sub);border:none;background:none;cursor:pointer;
+     border-bottom:3px solid transparent;white-space:nowrap;}
+.tab.active{color:var(--green);border-bottom-color:var(--green);}
+.tab.new-tab.active{color:var(--new);border-bottom-color:var(--new);}
 
-  /* ── Filter / Search ── */
-  .toolbar{display:flex;gap:8px;padding:12px 14px;background:#fff;
+/* ─ Toolbar ─ */
+.toolbar{display:flex;gap:8px;padding:10px 12px;background:#fff;
+         border-bottom:1px solid #E8F5E9;}
+.toolbar input{flex:1;border:1px solid #C8E6C9;border-radius:10px;
+               padding:8px 12px;font-size:13px;outline:none;}
+.toolbar input:focus{border-color:var(--green);}
+.toolbar select{border:1px solid #C8E6C9;border-radius:10px;
+                padding:8px 8px;font-size:11px;background:#fff;outline:none;}
+
+/* ─ Cards ─ */
+.list{padding:12px 13px;display:flex;flex-direction:column;gap:10px;}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+.card:active{transform:scale(.98);}
+.card-head{display:flex;align-items:center;padding:13px 14px;cursor:pointer;gap:11px;}
+.num{width:34px;height:34px;background:var(--green);color:#fff;border-radius:10px;
+     font-size:12px;font-weight:800;display:flex;align-items:center;
+     justify-content:center;flex-shrink:0;position:relative;}
+.num.done{background:#A5D6A7;}
+.num.new25{background:var(--new);}
+.num.new25.done{background:#90CAF9;}
+.new-dot{position:absolute;top:-3px;right:-3px;width:9px;height:9px;
+         background:#FF5252;border-radius:50%;border:1.5px solid #fff;}
+.q-wrap{flex:1;min-width:0;}
+.cat-badge{font-size:10px;background:#E8F5E9;color:var(--green);border-radius:6px;
+           padding:2px 7px;display:inline-block;margin-bottom:4px;font-weight:600;}
+.cat-badge.new25{background:var(--new-l);color:var(--new);}
+.q-text{font-size:13px;line-height:1.5;font-weight:500;}
+.chevron{font-size:18px;color:#bbb;transition:transform .3s;flex-shrink:0;}
+.card.open .chevron{transform:rotate(90deg);}
+.answer{display:none;border-top:1px solid #F1F8E9;padding:13px 14px;
+        background:#FAFFF8;animation:fadeIn .2s;}
+.answer.new25{background:#F0F7FF;}
+.answer-label{font-size:11px;color:var(--green);font-weight:700;margin-bottom:5px;}
+.answer-label.new25{color:var(--new);}
+.answer-text{font-size:13px;line-height:1.75;color:#333;}
+.card.open .answer{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.mark-btn{margin-top:10px;width:100%;padding:9px;border-radius:10px;border:none;
+          font-size:13px;font-weight:700;cursor:pointer;}
+.mark-btn.unlearned{background:#E8F5E9;color:var(--green);}
+.mark-btn.learned{background:var(--green);color:#fff;}
+
+/* ─ Bottom Nav ─ */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;
+            border-top:1px solid #E8F5E9;display:flex;
+            padding:10px 0 calc(10px + var(--safe-bot));
+            box-shadow:0 -4px 16px rgba(0,0,0,.08);z-index:200;}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
+         gap:3px;border:none;background:none;cursor:pointer;
+         font-size:10px;color:var(--sub);padding:2px 0;font-weight:600;}
+.nav-btn.active{color:var(--green);}
+.nav-btn span{font-size:22px;}
+
+/* ─ Pages ─ */
+.page{display:none;}
+.page.active{display:block;}
+
+/* ─ Quiz ─ */
+.quiz-ctrl{display:flex;gap:8px;padding:12px 13px;background:#fff;
            border-bottom:1px solid #E8F5E9;}
-  .toolbar input{flex:1;border:1px solid #C8E6C9;border-radius:10px;
-                 padding:8px 12px;font-size:13px;outline:none;}
-  .toolbar input:focus{border-color:var(--green);}
-  .toolbar select{border:1px solid #C8E6C9;border-radius:10px;
+.quiz-ctrl select{flex:1;border:1px solid #C8E6C9;border-radius:10px;
                   padding:8px 10px;font-size:12px;background:#fff;outline:none;}
+.quiz-ctrl button{background:var(--green);color:#fff;border:none;
+                  border-radius:10px;padding:9px 14px;font-size:13px;
+                  font-weight:700;cursor:pointer;flex-shrink:0;}
+.quiz-wrap{padding:14px 13px;}
+.quiz-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+           padding:20px 18px;min-height:200px;}
+.quiz-num{font-size:12px;color:var(--sub);margin-bottom:10px;
+          display:flex;align-items:center;flex-wrap:wrap;gap:6px;}
+.quiz-q{font-size:15px;line-height:1.65;font-weight:600;}
+.quiz-a-box{background:var(--bg);border-radius:12px;padding:13px;
+            margin-top:13px;display:none;}
+.quiz-a-box.show{display:block;animation:fadeIn .25s;}
+.quiz-a-label{font-size:11px;color:var(--green);font-weight:700;margin-bottom:5px;}
+.quiz-a-text{font-size:13px;line-height:1.75;}
+.quiz-btns{display:flex;gap:8px;margin-top:13px;}
+.qbtn{flex:1;padding:11px;border-radius:12px;border:none;font-size:14px;
+      font-weight:700;cursor:pointer;}
+.qbtn.show-ans{background:var(--green);color:#fff;}
+.qbtn.correct{background:#2E7D32;color:#fff;}
+.qbtn.wrong{background:#C62828;color:#fff;}
 
-  /* ── Stats ── */
-  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;
-         padding:12px 14px;background:#fff;border-bottom:1px solid #E8F5E9;}
-  .stat-box{background:var(--bg);border-radius:12px;padding:10px;text-align:center;}
-  .stat-box .n{font-size:22px;font-weight:800;color:var(--green);}
-  .stat-box .l{font-size:10px;color:var(--sub);margin-top:2px;}
+/* ─ AUTO mode ─ */
+.auto-bar{background:#fff;border-bottom:1px solid #E8F5E9;
+          padding:10px 13px;display:flex;align-items:center;gap:10px;}
+.auto-bar label{font-size:12px;font-weight:700;color:var(--sub);white-space:nowrap;}
+.auto-bar input[type=range]{flex:1;accent-color:var(--green);}
+.auto-bar .speed-lbl{font-size:12px;color:var(--green);font-weight:700;min-width:32px;text-align:right;}
+.auto-toggle{background:var(--green);color:#fff;border:none;border-radius:10px;
+             padding:8px 14px;font-size:13px;font-weight:700;cursor:pointer;
+             flex-shrink:0;white-space:nowrap;}
+.auto-toggle.running{background:#C62828;}
+/* Progress ring */
+.ring-wrap{display:flex;justify-content:center;margin:10px 0 4px;}
+svg.ring{transform:rotate(-90deg);}
+.ring-bg{fill:none;stroke:#E8F5E9;stroke-width:5;}
+.ring-fill{fill:none;stroke:var(--green);stroke-width:5;
+           stroke-linecap:round;transition:stroke-dashoffset .1s linear;}
+/* Phase label */
+.phase-badge{text-align:center;font-size:13px;font-weight:700;
+             padding:4px 14px;border-radius:20px;display:inline-block;margin:0 auto 10px;}
+.phase-badge.q{background:#E8F5E9;color:var(--green);}
+.phase-badge.a{background:var(--new-l);color:var(--new);}
+.phase-center{text-align:center;}
 
-  /* ── Card List ── */
-  .list{padding:12px 14px;display:flex;flex-direction:column;gap:10px;}
-  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);
-        overflow:hidden;transition:transform .15s;}
-  .card:active{transform:scale(.98);}
-  .card-head{display:flex;align-items:center;padding:14px 16px;cursor:pointer;gap:12px;}
-  .num{width:32px;height:32px;background:var(--green);color:#fff;border-radius:10px;
-       font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-  .num.done{background:#A5D6A7;}
-  .q-wrap{flex:1;}
-  .cat-badge{font-size:10px;background:#E8F5E9;color:var(--green);border-radius:6px;
-             padding:2px 7px;display:inline-block;margin-bottom:4px;font-weight:600;}
-  .q-text{font-size:14px;line-height:1.5;font-weight:500;}
-  .chevron{font-size:18px;color:#bbb;transition:transform .3s;flex-shrink:0;}
-  .card.open .chevron{transform:rotate(90deg);}
-
-  /* ── Answer panel ── */
-  .answer{display:none;border-top:1px solid #F1F8E9;padding:14px 16px;
-          background:#FAFFF8;animation:fadeIn .2s;}
-  .answer-label{font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px;
-                text-transform:uppercase;letter-spacing:.5px;}
-  .answer-text{font-size:14px;line-height:1.7;color:#333;}
-  .card.open .answer{display:block;}
-  @keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-
-  /* ── Mark btn ── */
-  .mark-btn{margin-top:10px;width:100%;padding:9px;border-radius:10px;border:none;
-            font-size:13px;font-weight:700;cursor:pointer;transition:.2s;}
-  .mark-btn.unlearned{background:#E8F5E9;color:var(--green);}
-  .mark-btn.learned{background:var(--green);color:#fff;}
-
-  /* ── Bottom nav ── */
-  .bottom-nav{position:fixed;bottom:0;left:0;right:0;
-              background:#fff;border-top:1px solid #E8F5E9;
-              display:flex;padding:10px 0 calc(10px + var(--safe-bot));
-              box-shadow:0 -4px 16px rgba(0,0,0,.08);z-index:200;}
-  .nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;
-           gap:3px;border:none;background:none;cursor:pointer;
-           font-size:10px;color:var(--sub);padding:2px 0;font-weight:600;}
-  .nav-btn.active{color:var(--green);}
-  .nav-btn span{font-size:22px;}
-
-  /* ── Pages ── */
-  .page{display:none;}
-  .page.active{display:block;}
-
-  /* ── Quiz mode ── */
-  .quiz-wrap{padding:16px 14px;}
-  .quiz-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
-             padding:22px 20px;min-height:220px;position:relative;}
-  .quiz-num{font-size:12px;color:var(--sub);margin-bottom:10px;}
-  .quiz-q{font-size:16px;line-height:1.6;font-weight:600;}
-  .quiz-a-box{background:var(--bg);border-radius:12px;padding:14px;
-              margin-top:14px;display:none;}
-  .quiz-a-box.show{display:block;animation:fadeIn .25s;}
-  .quiz-a-label{font-size:11px;color:var(--green);font-weight:700;margin-bottom:6px;}
-  .quiz-a-text{font-size:14px;line-height:1.7;}
-  .quiz-btns{display:flex;gap:10px;margin-top:14px;}
-  .qbtn{flex:1;padding:12px;border-radius:12px;border:none;font-size:14px;
-        font-weight:700;cursor:pointer;}
-  .qbtn.show-ans{background:var(--green);color:#fff;}
-  .qbtn.correct{background:#43A047;color:#fff;}
-  .qbtn.wrong{background:#E53935;color:#fff;}
-  .qbtn.next{background:#1565C0;color:#fff;}
-  .quiz-ctrl{display:flex;justify-content:space-between;align-items:center;
-             padding:12px 14px;background:#fff;border-bottom:1px solid #E8F5E9;}
-  .quiz-ctrl select{border:1px solid #C8E6C9;border-radius:10px;
-                    padding:7px 10px;font-size:12px;background:#fff;}
-  .quiz-ctrl button{background:var(--green);color:#fff;border:none;
-                    border-radius:10px;padding:8px 16px;font-size:13px;
-                    font-weight:700;cursor:pointer;}
-
-  /* ── Bookmarks ── */
-  .bk-empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:14px;}
-
-  /* ── About ── */
-  .about{padding:16px 14px;}
-  .info-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
-             padding:18px;margin-bottom:12px;}
-  .info-card h3{font-size:15px;font-weight:700;color:var(--green);margin-bottom:10px;}
-  .info-card p,.info-card li{font-size:13px;line-height:1.8;color:#333;}
-  .info-card ul{padding-left:18px;}
-  .exam-date{background:var(--green);color:#fff;border-radius:12px;padding:16px;
-             text-align:center;margin-bottom:12px;}
-  .exam-date .d{font-size:36px;font-weight:900;}
-  .exam-date .lbl{font-size:13px;opacity:.9;margin-top:4px;}
-
-  .empty{text-align:center;padding:40px;color:var(--sub);font-size:14px;}
+/* About */
+.about{padding:14px 13px;}
+.info-card{background:#fff;border-radius:var(--radius);box-shadow:var(--shadow);
+           padding:16px;margin-bottom:12px;}
+.info-card h3{font-size:14px;font-weight:700;color:var(--green);margin-bottom:8px;}
+.info-card h3.blue{color:var(--new);}
+.info-card li,.info-card p{font-size:13px;line-height:1.8;color:#333;}
+.info-card ul{padding-left:18px;}
+.exam-date{background:var(--green);color:#fff;border-radius:12px;padding:14px;
+           text-align:center;margin-bottom:12px;}
+.exam-date .d{font-size:34px;font-weight:900;}
+.exam-date .lbl{font-size:12px;opacity:.9;margin-top:3px;}
+.empty{text-align:center;padding:40px;color:var(--sub);font-size:14px;}
+.bk-empty{text-align:center;padding:60px 20px;color:var(--sub);font-size:14px;}
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🌱 유기농업기능사 실기 200제</h1>
-  <div class="sub">시험일: 2026년 5월 30일</div>
+  <h1>🌱 유기농업기능사 실기 250제</h1>
+  <div class="sub">기존 200문항 + 2025 개정 50문항 | 시험일: 2026.05.30</div>
 </div>
 <div class="dday" id="dday-banner">D-day 계산 중...</div>
+<div class="new-banner">🆕 2025 개정 출제기준 반영 50문항 추가 (Q201~Q250)</div>
 
-<!-- ═══ Page: 문제목록 ═══ -->
+<!-- ══ Page: 문제목록 ══ -->
 <div class="page active" id="page-list">
   <div class="prog-wrap">
     <div class="prog-info">
-      <span>학습 진도</span>
-      <span id="prog-text">0 / 200</span>
+      <span>학습 진도</span><span id="prog-text">0 / 250</span>
     </div>
     <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
   </div>
   <div class="stats">
-    <div class="stat-box"><div class="n" id="s-total">200</div><div class="l">전체 문항</div></div>
-    <div class="stat-box"><div class="n" id="s-learned">0</div><div class="l">학습 완료</div></div>
-    <div class="stat-box"><div class="n" id="s-remain">200</div><div class="l">미학습</div></div>
+    <div class="stat-box"><div class="n">250</div><div class="l">전체</div></div>
+    <div class="stat-box"><div class="n" id="s-learned">0</div><div class="l">완료</div></div>
+    <div class="stat-box"><div class="n" id="s-remain">250</div><div class="l">미학습</div></div>
+    <div class="stat-box"><div class="n blue" id="s-new">50</div><div class="l">🆕신규</div></div>
   </div>
   <div class="tabs" id="cat-tabs">
     <button class="tab active" data-cat="전체">전체</button>
@@ -186,34 +212,53 @@
       <option value="unlearned">미학습</option>
       <option value="learned">학습완료</option>
       <option value="bookmarked">북마크</option>
+      <option value="new25">🆕2025신규</option>
     </select>
   </div>
   <div class="list" id="q-list"></div>
 </div>
 
-<!-- ═══ Page: 퀴즈 ═══ -->
+<!-- ══ Page: 퀴즈+AUTO ══ -->
 <div class="page" id="page-quiz">
   <div class="quiz-ctrl">
     <select id="quiz-cat">
       <option value="전체">전체 랜덤</option>
+      <option value="new25only">🆕 2025신규만</option>
     </select>
-    <button onclick="startQuiz()">시작 / 다시하기</button>
+    <button onclick="startQuiz()">시작/재시작</button>
   </div>
+
+  <!-- AUTO 컨트롤 -->
+  <div class="auto-bar">
+    <label>⏱ 문제</label>
+    <input type="range" id="q-sec" min="3" max="30" value="5" step="1"
+           oninput="updateSpeedLabel()">
+    <span class="speed-lbl" id="q-lbl">5초</span>
+    <label>→ 답</label>
+    <input type="range" id="a-sec" min="3" max="30" value="5" step="1"
+           oninput="updateSpeedLabel()">
+    <span class="speed-lbl" id="a-lbl">5초</span>
+    <button class="auto-toggle" id="auto-btn" onclick="toggleAuto()">▶ AUTO</button>
+  </div>
+
   <div class="quiz-wrap">
     <div id="quiz-area">
       <div style="text-align:center;padding:50px 20px;color:var(--sub);">
-        카테고리를 선택하고 시작 버튼을 누르세요.
+        카테고리를 선택하고 시작을 누르세요.<br><br>
+        <span style="font-size:13px;color:var(--green);font-weight:600;">
+        ▶ AUTO 버튼으로 자동 진행 가능!<br>문제→답 순서로 설정한 초마다 자동 전환됩니다.
+        </span>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ═══ Page: 북마크 ═══ -->
+<!-- ══ Page: 북마크 ══ -->
 <div class="page" id="page-bk">
   <div class="list" id="bk-list"></div>
 </div>
 
-<!-- ═══ Page: 정보 ═══ -->
+<!-- ══ Page: 정보 ══ -->
 <div class="page" id="page-about">
   <div class="about">
     <div class="exam-date">
@@ -221,165 +266,153 @@
       <div class="lbl">2026년 5월 30일 시험일까지</div>
     </div>
     <div class="info-card">
+      <h3 class="blue">⏱ AUTO 자동 진행 기능 사용법</h3>
+      <ul>
+        <li>퀴즈 탭 → 카테고리 선택 → <strong>시작</strong></li>
+        <li>문제 노출 시간 / 답 노출 시간 슬라이더 조절 (3~30초)</li>
+        <li><strong>▶ AUTO</strong> 버튼 → 자동 진행 시작</li>
+        <li>문제(5초) → 답 공개(5초) → 다음 문제 자동 이동</li>
+        <li>⏸ PAUSE 버튼으로 언제든 일시정지</li>
+        <li>수동 채점(✓/✗)도 AUTO 중 가능</li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <h3 class="blue">🆕 2025년 출제기준 변경 핵심</h3>
+      <ul>
+        <li>비배 관리 심화 (시비 설계·엽면시비)</li>
+        <li>생육단계별 세부 관리 출제 강화</li>
+        <li>재배환경 관리 (온·습도·광 조절)</li>
+        <li>기상재해 대응 실무 (냉해·동해·가뭄)</li>
+        <li>잡초·병충해 생태적 관리 서술형 강화</li>
+        <li>수확 후 관리·이력추적 기록 출제</li>
+      </ul>
+    </div>
+    <div class="info-card">
       <h3>📋 시험 정보</h3>
       <ul>
-        <li>시험명: 유기농업기능사 실기</li>
-        <li>시험 형식: 필답형 (서술형 중심)</li>
+        <li>유기농업기능사 실기 (필답형)</li>
         <li>시험 시간: 1시간 30분</li>
         <li>합격 기준: 60점 이상</li>
-        <li>시행 기관: 한국산업인력공단</li>
+        <li>시행: 한국산업인력공단</li>
       </ul>
     </div>
     <div class="info-card">
-      <h3>📚 출제 영역</h3>
-      <ul>
-        <li>유기농업 원리·철학 (20문항)</li>
-        <li>토양 및 비료 관리 (40문항)</li>
-        <li>작물 재배 기술 (40문항)</li>
-        <li>병해충 방제 (40문항)</li>
-        <li>인증·유통 (20문항)</li>
-        <li>영농 경영 (20문항)</li>
-        <li>수확 후 관리·환경 (20문항)</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h3>💡 학습 TIP</h3>
-      <ul>
-        <li>퀴즈 모드로 모의 시험 반복 연습</li>
-        <li>틀린 문제는 북마크 후 집중 복습</li>
-        <li>카테고리별 취약점 파악 후 집중 공략</li>
-        <li>답변은 키워드 위주로 암기</li>
-      </ul>
-    </div>
-    <div class="info-card">
-      <h3>🔄 앱 사용법</h3>
-      <p>Safari에서 이 페이지를 열고<br>
-      <strong>공유 → 홈 화면에 추가</strong>를 선택하면<br>
-      아이폰 앱처럼 사용할 수 있습니다.</p>
+      <h3>📲 홈화면 앱 등록</h3>
+      <p>Safari → 공유(□↑) → <strong>홈 화면에 추가</strong><br>
+      → 아이폰 앱처럼 전체 화면 실행</p>
     </div>
   </div>
 </div>
 
-<!-- ═══ Bottom Nav ═══ -->
+<!-- ══ Bottom Nav ══ -->
 <div class="bottom-nav">
-  <button class="nav-btn active" data-page="list" onclick="showPage('list',this)">
-    <span>📝</span>문제목록
-  </button>
-  <button class="nav-btn" data-page="quiz" onclick="showPage('quiz',this)">
-    <span>🎯</span>퀴즈
-  </button>
-  <button class="nav-btn" data-page="bk" onclick="showPage('bk',this)">
-    <span>⭐</span>북마크
-  </button>
-  <button class="nav-btn" data-page="about" onclick="showPage('about',this)">
-    <span>ℹ️</span>정보
-  </button>
+  <button class="nav-btn active" onclick="showPage('list',this)"><span>📝</span>문제목록</button>
+  <button class="nav-btn" onclick="showPage('quiz',this)"><span>🎯</span>퀴즈·AUTO</button>
+  <button class="nav-btn" onclick="showPage('bk',this)"><span>⭐</span>북마크</button>
+  <button class="nav-btn" onclick="showPage('about',this)"><span>ℹ️</span>정보</button>
 </div>
 
 <script>
-// ── Data ──
-const QS = [{"id": 1, "cat": "유기농업 원리", "q": "유기농업의 4대 원칙을 모두 쓰시오.", "a": "건강(Health), 생태(Ecology), 공정(Fairness), 배려(Care)"}, {"id": 2, "cat": "유기농업 원리", "q": "IFOAM이란 무엇이며, 어떤 역할을 하는가?", "a": "국제유기농업운동연합(International Federation of Organic Agriculture Movements). 유기농업의 국제 기준 수립 및 인증 체계를 총괄하는 비영리 국제기구이다."}, {"id": 3, "cat": "유기농업 원리", "q": "친환경농업에서 '지속가능한 농업'이란 무엇인지 설명하시오.", "a": "현 세대의 필요를 충족하면서도 미래 세대의 필요를 충족할 수 있는 능력을 훼손하지 않는 농업 방식. 환경 보전·경제성·사회적 형평성을 동시에 추구한다."}, {"id": 4, "cat": "유기농업 원리", "q": "유기농업과 관행농업의 가장 큰 차이점 3가지를 쓰시오.", "a": "① 합성 농약·화학비료 불사용, ② 유전자변형생물체(GMO) 금지, ③ 토양 생태계 보전 중심 농법 적용"}, {"id": 5, "cat": "유기농업 원리", "q": "'전환기간'이란 무엇인지 설명하고, 유기농업 인증을 위한 최소 전환기간을 쓰시오.", "a": "관행농업에서 유기농업으로 전환하는 기간. 다년생 작물은 3년, 1년생 작물·목초지는 2년이 최소 전환기간이다."}, {"id": 6, "cat": "유기농업 원리", "q": "유기농업에서 '생물다양성'을 보전해야 하는 이유를 2가지 쓰시오.", "a": "① 해충·천적의 자연 균형 유지로 병해충 억제, ② 토양 미생물 다양성 증가로 영양 순환 촉진"}, {"id": 7, "cat": "유기농업 원리", "q": "우리나라 「친환경농어업 육성 및 유기식품 등의 관리·지원에 관한 법률」에서 유기농산물의 정의를 쓰시오.", "a": "전환기간 이상을 유기적으로 관리한 토지에서 화학비료, 유기합성농약을 일체 사용하지 않고 생산한 농산물"}, {"id": 8, "cat": "유기농업 원리", "q": "유기농업에서 금지되는 투입재 3가지를 쓰시오.", "a": "합성 화학비료, 유기합성농약, GMO 종자"}, {"id": 9, "cat": "유기농업 원리", "q": "유기농업이 기후변화 완화에 기여하는 메커니즘을 2가지 쓰시오.", "a": "① 토양 유기물 증가를 통한 탄소 격리, ② 화학비료 생산·사용 감소로 N₂O 배출 억제"}, {"id": 10, "cat": "유기농업 원리", "q": "유기농업에서 윤작을 실시하는 주된 이유 3가지를 쓰시오.", "a": "① 지력 유지·향상, ② 토양 병해충 및 잡초 억제, ③ 특정 영양소 과부족 방지"}, {"id": 11, "cat": "유기농업 원리", "q": "'농업생태계(Agroecosystem)' 개념을 설명하시오.", "a": "농업 활동이 이루어지는 생태계. 작물, 토양 생물, 잡초, 해충, 천적, 기후 등 생물·비생물 요소가 상호작용하는 시스템"}, {"id": 12, "cat": "유기농업 원리", "q": "유기축산에서 동물 복지를 위해 준수해야 할 사항 3가지를 쓰시오.", "a": "① 방목 또는 충분한 운동 공간 확보, ② 유기 사료 급여, ③ 항생제·성장촉진제 미사용"}, {"id": 13, "cat": "유기농업 원리", "q": "'혼작(intercropping)'의 장점을 2가지 쓰시오.", "a": "① 공간·광 활용 효율 향상, ② 특정 병해충의 밀도 억제 효과"}, {"id": 14, "cat": "유기농업 원리", "q": "유기농업에서 피복작물(cover crop)의 역할을 3가지 쓰시오.", "a": "① 토양 침식 방지, ② 잡초 억제, ③ 토양 질소 공급(콩과 이용 시)"}, {"id": 15, "cat": "유기농업 원리", "q": "「유기식품 등의 인증기준」에 따라 유기농산물 생산에 사용 가능한 토양 개량제를 3가지 쓰시오.", "a": "퇴비, 녹비, 목초회(재)"}, {"id": 16, "cat": "유기농업 원리", "q": "유기농업 인증 기관의 역할을 설명하시오.", "a": "유기농업 기준 적합 여부를 심사하고 인증서를 발급하며, 사후 관리·점검을 통해 인증의 신뢰성을 유지한다."}, {"id": 17, "cat": "유기농업 원리", "q": "'생태농업(Ecological Farming)'과 유기농업의 공통점과 차이점을 쓰시오.", "a": "공통점: 화학투입재 최소화, 생태계 보전. 차이점: 생태농업은 반드시 인증을 요구하지 않으며 지역 생태계 복원에 더 초점을 맞춤"}, {"id": 18, "cat": "유기농업 원리", "q": "유기농업에서 완충지대(buffer zone)를 설정하는 이유를 쓰시오.", "a": "인접 관행농지의 농약·비료가 유기농지로 유입·오염되는 것을 방지하기 위해"}, {"id": 19, "cat": "유기농업 원리", "q": "유기농업에서 유전자변형작물(GMO)을 금지하는 이유를 2가지 쓰시오.", "a": "① 생태계 유전자 오염 위험, ② 유기농업의 자연 원칙에 위배"}, {"id": 20, "cat": "유기농업 원리", "q": "'탄소-질소비(C/N비)'가 퇴비 발효에 미치는 영향을 설명하시오.", "a": "C/N비가 너무 높으면 분해가 느려지고, 너무 낮으면 암모니아 손실이 많아짐. 적정 C/N비는 25~30:1이다."}, {"id": 21, "cat": "토양·비료", "q": "토양의 3상(三相)을 쓰고 각각의 이상적인 비율을 쓰시오.", "a": "고상(固相) 약 50%, 액상(液相) 약 25%, 기상(氣相) 약 25%"}, {"id": 22, "cat": "토양·비료", "q": "토양 pH가 작물 생육에 미치는 영향을 설명하시오.", "a": "pH는 양분 가용성에 영향. 대부분 작물의 적정 pH는 6.0~6.5. 너무 산성(낮음)이면 Al·Mn 독성, 너무 알칼리(높음)이면 Fe·Mn·Zn 결핍"}, {"id": 23, "cat": "토양·비료", "q": "토양 유기물의 역할 4가지를 쓰시오.", "a": "① 보수력 증대, ② 완충능 향상, ③ 토양 생물 에너지원 공급, ④ 입단 구조 형성으로 통기성 개선"}, {"id": 24, "cat": "토양·비료", "q": "양이온교환용량(CEC)이란 무엇이며, CEC가 높을수록 좋은 이유를 쓰시오.", "a": "토양이 양이온을 흡착·보유할 수 있는 능력(cmol+/kg). CEC가 높을수록 Ca²⁺, K⁺, Mg²⁺ 등 양분 보유력이 높아 비옥한 토양이 된다."}, {"id": 25, "cat": "토양·비료", "q": "퇴비의 완숙 여부를 확인하는 방법 3가지를 쓰시오.", "a": "① 색이 흑갈색으로 변함, ② 발열이 멈춤(냉각), ③ 원재료 형태가 소실되고 흙 냄새가 남"}, {"id": 26, "cat": "토양·비료", "q": "녹비 작물의 정의와 주요 효과를 쓰시오.", "a": "토양에 갈아엎어 비료로 이용하는 식물. 질소 공급(콩과), 유기물 증가, 토양 구조 개선 효과"}, {"id": 27, "cat": "토양·비료", "q": "토양 침식의 주요 원인 3가지를 쓰시오.", "a": "① 강우에 의한 물 침식, ② 바람에 의한 풍식, ③ 경운으로 인한 표토 이탈"}, {"id": 28, "cat": "토양·비료", "q": "퇴비 발효 시 고온기(60~70℃)가 중요한 이유를 쓰시오.", "a": "잡초 종자, 병원균, 기생충 알 등을 사멸시켜 안전한 퇴비를 만들기 위해"}, {"id": 29, "cat": "토양·비료", "q": "석회 시용이 산성 토양 개량에 효과적인 이유를 설명하시오.", "a": "석회의 Ca²⁺가 H⁺와 교환되어 토양 pH를 상승시키고, 토양 입단 형성 및 Ca 공급 효과도 있다."}, {"id": 30, "cat": "토양·비료", "q": "토양 미생물의 역할 3가지를 쓰시오.", "a": "① 유기물 분해(무기화), ② 질소 고정, ③ 인산 가용화"}, {"id": 31, "cat": "토양·비료", "q": "유기농업에서 허용되는 질소원 비료 3가지를 쓰시오.", "a": "퇴비, 음식물 퇴비, 혈분·골분 등 동물 유래 비료"}, {"id": 32, "cat": "토양·비료", "q": "토양 입단(aggregate) 구조의 장점을 3가지 쓰시오.", "a": "① 통기성 향상, ② 보수력 증대, ③ 뿌리 발달 촉진"}, {"id": 33, "cat": "토양·비료", "q": "콩과 작물과 근류균의 공생 관계를 설명하시오.", "a": "콩과 뿌리에 Rhizobium 등 근류균이 공생하며 대기 중 N₂를 암모니아(NH₃)로 고정하여 식물이 이용할 수 있게 공급"}, {"id": 34, "cat": "토양·비료", "q": "토양 검정(soil test)의 목적을 쓰시오.", "a": "토양의 pH, 유기물 함량, 양분(N·P·K 등) 수준을 분석하여 작물별 적합한 비료 투입량을 결정하기 위해"}, {"id": 35, "cat": "토양·비료", "q": "유기물 시용이 토양 물리성 개선에 미치는 효과를 2가지 쓰시오.", "a": "① 공극률 증가로 배수·통기성 향상, ② 입단화 촉진으로 경도 감소"}, {"id": 36, "cat": "토양·비료", "q": "인산(P)이 토양에서 고정되는 원인을 설명하시오.", "a": "산성 토양에서 Fe·Al과 결합하여 불용성 화합물 형성, 알칼리 토양에서 Ca와 결합하여 난용성 인산칼슘 형성"}, {"id": 37, "cat": "토양·비료", "q": "미생물자재(생물비료)의 종류 3가지와 각각의 기능을 쓰시오.", "a": "① 근류균: 질소 고정, ② 균근균(Mycorrhiza): 인산 흡수 촉진, ③ Bacillus 계열: 길항균으로 병원균 억제"}, {"id": 38, "cat": "토양·비료", "q": "토양 용적밀도(bulk density)가 높을 때 나타나는 문제점을 쓰시오.", "a": "토양 압밀로 공극 감소 → 통기·배수 불량 → 뿌리 신장 저해 → 생육 부진"}, {"id": 39, "cat": "토양·비료", "q": "무경운 농업의 장점과 단점을 각각 2가지씩 쓰시오.", "a": "장점: 토양 구조 유지, 토양 탄소 보전. 단점: 잡초 방제 어려움, 초기 작물 정착 불리"}, {"id": 40, "cat": "토양·비료", "q": "가축분뇨를 직접 시용하지 않고 퇴비화해야 하는 이유 2가지를 쓰시오.", "a": "① 병원균·기생충 사멸을 위해, ② 암모니아 휘산 손실 및 작물 피해 방지"}, {"id": 41, "cat": "토양·비료", "q": "칼리(K)의 작물 생리적 역할 3가지를 쓰시오.", "a": "① 기공 개폐 조절, ② 효소 활성화, ③ 탄수화물 합성·이동 촉진"}, {"id": 42, "cat": "토양·비료", "q": "토양 중 질소의 순환 과정을 간략히 쓰시오.", "a": "유기태 N → 암모니아화(NH₄⁺) → 질산화(NO₃⁻) → 작물 흡수 또는 탈질(N₂↑)"}, {"id": 43, "cat": "토양·비료", "q": "음식물 쓰레기 퇴비화의 주의사항 2가지를 쓰시오.", "a": "① 염분 함량이 높아 희석·중화 필요, ② 중금속 오염 여부 사전 검사 필요"}, {"id": 44, "cat": "토양·비료", "q": "마그네슘(Mg) 결핍 증상을 설명하시오.", "a": "오래된 잎부터 엽맥 사이 황화(황록화) 현상 발생 — 엽맥은 녹색, 엽육은 황색"}, {"id": 45, "cat": "토양·비료", "q": "황(S) 결핍 증상과 유기농업에서의 공급 방법을 쓰시오.", "a": "새 잎에서 황화 발생. 공급: 황산석회(석고), 유기물 분해를 통해 공급"}, {"id": 46, "cat": "토양·비료", "q": "토양 완충능(buffering capacity)이란 무엇이며 높을수록 좋은 이유를 쓰시오.", "a": "외부 pH 변화에 저항하는 능력. 완충능이 높으면 pH 급변을 막아 양분 가용성과 미생물 활성이 안정적으로 유지됨"}, {"id": 47, "cat": "토양·비료", "q": "유기농업에서 허용되는 병해충 방제용 미량원소 자재 2가지를 쓰시오.", "a": "황(유황합제), 동(보르도액)"}, {"id": 48, "cat": "토양·비료", "q": "토양 중 인산 가용화 미생물의 작용 원리를 설명하시오.", "a": "유기산(글루콘산 등) 분비로 토양 pH를 낮추거나 킬레이트 작용으로 Fe·Al·Ca와 결합한 불용성 인산을 가용화"}, {"id": 49, "cat": "토양·비료", "q": "녹비 작물 중 헤어리베치의 특징을 3가지 쓰시오.", "a": "① 추위에 강한 월동 가능, ② 질소 고정량이 많음(약 100~200 kg N/ha), ③ 이른 봄 생육이 빨라 잡초 억제"}, {"id": 50, "cat": "토양·비료", "q": "토양 유기물 함량을 높이기 위한 방법 3가지를 쓰시오.", "a": "① 퇴비·볏짚 등 유기물 투입, ② 녹비 재배 및 환원, ③ 피복작물 활용으로 잔재물 토양 환원"}, {"id": 51, "cat": "토양·비료", "q": "질산태 질소(NO₃⁻)가 토양에서 쉽게 용탈되는 이유를 설명하시오.", "a": "NO₃⁻는 음이온으로 음전하를 띠는 토양 입자에 흡착되지 않아 강우·관개 시 물과 함께 하층으로 용탈"}, {"id": 52, "cat": "토양·비료", "q": "규소(Si)의 작물 생육 효과를 2가지 쓰시오.", "a": "① 세포벽 강화로 도복 및 병해 저항성 증대, ② 증산 억제로 내건성 향상"}, {"id": 53, "cat": "토양·비료", "q": "붕소(B) 결핍 증상과 주로 발생하는 작물을 쓰시오.", "a": "생장점 괴사, 과실 기형, 공동화. 주로 배추, 무, 사과 등에 발생"}, {"id": 54, "cat": "토양·비료", "q": "퇴비 발효 시 뒤집기(turning)의 목적을 쓰시오.", "a": "산소 공급으로 호기성 발효 촉진, 온도 균일화, 수분 균일 분포"}, {"id": 55, "cat": "토양·비료", "q": "토양 pH 교정을 위해 석회를 시용할 때 주의사항 2가지를 쓰시오.", "a": "① 과량 시용 시 Mn·Fe·B 결핍 유발, ② 작물 파종·이식 최소 2주 전 시용"}, {"id": 56, "cat": "토양·비료", "q": "미부숙 퇴비를 시용했을 때 발생할 수 있는 문제를 2가지 쓰시오.", "a": "① 발열·가스 발생으로 뿌리 피해, ② 병원균·잡초 종자 전파"}, {"id": 57, "cat": "토양·비료", "q": "유기농업에서 허용되는 칼리 공급원 2가지를 쓰시오.", "a": "황산칼리(황산칼륨 광물), 목회(wood ash)"}, {"id": 58, "cat": "토양·비료", "q": "인산 흡수를 돕는 균근균(Mycorrhiza)의 역할을 설명하시오.", "a": "균사가 뿌리 범위 밖으로 뻗어 인산 흡수 표면적을 크게 늘리고, 불용성 인산을 가용화하여 식물에 공급"}, {"id": 59, "cat": "토양·비료", "q": "토양 무기화(mineralization)란 무엇인지 설명하시오.", "a": "토양 미생물이 유기태 양분(단백질, 핵산 등)을 분해하여 무기태(NH₄⁺, PO₄³⁻ 등)로 전환하는 과정"}, {"id": 60, "cat": "토양·비료", "q": "점토광물과 부식이 CEC에 기여하는 원리를 설명하시오.", "a": "점토 표면과 부식의 카르복실기·수산기가 음전하를 띠어 양이온(Ca²⁺, K⁺ 등)을 전기적으로 흡착·보유"}, {"id": 61, "cat": "작물 재배", "q": "유기농업에서 종자 선택 시 고려해야 할 사항 3가지를 쓰시오.", "a": "① 유기 종자 우선 사용, ② GMO 종자 금지, ③ 지역 기후·토양에 적합한 품종 선택"}, {"id": 62, "cat": "작물 재배", "q": "'접목재배'를 하는 주요 이유를 2가지 쓰시오.", "a": "① 토양 전염 병해(덩굴쪼김병 등) 회피, ② 저온·습해 등 불량 환경 내성 향상"}, {"id": 63, "cat": "작물 재배", "q": "유기농업에서 잡초 방제의 기계적 방법 3가지를 쓰시오.", "a": "중경(중간 갈기), 멀칭(피복), 화염 제초"}, {"id": 64, "cat": "작물 재배", "q": "비닐 멀칭 대신 유기농업에서 사용할 수 있는 멀칭 재료 3가지를 쓰시오.", "a": "볏짚, 왕겨, 우드칩(나무 조각)"}, {"id": 65, "cat": "작물 재배", "q": "작물의 재배 적온과 생리적 한계 온도를 구분하여 설명하시오.", "a": "재배 적온: 생육이 가장 양호한 온도 범위. 생리적 한계 온도: 이 이상/이하에서는 생리 장해·고사 발생(최고·최저 온도)"}, {"id": 66, "cat": "작물 재배", "q": "'경종적 방제(cultural control)'란 무엇인지 설명하고 예를 2가지 드시오.", "a": "작부 체계, 재배 방식을 이용한 병해충 방제. 예: 윤작으로 특정 병원균 밀도 저하, 조기 수확으로 해충 번식 차단"}, {"id": 67, "cat": "작물 재배", "q": "점적관수(drip irrigation)의 장점 3가지를 쓰시오.", "a": "① 물 이용 효율 향상, ② 잎 습윤 방지로 병해 억제, ③ 비료 동시 공급(관비) 가능"}, {"id": 68, "cat": "작물 재배", "q": "유기농 시설재배에서 환경 조절의 핵심 요소 3가지를 쓰시오.", "a": "온도, 습도(환기), CO₂ 농도"}, {"id": 69, "cat": "작물 재배", "q": "작물의 '요수량(水分需要量, water requirement)'을 설명하시오.", "a": "건물 1g을 생산하기 위해 필요한 수분의 양(g). 요수량이 클수록 물이 많이 필요한 작물"}, {"id": 70, "cat": "작물 재배", "q": "'동반식물(companion plant)'의 개념과 예를 쓰시오.", "a": "함께 재배하면 서로에게 이익을 주는 식물 조합. 예: 옥수수+강낭콩+호박(Three Sisters), 당근+파(파는 당근파리 억제)"}, {"id": 71, "cat": "작물 재배", "q": "배추과 채소의 무름병 방제를 위한 경종적 방법 2가지를 쓰시오.", "a": "① 배수 불량지 개선(이랑 높임), ② 윤작(십자화과 작물 연작 피함)"}, {"id": 72, "cat": "작물 재배", "q": "작물의 '광포화점(light saturation point)'과 '광보상점'을 설명하시오.", "a": "광보상점: 광합성량 = 호흡량이 되는 광도. 광포화점: 이상 광도에서 광합성이 더 증가하지 않는 최소 광도"}, {"id": 73, "cat": "작물 재배", "q": "유기농업에서 인공수분이 필요한 경우를 2가지 쓰시오.", "a": "① 화분 매개 곤충이 부족한 시설재배, ② 기상 불량으로 자연수분이 어려울 때"}, {"id": 74, "cat": "작물 재배", "q": "과채류의 유인(誘引) 재배의 목적을 3가지 쓰시오.", "a": "① 수광 효율 향상, ② 통풍으로 병 발생 억제, ③ 수확 작업 편의성"}, {"id": 75, "cat": "작물 재배", "q": "'기지현상(replant problem/soil sickness)'이란 무엇이며 원인 2가지를 쓰시오.", "a": "동일 작물 연작 시 생육이 나빠지는 현상. 원인: ① 토양 병원균 축적, ② 자가 독소(allelopathy) 물질 축적"}, {"id": 76, "cat": "작물 재배", "q": "딸기 유기 재배에서 자묘(러너 묘) 선택 기준을 3가지 쓰시오.", "a": "① 모주로부터 2~3번째 자묘 선택, ② 병해충 감염 여부 확인, ③ 충실한 뿌리 발달 확인"}, {"id": 77, "cat": "작물 재배", "q": "벼 유기재배에서 잡초 억제를 위해 사용하는 '쌀겨 농법'의 원리를 설명하시오.", "a": "논에 쌀겨를 살포하면 미생물이 분해하면서 산소를 소비하여 혐기 상태를 만들어 잡초 발아를 억제"}, {"id": 78, "cat": "작물 재배", "q": "과수 유기재배에서 주요 병해 방제에 사용할 수 있는 허용 자재 2가지를 쓰시오.", "a": "보르도액(황산동+석회), 석회황합제"}, {"id": 79, "cat": "작물 재배", "q": "'솎기(thinning)'의 목적을 2가지 쓰시오.", "a": "① 개체 간 경합 감소로 남은 개체 생육 향상, ② 과실 품질(크기·당도) 향상"}, {"id": 80, "cat": "작물 재배", "q": "유기농업에서 혼작 잡초 방제 원리를 설명하시오.", "a": "밀식 혼작으로 광을 차단하여 잡초 발아 및 생육을 억제"}, {"id": 81, "cat": "작물 재배", "q": "육묘(모종 키우기)의 장점 3가지를 쓰시오.", "a": "① 재배 기간 단축, ② 포장 이용 효율 향상, ③ 불량 환경 노출 기간 단축"}, {"id": 82, "cat": "작물 재배", "q": "과수의 전정(pruning) 목적을 3가지 쓰시오.", "a": "① 수형(나무 형태) 조절, ② 수광 및 통풍 향상, ③ 병든 가지 제거로 병해 억제"}, {"id": 83, "cat": "작물 재배", "q": "식물의 광합성에 필요한 3가지 요소를 쓰시오.", "a": "빛(광에너지), CO₂, 물(H₂O)"}, {"id": 84, "cat": "작물 재배", "q": "시설재배에서 하우스 내 CO₂를 보충해야 하는 이유를 설명하시오.", "a": "밀폐 시설 내 작물의 활발한 광합성으로 CO₂가 감소하여 광합성 저하. 보충으로 생산성 향상"}, {"id": 85, "cat": "작물 재배", "q": "가지 유기재배에서 '담배나방' 방제 방법 2가지를 쓰시오.", "a": "① 페로몬 트랩 설치로 발생 감시 및 성충 포획, ② BT(Bacillus thuringiensis) 제제 살포"}, {"id": 86, "cat": "작물 재배", "q": "작물별 적정 재식 밀도가 중요한 이유를 설명하시오.", "a": "밀식 시 광·수분·양분 경합으로 개체 당 수량 감소, 통풍 불량으로 병해 증가. 소식 시 단위 면적당 수량 손실"}, {"id": 87, "cat": "작물 재배", "q": "유기농업에서 가능한 물리적 해충 방제 방법 3가지를 쓰시오.", "a": "방충망·한랭사 설치, 황색·청색 끈끈이트랩, 포식성 천적 방사"}, {"id": 88, "cat": "작물 재배", "q": "'춘화처리(vernalization)'란 무엇이며, 어떤 작물에 필요한지 예를 드시오.", "a": "저온을 경험해야 화아 분화(꽃눈 형성)가 촉진되는 현상. 예: 양파, 배추, 밀 등"}, {"id": 89, "cat": "작물 재배", "q": "수박 접목 재배 시 사용하는 대목과 그 이유를 쓰시오.", "a": "박 또는 호박 계통 대목. 이유: 덩굴쪼김병 저항성이 강하고 저온 신장성이 우수"}, {"id": 90, "cat": "작물 재배", "q": "유기인삼 재배의 주요 특징을 3가지 쓰시오.", "a": "① 직사광선 차단을 위한 차광 시설, ② 배수 불량 절대 금지, ③ 6~8년 이상 윤작 필요"}, {"id": 91, "cat": "작물 재배", "q": "잎채소(상추·시금치 등) 수확 후 품질 유지를 위한 저장 조건을 쓰시오.", "a": "저온(0~5℃), 고습도(95% 이상), 에틸렌 가스 격리"}, {"id": 92, "cat": "작물 재배", "q": "'그린 워터(green water)'와 '블루 워터(blue water)'의 차이를 설명하시오.", "a": "그린 워터: 강우에 의해 토양에 저장되어 작물이 직접 이용하는 수분. 블루 워터: 하천·지하수 등 관개에 이용하는 수자원"}, {"id": 93, "cat": "작물 재배", "q": "유기농 사과 재배에서 '복숭아혹진딧물' 방제 방법 2가지를 쓰시오.", "a": "① 천적(무당벌레, 풀잠자리) 활용, ② 님(neem) 오일 계열 유기 허용 자재 살포"}, {"id": 94, "cat": "작물 재배", "q": "수경재배가 유기농업 인증을 받기 어려운 이유를 설명하시오.", "a": "토양 없이 재배하므로 토양 생태계 보전이라는 유기농업 원칙을 충족하지 못하고, 합성 무기 양분을 사용하는 경우가 많기 때문"}, {"id": 95, "cat": "작물 재배", "q": "'타감작용(allelopathy)'이란 무엇인지 예를 들어 설명하시오.", "a": "식물이 분비하는 화학물질이 주변 식물의 생육을 억제하거나 촉진하는 현상. 예: 호밀 잔재물이 후속 작물 발아 억제"}, {"id": 96, "cat": "작물 재배", "q": "유기농업에서 씨앗 저장 시 주의사항 3가지를 쓰시오.", "a": "① 저온(10℃ 이하)·건조 보관, ② 밀봉 용기 사용, ③ GMO 오염 방지를 위해 유기 종자와 일반 종자 분리"}, {"id": 97, "cat": "작물 재배", "q": "배추 유기재배에서 뿌리혹병(근류병) 방제 방법을 3가지 쓰시오.", "a": "① 석회 시용으로 pH 7.0 이상 유지, ② 십자화과 작물 4년 이상 윤작, ③ 배수 개선"}, {"id": 98, "cat": "작물 재배", "q": "작물의 건물률과 수분함량의 관계를 설명하시오.", "a": "건물률(%) + 수분함량(%) = 100%. 건물률이 높을수록 건조 상태"}, {"id": 99, "cat": "작물 재배", "q": "유기농업에서 피복재 사용의 장단점을 각각 2가지씩 쓰시오.", "a": "장점: 잡초 억제, 지온 유지. 단점: 분해 전까지 토양 내 통기 감소, 비분해성 피복재의 환경오염"}, {"id": 100, "cat": "작물 재배", "q": "이랑(두둑)을 높게 만드는 이유 2가지를 쓰시오.", "a": "① 배수 향상으로 과습 방지, ② 지온 상승으로 초기 생육 촉진"}, {"id": 101, "cat": "병해충 방제", "q": "유기농업에서 병해충 방제의 우선 순위를 단계별로 쓰시오.", "a": "① 예방(건전 재배 환경), ② 물리·기계적 방제, ③ 생물적 방제, ④ 허용 자재 사용"}, {"id": 102, "cat": "병해충 방제", "q": "BT(Bacillus thuringiensis)의 작용 메커니즘을 설명하시오.", "a": "BT가 생산하는 δ-엔도톡신 단백질이 해충의 장 세포를 파괴하여 식욕 상실 및 사망을 유발"}, {"id": 103, "cat": "병해충 방제", "q": "천적 곤충 '칠레이리응애(Phytoseiulus persimilis)'가 방제하는 해충을 쓰시오.", "a": "점박이응애(Tetranychus urticae)"}, {"id": 104, "cat": "병해충 방제", "q": "보르도액의 성분과 살균 원리를 설명하시오.", "a": "황산동(CuSO₄) + 생석회(CaO)를 물에 혼합한 알칼리성 액제. Cu²⁺ 이온이 병원균의 효소 활성을 억제하여 살균"}, {"id": 105, "cat": "병해충 방제", "q": "식물 검역의 목적과 주요 검역 대상 해충 2가지를 쓰시오.", "a": "목적: 해외 위험 병해충의 국내 유입 차단. 대상: 매미나방, 소나무재선충"}, {"id": 106, "cat": "병해충 방제", "q": "페로몬 트랩의 원리와 유기농업에서의 활용 방법을 쓰시오.", "a": "해충 암컷이 방출하는 성페로몬을 합성하여 수컷을 유인·포획. 발생 밀도 감시 및 대량 포획에 활용"}, {"id": 107, "cat": "병해충 방제", "q": "역병(疫病, Phytophthora)의 발생 환경과 방제 방법을 쓰시오.", "a": "환경: 고온 다습, 배수 불량. 방제: 배수 개선, 윤작, 보르도액 살포"}, {"id": 108, "cat": "병해충 방제", "q": "흰가루병(powdery mildew) 방제에 사용할 수 있는 유기농 허용 자재를 2가지 쓰시오.", "a": "유황(황) 수화제, 중탄산나트륨(베이킹소다) 희석액"}, {"id": 109, "cat": "병해충 방제", "q": "'통합 병해충 관리(IPM)'의 개념을 설명하시오.", "a": "화학적, 생물적, 경종적, 물리적 방제 방법을 경제적 피해 수준(EIL)을 고려하여 합리적으로 조합하는 해충 관리 체계"}, {"id": 110, "cat": "병해충 방제", "q": "진딧물 방제를 위한 천적 2가지를 쓰시오.", "a": "무당벌레(칠성무당벌레), 진디벌(Aphidius 속)"}, {"id": 111, "cat": "병해충 방제", "q": "토마토의 잿빛곰팡이병(회색곰팡이병) 발생 조건과 방제 방법을 쓰시오.", "a": "조건: 저온 다습, 밀식. 방제: 통풍 개선, 이병 잔재물 즉시 제거, 과잉 질소 시비 자제"}, {"id": 112, "cat": "병해충 방제", "q": "해충의 '경제적 피해 수준(EIL)'이란 무엇인지 설명하시오.", "a": "해충 밀도에 의한 경제적 피해가 방제 비용과 같아지는 해충 밀도. 이 이상이면 방제가 경제적으로 타당"}, {"id": 113, "cat": "병해충 방제", "q": "파밤나방의 생활사와 유기농업에서의 방제 방법을 쓰시오.", "a": "알→유충(4~5령)→번데기→성충. 방제: 성페로몬 트랩, BT 제제(유충 초기), 포식성 천적"}, {"id": 114, "cat": "병해충 방제", "q": "고추 탄저병의 방제를 위한 경종적 방법 3가지를 쓰시오.", "a": "① 무병 종자 사용, ② 배수 개선, ③ 이병 과실 조기 수거·소각"}, {"id": 115, "cat": "병해충 방제", "q": "식물추출물 방제제 '님(Neem)' 오일의 작용 기작을 설명하시오.", "a": "아자디라크틴(azadirachtin) 성분이 해충의 탈피 호르몬 작용을 교란하여 탈피·성장 억제 및 기피 효과"}, {"id": 116, "cat": "병해충 방제", "q": "복숭아 유기재배에서 '복숭아심식나방' 방제 방법 2가지를 쓰시오.", "a": "① 교미 교란(sex pheromone 대량 살포), ② 봉지 씌우기(과실 봉지)"}, {"id": 117, "cat": "병해충 방제", "q": "벼 도열병 방제를 위한 경종적 방법 3가지를 쓰시오.", "a": "① 저항성 품종 선택, ② 질소 과다 시비 금지, ③ 규소 공급으로 표피 강화"}, {"id": 118, "cat": "병해충 방제", "q": "온실가루이의 천적으로 사용하는 기생벌을 쓰시오.", "a": "온실가루이좀벌(Encarsia formosa)"}, {"id": 119, "cat": "병해충 방제", "q": "고자리파리 피해를 받는 작물과 방제 방법을 쓰시오.", "a": "양파, 마늘, 파 등 파속 작물. 방제: 발생 시기 회피 파종, 피복 재료 덮기, 선충(Steinernema) 처리"}, {"id": 120, "cat": "병해충 방제", "q": "'생물농약'의 정의와 종류 3가지를 쓰시오.", "a": "살아 있는 미생물이나 그 대사산물을 이용한 농약. 종류: BT제, 핵다각체병바이러스(NPV), 곤충병원성 선충"}, {"id": 121, "cat": "병해충 방제", "q": "식물 면역 증진제(SAR 유도제)의 작용 원리를 설명하시오.", "a": "살리실산 등 물질이 식물 방어 유전자를 활성화하여 식물 자체의 면역(획득 저항성)을 유도"}, {"id": 122, "cat": "병해충 방제", "q": "황색 끈끈이 트랩이 유인하는 주요 해충 3가지를 쓰시오.", "a": "진딧물 유시충, 총채벌레, 온실가루이"}, {"id": 123, "cat": "병해충 방제", "q": "곤충병원성 선충(Entomopathogenic nematode)의 방제 특성 2가지를 쓰시오.", "a": "① 토양 내 이동하며 해충 유충·번데기 기생, ② 인축 및 환경에 무해"}, {"id": 124, "cat": "병해충 방제", "q": "사과 점무늬낙엽병 방제를 위해 유기농업에서 사용할 수 있는 자재를 쓰시오.", "a": "보르도액, 석회황합제"}, {"id": 125, "cat": "병해충 방제", "q": "'내병성 품종'을 재배하는 것이 유기농업에서 중요한 이유를 설명하시오.", "a": "화학 농약 없이도 병 발생을 원천적으로 억제할 수 있어 생산 안정성을 높이는 가장 경제적인 방제 수단"}, {"id": 126, "cat": "병해충 방제", "q": "벼 줄무늬잎마름병의 매개체와 방제 방법을 쓰시오.", "a": "매개체: 애멸구. 방제: 저항성 품종 재배, 애멸구 밀도 억제(포식성 천적 보전)"}, {"id": 127, "cat": "병해충 방제", "q": "식물 병원균의 월동 장소를 3가지 쓰시오.", "a": "토양(잔재물 포함), 종자 내부, 전식물 잔재물"}, {"id": 128, "cat": "병해충 방제", "q": "'식물 추출물 방제제' 마늘액의 해충 방제 원리를 설명하시오.", "a": "마늘의 알리신(allicin)이 해충의 기피·살충 효과, 살균 효과 발휘"}, {"id": 129, "cat": "병해충 방제", "q": "오이의 덩굴쪼김병(만고병) 방제를 위해 유기농업에서 활용하는 방법을 2가지 쓰시오.", "a": "① 저항성 대목에 접목 재배, ② 토양 태양열 소독(여름 비닐 피복)"}, {"id": 130, "cat": "병해충 방제", "q": "작물 잔재물 처리가 병해충 방제에 중요한 이유를 쓰시오.", "a": "병원균·해충의 월동 장소를 제거하여 다음 작기 초기 발생 밀도를 낮춤"}, {"id": 131, "cat": "병해충 방제", "q": "유기농업에서 허용되는 살충 효과의 광물성 자재를 2가지 쓰시오.", "a": "규조토(diatomaceous earth), 카올린 점토(Kaolin clay)"}, {"id": 132, "cat": "병해충 방제", "q": "'교미 교란제(mating disruption)'의 원리와 사용 작물 예를 쓰시오.", "a": "합성 성페로몬을 대기 중 고농도로 살포하여 수컷이 암컷을 찾지 못하게 함. 예: 복숭아심식나방 방제(복숭아, 사과)"}, {"id": 133, "cat": "병해충 방제", "q": "총채벌레 방제를 위한 천적 2가지를 쓰시오.", "a": "애꽃노린재(Orius 속), 황온좀응애(Amblyseius cucumeris)"}, {"id": 134, "cat": "병해충 방제", "q": "잿빛곰팡이병균(Botrytis cinerea)이 주로 침입하는 경로를 쓰시오.", "a": "상처 부위, 노화·죽은 조직, 꽃 기관"}, {"id": 135, "cat": "병해충 방제", "q": "한국에서 유기농업 허용 자재 목록을 관리하는 기관과 근거 법령을 쓰시오.", "a": "농촌진흥청(국립농업과학원). 「친환경농어업 육성 및 유기식품 등의 관리·지원에 관한 법률」"}, {"id": 136, "cat": "병해충 방제", "q": "토양 태양열 소독의 원리와 방법을 설명하시오.", "a": "여름 고온기에 토양을 충분히 관수하고 투명 비닐로 덮어 지온을 50℃ 이상으로 높여 병원균·잡초 종자를 사멸"}, {"id": 137, "cat": "병해충 방제", "q": "고추 역병 방제를 위한 유기농업 허용 자재를 쓰고 사용 방법을 설명하시오.", "a": "보르도액(1%): 발병 전 예방적으로 7~10일 간격 경엽 살포 및 토양 관주"}, {"id": 138, "cat": "병해충 방제", "q": "주요 곤충 천적의 종류와 대상 해충을 연결하시오(3쌍 이상).", "a": "칠레이리응애→점박이응애, 온실가루이좀벌→온실가루이, 진디벌→진딧물"}, {"id": 139, "cat": "병해충 방제", "q": "식물 검역 '금지 품목'이란 무엇인지 설명하시오.", "a": "병해충의 위험도가 높아 국내 반입 자체가 금지된 식물 또는 식물 산물"}, {"id": 140, "cat": "병해충 방제", "q": "유기농업에서 허용되는 살균제 '석회황합제'의 성분과 효과를 쓰시오.", "a": "생석회 + 황 + 물로 제조한 다황화칼슘(CaS₅) 혼합액. 살균(점무늬낙엽병, 흰가루병)과 살충·살응애 효과"}, {"id": 141, "cat": "인증·유통", "q": "우리나라 유기농산물 인증 마크의 명칭과 색상을 쓰시오.", "a": "'유기농산물' 마크(초록색 잎과 원 형태). 국립농산물품질관리원 또는 민간 인증기관이 발급"}, {"id": 142, "cat": "인증·유통", "q": "유기농산물 인증 갱신 주기와 사후 관리 방법을 쓰시오.", "a": "매년 갱신(1년 단위). 인증기관의 연 1회 이상 현장 조사 및 시료 수거 검사"}, {"id": 143, "cat": "인증·유통", "q": "'동등성 협약(equivalency agreement)'이 유기농업 수출에 미치는 영향을 쓰시오.", "a": "두 나라 간 유기 기준이 동등하다고 인정하면 상대국 기준으로 추가 인증 없이 유기 표시로 수출 가능"}, {"id": 144, "cat": "인증·유통", "q": "유기농산물과 무농약농산물의 차이를 쓰시오.", "a": "유기농산물: 화학비료+농약 모두 금지. 무농약농산물: 농약은 금지, 화학비료는 권장량의 1/3 이내 허용"}, {"id": 145, "cat": "인증·유통", "q": "농산물 이력추적 관리제도(traceability)의 목적을 쓰시오.", "a": "농산물 생산~유통~판매 전 과정을 추적하여 문제 발생 시 신속한 원인 규명 및 회수"}, {"id": 146, "cat": "인증·유통", "q": "'유기 가공식품'의 유기 원료 함량 기준을 쓰시오.", "a": "전체 원재료 함량의 95% 이상이 유기 인증 원료여야 '유기' 표시 가능"}, {"id": 147, "cat": "인증·유통", "q": "유기농산물 인증 신청 서류 3가지를 쓰시오.", "a": "인증 신청서, 영농 일지(작업 기록), 투입 자재 구매·사용 기록"}, {"id": 148, "cat": "인증·유통", "q": "유기농산물의 포장재 선택 시 고려사항 2가지를 쓰시오.", "a": "① 재활용·생분해 가능 소재 우선, ② 식품 안전성 인증된 소재 사용"}, {"id": 149, "cat": "인증·유통", "q": "'유기 농지' 표시를 위해 준수해야 하는 기록 관리 항목 3가지를 쓰시오.", "a": "파종·이식 일자, 비료·자재 투입 기록, 병해충 방제 기록"}, {"id": 150, "cat": "인증·유통", "q": "국내 유기농산물 인증 기관의 종류를 구분하여 쓰시오.", "a": "① 국가 기관: 국립농산물품질관리원(NAQS), ② 민간 인증기관: 농관원 인가를 받은 사설 인증기관"}, {"id": 151, "cat": "인증·유통", "q": "인증 유기농산물을 판매할 때 표기해야 할 의무 사항 3가지를 쓰시오.", "a": "유기 표시, 인증번호, 인증기관명"}, {"id": 152, "cat": "인증·유통", "q": "'신선 농산물'의 유통 기한 관리에서 가장 중요한 온도 관리 원칙을 쓰시오.", "a": "수확 후 즉시 예냉(pre-cooling)으로 품온을 낮추고, 콜드체인(cold chain)을 통해 유통 전 과정에서 저온 유지"}, {"id": 153, "cat": "인증·유통", "q": "유기농산물 직거래의 장단점을 각각 2가지씩 쓰시오.", "a": "장점: 유통 마진 절감, 소비자 신뢰 형성. 단점: 판로 확보 부담, 물류 비용"}, {"id": 154, "cat": "인증·유통", "q": "'꾸러미(CSA, Community Supported Agriculture)' 방식의 개념과 장점을 쓰시오.", "a": "소비자가 미리 대금을 지불하고 농가의 수확물을 정기 배송 받는 방식. 농가의 경영 안정성, 소비자의 신선 식품 확보"}, {"id": 155, "cat": "인증·유통", "q": "유기농산물 수입 시 확인해야 하는 서류를 2가지 쓰시오.", "a": "수출국의 유기 인증서, 동등성 협약 또는 개별 인증 확인 서류"}, {"id": 156, "cat": "인증·유통", "q": "인증 취소 사유에 해당하는 경우를 3가지 쓰시오.", "a": "① 금지 농약 검출, ② 인증 기준 위반 기록 발견, ③ 허위 서류 제출"}, {"id": 157, "cat": "인증·유통", "q": "GA P(우수농산물관리제도)와 유기농업 인증의 차이를 쓰시오.", "a": "GAP: 안전 농산물 생산 관리(농약 기준 이내 사용 가능). 유기 인증: 합성 농약·화학비료 전면 금지"}, {"id": 158, "cat": "인증·유통", "q": "'로컬푸드(local food)'의 개념과 유기농업과의 관계를 설명하시오.", "a": "지역에서 생산된 농산물을 지역에서 소비. 유기농업과 결합하면 신선도·안전성 향상, 탄소 발자국 감소"}, {"id": 159, "cat": "인증·유통", "q": "유기농산물 인증 농지에서 금지된 자재를 사용했을 경우의 조치를 쓰시오.", "a": "인증 취소(또는 정지), 해당 농지의 전환기간 재적용(최소 2~3년)"}, {"id": 160, "cat": "인증·유통", "q": "유기농산물 소비자 인식 제고를 위한 방법 3가지를 쓰시오.", "a": "인증 마크 홍보, 농장 체험 교육, 친환경 학교 급식 확대"}, {"id": 161, "cat": "영농 경영", "q": "유기농업 경영에서 '비용-편익 분석(cost-benefit analysis)'의 필요성을 설명하시오.", "a": "투입 비용 대비 수익을 비교하여 경영 합리화, 자재 절감, 수익성 향상을 위한 의사결정 근거 마련"}, {"id": 162, "cat": "영농 경영", "q": "유기농업에서 노동력이 많이 필요한 이유 2가지를 쓰시오.", "a": "① 제초·병해충 방제의 기계적·수작업 비중 증가, ② 퇴비 제조·살포 등 유기물 관리 작업 증가"}, {"id": 163, "cat": "영농 경영", "q": "'농업 경영 일지'에 기록해야 할 항목 5가지를 쓰시오.", "a": "작업 일자, 작업 내용, 투입 자재명·용량, 날씨, 노동력(인원)"}, {"id": 164, "cat": "영농 경영", "q": "유기농업 전환 초기에 수익이 감소하는 이유 2가지를 쓰시오.", "a": "① 전환기 인증 미획득으로 유기 프리미엄 불가, ② 관행 농법 대비 수량 감소"}, {"id": 165, "cat": "영농 경영", "q": "6차 산업화란 무엇이며 유기농업과 어떻게 연계되는지 설명하시오.", "a": "1차(생산) + 2차(가공) + 3차(유통·서비스) 융합. 유기농산물을 직접 가공·판매·체험 상품화하여 부가가치 창출"}, {"id": 166, "cat": "영농 경영", "q": "유기농업 전환 지원 정책(국내)을 2가지 쓰시오.", "a": "유기농업 직불제(친환경농업직불금), 유기 자재 구입 보조 지원"}, {"id": 167, "cat": "영농 경영", "q": "'선도 농가(leading farmer)'의 역할을 유기농업 확산 측면에서 설명하시오.", "a": "유기농업 기술을 먼저 실증하고 정보를 공유하여 주변 농가의 전환을 촉진하는 역할"}, {"id": 168, "cat": "영농 경영", "q": "유기농산물의 가격 프리미엄이 형성되는 이유를 3가지 쓰시오.", "a": "① 높은 생산 비용, ② 소비자의 안전성·환경 가치 지불 의사, ③ 공급량 제한"}, {"id": 169, "cat": "영농 경영", "q": "영농 계획서 작성 시 포함해야 할 항목 5가지를 쓰시오.", "a": "재배 작물, 재배 면적, 투입 자재 계획, 예상 생산량, 판로 계획"}, {"id": 170, "cat": "영농 경영", "q": "유기농업 농가 연합 조직(영농 조합)의 장점 2가지를 쓰시오.", "a": "① 공동 구매로 자재비 절감, ② 브랜드 공동화로 마케팅력 향상"}, {"id": 171, "cat": "영농 경영", "q": "농업 재해보험의 필요성을 유기농업 측면에서 설명하시오.", "a": "기상재해·병해충 피해 시 경영 안정성 확보. 유기농업은 화학 방제 불가로 피해 위험이 상대적으로 높아 보험이 더 중요"}, {"id": 172, "cat": "영농 경영", "q": "'스마트팜' 기술이 유기농업에 기여할 수 있는 분야를 2가지 쓰시오.", "a": "① 환경 모니터링으로 병해충 발생 조기 예측, ② 정밀 관개로 수자원 효율화"}, {"id": 173, "cat": "영농 경영", "q": "유기농업 교육 이수가 인증 유지에 필요한 이유를 설명하시오.", "a": "기준 변경 사항 숙지, 신기술 습득을 통한 인증 기준 준수 능력 유지"}, {"id": 174, "cat": "영농 경영", "q": "온라인 직거래 플랫폼을 활용한 유기농산물 판매의 장점 2가지를 쓰시오.", "a": "① 전국 소비자 접근성 확보, ② 중간 유통 마진 절감"}, {"id": 175, "cat": "영농 경영", "q": "농업 회계에서 '손익분기점(BEP)'을 구하는 공식을 쓰시오.", "a": "BEP = 고정비 ÷ (단가 - 변동비) (수량 기준) 또는 BEP 매출액 = 고정비 ÷ (1 - 변동비율)"}, {"id": 176, "cat": "영농 경영", "q": "'유기농업 클러스터'의 개념과 효과를 쓰시오.", "a": "동일 지역 유기농업 농가·가공·유통·연구 기관이 협력하는 산업 군집. 효과: 기술 공유, 물류 효율화, 브랜드 경쟁력 향상"}, {"id": 177, "cat": "영농 경영", "q": "농업 경영 위기 관리(risk management) 방법 3가지를 쓰시오.", "a": "① 다품목 재배로 단일 작목 실패 위험 분산, ② 농업재해보험 가입, ③ 저장·가공을 통한 가격 하락 대비"}, {"id": 178, "cat": "영농 경영", "q": "유기농산물 수출 확대를 위한 과제 2가지를 쓰시오.", "a": "① 수출국 유기 인증 취득, ② 상대국 기준 맞춤 생산 체계 구축"}, {"id": 179, "cat": "영농 경영", "q": "농업의 다원적 기능(multifunctionality)을 3가지 쓰시오.", "a": "환경 보전, 식량 안보, 농촌 경관·문화 유지"}, {"id": 180, "cat": "영농 경영", "q": "'탄소 중립 농업' 실현을 위해 유기농업 농가가 실천할 수 있는 방법 3가지를 쓰시오.", "a": "① 유기물 투입으로 토양 탄소 격리, ② 재생에너지(태양광) 활용, ③ 농기계 사용 최소화"}, {"id": 181, "cat": "수확후·환경", "q": "유기농산물의 수확 적기 판정 방법 3가지를 쓰시오.", "a": "① 적산온도 기준, ② 겉껍질(과피) 색 변화, ③ 당도·경도 측정"}, {"id": 182, "cat": "수확후·환경", "q": "에틸렌 가스가 과실 저장에 미치는 영향과 관리 방법을 쓰시오.", "a": "에틸렌은 과실 성숙·노화 촉진. 저장 시 에틸렌 흡착제 사용, CA 저장(저O₂·고CO₂)으로 억제"}, {"id": 183, "cat": "수확후·환경", "q": "CA 저장(Controlled Atmosphere Storage)의 원리를 설명하시오.", "a": "저장고 내 O₂ 농도를 낮추고 CO₂ 농도를 높여 호흡을 억제함으로써 신선도 장기 유지"}, {"id": 184, "cat": "수확후·환경", "q": "예냉(pre-cooling)이 필요한 이유를 설명하시오.", "a": "수확 직후 높은 품온이 호흡·증산을 촉진하여 품질 저하. 예냉으로 대사 억제 → 유통 기한 연장"}, {"id": 185, "cat": "수확후·환경", "q": "유기농산물의 세척·건조 시 주의사항 2가지를 쓰시오.", "a": "① 살균·소독제 사용 금지 또는 유기 허용 자재만 사용, ② 세척 후 충분한 건조로 부패 방지"}, {"id": 186, "cat": "수확후·환경", "q": "친환경농업이 수질 보전에 기여하는 방법을 2가지 쓰시오.", "a": "① 화학비료 감소로 하천·지하수 질산 오염 감소, ② 농약 불사용으로 수생 생태계 보전"}, {"id": 187, "cat": "수확후·환경", "q": "농업 분야의 온실가스 배출원 3가지를 쓰시오.", "a": "벼 재배(CH₄), 가축 소화(CH₄), 농경지 질소 비료 시용(N₂O)"}, {"id": 188, "cat": "수확후·환경", "q": "유기농업에서 생물다양성 보전을 위한 실천 사항 3가지를 쓰시오.", "a": "생태 통로(hedgerow) 조성, 야생화 띠 재배, 논·밭 습지 보전"}, {"id": 189, "cat": "수확후·환경", "q": "농업용수의 수질 기준에서 유기농업에서 특히 주의해야 할 항목 2가지를 쓰시오.", "a": "중금속(카드뮴, 납 등) 함량, 대장균 수"}, {"id": 190, "cat": "수확후·환경", "q": "유기농산물 포장 시 완충재로 사용 가능한 친환경 소재 2가지를 쓰시오.", "a": "종이 완충재, 옥수수 전분 기반 생분해 완충재"}, {"id": 191, "cat": "수확후·환경", "q": "수확 후 손실(postharvest loss)의 주요 원인 3가지를 쓰시오.", "a": "호흡에 의한 양분 소모, 증산에 의한 위조, 미생물(곰팡이·세균) 부패"}, {"id": 192, "cat": "수확후·환경", "q": "'생태 통로(hedgerow)'의 기능을 유기농업 측면에서 설명하시오.", "a": "천적 곤충·소동물의 서식·이동 경로 제공, 야생화 꽃가루 매개 곤충 유인, 바람 차단으로 농지 보호"}, {"id": 193, "cat": "수확후·환경", "q": "유기농업에서 농업용 비닐 사용을 줄이기 위한 대안 2가지를 쓰시오.", "a": "생분해성 멀칭 필름, 볏짚·왕겨 등 천연 피복 자재"}, {"id": 194, "cat": "수확후·환경", "q": "농약 잔류 검사에서 '불검출'과 '검출 허용 기준 이하'의 차이를 설명하시오.", "a": "불검출: 분석 한계 이하로 검출 안 됨. 검출 허용 기준 이하: 잔류 허용 기준(MRL) 이하로 인체 위해성 없다고 판단"}, {"id": 195, "cat": "수확후·환경", "q": "유기농업이 토양 탄소 저장에 기여하는 메커니즘을 설명하시오.", "a": "유기물 투입 증가와 불경운 관행으로 토양 부식 증가 → 안정된 유기 탄소화합물로 장기 저장"}, {"id": 196, "cat": "수확후·환경", "q": "'푸드 마일리지(food mileage)'란 무엇이며 유기농업과의 연관성을 설명하시오.", "a": "식품이 생산지에서 소비지까지 이동한 거리×중량. 로컬 유기농산물 소비 시 푸드 마일리지 감소 → 탄소 배출 감소"}, {"id": 197, "cat": "수확후·환경", "q": "농산물 GAP 인증 제도에서 수확 후 관리 기록 의무 사항을 2가지 쓰시오.", "a": "선별·세척 일자 및 방법, 저장 온도·기간 기록"}, {"id": 198, "cat": "수확후·환경", "q": "유기농업에서 빗물 이용(우수 재이용)의 장점을 쓰시오.", "a": "무기질(chlorine 등) 없는 순수한 물 활용, 관개 비용 절감, 지하수 보전"}, {"id": 199, "cat": "수확후·환경", "q": "'오염자 부담 원칙(PPP, Polluter Pays Principle)'이 농업에 적용되는 방식을 설명하시오.", "a": "농약·화학비료로 인한 수질·토양 오염의 정화 비용을 오염 유발 농업인이 부담하도록 하는 원칙"}, {"id": 200, "cat": "수확후·환경", "q": "유기농업기능사 실기 시험에서 주로 평가하는 역량을 3가지 쓰시오.", "a": "① 유기농업 원리·인증 기준 이해, ② 토양·비료 관리 실무 지식, ③ 병해충 방제 및 친환경 자재 활용 능력"}];
-const EXAM = new Date('2026-05-30');
+const QS=[{"id": 1, "cat": "유기농업 원리", "q": "유기농업의 4대 원칙을 모두 쓰시오.", "a": "건강(Health), 생태(Ecology), 공정(Fairness), 배려(Care)"}, {"id": 2, "cat": "유기농업 원리", "q": "IFOAM이란 무엇이며, 어떤 역할을 하는가?", "a": "국제유기농업운동연합(International Federation of Organic Agriculture Movements). 유기농업의 국제 기준 수립 및 인증 체계를 총괄하는 비영리 국제기구이다."}, {"id": 3, "cat": "유기농업 원리", "q": "친환경농업에서 '지속가능한 농업'이란 무엇인지 설명하시오.", "a": "현 세대의 필요를 충족하면서도 미래 세대의 필요를 충족할 수 있는 능력을 훼손하지 않는 농업 방식. 환경 보전·경제성·사회적 형평성을 동시에 추구한다."}, {"id": 4, "cat": "유기농업 원리", "q": "유기농업과 관행농업의 가장 큰 차이점 3가지를 쓰시오.", "a": "① 합성 농약·화학비료 불사용, ② 유전자변형생물체(GMO) 금지, ③ 토양 생태계 보전 중심 농법 적용"}, {"id": 5, "cat": "유기농업 원리", "q": "'전환기간'이란 무엇인지 설명하고, 유기농업 인증을 위한 최소 전환기간을 쓰시오.", "a": "관행농업에서 유기농업으로 전환하는 기간. 다년생 작물은 3년, 1년생 작물·목초지는 2년이 최소 전환기간이다."}, {"id": 6, "cat": "유기농업 원리", "q": "유기농업에서 '생물다양성'을 보전해야 하는 이유를 2가지 쓰시오.", "a": "① 해충·천적의 자연 균형 유지로 병해충 억제, ② 토양 미생물 다양성 증가로 영양 순환 촉진"}, {"id": 7, "cat": "유기농업 원리", "q": "우리나라 「친환경농어업 육성 및 유기식품 등의 관리·지원에 관한 법률」에서 유기농산물의 정의를 쓰시오.", "a": "전환기간 이상을 유기적으로 관리한 토지에서 화학비료, 유기합성농약을 일체 사용하지 않고 생산한 농산물"}, {"id": 8, "cat": "유기농업 원리", "q": "유기농업에서 금지되는 투입재 3가지를 쓰시오.", "a": "합성 화학비료, 유기합성농약, GMO 종자"}, {"id": 9, "cat": "유기농업 원리", "q": "유기농업이 기후변화 완화에 기여하는 메커니즘을 2가지 쓰시오.", "a": "① 토양 유기물 증가를 통한 탄소 격리, ② 화학비료 생산·사용 감소로 N₂O 배출 억제"}, {"id": 10, "cat": "유기농업 원리", "q": "유기농업에서 윤작을 실시하는 주된 이유 3가지를 쓰시오.", "a": "① 지력 유지·향상, ② 토양 병해충 및 잡초 억제, ③ 특정 영양소 과부족 방지"}, {"id": 11, "cat": "유기농업 원리", "q": "'농업생태계(Agroecosystem)' 개념을 설명하시오.", "a": "농업 활동이 이루어지는 생태계. 작물, 토양 생물, 잡초, 해충, 천적, 기후 등 생물·비생물 요소가 상호작용하는 시스템"}, {"id": 12, "cat": "유기농업 원리", "q": "유기축산에서 동물 복지를 위해 준수해야 할 사항 3가지를 쓰시오.", "a": "① 방목 또는 충분한 운동 공간 확보, ② 유기 사료 급여, ③ 항생제·성장촉진제 미사용"}, {"id": 13, "cat": "유기농업 원리", "q": "'혼작(intercropping)'의 장점을 2가지 쓰시오.", "a": "① 공간·광 활용 효율 향상, ② 특정 병해충의 밀도 억제 효과"}, {"id": 14, "cat": "유기농업 원리", "q": "유기농업에서 피복작물(cover crop)의 역할을 3가지 쓰시오.", "a": "① 토양 침식 방지, ② 잡초 억제, ③ 토양 질소 공급(콩과 이용 시)"}, {"id": 15, "cat": "유기농업 원리", "q": "「유기식품 등의 인증기준」에 따라 유기농산물 생산에 사용 가능한 토양 개량제를 3가지 쓰시오.", "a": "퇴비, 녹비, 목초회(재)"}, {"id": 16, "cat": "유기농업 원리", "q": "유기농업 인증 기관의 역할을 설명하시오.", "a": "유기농업 기준 적합 여부를 심사하고 인증서를 발급하며, 사후 관리·점검을 통해 인증의 신뢰성을 유지한다."}, {"id": 17, "cat": "유기농업 원리", "q": "'생태농업(Ecological Farming)'과 유기농업의 공통점과 차이점을 쓰시오.", "a": "공통점: 화학투입재 최소화, 생태계 보전. 차이점: 생태농업은 반드시 인증을 요구하지 않으며 지역 생태계 복원에 더 초점을 맞춤"}, {"id": 18, "cat": "유기농업 원리", "q": "유기농업에서 완충지대(buffer zone)를 설정하는 이유를 쓰시오.", "a": "인접 관행농지의 농약·비료가 유기농지로 유입·오염되는 것을 방지하기 위해"}, {"id": 19, "cat": "유기농업 원리", "q": "유기농업에서 유전자변형작물(GMO)을 금지하는 이유를 2가지 쓰시오.", "a": "① 생태계 유전자 오염 위험, ② 유기농업의 자연 원칙에 위배"}, {"id": 20, "cat": "유기농업 원리", "q": "'탄소-질소비(C/N비)'가 퇴비 발효에 미치는 영향을 설명하시오.", "a": "C/N비가 너무 높으면 분해가 느려지고, 너무 낮으면 암모니아 손실이 많아짐. 적정 C/N비는 25~30:1이다."}, {"id": 21, "cat": "토양·비료", "q": "토양의 3상(三相)을 쓰고 각각의 이상적인 비율을 쓰시오.", "a": "고상(固相) 약 50%, 액상(液相) 약 25%, 기상(氣相) 약 25%"}, {"id": 22, "cat": "토양·비료", "q": "토양 pH가 작물 생육에 미치는 영향을 설명하시오.", "a": "pH는 양분 가용성에 영향. 대부분 작물의 적정 pH는 6.0~6.5. 너무 산성(낮음)이면 Al·Mn 독성, 너무 알칼리(높음)이면 Fe·Mn·Zn 결핍"}, {"id": 23, "cat": "토양·비료", "q": "토양 유기물의 역할 4가지를 쓰시오.", "a": "① 보수력 증대, ② 완충능 향상, ③ 토양 생물 에너지원 공급, ④ 입단 구조 형성으로 통기성 개선"}, {"id": 24, "cat": "토양·비료", "q": "양이온교환용량(CEC)이란 무엇이며, CEC가 높을수록 좋은 이유를 쓰시오.", "a": "토양이 양이온을 흡착·보유할 수 있는 능력(cmol+/kg). CEC가 높을수록 Ca²⁺, K⁺, Mg²⁺ 등 양분 보유력이 높아 비옥한 토양이 된다."}, {"id": 25, "cat": "토양·비료", "q": "퇴비의 완숙 여부를 확인하는 방법 3가지를 쓰시오.", "a": "① 색이 흑갈색으로 변함, ② 발열이 멈춤(냉각), ③ 원재료 형태가 소실되고 흙 냄새가 남"}, {"id": 26, "cat": "토양·비료", "q": "녹비 작물의 정의와 주요 효과를 쓰시오.", "a": "토양에 갈아엎어 비료로 이용하는 식물. 질소 공급(콩과), 유기물 증가, 토양 구조 개선 효과"}, {"id": 27, "cat": "토양·비료", "q": "토양 침식의 주요 원인 3가지를 쓰시오.", "a": "① 강우에 의한 물 침식, ② 바람에 의한 풍식, ③ 경운으로 인한 표토 이탈"}, {"id": 28, "cat": "토양·비료", "q": "퇴비 발효 시 고온기(60~70℃)가 중요한 이유를 쓰시오.", "a": "잡초 종자, 병원균, 기생충 알 등을 사멸시켜 안전한 퇴비를 만들기 위해"}, {"id": 29, "cat": "토양·비료", "q": "석회 시용이 산성 토양 개량에 효과적인 이유를 설명하시오.", "a": "석회의 Ca²⁺가 H⁺와 교환되어 토양 pH를 상승시키고, 토양 입단 형성 및 Ca 공급 효과도 있다."}, {"id": 30, "cat": "토양·비료", "q": "토양 미생물의 역할 3가지를 쓰시오.", "a": "① 유기물 분해(무기화), ② 질소 고정, ③ 인산 가용화"}, {"id": 31, "cat": "토양·비료", "q": "유기농업에서 허용되는 질소원 비료 3가지를 쓰시오.", "a": "퇴비, 음식물 퇴비, 혈분·골분 등 동물 유래 비료"}, {"id": 32, "cat": "토양·비료", "q": "토양 입단(aggregate) 구조의 장점을 3가지 쓰시오.", "a": "① 통기성 향상, ② 보수력 증대, ③ 뿌리 발달 촉진"}, {"id": 33, "cat": "토양·비료", "q": "콩과 작물과 근류균의 공생 관계를 설명하시오.", "a": "콩과 뿌리에 Rhizobium 등 근류균이 공생하며 대기 중 N₂를 암모니아(NH₃)로 고정하여 식물이 이용할 수 있게 공급"}, {"id": 34, "cat": "토양·비료", "q": "토양 검정(soil test)의 목적을 쓰시오.", "a": "토양의 pH, 유기물 함량, 양분(N·P·K 등) 수준을 분석하여 작물별 적합한 비료 투입량을 결정하기 위해"}, {"id": 35, "cat": "토양·비료", "q": "유기물 시용이 토양 물리성 개선에 미치는 효과를 2가지 쓰시오.", "a": "① 공극률 증가로 배수·통기성 향상, ② 입단화 촉진으로 경도 감소"}, {"id": 36, "cat": "토양·비료", "q": "인산(P)이 토양에서 고정되는 원인을 설명하시오.", "a": "산성 토양에서 Fe·Al과 결합하여 불용성 화합물 형성, 알칼리 토양에서 Ca와 결합하여 난용성 인산칼슘 형성"}, {"id": 37, "cat": "토양·비료", "q": "미생물자재(생물비료)의 종류 3가지와 각각의 기능을 쓰시오.", "a": "① 근류균: 질소 고정, ② 균근균(Mycorrhiza): 인산 흡수 촉진, ③ Bacillus 계열: 길항균으로 병원균 억제"}, {"id": 38, "cat": "토양·비료", "q": "토양 용적밀도(bulk density)가 높을 때 나타나는 문제점을 쓰시오.", "a": "토양 압밀로 공극 감소 → 통기·배수 불량 → 뿌리 신장 저해 → 생육 부진"}, {"id": 39, "cat": "토양·비료", "q": "무경운 농업의 장점과 단점을 각각 2가지씩 쓰시오.", "a": "장점: 토양 구조 유지, 토양 탄소 보전. 단점: 잡초 방제 어려움, 초기 작물 정착 불리"}, {"id": 40, "cat": "토양·비료", "q": "가축분뇨를 직접 시용하지 않고 퇴비화해야 하는 이유 2가지를 쓰시오.", "a": "① 병원균·기생충 사멸을 위해, ② 암모니아 휘산 손실 및 작물 피해 방지"}, {"id": 41, "cat": "토양·비료", "q": "칼리(K)의 작물 생리적 역할 3가지를 쓰시오.", "a": "① 기공 개폐 조절, ② 효소 활성화, ③ 탄수화물 합성·이동 촉진"}, {"id": 42, "cat": "토양·비료", "q": "토양 중 질소의 순환 과정을 간략히 쓰시오.", "a": "유기태 N → 암모니아화(NH₄⁺) → 질산화(NO₃⁻) → 작물 흡수 또는 탈질(N₂↑)"}, {"id": 43, "cat": "토양·비료", "q": "음식물 쓰레기 퇴비화의 주의사항 2가지를 쓰시오.", "a": "① 염분 함량이 높아 희석·중화 필요, ② 중금속 오염 여부 사전 검사 필요"}, {"id": 44, "cat": "토양·비료", "q": "마그네슘(Mg) 결핍 증상을 설명하시오.", "a": "오래된 잎부터 엽맥 사이 황화(황록화) 현상 발생 — 엽맥은 녹색, 엽육은 황색"}, {"id": 45, "cat": "토양·비료", "q": "황(S) 결핍 증상과 유기농업에서의 공급 방법을 쓰시오.", "a": "새 잎에서 황화 발생. 공급: 황산석회(석고), 유기물 분해를 통해 공급"}, {"id": 46, "cat": "토양·비료", "q": "토양 완충능(buffering capacity)이란 무엇이며 높을수록 좋은 이유를 쓰시오.", "a": "외부 pH 변화에 저항하는 능력. 완충능이 높으면 pH 급변을 막아 양분 가용성과 미생물 활성이 안정적으로 유지됨"}, {"id": 47, "cat": "토양·비료", "q": "유기농업에서 허용되는 병해충 방제용 미량원소 자재 2가지를 쓰시오.", "a": "황(유황합제), 동(보르도액)"}, {"id": 48, "cat": "토양·비료", "q": "토양 중 인산 가용화 미생물의 작용 원리를 설명하시오.", "a": "유기산(글루콘산 등) 분비로 토양 pH를 낮추거나 킬레이트 작용으로 Fe·Al·Ca와 결합한 불용성 인산을 가용화"}, {"id": 49, "cat": "토양·비료", "q": "녹비 작물 중 헤어리베치의 특징을 3가지 쓰시오.", "a": "① 추위에 강한 월동 가능, ② 질소 고정량이 많음(약 100~200 kg N/ha), ③ 이른 봄 생육이 빨라 잡초 억제"}, {"id": 50, "cat": "토양·비료", "q": "토양 유기물 함량을 높이기 위한 방법 3가지를 쓰시오.", "a": "① 퇴비·볏짚 등 유기물 투입, ② 녹비 재배 및 환원, ③ 피복작물 활용으로 잔재물 토양 환원"}, {"id": 51, "cat": "토양·비료", "q": "질산태 질소(NO₃⁻)가 토양에서 쉽게 용탈되는 이유를 설명하시오.", "a": "NO₃⁻는 음이온으로 음전하를 띠는 토양 입자에 흡착되지 않아 강우·관개 시 물과 함께 하층으로 용탈"}, {"id": 52, "cat": "토양·비료", "q": "규소(Si)의 작물 생육 효과를 2가지 쓰시오.", "a": "① 세포벽 강화로 도복 및 병해 저항성 증대, ② 증산 억제로 내건성 향상"}, {"id": 53, "cat": "토양·비료", "q": "붕소(B) 결핍 증상과 주로 발생하는 작물을 쓰시오.", "a": "생장점 괴사, 과실 기형, 공동화. 주로 배추, 무, 사과 등에 발생"}, {"id": 54, "cat": "토양·비료", "q": "퇴비 발효 시 뒤집기(turning)의 목적을 쓰시오.", "a": "산소 공급으로 호기성 발효 촉진, 온도 균일화, 수분 균일 분포"}, {"id": 55, "cat": "토양·비료", "q": "토양 pH 교정을 위해 석회를 시용할 때 주의사항 2가지를 쓰시오.", "a": "① 과량 시용 시 Mn·Fe·B 결핍 유발, ② 작물 파종·이식 최소 2주 전 시용"}, {"id": 56, "cat": "토양·비료", "q": "미부숙 퇴비를 시용했을 때 발생할 수 있는 문제를 2가지 쓰시오.", "a": "① 발열·가스 발생으로 뿌리 피해, ② 병원균·잡초 종자 전파"}, {"id": 57, "cat": "토양·비료", "q": "유기농업에서 허용되는 칼리 공급원 2가지를 쓰시오.", "a": "황산칼리(황산칼륨 광물), 목회(wood ash)"}, {"id": 58, "cat": "토양·비료", "q": "인산 흡수를 돕는 균근균(Mycorrhiza)의 역할을 설명하시오.", "a": "균사가 뿌리 범위 밖으로 뻗어 인산 흡수 표면적을 크게 늘리고, 불용성 인산을 가용화하여 식물에 공급"}, {"id": 59, "cat": "토양·비료", "q": "토양 무기화(mineralization)란 무엇인지 설명하시오.", "a": "토양 미생물이 유기태 양분(단백질, 핵산 등)을 분해하여 무기태(NH₄⁺, PO₄³⁻ 등)로 전환하는 과정"}, {"id": 60, "cat": "토양·비료", "q": "점토광물과 부식이 CEC에 기여하는 원리를 설명하시오.", "a": "점토 표면과 부식의 카르복실기·수산기가 음전하를 띠어 양이온(Ca²⁺, K⁺ 등)을 전기적으로 흡착·보유"}, {"id": 61, "cat": "작물 재배", "q": "유기농업에서 종자 선택 시 고려해야 할 사항 3가지를 쓰시오.", "a": "① 유기 종자 우선 사용, ② GMO 종자 금지, ③ 지역 기후·토양에 적합한 품종 선택"}, {"id": 62, "cat": "작물 재배", "q": "'접목재배'를 하는 주요 이유를 2가지 쓰시오.", "a": "① 토양 전염 병해(덩굴쪼김병 등) 회피, ② 저온·습해 등 불량 환경 내성 향상"}, {"id": 63, "cat": "작물 재배", "q": "유기농업에서 잡초 방제의 기계적 방법 3가지를 쓰시오.", "a": "중경(중간 갈기), 멀칭(피복), 화염 제초"}, {"id": 64, "cat": "작물 재배", "q": "비닐 멀칭 대신 유기농업에서 사용할 수 있는 멀칭 재료 3가지를 쓰시오.", "a": "볏짚, 왕겨, 우드칩(나무 조각)"}, {"id": 65, "cat": "작물 재배", "q": "작물의 재배 적온과 생리적 한계 온도를 구분하여 설명하시오.", "a": "재배 적온: 생육이 가장 양호한 온도 범위. 생리적 한계 온도: 이 이상/이하에서는 생리 장해·고사 발생(최고·최저 온도)"}, {"id": 66, "cat": "작물 재배", "q": "'경종적 방제(cultural control)'란 무엇인지 설명하고 예를 2가지 드시오.", "a": "작부 체계, 재배 방식을 이용한 병해충 방제. 예: 윤작으로 특정 병원균 밀도 저하, 조기 수확으로 해충 번식 차단"}, {"id": 67, "cat": "작물 재배", "q": "점적관수(drip irrigation)의 장점 3가지를 쓰시오.", "a": "① 물 이용 효율 향상, ② 잎 습윤 방지로 병해 억제, ③ 비료 동시 공급(관비) 가능"}, {"id": 68, "cat": "작물 재배", "q": "유기농 시설재배에서 환경 조절의 핵심 요소 3가지를 쓰시오.", "a": "온도, 습도(환기), CO₂ 농도"}, {"id": 69, "cat": "작물 재배", "q": "작물의 '요수량(水分需要量, water requirement)'을 설명하시오.", "a": "건물 1g을 생산하기 위해 필요한 수분의 양(g). 요수량이 클수록 물이 많이 필요한 작물"}, {"id": 70, "cat": "작물 재배", "q": "'동반식물(companion plant)'의 개념과 예를 쓰시오.", "a": "함께 재배하면 서로에게 이익을 주는 식물 조합. 예: 옥수수+강낭콩+호박(Three Sisters), 당근+파(파는 당근파리 억제)"}, {"id": 71, "cat": "작물 재배", "q": "배추과 채소의 무름병 방제를 위한 경종적 방법 2가지를 쓰시오.", "a": "① 배수 불량지 개선(이랑 높임), ② 윤작(십자화과 작물 연작 피함)"}, {"id": 72, "cat": "작물 재배", "q": "작물의 '광포화점(light saturation point)'과 '광보상점'을 설명하시오.", "a": "광보상점: 광합성량 = 호흡량이 되는 광도. 광포화점: 이상 광도에서 광합성이 더 증가하지 않는 최소 광도"}, {"id": 73, "cat": "작물 재배", "q": "유기농업에서 인공수분이 필요한 경우를 2가지 쓰시오.", "a": "① 화분 매개 곤충이 부족한 시설재배, ② 기상 불량으로 자연수분이 어려울 때"}, {"id": 74, "cat": "작물 재배", "q": "과채류의 유인(誘引) 재배의 목적을 3가지 쓰시오.", "a": "① 수광 효율 향상, ② 통풍으로 병 발생 억제, ③ 수확 작업 편의성"}, {"id": 75, "cat": "작물 재배", "q": "'기지현상(replant problem/soil sickness)'이란 무엇이며 원인 2가지를 쓰시오.", "a": "동일 작물 연작 시 생육이 나빠지는 현상. 원인: ① 토양 병원균 축적, ② 자가 독소(allelopathy) 물질 축적"}, {"id": 76, "cat": "작물 재배", "q": "딸기 유기 재배에서 자묘(러너 묘) 선택 기준을 3가지 쓰시오.", "a": "① 모주로부터 2~3번째 자묘 선택, ② 병해충 감염 여부 확인, ③ 충실한 뿌리 발달 확인"}, {"id": 77, "cat": "작물 재배", "q": "벼 유기재배에서 잡초 억제를 위해 사용하는 '쌀겨 농법'의 원리를 설명하시오.", "a": "논에 쌀겨를 살포하면 미생물이 분해하면서 산소를 소비하여 혐기 상태를 만들어 잡초 발아를 억제"}, {"id": 78, "cat": "작물 재배", "q": "과수 유기재배에서 주요 병해 방제에 사용할 수 있는 허용 자재 2가지를 쓰시오.", "a": "보르도액(황산동+석회), 석회황합제"}, {"id": 79, "cat": "작물 재배", "q": "'솎기(thinning)'의 목적을 2가지 쓰시오.", "a": "① 개체 간 경합 감소로 남은 개체 생육 향상, ② 과실 품질(크기·당도) 향상"}, {"id": 80, "cat": "작물 재배", "q": "유기농업에서 혼작 잡초 방제 원리를 설명하시오.", "a": "밀식 혼작으로 광을 차단하여 잡초 발아 및 생육을 억제"}, {"id": 81, "cat": "작물 재배", "q": "육묘(모종 키우기)의 장점 3가지를 쓰시오.", "a": "① 재배 기간 단축, ② 포장 이용 효율 향상, ③ 불량 환경 노출 기간 단축"}, {"id": 82, "cat": "작물 재배", "q": "과수의 전정(pruning) 목적을 3가지 쓰시오.", "a": "① 수형(나무 형태) 조절, ② 수광 및 통풍 향상, ③ 병든 가지 제거로 병해 억제"}, {"id": 83, "cat": "작물 재배", "q": "식물의 광합성에 필요한 3가지 요소를 쓰시오.", "a": "빛(광에너지), CO₂, 물(H₂O)"}, {"id": 84, "cat": "작물 재배", "q": "시설재배에서 하우스 내 CO₂를 보충해야 하는 이유를 설명하시오.", "a": "밀폐 시설 내 작물의 활발한 광합성으로 CO₂가 감소하여 광합성 저하. 보충으로 생산성 향상"}, {"id": 85, "cat": "작물 재배", "q": "가지 유기재배에서 '담배나방' 방제 방법 2가지를 쓰시오.", "a": "① 페로몬 트랩 설치로 발생 감시 및 성충 포획, ② BT(Bacillus thuringiensis) 제제 살포"}, {"id": 86, "cat": "작물 재배", "q": "작물별 적정 재식 밀도가 중요한 이유를 설명하시오.", "a": "밀식 시 광·수분·양분 경합으로 개체 당 수량 감소, 통풍 불량으로 병해 증가. 소식 시 단위 면적당 수량 손실"}, {"id": 87, "cat": "작물 재배", "q": "유기농업에서 가능한 물리적 해충 방제 방법 3가지를 쓰시오.", "a": "방충망·한랭사 설치, 황색·청색 끈끈이트랩, 포식성 천적 방사"}, {"id": 88, "cat": "작물 재배", "q": "'춘화처리(vernalization)'란 무엇이며, 어떤 작물에 필요한지 예를 드시오.", "a": "저온을 경험해야 화아 분화(꽃눈 형성)가 촉진되는 현상. 예: 양파, 배추, 밀 등"}, {"id": 89, "cat": "작물 재배", "q": "수박 접목 재배 시 사용하는 대목과 그 이유를 쓰시오.", "a": "박 또는 호박 계통 대목. 이유: 덩굴쪼김병 저항성이 강하고 저온 신장성이 우수"}, {"id": 90, "cat": "작물 재배", "q": "유기인삼 재배의 주요 특징을 3가지 쓰시오.", "a": "① 직사광선 차단을 위한 차광 시설, ② 배수 불량 절대 금지, ③ 6~8년 이상 윤작 필요"}, {"id": 91, "cat": "작물 재배", "q": "잎채소(상추·시금치 등) 수확 후 품질 유지를 위한 저장 조건을 쓰시오.", "a": "저온(0~5℃), 고습도(95% 이상), 에틸렌 가스 격리"}, {"id": 92, "cat": "작물 재배", "q": "'그린 워터(green water)'와 '블루 워터(blue water)'의 차이를 설명하시오.", "a": "그린 워터: 강우에 의해 토양에 저장되어 작물이 직접 이용하는 수분. 블루 워터: 하천·지하수 등 관개에 이용하는 수자원"}, {"id": 93, "cat": "작물 재배", "q": "유기농 사과 재배에서 '복숭아혹진딧물' 방제 방법 2가지를 쓰시오.", "a": "① 천적(무당벌레, 풀잠자리) 활용, ② 님(neem) 오일 계열 유기 허용 자재 살포"}, {"id": 94, "cat": "작물 재배", "q": "수경재배가 유기농업 인증을 받기 어려운 이유를 설명하시오.", "a": "토양 없이 재배하므로 토양 생태계 보전이라는 유기농업 원칙을 충족하지 못하고, 합성 무기 양분을 사용하는 경우가 많기 때문"}, {"id": 95, "cat": "작물 재배", "q": "'타감작용(allelopathy)'이란 무엇인지 예를 들어 설명하시오.", "a": "식물이 분비하는 화학물질이 주변 식물의 생육을 억제하거나 촉진하는 현상. 예: 호밀 잔재물이 후속 작물 발아 억제"}, {"id": 96, "cat": "작물 재배", "q": "유기농업에서 씨앗 저장 시 주의사항 3가지를 쓰시오.", "a": "① 저온(10℃ 이하)·건조 보관, ② 밀봉 용기 사용, ③ GMO 오염 방지를 위해 유기 종자와 일반 종자 분리"}, {"id": 97, "cat": "작물 재배", "q": "배추 유기재배에서 뿌리혹병(근류병) 방제 방법을 3가지 쓰시오.", "a": "① 석회 시용으로 pH 7.0 이상 유지, ② 십자화과 작물 4년 이상 윤작, ③ 배수 개선"}, {"id": 98, "cat": "작물 재배", "q": "작물의 건물률과 수분함량의 관계를 설명하시오.", "a": "건물률(%) + 수분함량(%) = 100%. 건물률이 높을수록 건조 상태"}, {"id": 99, "cat": "작물 재배", "q": "유기농업에서 피복재 사용의 장단점을 각각 2가지씩 쓰시오.", "a": "장점: 잡초 억제, 지온 유지. 단점: 분해 전까지 토양 내 통기 감소, 비분해성 피복재의 환경오염"}, {"id": 100, "cat": "작물 재배", "q": "이랑(두둑)을 높게 만드는 이유 2가지를 쓰시오.", "a": "① 배수 향상으로 과습 방지, ② 지온 상승으로 초기 생육 촉진"}, {"id": 101, "cat": "병해충 방제", "q": "유기농업에서 병해충 방제의 우선 순위를 단계별로 쓰시오.", "a": "① 예방(건전 재배 환경), ② 물리·기계적 방제, ③ 생물적 방제, ④ 허용 자재 사용"}, {"id": 102, "cat": "병해충 방제", "q": "BT(Bacillus thuringiensis)의 작용 메커니즘을 설명하시오.", "a": "BT가 생산하는 δ-엔도톡신 단백질이 해충의 장 세포를 파괴하여 식욕 상실 및 사망을 유발"}, {"id": 103, "cat": "병해충 방제", "q": "천적 곤충 '칠레이리응애(Phytoseiulus persimilis)'가 방제하는 해충을 쓰시오.", "a": "점박이응애(Tetranychus urticae)"}, {"id": 104, "cat": "병해충 방제", "q": "보르도액의 성분과 살균 원리를 설명하시오.", "a": "황산동(CuSO₄) + 생석회(CaO)를 물에 혼합한 알칼리성 액제. Cu²⁺ 이온이 병원균의 효소 활성을 억제하여 살균"}, {"id": 105, "cat": "병해충 방제", "q": "식물 검역의 목적과 주요 검역 대상 해충 2가지를 쓰시오.", "a": "목적: 해외 위험 병해충의 국내 유입 차단. 대상: 매미나방, 소나무재선충"}, {"id": 106, "cat": "병해충 방제", "q": "페로몬 트랩의 원리와 유기농업에서의 활용 방법을 쓰시오.", "a": "해충 암컷이 방출하는 성페로몬을 합성하여 수컷을 유인·포획. 발생 밀도 감시 및 대량 포획에 활용"}, {"id": 107, "cat": "병해충 방제", "q": "역병(疫病, Phytophthora)의 발생 환경과 방제 방법을 쓰시오.", "a": "환경: 고온 다습, 배수 불량. 방제: 배수 개선, 윤작, 보르도액 살포"}, {"id": 108, "cat": "병해충 방제", "q": "흰가루병(powdery mildew) 방제에 사용할 수 있는 유기농 허용 자재를 2가지 쓰시오.", "a": "유황(황) 수화제, 중탄산나트륨(베이킹소다) 희석액"}, {"id": 109, "cat": "병해충 방제", "q": "'통합 병해충 관리(IPM)'의 개념을 설명하시오.", "a": "화학적, 생물적, 경종적, 물리적 방제 방법을 경제적 피해 수준(EIL)을 고려하여 합리적으로 조합하는 해충 관리 체계"}, {"id": 110, "cat": "병해충 방제", "q": "진딧물 방제를 위한 천적 2가지를 쓰시오.", "a": "무당벌레(칠성무당벌레), 진디벌(Aphidius 속)"}, {"id": 111, "cat": "병해충 방제", "q": "토마토의 잿빛곰팡이병(회색곰팡이병) 발생 조건과 방제 방법을 쓰시오.", "a": "조건: 저온 다습, 밀식. 방제: 통풍 개선, 이병 잔재물 즉시 제거, 과잉 질소 시비 자제"}, {"id": 112, "cat": "병해충 방제", "q": "해충의 '경제적 피해 수준(EIL)'이란 무엇인지 설명하시오.", "a": "해충 밀도에 의한 경제적 피해가 방제 비용과 같아지는 해충 밀도. 이 이상이면 방제가 경제적으로 타당"}, {"id": 113, "cat": "병해충 방제", "q": "파밤나방의 생활사와 유기농업에서의 방제 방법을 쓰시오.", "a": "알→유충(4~5령)→번데기→성충. 방제: 성페로몬 트랩, BT 제제(유충 초기), 포식성 천적"}, {"id": 114, "cat": "병해충 방제", "q": "고추 탄저병의 방제를 위한 경종적 방법 3가지를 쓰시오.", "a": "① 무병 종자 사용, ② 배수 개선, ③ 이병 과실 조기 수거·소각"}, {"id": 115, "cat": "병해충 방제", "q": "식물추출물 방제제 '님(Neem)' 오일의 작용 기작을 설명하시오.", "a": "아자디라크틴(azadirachtin) 성분이 해충의 탈피 호르몬 작용을 교란하여 탈피·성장 억제 및 기피 효과"}, {"id": 116, "cat": "병해충 방제", "q": "복숭아 유기재배에서 '복숭아심식나방' 방제 방법 2가지를 쓰시오.", "a": "① 교미 교란(sex pheromone 대량 살포), ② 봉지 씌우기(과실 봉지)"}, {"id": 117, "cat": "병해충 방제", "q": "벼 도열병 방제를 위한 경종적 방법 3가지를 쓰시오.", "a": "① 저항성 품종 선택, ② 질소 과다 시비 금지, ③ 규소 공급으로 표피 강화"}, {"id": 118, "cat": "병해충 방제", "q": "온실가루이의 천적으로 사용하는 기생벌을 쓰시오.", "a": "온실가루이좀벌(Encarsia formosa)"}, {"id": 119, "cat": "병해충 방제", "q": "고자리파리 피해를 받는 작물과 방제 방법을 쓰시오.", "a": "양파, 마늘, 파 등 파속 작물. 방제: 발생 시기 회피 파종, 피복 재료 덮기, 선충(Steinernema) 처리"}, {"id": 120, "cat": "병해충 방제", "q": "'생물농약'의 정의와 종류 3가지를 쓰시오.", "a": "살아 있는 미생물이나 그 대사산물을 이용한 농약. 종류: BT제, 핵다각체병바이러스(NPV), 곤충병원성 선충"}, {"id": 121, "cat": "병해충 방제", "q": "식물 면역 증진제(SAR 유도제)의 작용 원리를 설명하시오.", "a": "살리실산 등 물질이 식물 방어 유전자를 활성화하여 식물 자체의 면역(획득 저항성)을 유도"}, {"id": 122, "cat": "병해충 방제", "q": "황색 끈끈이 트랩이 유인하는 주요 해충 3가지를 쓰시오.", "a": "진딧물 유시충, 총채벌레, 온실가루이"}, {"id": 123, "cat": "병해충 방제", "q": "곤충병원성 선충(Entomopathogenic nematode)의 방제 특성 2가지를 쓰시오.", "a": "① 토양 내 이동하며 해충 유충·번데기 기생, ② 인축 및 환경에 무해"}, {"id": 124, "cat": "병해충 방제", "q": "사과 점무늬낙엽병 방제를 위해 유기농업에서 사용할 수 있는 자재를 쓰시오.", "a": "보르도액, 석회황합제"}, {"id": 125, "cat": "병해충 방제", "q": "'내병성 품종'을 재배하는 것이 유기농업에서 중요한 이유를 설명하시오.", "a": "화학 농약 없이도 병 발생을 원천적으로 억제할 수 있어 생산 안정성을 높이는 가장 경제적인 방제 수단"}, {"id": 126, "cat": "병해충 방제", "q": "벼 줄무늬잎마름병의 매개체와 방제 방법을 쓰시오.", "a": "매개체: 애멸구. 방제: 저항성 품종 재배, 애멸구 밀도 억제(포식성 천적 보전)"}, {"id": 127, "cat": "병해충 방제", "q": "식물 병원균의 월동 장소를 3가지 쓰시오.", "a": "토양(잔재물 포함), 종자 내부, 전식물 잔재물"}, {"id": 128, "cat": "병해충 방제", "q": "'식물 추출물 방제제' 마늘액의 해충 방제 원리를 설명하시오.", "a": "마늘의 알리신(allicin)이 해충의 기피·살충 효과, 살균 효과 발휘"}, {"id": 129, "cat": "병해충 방제", "q": "오이의 덩굴쪼김병(만고병) 방제를 위해 유기농업에서 활용하는 방법을 2가지 쓰시오.", "a": "① 저항성 대목에 접목 재배, ② 토양 태양열 소독(여름 비닐 피복)"}, {"id": 130, "cat": "병해충 방제", "q": "작물 잔재물 처리가 병해충 방제에 중요한 이유를 쓰시오.", "a": "병원균·해충의 월동 장소를 제거하여 다음 작기 초기 발생 밀도를 낮춤"}, {"id": 131, "cat": "병해충 방제", "q": "유기농업에서 허용되는 살충 효과의 광물성 자재를 2가지 쓰시오.", "a": "규조토(diatomaceous earth), 카올린 점토(Kaolin clay)"}, {"id": 132, "cat": "병해충 방제", "q": "'교미 교란제(mating disruption)'의 원리와 사용 작물 예를 쓰시오.", "a": "합성 성페로몬을 대기 중 고농도로 살포하여 수컷이 암컷을 찾지 못하게 함. 예: 복숭아심식나방 방제(복숭아, 사과)"}, {"id": 133, "cat": "병해충 방제", "q": "총채벌레 방제를 위한 천적 2가지를 쓰시오.", "a": "애꽃노린재(Orius 속), 황온좀응애(Amblyseius cucumeris)"}, {"id": 134, "cat": "병해충 방제", "q": "잿빛곰팡이병균(Botrytis cinerea)이 주로 침입하는 경로를 쓰시오.", "a": "상처 부위, 노화·죽은 조직, 꽃 기관"}, {"id": 135, "cat": "병해충 방제", "q": "한국에서 유기농업 허용 자재 목록을 관리하는 기관과 근거 법령을 쓰시오.", "a": "농촌진흥청(국립농업과학원). 「친환경농어업 육성 및 유기식품 등의 관리·지원에 관한 법률」"}, {"id": 136, "cat": "병해충 방제", "q": "토양 태양열 소독의 원리와 방법을 설명하시오.", "a": "여름 고온기에 토양을 충분히 관수하고 투명 비닐로 덮어 지온을 50℃ 이상으로 높여 병원균·잡초 종자를 사멸"}, {"id": 137, "cat": "병해충 방제", "q": "고추 역병 방제를 위한 유기농업 허용 자재를 쓰고 사용 방법을 설명하시오.", "a": "보르도액(1%): 발병 전 예방적으로 7~10일 간격 경엽 살포 및 토양 관주"}, {"id": 138, "cat": "병해충 방제", "q": "주요 곤충 천적의 종류와 대상 해충을 연결하시오(3쌍 이상).", "a": "칠레이리응애→점박이응애, 온실가루이좀벌→온실가루이, 진디벌→진딧물"}, {"id": 139, "cat": "병해충 방제", "q": "식물 검역 '금지 품목'이란 무엇인지 설명하시오.", "a": "병해충의 위험도가 높아 국내 반입 자체가 금지된 식물 또는 식물 산물"}, {"id": 140, "cat": "병해충 방제", "q": "유기농업에서 허용되는 살균제 '석회황합제'의 성분과 효과를 쓰시오.", "a": "생석회 + 황 + 물로 제조한 다황화칼슘(CaS₅) 혼합액. 살균(점무늬낙엽병, 흰가루병)과 살충·살응애 효과"}, {"id": 141, "cat": "인증·유통", "q": "우리나라 유기농산물 인증 마크의 명칭과 색상을 쓰시오.", "a": "'유기농산물' 마크(초록색 잎과 원 형태). 국립농산물품질관리원 또는 민간 인증기관이 발급"}, {"id": 142, "cat": "인증·유통", "q": "유기농산물 인증 갱신 주기와 사후 관리 방법을 쓰시오.", "a": "매년 갱신(1년 단위). 인증기관의 연 1회 이상 현장 조사 및 시료 수거 검사"}, {"id": 143, "cat": "인증·유통", "q": "'동등성 협약(equivalency agreement)'이 유기농업 수출에 미치는 영향을 쓰시오.", "a": "두 나라 간 유기 기준이 동등하다고 인정하면 상대국 기준으로 추가 인증 없이 유기 표시로 수출 가능"}, {"id": 144, "cat": "인증·유통", "q": "유기농산물과 무농약농산물의 차이를 쓰시오.", "a": "유기농산물: 화학비료+농약 모두 금지. 무농약농산물: 농약은 금지, 화학비료는 권장량의 1/3 이내 허용"}, {"id": 145, "cat": "인증·유통", "q": "농산물 이력추적 관리제도(traceability)의 목적을 쓰시오.", "a": "농산물 생산~유통~판매 전 과정을 추적하여 문제 발생 시 신속한 원인 규명 및 회수"}, {"id": 146, "cat": "인증·유통", "q": "'유기 가공식품'의 유기 원료 함량 기준을 쓰시오.", "a": "전체 원재료 함량의 95% 이상이 유기 인증 원료여야 '유기' 표시 가능"}, {"id": 147, "cat": "인증·유통", "q": "유기농산물 인증 신청 서류 3가지를 쓰시오.", "a": "인증 신청서, 영농 일지(작업 기록), 투입 자재 구매·사용 기록"}, {"id": 148, "cat": "인증·유통", "q": "유기농산물의 포장재 선택 시 고려사항 2가지를 쓰시오.", "a": "① 재활용·생분해 가능 소재 우선, ② 식품 안전성 인증된 소재 사용"}, {"id": 149, "cat": "인증·유통", "q": "'유기 농지' 표시를 위해 준수해야 하는 기록 관리 항목 3가지를 쓰시오.", "a": "파종·이식 일자, 비료·자재 투입 기록, 병해충 방제 기록"}, {"id": 150, "cat": "인증·유통", "q": "국내 유기농산물 인증 기관의 종류를 구분하여 쓰시오.", "a": "① 국가 기관: 국립농산물품질관리원(NAQS), ② 민간 인증기관: 농관원 인가를 받은 사설 인증기관"}, {"id": 151, "cat": "인증·유통", "q": "인증 유기농산물을 판매할 때 표기해야 할 의무 사항 3가지를 쓰시오.", "a": "유기 표시, 인증번호, 인증기관명"}, {"id": 152, "cat": "인증·유통", "q": "'신선 농산물'의 유통 기한 관리에서 가장 중요한 온도 관리 원칙을 쓰시오.", "a": "수확 후 즉시 예냉(pre-cooling)으로 품온을 낮추고, 콜드체인(cold chain)을 통해 유통 전 과정에서 저온 유지"}, {"id": 153, "cat": "인증·유통", "q": "유기농산물 직거래의 장단점을 각각 2가지씩 쓰시오.", "a": "장점: 유통 마진 절감, 소비자 신뢰 형성. 단점: 판로 확보 부담, 물류 비용"}, {"id": 154, "cat": "인증·유통", "q": "'꾸러미(CSA, Community Supported Agriculture)' 방식의 개념과 장점을 쓰시오.", "a": "소비자가 미리 대금을 지불하고 농가의 수확물을 정기 배송 받는 방식. 농가의 경영 안정성, 소비자의 신선 식품 확보"}, {"id": 155, "cat": "인증·유통", "q": "유기농산물 수입 시 확인해야 하는 서류를 2가지 쓰시오.", "a": "수출국의 유기 인증서, 동등성 협약 또는 개별 인증 확인 서류"}, {"id": 156, "cat": "인증·유통", "q": "인증 취소 사유에 해당하는 경우를 3가지 쓰시오.", "a": "① 금지 농약 검출, ② 인증 기준 위반 기록 발견, ③ 허위 서류 제출"}, {"id": 157, "cat": "인증·유통", "q": "GA P(우수농산물관리제도)와 유기농업 인증의 차이를 쓰시오.", "a": "GAP: 안전 농산물 생산 관리(농약 기준 이내 사용 가능). 유기 인증: 합성 농약·화학비료 전면 금지"}, {"id": 158, "cat": "인증·유통", "q": "'로컬푸드(local food)'의 개념과 유기농업과의 관계를 설명하시오.", "a": "지역에서 생산된 농산물을 지역에서 소비. 유기농업과 결합하면 신선도·안전성 향상, 탄소 발자국 감소"}, {"id": 159, "cat": "인증·유통", "q": "유기농산물 인증 농지에서 금지된 자재를 사용했을 경우의 조치를 쓰시오.", "a": "인증 취소(또는 정지), 해당 농지의 전환기간 재적용(최소 2~3년)"}, {"id": 160, "cat": "인증·유통", "q": "유기농산물 소비자 인식 제고를 위한 방법 3가지를 쓰시오.", "a": "인증 마크 홍보, 농장 체험 교육, 친환경 학교 급식 확대"}, {"id": 161, "cat": "영농 경영", "q": "유기농업 경영에서 '비용-편익 분석(cost-benefit analysis)'의 필요성을 설명하시오.", "a": "투입 비용 대비 수익을 비교하여 경영 합리화, 자재 절감, 수익성 향상을 위한 의사결정 근거 마련"}, {"id": 162, "cat": "영농 경영", "q": "유기농업에서 노동력이 많이 필요한 이유 2가지를 쓰시오.", "a": "① 제초·병해충 방제의 기계적·수작업 비중 증가, ② 퇴비 제조·살포 등 유기물 관리 작업 증가"}, {"id": 163, "cat": "영농 경영", "q": "'농업 경영 일지'에 기록해야 할 항목 5가지를 쓰시오.", "a": "작업 일자, 작업 내용, 투입 자재명·용량, 날씨, 노동력(인원)"}, {"id": 164, "cat": "영농 경영", "q": "유기농업 전환 초기에 수익이 감소하는 이유 2가지를 쓰시오.", "a": "① 전환기 인증 미획득으로 유기 프리미엄 불가, ② 관행 농법 대비 수량 감소"}, {"id": 165, "cat": "영농 경영", "q": "6차 산업화란 무엇이며 유기농업과 어떻게 연계되는지 설명하시오.", "a": "1차(생산) + 2차(가공) + 3차(유통·서비스) 융합. 유기농산물을 직접 가공·판매·체험 상품화하여 부가가치 창출"}, {"id": 166, "cat": "영농 경영", "q": "유기농업 전환 지원 정책(국내)을 2가지 쓰시오.", "a": "유기농업 직불제(친환경농업직불금), 유기 자재 구입 보조 지원"}, {"id": 167, "cat": "영농 경영", "q": "'선도 농가(leading farmer)'의 역할을 유기농업 확산 측면에서 설명하시오.", "a": "유기농업 기술을 먼저 실증하고 정보를 공유하여 주변 농가의 전환을 촉진하는 역할"}, {"id": 168, "cat": "영농 경영", "q": "유기농산물의 가격 프리미엄이 형성되는 이유를 3가지 쓰시오.", "a": "① 높은 생산 비용, ② 소비자의 안전성·환경 가치 지불 의사, ③ 공급량 제한"}, {"id": 169, "cat": "영농 경영", "q": "영농 계획서 작성 시 포함해야 할 항목 5가지를 쓰시오.", "a": "재배 작물, 재배 면적, 투입 자재 계획, 예상 생산량, 판로 계획"}, {"id": 170, "cat": "영농 경영", "q": "유기농업 농가 연합 조직(영농 조합)의 장점 2가지를 쓰시오.", "a": "① 공동 구매로 자재비 절감, ② 브랜드 공동화로 마케팅력 향상"}, {"id": 171, "cat": "영농 경영", "q": "농업 재해보험의 필요성을 유기농업 측면에서 설명하시오.", "a": "기상재해·병해충 피해 시 경영 안정성 확보. 유기농업은 화학 방제 불가로 피해 위험이 상대적으로 높아 보험이 더 중요"}, {"id": 172, "cat": "영농 경영", "q": "'스마트팜' 기술이 유기농업에 기여할 수 있는 분야를 2가지 쓰시오.", "a": "① 환경 모니터링으로 병해충 발생 조기 예측, ② 정밀 관개로 수자원 효율화"}, {"id": 173, "cat": "영농 경영", "q": "유기농업 교육 이수가 인증 유지에 필요한 이유를 설명하시오.", "a": "기준 변경 사항 숙지, 신기술 습득을 통한 인증 기준 준수 능력 유지"}, {"id": 174, "cat": "영농 경영", "q": "온라인 직거래 플랫폼을 활용한 유기농산물 판매의 장점 2가지를 쓰시오.", "a": "① 전국 소비자 접근성 확보, ② 중간 유통 마진 절감"}, {"id": 175, "cat": "영농 경영", "q": "농업 회계에서 '손익분기점(BEP)'을 구하는 공식을 쓰시오.", "a": "BEP = 고정비 ÷ (단가 - 변동비) (수량 기준) 또는 BEP 매출액 = 고정비 ÷ (1 - 변동비율)"}, {"id": 176, "cat": "영농 경영", "q": "'유기농업 클러스터'의 개념과 효과를 쓰시오.", "a": "동일 지역 유기농업 농가·가공·유통·연구 기관이 협력하는 산업 군집. 효과: 기술 공유, 물류 효율화, 브랜드 경쟁력 향상"}, {"id": 177, "cat": "영농 경영", "q": "농업 경영 위기 관리(risk management) 방법 3가지를 쓰시오.", "a": "① 다품목 재배로 단일 작목 실패 위험 분산, ② 농업재해보험 가입, ③ 저장·가공을 통한 가격 하락 대비"}, {"id": 178, "cat": "영농 경영", "q": "유기농산물 수출 확대를 위한 과제 2가지를 쓰시오.", "a": "① 수출국 유기 인증 취득, ② 상대국 기준 맞춤 생산 체계 구축"}, {"id": 179, "cat": "영농 경영", "q": "농업의 다원적 기능(multifunctionality)을 3가지 쓰시오.", "a": "환경 보전, 식량 안보, 농촌 경관·문화 유지"}, {"id": 180, "cat": "영농 경영", "q": "'탄소 중립 농업' 실현을 위해 유기농업 농가가 실천할 수 있는 방법 3가지를 쓰시오.", "a": "① 유기물 투입으로 토양 탄소 격리, ② 재생에너지(태양광) 활용, ③ 농기계 사용 최소화"}, {"id": 181, "cat": "수확후·환경", "q": "유기농산물의 수확 적기 판정 방법 3가지를 쓰시오.", "a": "① 적산온도 기준, ② 겉껍질(과피) 색 변화, ③ 당도·경도 측정"}, {"id": 182, "cat": "수확후·환경", "q": "에틸렌 가스가 과실 저장에 미치는 영향과 관리 방법을 쓰시오.", "a": "에틸렌은 과실 성숙·노화 촉진. 저장 시 에틸렌 흡착제 사용, CA 저장(저O₂·고CO₂)으로 억제"}, {"id": 183, "cat": "수확후·환경", "q": "CA 저장(Controlled Atmosphere Storage)의 원리를 설명하시오.", "a": "저장고 내 O₂ 농도를 낮추고 CO₂ 농도를 높여 호흡을 억제함으로써 신선도 장기 유지"}, {"id": 184, "cat": "수확후·환경", "q": "예냉(pre-cooling)이 필요한 이유를 설명하시오.", "a": "수확 직후 높은 품온이 호흡·증산을 촉진하여 품질 저하. 예냉으로 대사 억제 → 유통 기한 연장"}, {"id": 185, "cat": "수확후·환경", "q": "유기농산물의 세척·건조 시 주의사항 2가지를 쓰시오.", "a": "① 살균·소독제 사용 금지 또는 유기 허용 자재만 사용, ② 세척 후 충분한 건조로 부패 방지"}, {"id": 186, "cat": "수확후·환경", "q": "친환경농업이 수질 보전에 기여하는 방법을 2가지 쓰시오.", "a": "① 화학비료 감소로 하천·지하수 질산 오염 감소, ② 농약 불사용으로 수생 생태계 보전"}, {"id": 187, "cat": "수확후·환경", "q": "농업 분야의 온실가스 배출원 3가지를 쓰시오.", "a": "벼 재배(CH₄), 가축 소화(CH₄), 농경지 질소 비료 시용(N₂O)"}, {"id": 188, "cat": "수확후·환경", "q": "유기농업에서 생물다양성 보전을 위한 실천 사항 3가지를 쓰시오.", "a": "생태 통로(hedgerow) 조성, 야생화 띠 재배, 논·밭 습지 보전"}, {"id": 189, "cat": "수확후·환경", "q": "농업용수의 수질 기준에서 유기농업에서 특히 주의해야 할 항목 2가지를 쓰시오.", "a": "중금속(카드뮴, 납 등) 함량, 대장균 수"}, {"id": 190, "cat": "수확후·환경", "q": "유기농산물 포장 시 완충재로 사용 가능한 친환경 소재 2가지를 쓰시오.", "a": "종이 완충재, 옥수수 전분 기반 생분해 완충재"}, {"id": 191, "cat": "수확후·환경", "q": "수확 후 손실(postharvest loss)의 주요 원인 3가지를 쓰시오.", "a": "호흡에 의한 양분 소모, 증산에 의한 위조, 미생물(곰팡이·세균) 부패"}, {"id": 192, "cat": "수확후·환경", "q": "'생태 통로(hedgerow)'의 기능을 유기농업 측면에서 설명하시오.", "a": "천적 곤충·소동물의 서식·이동 경로 제공, 야생화 꽃가루 매개 곤충 유인, 바람 차단으로 농지 보호"}, {"id": 193, "cat": "수확후·환경", "q": "유기농업에서 농업용 비닐 사용을 줄이기 위한 대안 2가지를 쓰시오.", "a": "생분해성 멀칭 필름, 볏짚·왕겨 등 천연 피복 자재"}, {"id": 194, "cat": "수확후·환경", "q": "농약 잔류 검사에서 '불검출'과 '검출 허용 기준 이하'의 차이를 설명하시오.", "a": "불검출: 분석 한계 이하로 검출 안 됨. 검출 허용 기준 이하: 잔류 허용 기준(MRL) 이하로 인체 위해성 없다고 판단"}, {"id": 195, "cat": "수확후·환경", "q": "유기농업이 토양 탄소 저장에 기여하는 메커니즘을 설명하시오.", "a": "유기물 투입 증가와 불경운 관행으로 토양 부식 증가 → 안정된 유기 탄소화합물로 장기 저장"}, {"id": 196, "cat": "수확후·환경", "q": "'푸드 마일리지(food mileage)'란 무엇이며 유기농업과의 연관성을 설명하시오.", "a": "식품이 생산지에서 소비지까지 이동한 거리×중량. 로컬 유기농산물 소비 시 푸드 마일리지 감소 → 탄소 배출 감소"}, {"id": 197, "cat": "수확후·환경", "q": "농산물 GAP 인증 제도에서 수확 후 관리 기록 의무 사항을 2가지 쓰시오.", "a": "선별·세척 일자 및 방법, 저장 온도·기간 기록"}, {"id": 198, "cat": "수확후·환경", "q": "유기농업에서 빗물 이용(우수 재이용)의 장점을 쓰시오.", "a": "무기질(chlorine 등) 없는 순수한 물 활용, 관개 비용 절감, 지하수 보전"}, {"id": 199, "cat": "수확후·환경", "q": "'오염자 부담 원칙(PPP, Polluter Pays Principle)'이 농업에 적용되는 방식을 설명하시오.", "a": "농약·화학비료로 인한 수질·토양 오염의 정화 비용을 오염 유발 농업인이 부담하도록 하는 원칙"}, {"id": 200, "cat": "수확후·환경", "q": "유기농업기능사 실기 시험에서 주로 평가하는 역량을 3가지 쓰시오.", "a": "① 유기농업 원리·인증 기준 이해, ② 토양·비료 관리 실무 지식, ③ 병해충 방제 및 친환경 자재 활용 능력"}, {"id": 201, "cat": "비배 관리", "q": "유기재배에서 '시비 설계'를 할 때 고려해야 할 요소 4가지를 쓰시오.", "a": "① 토양 검정 결과(양분 현황), ② 목표 수량, ③ 작물의 양분 흡수 특성, ④ 유기 자재의 양분 이용률(무기화율)"}, {"id": 202, "cat": "비배 관리", "q": "작물의 '최소 양분 법칙(리비히의 최소율)'을 설명하고, 유기농업에서의 적용 방법을 쓰시오.", "a": "작물 생육은 가장 부족한 양분에 의해 제한된다는 법칙. 적용: 토양 검정으로 결핍 원소를 파악하고 해당 양분을 유기 허용 자재로 우선 보충"}, {"id": 203, "cat": "비배 관리", "q": "엽면시비(葉面施肥)가 유기농업에서 효과적인 경우를 2가지 쓰시오.", "a": "① 뿌리 흡수가 어려운 토양 조건(저온·과습)에서 미량원소 결핍 응급 처치, ② 생육 후기 빠른 양분 공급"}, {"id": 204, "cat": "비배 관리", "q": "유기농업 허용 엽면시비 자재 2가지를 쓰고 각각의 효과를 쓰시오.", "a": "① 해조류 추출물(kelp extract): 생장 촉진·스트레스 완화, ② 목초액: 생육 촉진·병해 억제"}, {"id": 205, "cat": "비배 관리", "q": "벼 유기재배에서 밑거름과 웃거름의 역할 차이를 설명하시오.", "a": "밑거름: 이식 전 기비로 초기 생육 기반 조성. 웃거름: 분얼·수잉기 등 생육 단계별 양분 요구에 맞춰 공급"}, {"id": 206, "cat": "비배 관리", "q": "'부산물 비료'의 정의와 유기농업에서 사용 가능한 조건을 쓰시오.", "a": "농축수산물 부산물로 만든 비료(혈분, 골분, 어분 등). 조건: 유기농업 허용 자재 목록에 등재된 제품, 중금속·오염물질 기준 이하"}, {"id": 207, "cat": "비배 관리", "q": "작물의 생육 단계별 질소(N) 요구량의 변화 패턴을 설명하시오.", "a": "초기 생육기에 서서히 증가 → 영양 생장 최성기에 최대 → 생식 생장기(착과·결실) 이후 감소"}, {"id": 208, "cat": "비배 관리", "q": "유기농업에서 인산 결핍을 교정하기 위한 허용 자재 2가지와 각각의 특징을 쓰시오.", "a": "① 용과린(과인산석회 아님): 천연 광물 유래, 서방성. ② 골분: 동물 뼈 유래, 인산·칼슘 동시 공급"}, {"id": 209, "cat": "비배 관리", "q": "'질소 무기화율'이란 무엇이며, 퇴비 종류별로 차이가 나는 이유를 설명하시오.", "a": "유기태 질소 중 작물이 이용 가능한 무기태 질소로 전환되는 비율. C/N비가 낮을수록(단백질 풍부) 무기화 속도가 빠르고 비율이 높음"}, {"id": 210, "cat": "비배 관리", "q": "과수 유기재배에서 '결실 이후 시비'가 중요한 이유와 적합한 자재를 쓰시오.", "a": "수확 후 소모된 양분 보충 및 다음 해 화아 분화 지원. 자재: 완숙 퇴비, 골분 등 인·칼리 위주 비료"}, {"id": 211, "cat": "생육단계별 관리", "q": "발아 단계에서 유기 종자 처리 방법으로 허용되는 것 2가지를 쓰시오.", "a": "온탕 침종(온수 처리로 종자 소독), 프라이밍(발아력 향상을 위한 흡수 처리)"}, {"id": 212, "cat": "생육단계별 관리", "q": "육묘 단계에서 '도장묘(웃자람 묘)'가 발생하는 원인 3가지를 쓰시오.", "a": "① 광 부족(밀식·차광 과다), ② 야간 온도 과다, ③ 질소 과잉 공급"}, {"id": 213, "cat": "생육단계별 관리", "q": "벼 분얼기 관리에서 중간 물떼기의 목적 3가지를 쓰시오.", "a": "① 과잉 분얼 억제, ② 토양 산소 공급으로 뿌리 활력 증진, ③ 잡초 발생 억제"}, {"id": 214, "cat": "생육단계별 관리", "q": "과채류 착과 촉진을 위한 유기농업 허용 방법 2가지를 쓰시오.", "a": "인공수분(진동수분 포함), 화분 매개 곤충(뒤영벌) 방사"}, {"id": 215, "cat": "생육단계별 관리", "q": "마늘 유기재배에서 '구비대기' 관리 핵심 사항 3가지를 쓰시오.", "a": "① 충분한 관수(가뭄 방지), ② 칼리 중심 추비로 구 충실도 향상, ③ 수확 2~3주 전 관수 중단"}, {"id": 216, "cat": "생육단계별 관리", "q": "작물의 '영양 생장'과 '생식 생장'의 전환 시점에 관리해야 할 사항을 설명하시오.", "a": "전환기에 질소 공급을 줄이고 인·칼리 비율을 높여 화아 분화 및 결실을 촉진. 과다 질소는 영양 생장을 연장시켜 수량 저하"}, {"id": 217, "cat": "생육단계별 관리", "q": "고구마 유기재배에서 덩이뿌리 비대 촉진을 위한 관리 방법 2가지를 쓰시오.", "a": "① 덩굴 들기(순지르기)로 동화산물을 뿌리로 집중, ② 배수 및 통기성 좋은 토양 관리"}, {"id": 218, "cat": "생육단계별 관리", "q": "'착색 관리'가 중요한 과수 작물과 유기농업에서의 착색 증진 방법을 2가지 쓰시오.", "a": "사과, 포도 등. 방법: ① 반사 멀칭 필름 활용, ② 적절한 엽 제거(그린 워크)로 광 접촉 증대"}, {"id": 219, "cat": "생육단계별 관리", "q": "양파 유기재배에서 추대(꽃대 올라오기) 발생 원인과 방지 방법을 쓰시오.", "a": "원인: 춘화 조건(저온) 후 장일 조건 노출. 방지: 추대 저항성 품종 선택, 묘의 크기 조절(너무 큰 묘 기피)"}, {"id": 220, "cat": "생육단계별 관리", "q": "수박 유기재배에서 착과 절위 관리의 중요성을 설명하시오.", "a": "너무 이른 절위 착과는 과실이 작고 기형 발생, 너무 늦으면 과실 발육 기간 단축. 적정 절위(주지 11~15절) 착과로 품질 향상"}, {"id": 221, "cat": "재배환경 관리", "q": "시설재배에서 일교차(주야간 온도차)가 작물 품질에 미치는 영향을 설명하시오.", "a": "일교차가 크면 낮 광합성량이 많고 밤 호흡 소모가 적어 당분·아미노산이 축적되어 품질(당도·색택) 향상"}, {"id": 222, "cat": "재배환경 관리", "q": "유기농 시설재배에서 환기의 목적 3가지와 관리 방법을 쓰시오.", "a": "목적: ① CO₂ 공급, ② 습도·온도 조절, ③ 에틸렌 배출. 관리: 측창·천창 자동 개폐, 온도 27℃ 이상 시 환기"}, {"id": 223, "cat": "재배환경 관리", "q": "'광포화점'이 낮은 음지식물의 유기재배 시 주의사항을 2가지 쓰시오.", "a": "① 강한 직사광선 차광(50~70% 차광), ② 밀식 재배 피하고 통풍 확보"}, {"id": 224, "cat": "재배환경 관리", "q": "유기농업에서 토양 수분 관리의 중요성과 과습 시 나타나는 피해를 쓰시오.", "a": "수분은 양분 흡수·광합성의 매개체. 과습 시: 뿌리 산소 결핍 → 역병·무름병 발생 증가, 양분 용탈"}, {"id": 225, "cat": "재배환경 관리", "q": "겨울철 시설재배에서 보온 효율을 높이기 위한 방법 3가지를 쓰시오.", "a": "① 보온 커튼(이중 보온) 설치, ② 지온 유지를 위한 바닥 피복, ③ 하우스 측면 틈새 밀폐"}, {"id": 226, "cat": "재배환경 관리", "q": "'증산량'에 영향을 미치는 환경 요인 4가지를 쓰시오.", "a": "① 온도(고온일수록 증가), ② 습도(저습일수록 증가), ③ 풍속(강할수록 증가), ④ 광도(강할수록 증가)"}, {"id": 227, "cat": "재배환경 관리", "q": "노지 유기재배에서 바람(강풍)으로 인한 피해를 줄이기 위한 방법 2가지를 쓰시오.", "a": "방풍림(hedgerow) 조성, 방풍망 설치"}, {"id": 228, "cat": "재배환경 관리", "q": "작물 재배에서 '지온(地溫, soil temperature)'이 중요한 이유를 3가지 쓰시오.", "a": "① 발아·발근 속도에 영향, ② 미생물 활성과 양분 무기화 속도 결정, ③ 뿌리의 수분·양분 흡수 활성에 영향"}, {"id": 229, "cat": "기상재해 대응", "q": "냉해(冷害)와 동해(凍害)의 차이를 설명하고, 각각의 대응 방법을 쓰시오.", "a": "냉해: 생육 가능 온도 이상이나 저온 스트레스로 생리 장해 발생. 동해: 빙점 이하로 세포 조직 파괴. 냉해 대응: 물 대기(논), 동해 대응: 방상 팬·보온 자재"}, {"id": 230, "cat": "기상재해 대응", "q": "가뭄 피해를 줄이기 위한 유기농업에서의 재배적 방법 3가지를 쓰시오.", "a": "① 유기물 투입으로 토양 보수력 향상, ② 멀칭으로 증발산 억제, ③ 점적관수로 효율적 물 공급"}, {"id": 231, "cat": "기상재해 대응", "q": "집중호우 시 유기농지 피해를 최소화하기 위한 준비 사항 3가지를 쓰시오.", "a": "① 배수로 정비, ② 이랑 높이기, ③ 경사지 피복 작물로 표토 침식 방지"}, {"id": 232, "cat": "기상재해 대응", "q": "고온 장해(열해)가 발생하는 메커니즘과 유기농업에서의 대처 방법을 쓰시오.", "a": "메커니즘: 고온에서 단백질 변성·효소 불활성화로 광합성 저하, 호흡 과다로 동화물 소모 증가. 대처: 차광망 설치, 증발 관개로 기온 낮추기"}, {"id": 233, "cat": "기상재해 대응", "q": "서리(霜) 피해를 예방하기 위한 방법 3가지를 쓰시오.", "a": "① 서리 내리기 전 관수(잠열 이용), ② 부직포·비닐 피복, ③ 방상 팬 가동"}, {"id": 234, "cat": "기상재해 대응", "q": "기후변화로 인해 유기농업 생산에 예상되는 문제점 3가지와 대응 방안을 쓰시오.", "a": "문제: 병해충 분포 확대, 이상 기온으로 수량 불안정, 가뭄·홍수 빈발. 대응: 내열·내한성 품종 개발, 스마트 관개, 작기 조정"}, {"id": 235, "cat": "잡초·병충해 관리", "q": "유기재배에서 '잡초 생태 관리(ecological weed management)'란 무엇인지 설명하시오.", "a": "잡초를 완전히 박멸하지 않고, 작물과의 경쟁이 최소화되는 수준으로 관리하면서 천적 서식지·토양 피복 기능을 활용하는 방식"}, {"id": 236, "cat": "잡초·병충해 관리", "q": "논 유기재배에서 피(雜草) 방제를 위한 기계적 방법 2가지를 쓰시오.", "a": "손 제초(수확 제초), 제초 오리(합오리) 방사 — 발을 이용한 흙 교란으로 어린 피 억제"}, {"id": 237, "cat": "잡초·병충해 관리", "q": "'다년생 잡초'가 '일년생 잡초'보다 방제하기 어려운 이유를 설명하시오.", "a": "다년생 잡초는 지하 저장 기관(뿌리줄기, 구근)에 양분을 저장하여 지상부 제거 후에도 재생. 단순 예초로는 완전 방제 불가"}, {"id": 238, "cat": "잡초·병충해 관리", "q": "2025년 개정 기준 유기농업 실기에서 강조되는 '병해충 발생 기록지' 작성의 중요성을 설명하시오.", "a": "발생 이력 축적으로 발생 패턴 예측, 방제 시기 최적화, 인증 심사 시 방제 기록 증빙 자료로 활용"}, {"id": 239, "cat": "잡초·병충해 관리", "q": "'경보 시스템(병해충 예보제)'을 활용한 유기농업 병해충 방제의 장점을 쓰시오.", "a": "발생 전 예방적 방제 가능, 불필요한 자재 사용 최소화, 방제 효과 향상"}, {"id": 240, "cat": "잡초·병충해 관리", "q": "유기재배 사과원에서 '갈색무늬병' 방제를 위한 연간 관리 체계를 간략히 쓰시오.", "a": "겨울: 이병 낙엽·가지 제거 소각 → 발아 전: 석회황합제 살포 → 생육기: 보르도액 7~10일 간격 예방 살포 → 수확 후: 낙엽 제거"}, {"id": 241, "cat": "잡초·병충해 관리", "q": "토마토 유기재배에서 '시들음병(Fusarium)' 방제 방법 3가지를 쓰시오.", "a": "① 저항성 대목에 접목 재배, ② 토양 태양열 소독, ③ 길항 미생물(Trichoderma) 자재 처리"}, {"id": 242, "cat": "잡초·병충해 관리", "q": "'천적 보전 농법(conservation biological control)'의 개념을 설명하시오.", "a": "농지 내외 천적이 서식할 수 있는 환경(초지대, 생태 통로, 다양한 식물 혼합)을 조성하여 자연적인 해충 억제 능력을 유지·증진하는 방법"}, {"id": 243, "cat": "잡초·병충해 관리", "q": "유기농업에서 '식물 저항성 유도제(elicitor)'의 역할과 허용 자재 예를 쓰시오.", "a": "역할: 식물 면역 체계(SAR/ISR)를 활성화하여 스스로 병원균에 저항. 허용 예: 키토산, 살리실산, 해조류 추출물"}, {"id": 244, "cat": "수확·수확후 관리", "q": "유기농산물의 '수확 후 세척 및 포장 라인'에서 교차 오염을 방지하는 방법 3가지를 쓰시오.", "a": "① 유기·비유기 농산물 처리 라인 분리, ② 세척수 오염 여부 정기 점검, ③ 포장재·용기에 유기 표시 명확히 구분"}, {"id": 245, "cat": "수확·수확후 관리", "q": "과실의 '호흡급등형(climacteric type)'과 '비급등형(non-climacteric type)'을 구분하고 각각 예를 드시오.", "a": "호흡급등형: 성숙 후 호흡이 급격히 증가하며 후숙 가능(사과, 복숭아, 토마토). 비급등형: 호흡 변화 없이 수확 후 품질 향상 없음(포도, 딸기, 감귤)"}, {"id": 246, "cat": "수확·수확후 관리", "q": "유기농산물 선별 기준 3가지를 쓰시오.", "a": "크기(중량·직경), 외관(형태·색택), 결점(병해·상처·이물질) 여부"}, {"id": 247, "cat": "수확·수확후 관리", "q": "'저온 장해(chilling injury)'가 발생하는 작물의 특징과 예를 쓰시오.", "a": "열대·아열대 원산 작물. 예: 고구마, 오이, 고추. 저온 장해 증상: 표면 함몰, 갈변, 부패 가속"}, {"id": 248, "cat": "수확·수확후 관리", "q": "유기농산물 '이력 추적 라벨'에 반드시 기재해야 할 정보 3가지를 쓰시오.", "a": "생산자(농가) 정보, 인증번호, 생산 이력 번호(lot 번호)"}, {"id": 249, "cat": "종합 심화", "q": "유기농업기능사 실기 시험에서 자주 출제되는 '유기자재 선택 기준'을 서술형으로 설명하시오.", "a": "① 농촌진흥청 '유기농업자재 공시·허용 목록' 등재 여부 확인 → ② 주성분·함량 표기 확인 → ③ 합성 화학물질 혼입 여부 확인 → ④ 작물·토양에 맞는 적합 자재 선택"}, {"id": 250, "cat": "종합 심화", "q": "2025년 개정 출제 기준의 핵심 변화를 반영하여, '생육 단계별 통합 유기 재배 계획서'의 구성 요소를 서술하시오.", "a": "① 토양 검정 결과 분석 → ② 유기 자재 시비 계획(밑거름·웃거름 구분) → ③ 단계별 병해충·잡초 방제 계획 → ④ 수확 후 관리(저장·포장·이력 관리) → ⑤ 환경·기상 대응 비상 계획"}];
+const NEW_IDS=new Set([201,202,203,204,205,206,207,208,209,210,211,212,213,214,215,216,217,218,219,220,221,222,223,224,225,226,227,228,229,230,231,232,233,234,235,236,237,238,239,240,241,242,243,244,245,246,247,248,249,250]);
+const TOTAL=QS.length;
+const EXAM=new Date('2026-05-30');
 
-// ── Storage helpers ──
 function load(k,d){try{return JSON.parse(localStorage.getItem(k))??d}catch{return d}}
 function save(k,v){localStorage.setItem(k,JSON.stringify(v))}
 
-let learned = load('learned',{});
-let bookmarks = load('bookmarks',{});
-let activeCat = '전체';
-let searchQ = '';
-let filterMode = 'all';
+let learned=load('learned',{});
+let bookmarks=load('bookmarks',{});
+let activeCat='전체';
+let searchQ='';
+let filterMode='all';
 
-// ── D-Day ──
+/* D-Day */
 function calcDday(){
-  const now = new Date(); now.setHours(0,0,0,0);
-  const d = Math.ceil((EXAM-now)/86400000);
-  const txt = d>0?`D-${d}`:d===0?'D-Day':'시험 종료';
-  document.getElementById('dday-banner').textContent =
-    `📅 시험일: 2026년 5월 30일  |  ${txt}`;
-  document.getElementById('dday-big').textContent = d>0?`D-${d}`:txt;
+  const now=new Date();now.setHours(0,0,0,0);
+  const d=Math.ceil((EXAM-now)/86400000);
+  const txt=d>0?`D-${d}`:d===0?'D-Day':'시험 종료';
+  document.getElementById('dday-banner').textContent=`📅 시험일: 2026.05.30  |  ${txt}`;
+  document.getElementById('dday-big').textContent=d>0?`D-${d}`:txt;
 }
 calcDday();
 
-// ── Categories ──
-const CATS = ['전체',...[...new Set(QS.map(q=>q.cat))]];
-const tabsEl = document.getElementById('cat-tabs');
+/* Tabs */
+const CATS=['전체',...[...new Set(QS.map(q=>q.cat))]];
+const NEW_CATS=new Set(QS.filter(q=>NEW_IDS.has(q.id)).map(q=>q.cat));
+const tabsEl=document.getElementById('cat-tabs');
 CATS.forEach(c=>{
-  if(c==='전체') return;
-  const b = document.createElement('button');
-  b.className='tab'; b.dataset.cat=c; b.textContent=c;
-  b.onclick=()=>setCat(c);
-  tabsEl.appendChild(b);
+  if(c==='전체')return;
+  const b=document.createElement('button');
+  b.className='tab'+(NEW_CATS.has(c)?' new-tab':'');
+  b.dataset.cat=c;b.textContent=(NEW_CATS.has(c)?'🆕':'')+c;
+  b.onclick=()=>setCat(c);tabsEl.appendChild(b);
 });
-// Add to quiz cat select
-const qcatEl = document.getElementById('quiz-cat');
+const qcatEl=document.getElementById('quiz-cat');
 CATS.slice(1).forEach(c=>{
-  const o=document.createElement('option'); o.value=c; o.textContent=c;
-  qcatEl.appendChild(o);
+  const o=document.createElement('option');o.value=c;
+  o.textContent=(NEW_CATS.has(c)?'🆕':'')+c;qcatEl.appendChild(o);
 });
 
 function setCat(c){
   activeCat=c;
-  document.querySelectorAll('.tab').forEach(t=>{
-    t.classList.toggle('active', t.dataset.cat===c);
-  });
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.cat===c));
   renderList();
 }
 document.querySelector('[data-cat="전체"]').onclick=()=>setCat('전체');
-
-// ── Search & filter ──
 document.getElementById('search').oninput=e=>{searchQ=e.target.value;renderList();}
 document.getElementById('filter').onchange=e=>{filterMode=e.target.value;renderList();}
 
-// ── Stats ──
 function updateStats(){
-  const cnt = Object.keys(learned).filter(k=>learned[k]).length;
+  const cnt=Object.keys(learned).filter(k=>learned[k]).length;
   document.getElementById('s-learned').textContent=cnt;
-  document.getElementById('s-remain').textContent=200-cnt;
-  document.getElementById('prog-text').textContent=`${cnt} / 200`;
-  document.getElementById('prog-fill').style.width=(cnt/200*100)+'%';
+  document.getElementById('s-remain').textContent=TOTAL-cnt;
+  document.getElementById('prog-text').textContent=`${cnt} / ${TOTAL}`;
+  document.getElementById('prog-fill').style.width=(cnt/TOTAL*100)+'%';
 }
 
-// ── Render list ──
 function renderList(){
   updateStats();
-  let qs = QS.filter(q=>{
-    if(activeCat!=='전체' && q.cat!==activeCat) return false;
-    if(searchQ && !q.q.includes(searchQ) && !q.a.includes(searchQ)) return false;
-    if(filterMode==='learned' && !learned[q.id]) return false;
-    if(filterMode==='unlearned' && learned[q.id]) return false;
-    if(filterMode==='bookmarked' && !bookmarks[q.id]) return false;
+  let qs=QS.filter(q=>{
+    if(activeCat!=='전체'&&q.cat!==activeCat)return false;
+    if(searchQ&&!q.q.includes(searchQ)&&!q.a.includes(searchQ))return false;
+    if(filterMode==='learned'&&!learned[q.id])return false;
+    if(filterMode==='unlearned'&&learned[q.id])return false;
+    if(filterMode==='bookmarked'&&!bookmarks[q.id])return false;
+    if(filterMode==='new25'&&!NEW_IDS.has(q.id))return false;
     return true;
   });
-  const el = document.getElementById('q-list');
-  el.innerHTML = qs.length ? '' : '<div class="empty">해당하는 문항이 없습니다.</div>';
+  const el=document.getElementById('q-list');
+  el.innerHTML=qs.length?'':'<div class="empty">해당하는 문항이 없습니다.</div>';
   qs.forEach(q=>el.appendChild(makeCard(q)));
 }
 
-function makeCard(q){
-  const card = document.createElement('div');
+function makeCard(q,inBk){
+  const isNew=NEW_IDS.has(q.id);
+  const card=document.createElement('div');
   card.className='card'+(learned[q.id]?' learned':'');
-  card.id='card-'+q.id;
-  const bkIcon = bookmarks[q.id]?'⭐':'☆';
+  card.id=(inBk?'bk-card-':'card-')+q.id;
+  const bkIcon=bookmarks[q.id]?'⭐':'☆';
   card.innerHTML=`
-    <div class="card-head" onclick="toggleCard(${q.id})">
-      <div class="num${learned[q.id]?' done':''}">${q.id}</div>
+    <div class="card-head" onclick="toggleCard(${q.id},${inBk?1:0})">
+      <div class="num${isNew?' new25':''}${learned[q.id]?' done':''}">
+        ${q.id}${isNew?'<span class="new-dot"></span>':''}
+      </div>
       <div class="q-wrap">
-        <div class="cat-badge">${q.cat}</div>
+        <div class="cat-badge${isNew?' new25':''}">${isNew?'🆕 ':''}${q.cat}</div>
         <div class="q-text">${q.q}</div>
       </div>
-      <div style="display:flex;flex-direction:column;align-items:center;gap:6px;">
-        <button onclick="event.stopPropagation();toggleBk(${q.id})" 
-          style="background:none;border:none;font-size:18px;cursor:pointer;" 
-          id="bk-${q.id}">${bkIcon}</button>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button onclick="event.stopPropagation();toggleBk(${q.id})"
+          style="background:none;border:none;font-size:18px;cursor:pointer;"
+          id="bk-icon-${q.id}">${bkIcon}</button>
         <span class="chevron">›</span>
       </div>
     </div>
-    <div class="answer">
-      <div class="answer-label">✅ 정답</div>
+    <div class="answer${isNew?' new25':''}">
+      <div class="answer-label${isNew?' new25':''}">✅ 정답</div>
       <div class="answer-text">${q.a}</div>
-      <button class="mark-btn ${learned[q.id]?'learned':'unlearned'}" 
+      <button class="mark-btn ${learned[q.id]?'learned':'unlearned'}"
         id="mb-${q.id}" onclick="toggleLearned(${q.id})">
         ${learned[q.id]?'✓ 학습 완료':'○ 학습 완료로 표시'}
       </button>
@@ -387,122 +420,228 @@ function makeCard(q){
   return card;
 }
 
-function toggleCard(id){
-  const c = document.getElementById('card-'+id);
-  c.classList.toggle('open');
+function toggleCard(id,inBk){
+  const pfx=inBk?'bk-card-':'card-';
+  document.getElementById(pfx+id).classList.toggle('open');
 }
-
 function toggleLearned(id){
-  learned[id] = !learned[id];
-  save('learned',learned);
-  const mb = document.getElementById('mb-'+id);
-  const num = document.querySelector(`#card-${id} .num`);
-  if(mb){
-    mb.className='mark-btn '+(learned[id]?'learned':'unlearned');
-    mb.textContent=learned[id]?'✓ 학습 완료':'○ 학습 완료로 표시';
-  }
-  if(num) num.className='num'+(learned[id]?' done':'');
+  learned[id]=!learned[id];save('learned',learned);
+  ['','bk-'].forEach(p=>{
+    const mb=document.getElementById('mb-'+id);
+    const num=document.querySelector(`#${p}card-${id} .num`);
+    if(mb){mb.className='mark-btn '+(learned[id]?'learned':'unlearned');
+           mb.textContent=learned[id]?'✓ 학습 완료':'○ 학습 완료로 표시';}
+    if(num)num.className='num'+(NEW_IDS.has(id)?' new25':'')+(learned[id]?' done':'');
+  });
   updateStats();
 }
-
 function toggleBk(id){
-  bookmarks[id]=!bookmarks[id];
-  save('bookmarks',bookmarks);
-  const b=document.getElementById('bk-'+id);
-  if(b) b.textContent=bookmarks[id]?'⭐':'☆';
+  bookmarks[id]=!bookmarks[id];save('bookmarks',bookmarks);
+  document.querySelectorAll('#bk-icon-'+id).forEach(b=>b.textContent=bookmarks[id]?'⭐':'☆');
   renderBk();
 }
-
-// ── Bookmarks ──
 function renderBk(){
   const el=document.getElementById('bk-list');
   const bkQs=QS.filter(q=>bookmarks[q.id]);
-  if(!bkQs.length){
-    el.innerHTML='<div class="bk-empty">☆<br><br>북마크한 문항이 없습니다.<br>문제 옆 ☆ 버튼을 눌러 추가하세요.</div>';
-    return;
-  }
-  el.innerHTML='';
-  bkQs.forEach(q=>el.appendChild(makeCard(q)));
+  if(!bkQs.length){el.innerHTML='<div class="bk-empty">☆<br><br>북마크 문항이 없습니다.</div>';return;}
+  el.innerHTML='';bkQs.forEach(q=>el.appendChild(makeCard(q,true)));
 }
 
-// ── Quiz mode ──
-let quizQueue=[], quizIdx=0, quizScore={c:0,w:0};
+/* ══════════════════════════
+   QUIZ + AUTO MODE
+══════════════════════════ */
+let quizQueue=[],quizIdx=0,quizScore={c:0,w:0};
+let autoRunning=false,autoTimer=null,autoPhase='q'; // phase: 'q'|'a'
+
+function updateSpeedLabel(){
+  document.getElementById('q-lbl').textContent=document.getElementById('q-sec').value+'초';
+  document.getElementById('a-lbl').textContent=document.getElementById('a-sec').value+'초';
+}
+
+function getQSec(){return parseInt(document.getElementById('q-sec').value,10)*1000;}
+function getASec(){return parseInt(document.getElementById('a-sec').value,10)*1000;}
 
 function startQuiz(){
-  const cat = document.getElementById('quiz-cat').value;
-  let pool = cat==='전체' ? [...QS] : QS.filter(q=>q.cat===cat);
-  // shuffle
-  for(let i=pool.length-1;i>0;i--){
-    const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];
-  }
-  quizQueue=pool; quizIdx=0; quizScore={c:0,w:0};
+  stopAuto();
+  const cat=document.getElementById('quiz-cat').value;
+  let pool;
+  if(cat==='전체') pool=[...QS];
+  else if(cat==='new25only') pool=QS.filter(q=>NEW_IDS.has(q.id));
+  else pool=QS.filter(q=>q.cat===cat);
+  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  quizQueue=pool;quizIdx=0;quizScore={c:0,w:0};
   renderQuiz();
+}
+
+/* 진행 링 그리기 */
+function buildRing(secMs){
+  const R=28,C=2*Math.PI*R;
+  return `<div class="ring-wrap">
+    <svg class="ring" width="70" height="70" viewBox="0 0 70 70">
+      <circle class="ring-bg" cx="35" cy="35" r="${R}"/>
+      <circle class="ring-fill" cx="35" cy="35" r="${R}"
+        stroke-dasharray="${C}" stroke-dashoffset="0"
+        id="ring-circle"/>
+    </svg>
+  </div>`;
 }
 
 function renderQuiz(){
   const el=document.getElementById('quiz-area');
   if(quizIdx>=quizQueue.length){
-    const total=quizScore.c+quizScore.w;
+    stopAuto();
+    const total=quizScore.c+quizScore.w||1;
     el.innerHTML=`<div class="quiz-card" style="text-align:center;">
-      <div style="font-size:48px;margin-bottom:16px;">🏆</div>
-      <div style="font-size:22px;font-weight:800;color:var(--green);">퀴즈 완료!</div>
-      <div style="font-size:16px;margin:12px 0;color:#333;">
-        정답 ${quizScore.c} / ${total}문항<br>
-        <span style="font-size:24px;font-weight:900;color:var(--green);">
+      <div style="font-size:44px;margin-bottom:14px;">🏆</div>
+      <div style="font-size:20px;font-weight:800;color:var(--green);">퀴즈 완료!</div>
+      <div style="font-size:15px;margin:12px 0;color:#333;">
+        정답 ${quizScore.c} / ${quizScore.c+quizScore.w}문항<br>
+        <span style="font-size:26px;font-weight:900;color:var(--green);">
           ${Math.round(quizScore.c/total*100)}점
         </span>
       </div>
-      <button class="qbtn next" onclick="startQuiz()" style="margin-top:12px;">
-        다시 풀기
-      </button>
+      <button class="qbtn show-ans" onclick="startQuiz()"
+        style="width:100%;margin-top:12px;">다시 풀기</button>
     </div>`;
     return;
   }
+  autoPhase='q';
   const q=quizQueue[quizIdx];
+  const isNew=NEW_IDS.has(q.id);
   el.innerHTML=`
     <div class="quiz-card">
       <div class="quiz-num">
-        ${quizIdx+1} / ${quizQueue.length} &nbsp;|&nbsp; 
+        ${quizIdx+1}/${quizQueue.length} &nbsp;|&nbsp;
         <span style="color:var(--green)">✓${quizScore.c}</span>
         <span style="color:#E53935"> ✗${quizScore.w}</span>
-        &nbsp;|&nbsp;<span class="cat-badge">${q.cat}</span>
+        &nbsp;|&nbsp;<span class="cat-badge${isNew?' new25':''}">${isNew?'🆕':''} ${q.cat}</span>
       </div>
-      <div class="quiz-q">Q${q.id}. ${q.q}</div>
+      <div id="phase-wrap" class="phase-center">
+        <span class="phase-badge q" id="phase-lbl">📖 문제</span>
+      </div>
+      ${buildRing(getQSec())}
+      <div class="quiz-q" id="quiz-q-text">Q${q.id}. ${q.q}</div>
       <div class="quiz-a-box" id="qa-box">
         <div class="quiz-a-label">✅ 정답</div>
         <div class="quiz-a-text">${q.a}</div>
       </div>
       <div class="quiz-btns" id="qbtns">
-        <button class="qbtn show-ans" onclick="showAns()">정답 보기</button>
+        <button class="qbtn show-ans" onclick="manualShowAns()">정답 보기</button>
       </div>
     </div>`;
+
+  if(autoRunning) scheduleAutoPhase();
 }
 
-function showAns(){
-  document.getElementById('qa-box').classList.add('show');
-  document.getElementById('qbtns').innerHTML=`
-    <button class="qbtn correct" onclick="mark(true)">✓ 맞음</button>
-    <button class="qbtn wrong" onclick="mark(false)">✗ 틀림</button>`;
+/* 링 애니메이션 */
+let ringRAF=null,ringStart=null,ringDur=0;
+function startRing(durationMs){
+  stopRing();
+  const circle=document.getElementById('ring-circle');
+  if(!circle)return;
+  const R=28,C=2*Math.PI*R;
+  ringDur=durationMs;ringStart=null;
+  function frame(ts){
+    if(!ringStart)ringStart=ts;
+    const elapsed=ts-ringStart;
+    const frac=Math.min(elapsed/ringDur,1);
+    if(circle) circle.style.strokeDashoffset=(C*frac)+'';
+    if(frac<1) ringRAF=requestAnimationFrame(frame);
+  }
+  ringRAF=requestAnimationFrame(frame);
+}
+function stopRing(){if(ringRAF){cancelAnimationFrame(ringRAF);ringRAF=null;}}
+
+function scheduleAutoPhase(){
+  clearTimeout(autoTimer);
+  if(autoPhase==='q'){
+    startRing(getQSec());
+    autoTimer=setTimeout(()=>{
+      autoShowAns();
+    },getQSec());
+  } else {
+    startRing(getASec());
+    autoTimer=setTimeout(()=>{
+      autoNext();
+    },getASec());
+  }
 }
 
-function mark(ok){
-  if(ok){quizScore.c++;learned[quizQueue[quizIdx].id]=true;save('learned',learned);}
-  else quizScore.w++;
+function autoShowAns(){
+  if(!autoRunning)return;
+  revealAnswer();
+  autoPhase='a';
+  scheduleAutoPhase();
+}
+
+function autoNext(){
+  if(!autoRunning)return;
+  // 자동 전진 시 채점 없이 넘김
   quizIdx++;
   renderQuiz();
+  if(autoRunning) scheduleAutoPhase();
 }
 
-// ── Page nav ──
-function showPage(id, btn){
+function revealAnswer(){
+  const box=document.getElementById('qa-box');
+  const btns=document.getElementById('qbtns');
+  const lbl=document.getElementById('phase-lbl');
+  if(box) box.classList.add('show');
+  if(lbl){lbl.className='phase-badge a';lbl.textContent='✅ 정답';}
+  if(btns) btns.innerHTML=`
+    <button class="qbtn correct" onclick="manualMark(true)">✓ 맞음</button>
+    <button class="qbtn wrong" onclick="manualMark(false)">✗ 틀림</button>`;
+}
+
+function manualShowAns(){
+  // 수동 정답 보기 (AUTO 진행 중이면 A 단계로 전환)
+  if(autoRunning){clearTimeout(autoTimer);stopRing();}
+  revealAnswer();
+  autoPhase='a';
+  if(autoRunning) scheduleAutoPhase();
+}
+
+function manualMark(ok){
+  if(ok){quizScore.c++;learned[quizQueue[quizIdx].id]=true;save('learned',learned);}
+  else quizScore.w++;
+  if(autoRunning){clearTimeout(autoTimer);stopRing();}
+  quizIdx++;renderQuiz();
+  if(autoRunning) scheduleAutoPhase();
+}
+
+/* AUTO 토글 */
+function toggleAuto(){
+  if(!quizQueue.length){alert('먼저 시작 버튼을 눌러주세요!');return;}
+  autoRunning=!autoRunning;
+  const btn=document.getElementById('auto-btn');
+  if(autoRunning){
+    btn.textContent='⏸ PAUSE';btn.className='auto-toggle running';
+    scheduleAutoPhase();
+  } else {
+    stopAuto(false);
+    btn.textContent='▶ AUTO';btn.className='auto-toggle';
+  }
+}
+
+function stopAuto(resetBtn=true){
+  autoRunning=false;clearTimeout(autoTimer);stopRing();
+  if(resetBtn){
+    const btn=document.getElementById('auto-btn');
+    if(btn){btn.textContent='▶ AUTO';btn.className='auto-toggle';}
+  }
+}
+
+/* Page nav */
+function showPage(id,btn){
+  if(id!=='quiz') stopAuto();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
-  if(btn) btn.classList.add('active');
-  if(id==='bk') renderBk();
-  if(id==='list'){renderList();}
+  if(btn)btn.classList.add('active');
+  if(id==='bk')renderBk();
+  if(id==='list')renderList();
 }
 
-// ── Init ──
 renderList();
 </script>
 </body>
