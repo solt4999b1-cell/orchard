@@ -181,6 +181,39 @@
   .quiz-result.wrong   { background: #FFEBEE; color: #B71C1C; }
   .quiz-btns { display: flex; gap: 8px; }
 
+  /* 음성 읽기 바 */
+  .tts-bar {
+    background: white; border-radius: 12px; padding: 10px 14px;
+    margin: 8px 12px 0; box-shadow: var(--shadow);
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .tts-label { font-size: 12px; font-weight: 700; color: var(--green); white-space: nowrap; }
+  .tts-speed-group { display: flex; gap: 4px; }
+  .tts-speed-btn {
+    padding: 4px 10px; font-size: 11px; font-weight: 700;
+    border: 1.5px solid var(--border); border-radius: 14px;
+    background: white; color: var(--gray); cursor: pointer; font-family: inherit;
+    transition: all 0.15s;
+  }
+  .tts-speed-btn.active { background: var(--green); color: white; border-color: var(--green); }
+  .tts-btn {
+    padding: 6px 14px; font-size: 12px; font-weight: 700;
+    border: none; border-radius: 14px; cursor: pointer; font-family: inherit;
+    display: flex; align-items: center; gap: 5px; transition: all 0.15s;
+  }
+  .tts-btn.play  { background: var(--green); color: white; }
+  .tts-btn.pause { background: var(--yellow); color: #7B4F00; }
+  .tts-btn.stop  { background: #F0FAF4; color: var(--green); border: 1.5px solid var(--green-light); }
+  .tts-progress-wrap {
+    flex: 1; min-width: 120px; height: 4px;
+    background: var(--green-pale); border-radius: 4px; overflow: hidden;
+  }
+  .tts-progress-fill {
+    height: 100%; background: var(--green); border-radius: 4px;
+    transition: width 0.3s; width: 0%;
+  }
+  .tts-current { font-size: 11px; color: var(--gray); white-space: nowrap; min-width: 60px; text-align: right; }
+
   /* 요약 노트 스타일 */
   .note-box { border-radius:12px; padding:14px; margin-bottom:12px; }
   .note-box.green  { background:#F0FAF4; border:1.5px solid #A5D6A7; }
@@ -236,6 +269,25 @@
     <div class="stat-item"><div class="stat-num" id="checkedStat">0</div><div class="stat-label">학습완료</div></div>
     <div class="stat-div"></div>
     <div class="stat-item"><div class="stat-num" id="rateStat">0%</div><div class="stat-label">진도율</div></div>
+  </div>
+</div>
+
+<!-- 음성 읽기 바 -->
+<div class="tts-bar" id="ttsBar">
+  <span class="tts-label">🔊 음성읽기</span>
+  <div class="tts-speed-group">
+    <button class="tts-speed-btn active" onclick="setSpeed(1.0, this)">1배</button>
+    <button class="tts-speed-btn" onclick="setSpeed(1.2, this)">1.2배</button>
+    <button class="tts-speed-btn" onclick="setSpeed(1.5, this)">1.5배</button>
+  </div>
+  <button class="tts-btn play" id="ttsPlayBtn" onclick="ttsToggle()">▶ 읽기</button>
+  <button class="tts-btn stop" onclick="ttsStop()">■ 정지</button>
+  <div style="display:flex;flex-direction:column;flex:1;gap:3px;min-width:100px">
+    <div class="tts-progress-wrap"><div class="tts-progress-fill" id="ttsProgressFill"></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <span id="ttsVoiceTag" style="font-size:10px;color:var(--gray)"></span>
+      <span class="tts-current" id="ttsCurrent"></span>
+    </div>
   </div>
 </div>
 
@@ -805,6 +857,221 @@ function showToast(msg) {
   setTimeout(()=>t.remove(),2000);
 }
 
+// ══════════════════════════════════════════════════════════
+// TTS (음성 읽기) — 60대 친화형, 문제/정답 음성 분리
+// ══════════════════════════════════════════════════════════
+
+// 각 항목에 type('q'=문제, 'a'=정답, 'info'=기타) 포함
+let ttsItems  = [];   // [{type:'q'|'a'|'info', text:'...'}]
+let ttsIndex  = 0;
+let ttsRate   = 1.0;
+let ttsPaused = false;
+let ttsActive = false;
+let ttsVoices = [];
+
+// 음성 목록 로드 (비동기)
+function loadVoices() {
+  ttsVoices = window.speechSynthesis.getVoices();
+}
+window.speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// 한국어 음성 중 조건에 맞는 것 선택
+function pickVoice(preferFemale) {
+  const koVoices = ttsVoices.filter(v => v.lang && v.lang.startsWith('ko'));
+  if (!koVoices.length) return null;
+
+  // 이름 기반 성별 추정
+  const femaleKeywords = ['female','woman','여성','미나','유나','지수','서연','나라','yuna','mina','지현'];
+  const maleKeywords   = ['male','man','남성','민준','재원','junho','남자'];
+
+  if (preferFemale) {
+    const f = koVoices.find(v => femaleKeywords.some(k => v.name.toLowerCase().includes(k)));
+    if (f) return f;
+    // 대표 여성 음성명 (iOS/Android/Chrome 공통)
+    const named = koVoices.find(v => /yuna|미나|나라|female/i.test(v.name));
+    return named || koVoices[koVoices.length - 1]; // 마지막 목소리가 주로 여성
+  } else {
+    const m = koVoices.find(v => maleKeywords.some(k => v.name.toLowerCase().includes(k)));
+    if (m) return m;
+    return koVoices[0]; // 첫 번째 목소리가 주로 남성
+  }
+}
+
+// 특수문자·기호 제거 → 청취 편의
+function cleanText(raw) {
+  return raw
+    .replace(/<[^>]+>/g, ' ')          // HTML 태그 제거
+    .replace(/[①②③④⑤⑥⑦⑧⑨⑩]/g, (m) => ['첫째','둘째','셋째','넷째','다섯째','여섯째','일곱째','여덟째','아홉째','열째']['①②③④⑤⑥⑦⑧⑨⑩'.indexOf(m)] + ', ')
+    .replace(/[✅☑□✓]/g, '')
+    .replace(/[💡🌱🍂🌿🌾📋★⚡🔊▶⏸■]/g, '')
+    .replace(/[→←↑↓]/g, '. ')
+    .replace(/~|～/g, '에서 ')
+    .replace(/\s{2,}/g, ' ')
+    .replace(/\.\s*\./g, '.')
+    .trim();
+}
+
+// 현재 탭의 문제+정답 항목 목록 생성
+function getTabItems() {
+  const items = [];
+  const activeSection = document.querySelector('.section.active');
+  if (!activeSection) return items;
+
+  // 핵심요약 탭
+  if (activeSection.id === 'sec6') {
+    activeSection.querySelectorAll('.note-title, .note-table td, .note-key').forEach(el => {
+      const t = cleanText(el.innerText);
+      if (t.length > 1) items.push({type:'info', text: t});
+    });
+    return items;
+  }
+
+  // 암기카드 탭
+  if (activeSection.id === 'sec5') {
+    activeSection.querySelectorAll('div[style*="background:linear-gradient"]').forEach(el => {
+      const span = el.querySelector('span');
+      const q = span ? cleanText(span.innerText.replace(/^Q\.\s*/,'')) : '';
+      const ansDiv = el.nextElementSibling;
+      const a = ansDiv ? cleanText(ansDiv.innerText.replace(/✅/g,'')) : '';
+      if (q) items.push({type:'q', text: q});
+      if (a) items.push({type:'a', text: '정답은,  ' + a});
+    });
+    return items;
+  }
+
+  // 일반 문제 카드 (Ⅰ~Ⅴ)
+  activeSection.querySelectorAll('.q-card').forEach(card => {
+    const num  = card.querySelector('.q-num')    ? card.querySelector('.q-num').innerText.trim() : '';
+    const qRaw = card.querySelector('.q-text')   ? card.querySelector('.q-text').innerText : '';
+    const aRaw = card.querySelector('.q-answer') ? card.querySelector('.q-answer').innerHTML : '';
+    const qText = cleanText(qRaw);
+    const aText = cleanText(aRaw);
+    if (qText) items.push({type:'q', text: num + '번 문제.  ' + qText});
+    if (aText) items.push({type:'a', text: '정답.  ' + aText});
+  });
+  return items;
+}
+
+// 단일 발화 생성 — type에 따라 음성 파라미터 분리
+function makeUtterance(item) {
+  const utter = new SpeechSynthesisUtterance(item.text);
+  utter.lang = 'ko-KR';
+
+  if (item.type === 'q') {
+    // 문제: 낮고 또렷한 남성 톤 — 느리고 명확하게
+    utter.rate   = ttsRate * 0.88;   // 기준 속도보다 12% 느리게
+    utter.pitch  = 0.85;             // 낮은 피치 (남성적)
+    utter.volume = 1.0;
+    const v = pickVoice(false);
+    if (v) utter.voice = v;
+  } else if (item.type === 'a') {
+    // 정답: 약간 높고 차분한 여성 톤 — 명확한 발음
+    utter.rate   = ttsRate * 0.82;   // 정답은 더 천천히 (핵심 전달)
+    utter.pitch  = 1.25;             // 높은 피치 (여성적·구분 용이)
+    utter.volume = 1.0;
+    const v = pickVoice(true);
+    if (v) utter.voice = v;
+  } else {
+    // 요약·기타: 중간 톤
+    utter.rate   = ttsRate * 0.85;
+    utter.pitch  = 1.0;
+    utter.volume = 1.0;
+  }
+  return utter;
+}
+
+// 발화 실행 (문제↔정답 사이 무음 포함)
+function speakFrom(idx) {
+  if (!ttsActive || ttsPaused) return;
+  if (idx >= ttsItems.length) { ttsStop(); showToast('🎉 음성 읽기 완료!'); return; }
+  ttsIndex = idx;
+  updateTtsProgress();
+
+  const item = ttsItems[idx];
+
+  // 정답 앞에 0.6초 무음 삽입 (문제-정답 구분을 청각적으로 명확히)
+  const pauseMs = (item.type === 'a') ? 700 : 300;
+
+  setTimeout(() => {
+    if (!ttsActive || ttsPaused) return;
+    const utter = makeUtterance(item);
+    utter.onend   = () => { if (ttsActive && !ttsPaused) speakFrom(ttsIndex + 1); };
+    utter.onerror = () => { if (ttsActive && !ttsPaused) speakFrom(ttsIndex + 1); };
+    window.speechSynthesis.speak(utter);
+  }, pauseMs);
+}
+
+function updateTtsProgress() {
+  const total = ttsItems.length;
+  const pct   = total ? Math.round((ttsIndex / total) * 100) : 0;
+  document.getElementById('ttsProgressFill').style.width = pct + '%';
+  // 문제 번호 기준으로 표시 (q 항목 index)
+  const qCount = ttsItems.slice(0, ttsIndex + 1).filter(i => i.type === 'q').length;
+  const qTotal = ttsItems.filter(i => i.type === 'q').length || Math.ceil(total / 2);
+  document.getElementById('ttsCurrent').textContent = total ? qCount + ' / ' + qTotal + '번' : '';
+  // 현재 읽는 항목 타입 표시
+  const tag = document.getElementById('ttsVoiceTag');
+  if (tag && total) {
+    const cur = ttsItems[ttsIndex];
+    if (cur.type === 'q')    { tag.textContent = '🔵 문제 낭독 중'; tag.style.color = '#2D6A4F'; }
+    else if (cur.type === 'a') { tag.textContent = '🟠 정답 낭독 중'; tag.style.color = '#B45309'; }
+    else                     { tag.textContent = '📖 요약 낭독 중'; tag.style.color = '#6B7280'; }
+  } else if (tag) { tag.textContent = ''; }
+}
+
+function setSpeed(rate, btn) {
+  ttsRate = rate;
+  document.querySelectorAll('.tts-speed-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (ttsActive && !ttsPaused) {
+    window.speechSynthesis.cancel();
+    setTimeout(() => speakFrom(ttsIndex), 150);
+  }
+}
+
+function ttsToggle() {
+  const btn = document.getElementById('ttsPlayBtn');
+  if (!ttsActive) {
+    ttsItems = getTabItems();
+    if (!ttsItems.length) { showToast('읽을 내용이 없습니다.'); return; }
+    ttsIndex = 0; ttsActive = true; ttsPaused = false;
+    btn.innerHTML = '⏸ 일시정지';
+    btn.className = 'tts-btn pause';
+    // 음성 목록 재로드 후 시작 (모바일 대응)
+    loadVoices();
+    speakFrom(0);
+  } else if (!ttsPaused) {
+    ttsPaused = true;
+    window.speechSynthesis.pause();
+    btn.innerHTML = '▶ 계속듣기';
+    btn.className = 'tts-btn play';
+  } else {
+    ttsPaused = false;
+    window.speechSynthesis.resume();
+    btn.innerHTML = '⏸ 일시정지';
+    btn.className = 'tts-btn pause';
+  }
+}
+
+function ttsStop() {
+  window.speechSynthesis.cancel();
+  ttsActive = false; ttsPaused = false; ttsIndex = 0; ttsItems = [];
+  const btn = document.getElementById('ttsPlayBtn');
+  btn.innerHTML = '▶ 읽기';
+  btn.className = 'tts-btn play';
+  document.getElementById('ttsProgressFill').style.width = '0%';
+  document.getElementById('ttsCurrent').textContent = '';
+}
+
+// 탭 전환 시 TTS 정지
+const _origShowTab = showTab;
+function showTab(i) {
+  ttsStop();
+  _origShowTab(i);
+}
+
+// ══════════════════════════════════════════════════════════
 // 초기화
 buildCards();
 buildFlashCards();
