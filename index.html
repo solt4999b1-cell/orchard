@@ -661,6 +661,38 @@
     background: var(--green-dark); color: white;
   }
 
+  /* ── TTS(음성읽기) 버튼 ── */
+  .tts-bar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px; background: #F1F8E9;
+    border-bottom: 1px solid #A5D6A7;
+    position: sticky; top: 96px; z-index: 95;
+  }
+  .tts-btn {
+    display: flex; align-items: center; gap: 5px;
+    padding: 6px 12px; border: none; border-radius: 20px;
+    font-size: 12px; font-weight: 700; cursor: pointer;
+    font-family: inherit; transition: all 0.2s;
+  }
+  .tts-play  { background: #1B5E20; color: white; }
+  .tts-stop  { background: #E53935; color: white; }
+  .tts-pause { background: #F57F17; color: white; }
+  .tts-speed { background: white; color: #1B5E20;
+               border: 1.5px solid #1B5E20 !important;
+               padding: 5px 8px; font-size: 11px; }
+  .tts-status {
+    flex: 1; font-size: 11px; color: #2E7D32;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .tts-progress {
+    height: 4px; background: #A5D6A7;
+    position: sticky; top: 134px; z-index: 94;
+  }
+  .tts-progress-fill {
+    height: 100%; background: #1B5E20;
+    width: 0%; transition: width 0.3s;
+  }
+
 </style>
   <!-- Firebase SDK (compat version — 브라우저 직접 사용) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -708,6 +740,21 @@
   <div class="tab" id="tab-backup" onclick="showTab('backup')">💾 백업·복원</div>
 
 </div>
+
+<!-- TTS 음성 읽기 바 -->
+<div class="tts-bar" id="ttsBar">
+  <button class="tts-btn tts-play" id="ttsPlayBtn" onclick="ttsPlay()">🔊 읽어주기</button>
+  <button class="tts-btn tts-pause" id="ttsPauseBtn" onclick="ttsPause()" style="display:none">⏸ 일시정지</button>
+  <button class="tts-btn tts-stop" id="ttsStopBtn" onclick="ttsStop()" style="display:none">⏹ 정지</button>
+  <select id="ttsSpeed" class="tts-btn tts-speed" onchange="ttsChangeSpeed(this.value)">
+    <option value="0.7">🐢 느리게</option>
+    <option value="1.0" selected>🚶 보통</option>
+    <option value="1.3">🏃 빠르게</option>
+    <option value="1.6">⚡ 매우빠름</option>
+  </select>
+  <span class="tts-status" id="ttsStatus">현재 탭의 내용을 읽어드립니다</span>
+</div>
+<div class="tts-progress"><div class="tts-progress-fill" id="ttsProgressFill"></div></div>
 
 <!-- 컨텐츠 -->
 <div class="content">
@@ -6604,6 +6651,8 @@ function renderAll() {
 
 let wxAutoLoaded = false;
 function showTab(id) {
+  // 탭 전환 시 TTS 자동 정지
+  try { if (typeof ttsStop === 'function') ttsStop(); } catch(e) {}
   // 직접 id 참조 (querySelectorAll 루프 제거 - iOS 성능)
   ['today','search','supply','monthly','wxlive','pest','pruning','grow','guide','sheet','backup'].forEach(t => {
     const s = document.getElementById('sec-' + t);
@@ -14023,6 +14072,291 @@ function loadPruningImages() {
   });
   _pruningImgsLoaded = true;
 }
+
+// ══════════════════════════════════════════════════════════
+// TTS (Web Speech API 음성 읽기)
+// ══════════════════════════════════════════════════════════
+var _tts = {
+  synth:    window.speechSynthesis || null,
+  utterances: [],
+  idx:      0,
+  rate:     1.0,
+  paused:   false,
+  playing:  false,
+};
+
+// 탭별 읽을 텍스트 수집
+function ttsGetTexts() {
+  // 현재 활성 섹션 찾기
+  var activeSec = document.querySelector('.section.active');
+  if (!activeSec) return ['읽을 내용이 없습니다.'];
+
+  var texts = [];
+  var secId = activeSec.id;
+
+  // 섹션 제목
+  var title = activeSec.querySelector('.section-title, .card-title, h2, h3');
+  if (title) texts.push(title.innerText.replace(/[🌿📋🌱🛒📅🌡️🐛✂️📷📒💾🔥]/g,'').trim());
+
+  // 섹션별 맞춤 수집
+  if (secId === 'sec-today') {
+    // 오늘 작업
+    var tasks = activeSec.querySelectorAll('.task-item, .today-task, [class*="task"]');
+    tasks.forEach(function(t) {
+      var txt = t.innerText.trim();
+      if (txt && txt.length > 2) texts.push(txt);
+    });
+    // 작업 카드들
+    var cards = activeSec.querySelectorAll('.card');
+    cards.forEach(function(c) {
+      var h = c.querySelector('.card-title');
+      var b = c.querySelector('.card-body');
+      if (h) texts.push(h.innerText.trim());
+      if (b) {
+        var items = b.querySelectorAll('li, .item, div[class*="item"], div[class*="task"]');
+        if (items.length) {
+          items.forEach(function(it) {
+            var t2 = it.innerText.trim();
+            if (t2 && t2.length > 3) texts.push(t2);
+          });
+        }
+      }
+    });
+  } else if (secId === 'sec-pest') {
+    // 병해충·시비
+    var pCards = activeSec.querySelectorAll('.card');
+    pCards.forEach(function(c) {
+      var ht = c.querySelector('.card-title');
+      if (ht) texts.push(ht.innerText.trim());
+      var rows = c.querySelectorAll('tr, .pest-item, li');
+      rows.forEach(function(r) {
+        var t3 = r.innerText.trim();
+        if (t3 && t3.length > 3) texts.push(t3);
+      });
+    });
+  } else if (secId === 'sec-monthly') {
+    // 일정·D-day
+    var ddays = activeSec.querySelectorAll('.dday-item, [class*="dday"], [class*="schedule"]');
+    if (!ddays.length) {
+      // 텍스트 직접 추출
+      var allText = activeSec.innerText;
+      var lines = allText.split('\n').filter(function(l) {
+        return l.trim().length > 4 && !l.includes('---');
+      });
+      lines.slice(0, 30).forEach(function(l) { texts.push(l.trim()); });
+    } else {
+      ddays.forEach(function(d) {
+        var t4 = d.innerText.trim();
+        if (t4) texts.push(t4);
+      });
+    }
+  } else if (secId === 'sec-grow') {
+    // 생육 관리
+    var growItems = activeSec.querySelectorAll('[style*="border-radius:10px"]');
+    growItems.forEach(function(g) {
+      var name = g.querySelector('[style*="font-weight:700"][style*="color:white"]');
+      var date = g.querySelector('[style*="font-size:22px"]');
+      var harvest = g.querySelector('[style*="harvestBadge"], span[style*="color:white"]');
+      if (name) {
+        var txt = name.innerText.trim();
+        if (date) txt += ', ' + date.innerText.trim() + '일째';
+        if (harvest) txt += ', ' + harvest.innerText.replace(/[🌾✂️]/g,'').trim();
+        texts.push(txt);
+      }
+    });
+    if (!texts.length || texts.length < 2) {
+      // 폴백: 전체 텍스트
+      var gt = activeSec.innerText;
+      var glines = gt.split('\n').filter(function(l){ return l.trim().length > 5; });
+      glines.slice(0,20).forEach(function(l){ texts.push(l.trim()); });
+    }
+  } else if (secId === 'sec-wxlive') {
+    // 날씨
+    var wxText = activeSec.innerText;
+    var wxLines = wxText.split('\n').filter(function(l){
+      return l.trim().length > 3 && !l.match(/^\s*[-_]+\s*$/);
+    });
+    wxLines.slice(0,20).forEach(function(l){ texts.push(l.trim()); });
+  } else if (secId === 'sec-pruning') {
+    // 전정 가이드
+    var pSections = activeSec.querySelectorAll('[class*="guide"], .guide-item, h3, h4, p');
+    if (pSections.length) {
+      pSections.forEach(function(p) {
+        var t5 = p.innerText.trim();
+        if (t5 && t5.length > 5 && !t5.match(/^[0-9]+$/)) texts.push(t5);
+      });
+    } else {
+      var pAll = activeSec.innerText.split('\n').filter(function(l){
+        return l.trim().length > 5;
+      });
+      pAll.slice(0,30).forEach(function(l){ texts.push(l.trim()); });
+    }
+  } else if (secId === 'sec-sheet') {
+    // 기록장
+    var logItems = activeSec.querySelectorAll('[class*="log-item"], [class*="work-item"]');
+    if (logItems.length) {
+      logItems.forEach(function(li) {
+        texts.push(li.innerText.trim().replace(/\n+/g,' '));
+      });
+    } else {
+      var shAll = activeSec.innerText.split('\n').filter(function(l){
+        return l.trim().length > 5;
+      });
+      shAll.slice(0,25).forEach(function(l){ texts.push(l.trim()); });
+    }
+  } else {
+    // 범용: 카드 제목 + 내용 수집
+    var allCards = activeSec.querySelectorAll('.card, [class*="card"]');
+    if (allCards.length) {
+      allCards.forEach(function(c) {
+        var ct = c.querySelector('.card-title, [class*="title"]');
+        if (ct) texts.push(ct.innerText.trim());
+        var cb = c.querySelector('.card-body, [class*="body"]');
+        if (cb) {
+          var lines2 = cb.innerText.split('\n').filter(function(l){
+            return l.trim().length > 3;
+          });
+          lines2.slice(0,10).forEach(function(l){ texts.push(l.trim()); });
+        }
+      });
+    }
+    if (texts.length < 2) {
+      // 최후 폴백: 전체 텍스트
+      var fallAll = activeSec.innerText.split('\n').filter(function(l){
+        return l.trim().length > 4;
+      });
+      fallAll.slice(0,30).forEach(function(l){ texts.push(l.trim()); });
+    }
+  }
+
+  // 중복·빈 항목 제거
+  var seen = {};
+  return texts.filter(function(t) {
+    var k = t.slice(0,30);
+    if (seen[k] || !t.trim()) return false;
+    seen[k] = 1; return true;
+  });
+}
+
+function ttsPlay() {
+  if (!_tts.synth) {
+    showToast('⚠ 이 브라우저는 음성 읽기를 지원하지 않습니다');
+    return;
+  }
+  // 재생 중이면 처음부터
+  ttsStop();
+
+  var texts = ttsGetTexts();
+  if (!texts.length) { showToast('읽을 내용이 없습니다'); return; }
+
+  _tts.utterances = texts;
+  _tts.idx = 0;
+  _tts.playing = true;
+  _tts.paused = false;
+  ttsUpdateUI();
+  ttsSpeakNext();
+}
+
+function ttsSpeakNext() {
+  if (!_tts.playing || _tts.idx >= _tts.utterances.length) {
+    if (_tts.idx >= _tts.utterances.length) {
+      ttsStop();
+      showToast('✅ 읽기 완료');
+    }
+    return;
+  }
+  var text = _tts.utterances[_tts.idx];
+  var utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'ko-KR';
+  utter.rate = _tts.rate;
+  utter.pitch = 1.0;
+  utter.volume = 1.0;
+
+  // 한국어 목소리 선택
+  var voices = _tts.synth.getVoices();
+  var koVoice = voices.find(function(v){ return v.lang === 'ko-KR'; })
+             || voices.find(function(v){ return v.lang.startsWith('ko'); });
+  if (koVoice) utter.voice = koVoice;
+
+  utter.onstart = function() {
+    var st = document.getElementById('ttsStatus');
+    if (st) st.textContent = (_tts.idx+1) + '/' + _tts.utterances.length + '  ' + text.slice(0,30) + (text.length>30?'…':'');
+    var pf = document.getElementById('ttsProgressFill');
+    if (pf) pf.style.width = ((_tts.idx+1)/_tts.utterances.length*100) + '%';
+  };
+  utter.onend = function() {
+    if (!_tts.playing) return;
+    _tts.idx++;
+    ttsSpeakNext();
+  };
+  utter.onerror = function() {
+    _tts.idx++;
+    ttsSpeakNext();
+  };
+  _tts.synth.speak(utter);
+}
+
+function ttsPause() {
+  if (!_tts.synth) return;
+  if (_tts.paused) {
+    _tts.synth.resume();
+    _tts.paused = false;
+    document.getElementById('ttsPauseBtn').textContent = '⏸ 일시정지';
+    showToast('▶ 계속 읽습니다');
+  } else {
+    _tts.synth.pause();
+    _tts.paused = true;
+    document.getElementById('ttsPauseBtn').textContent = '▶ 계속';
+    showToast('⏸ 일시정지');
+  }
+}
+
+function ttsStop() {
+  if (_tts.synth) _tts.synth.cancel();
+  _tts.playing = false;
+  _tts.paused  = false;
+  _tts.idx     = 0;
+  ttsUpdateUI();
+  var st = document.getElementById('ttsStatus');
+  if (st) st.textContent = '현재 탭의 내용을 읽어드립니다';
+  var pf = document.getElementById('ttsProgressFill');
+  if (pf) pf.style.width = '0%';
+}
+
+function ttsChangeSpeed(val) {
+  _tts.rate = parseFloat(val);
+  if (_tts.playing) {
+    // 재생 중이면 현재 위치에서 속도 변경
+    var curIdx = _tts.idx;
+    ttsStop();
+    _tts.idx = Math.max(0, curIdx - 1);
+    _tts.playing = true;
+    _tts.paused = false;
+    ttsUpdateUI();
+    ttsSpeakNext();
+  }
+  var labels = {'0.7':'🐢 느리게','1.0':'🚶 보통','1.3':'🏃 빠르게','1.6':'⚡ 매우빠름'};
+  showToast('음성 속도: ' + (labels[val] || val));
+}
+
+function ttsUpdateUI() {
+  var playBtn  = document.getElementById('ttsPlayBtn');
+  var pauseBtn = document.getElementById('ttsPauseBtn');
+  var stopBtn  = document.getElementById('ttsStopBtn');
+  if (!playBtn) return;
+  if (_tts.playing) {
+    playBtn.style.display  = 'none';
+    pauseBtn.style.display = 'flex';
+    stopBtn.style.display  = 'flex';
+  } else {
+    playBtn.style.display  = 'flex';
+    pauseBtn.style.display = 'none';
+    stopBtn.style.display  = 'none';
+  }
+}
+
+// 탭 전환 시 자동 정지
+var _origShowTab = typeof showTab === 'function' ? showTab : null;
 
 
 
