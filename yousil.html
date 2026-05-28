@@ -170,18 +170,19 @@
   /* 하단 그리드 액션 바 */
   .action-bar {
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: white; padding: 10px 12px;
+    background: white; padding: 8px 10px;
     box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; z-index: 101;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 5px; z-index: 101;
   }
   .action-bar button {
-    padding: 10px 4px; border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+    padding: 9px 4px; border: none; border-radius: 8px; font-size: 11px; font-weight: 700;
     cursor: pointer; font-family: inherit; text-align: center;
   }
   .btn-primary { background: var(--green); color: white; }
   .btn-secondary { background: var(--green-pale); color: var(--green); }
   .btn-yellow { background: var(--yellow); color: #4A3B00; }
   .btn-danger { background: var(--red); color: white; }
+  .btn-pause { background: #FFF3E0; color: #E65100; border: 1.5px solid #FFB74D !important; }
 
   /* 퀴즈 모드 */
   .quiz-modal {
@@ -224,10 +225,90 @@
   .note-table td:last-child  { font-weight:700; color:#1A3C34; }
   .note-key { background:rgba(255,255,255,0.6); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.9; color:#2D2D2D; }
   .tag { display:inline-block; background:#1B5E20; color:white; padding:0 6px; border-radius:5px; font-size:11px; font-weight:700; }
+
+  /* ── 인쇄 옵션 모달 ──────────────────────────────────── */
+  .print-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.55); z-index: 300;
+    align-items: center; justify-content: center; padding: 20px;
+  }
+  .print-modal.open { display: flex; }
+  .print-box {
+    background: white; border-radius: 16px; padding: 24px;
+    width: 100%; max-width: 340px; box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  }
+  .print-box h3 {
+    font-size: 15px; font-weight: 800; color: #1B4332;
+    margin: 0 0 16px; padding-bottom: 10px; border-bottom: 2px solid #D8F3DC;
+  }
+  .print-option-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+  .print-option-label {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    padding: 10px 14px; border-radius: 10px; border: 2px solid #E0E0E0;
+    font-size: 13px; font-weight: 600; transition: all 0.15s;
+  }
+  .print-option-label:has(input:checked) { border-color: #2D6A4F; background: #F0FAF4; color: #1B4332; }
+  .print-option-label input[type="radio"] { accent-color: #2D6A4F; width: 16px; height: 16px; }
+  .print-option-desc { font-size: 11px; color: #888; font-weight: 400; margin-top: 2px; display: block; }
+  .print-scope-info {
+    background: #F0FAF4; border-radius: 8px; padding: 8px 12px;
+    font-size: 12px; color: #2D6A4F; margin-bottom: 16px; font-weight: 600;
+  }
+  .print-btns { display: flex; gap: 8px; }
+  .print-btns button { flex: 1; padding: 11px; border: none; border-radius: 10px;
+    font-size: 13px; font-weight: 700; cursor: pointer; font-family: inherit; }
+
+  /* 인쇄 시 답 숨기기 */
+  @media print {
+    .print-modal { display: none !important; }
+    .q-card.print-hide-answer .q-answer { display: none !important; }
+    .q-card.print-hide-answer .answer-blank {
+      display: block !important; height: 28pt;
+      border-bottom: 1.5px solid #aaa; margin-top: 8pt;
+    }
+  }
+  .answer-blank { display: none; }
+  @media print {
+    .header, .tabs, .action-bar, .stat-bar, .audio-status,
+    .tts-panel, .progress-bar, .quiz-modal,
+    .check-btn, .speaker-btn, .btn-group { display: none !important; }
+
+    body { background: white; font-size: 12pt; color: #000; }
+
+    .section { display: none !important; padding: 0 !important; }
+    .section.print-target { display: block !important; }
+
+    .q-card {
+      border: 1px solid #ccc !important; border-radius: 0 !important;
+      box-shadow: none !important; margin-bottom: 8pt !important;
+      padding: 8pt !important; page-break-inside: avoid;
+    }
+    .q-card .q-answer { display: block !important; }
+    .q-num  { color: #1B4332 !important; font-size: 11pt !important; }
+    .q-text { font-size: 11pt !important; }
+    .q-answer { font-size: 10.5pt !important;
+                border-top: 1px dashed #aaa; padding-top: 6pt !important; }
+
+    .note-box { border: 1px solid #bbb !important; box-shadow: none !important;
+                page-break-inside: avoid; margin-bottom: 10pt !important; }
+    .note-title { font-size: 12pt !important; }
+    .note-table td { font-size: 10.5pt !important; }
+    .note-key { font-size: 10.5pt !important; }
+    .section-title { font-size: 14pt !important; margin-bottom: 8pt; }
+
+    @page { margin: 15mm 12mm; }
+    .print-header { display: block !important; }
+  }
+  .print-header {
+    display: none; text-align: center; font-size: 15pt; font-weight: 800;
+    color: #1B4332; margin-bottom: 10pt; padding-bottom: 6pt;
+    border-bottom: 2px solid #1B4332;
+  }
 </style>
 </head>
 <body>
 
+<div class="print-header" id="printHeader">🌱 유기농업기능사 실기 200문제</div>
 <div class="header">
   <h1>🌱 유기농업기능사 실기 200문제</h1>
   <p>5월 31일 시험 대비 · 탭하면 정답 확인</p>
@@ -415,11 +496,41 @@
 <div class="action-bar">
   <button class="btn-secondary" onclick="openQuiz()">🎲 랜덤 퀴즈</button>
   <button class="btn-secondary" onclick="toggleAll()">📖 전체펼치기</button>
-  <button class="btn-danger" onclick="stopSpeaking()">🛑 음성 정지</button>
-  
-  <button class="btn-yellow" onclick="playSectionAudio()">▶️ 메뉴별 다듣기</button>
-  <button class="btn-primary" onclick="playAllAudio()">📢 전체 다듣기</button>
-  <button class="btn-secondary" style="background:#E5E7EB; color:#374151;" onclick="window.scrollTo(0,0)">⬆️ 맨 위로</button>
+  <button class="btn-secondary" style="background:#E5E7EB;color:#374151;" onclick="window.scrollTo(0,0)">⬆️ 맨 위로</button>
+  <button class="btn-yellow" onclick="playSectionAudio()">▶️ 메뉴별 듣기</button>
+  <button class="btn-pause" id="pauseResumeBtn" onclick="togglePause()">⏸ 일시정지</button>
+  <button class="btn-danger" onclick="stopSpeaking()">🛑 정지</button>
+  <button class="btn-primary" onclick="playAllAudio()">📢 전체 듣기</button>
+  <button class="btn-secondary" style="background:#E3F2FD;color:#1565C0;" onclick="printSection()">🖨️ 메뉴별 인쇄</button>
+  <button class="btn-secondary" style="background:#E8F5E9;color:#1B5E20;" onclick="printAll()">🖨️ 전체 인쇄</button>
+</div>
+
+<!-- 인쇄 옵션 모달 -->
+<div class="print-modal" id="printModal">
+  <div class="print-box">
+    <h3>🖨️ 인쇄 옵션</h3>
+    <div class="print-scope-info" id="printScopeInfo">현재 탭: Ⅰ. 토양 (1~40번)</div>
+    <div class="print-option-group">
+      <label class="print-option-label">
+        <input type="radio" name="printAnswer" value="with" checked>
+        <span>
+          문제 + 정답 함께 인쇄
+          <span class="print-option-desc">문제 아래에 정답·설명이 포함됩니다</span>
+        </span>
+      </label>
+      <label class="print-option-label">
+        <input type="radio" name="printAnswer" value="without">
+        <span>
+          문제만 인쇄 (답 제외)
+          <span class="print-option-desc">정답 자리에 빈 줄이 표시됩니다</span>
+        </span>
+      </label>
+    </div>
+    <div class="print-btns">
+      <button style="background:#F5F5F5; color:#555;" onclick="closePrintModal()">취소</button>
+      <button style="background:#1B4332; color:white;" onclick="executePrint()">🖨️ 인쇄 시작</button>
+    </div>
+  </div>
 </div>
 
 <div class="quiz-modal" id="quizModal">
@@ -723,14 +834,15 @@ function buildFlashCards() {
   const sec = document.getElementById('sec5');
   FLASHCARDS.forEach((fc, i) => {
     const d = document.createElement('div');
+    d.className = 'flash-card';
     d.style.cssText = 'background:white;border-radius:12px;box-shadow:0 2px 8px rgba(45,106,79,0.1);margin-bottom:8px;overflow:hidden';
     d.innerHTML = `
-      <div style="background:linear-gradient(135deg,#1B4332,#2D6A4F);padding:12px 16px;cursor:pointer; display:flex; justify-content:space-between; align-items:center;"
-        onclick="this.nextSibling.style.display=this.nextSibling.style.display==='block'?'none':'block'">
-        <span style="font-size:13px;font-weight:700;color:white">Q. ${fc.front}</span>
-        <button class="speaker-btn" style="padding:1px 8px; font-size:10px;" onclick="event.stopPropagation();speakText('${fc.front}. 정답은 ${fc.back}입니다.')">🔊</button>
+      <div class="flash-front" style="background:linear-gradient(135deg,#1B4332,#2D6A4F);padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;"
+        onclick="var ans=this.nextElementSibling;ans.style.display=ans.style.display==='block'?'none':'block'">
+        <span style="font-size:13px;font-weight:700;color:white" data-front="${fc.front.replace(/"/g,'&quot;')}">Q. ${fc.front}</span>
+        <button class="speaker-btn" style="padding:1px 8px;font-size:10px;" onclick="event.stopPropagation();speakText('${fc.front.replace(/'/g,'\\\'')}.  정답은,  ${fc.back.replace(/'/g,'\\\'')}.  ')">🔊</button>
       </div>
-      <div style="display:none;padding:12px 16px;font-size:14px;font-weight:700;color:#1B4332;text-align:center">
+      <div class="flash-back" style="display:none;padding:12px 16px;font-size:14px;font-weight:700;color:#1B4332;text-align:center" data-back="${fc.back.replace(/"/g,'&quot;')}">
         ✅ ${fc.back}
       </div>`;
     sec.appendChild(d);
@@ -740,8 +852,12 @@ function buildFlashCards() {
 // ══════════════════════════════════════════════════════════
 // 🔊 핵심 기능: 연속 재생 및 큐 제어 TTS 엔진 (발음 & 괄호 생략 지원)
 // ══════════════════════════════════════════════════════════
+
+let isPaused = false;
+
 function stopSpeaking() {
   isContinuousPlaying = false;
+  isPaused = false;
   audioQueue = [];
   queueIndex = 0;
   if ('speechSynthesis' in window) {
@@ -751,6 +867,30 @@ function stopSpeaking() {
   const statusDiv = document.getElementById('audioStatus');
   statusDiv.style.display = 'none';
   statusDiv.innerText = '';
+  // 일시정지 버튼 초기화
+  const pb = document.getElementById('pauseResumeBtn');
+  if (pb) { pb.textContent = '⏸ 일시정지'; pb.className = 'btn-pause'; }
+}
+
+function togglePause() {
+  if (!('speechSynthesis' in window)) return;
+  const pb = document.getElementById('pauseResumeBtn');
+  if (!isPaused) {
+    window.speechSynthesis.pause();
+    isPaused = true;
+    isContinuousPlaying = false;
+    if (pb) { pb.textContent = '▶ 재개'; pb.className = 'btn-yellow'; }
+    const statusDiv = document.getElementById('audioStatus');
+    statusDiv.style.display = 'block';
+    statusDiv.innerText = '⏸ 일시정지됨 — 재개 버튼을 누르세요';
+  } else {
+    window.speechSynthesis.resume();
+    isPaused = false;
+    isContinuousPlaying = true;
+    if (pb) { pb.textContent = '⏸ 일시정지'; pb.className = 'btn-pause'; }
+    const statusDiv = document.getElementById('audioStatus');
+    statusDiv.innerText = '🎧 재생 재개 중...';
+  }
 }
 
 function numberToKorean(num) {
@@ -765,6 +905,56 @@ function numberToKorean(num) {
     }
   }
   return result || '영';
+}
+
+// 단위 발음 변환 — 영어 약자를 한국어 물리·수학 단위 발음으로 치환
+function applyUnitPronunciation(s) {
+  // ── 복합 단위 (긴 것부터 먼저 처리) ──────────────────────
+  s = s.replace(/g\s*\/\s*cm\s*³/gi,  '그램 퍼 세제곱센티미터');
+  s = s.replace(/kg\s*\/\s*ha/gi,     '킬로그램 퍼 헥타르');
+  s = s.replace(/kg\s*N\s*\/\s*ha/gi, '킬로그램 질소 퍼 헥타르');
+  s = s.replace(/cmol\s*\+?\s*\/\s*kg/gi, '씨몰 퍼 킬로그램');
+  s = s.replace(/meq\s*\/\s*100g/gi,  '밀리당량 퍼 백그램');
+  s = s.replace(/ml\s*\/\s*l/gi,      '밀리리터 퍼 리터');
+
+  // ── 온도 ──────────────────────────────────────────────────
+  s = s.replace(/(\d[\d.]*)\s*℃/g,   '$1도씨');
+  s = s.replace(/(\d[\d.]*)\s*°C/gi, '$1도씨');
+
+  // ── 길이 ──────────────────────────────────────────────────
+  s = s.replace(/(\d[\d.]*)\s*mm/g,  '$1밀리미터');
+  s = s.replace(/(\d[\d.]*)\s*cm/g,  '$1센티미터');
+  s = s.replace(/(\d[\d.]*)\s*m\b/g, '$1미터');
+  s = s.replace(/(\d[\d.]*)\s*km/g,  '$1킬로미터');
+  s = s.replace(/(\d[\d.]*)\s*µm/g,  '$1마이크로미터');
+
+  // ── 넓이·부피 ─────────────────────────────────────────────
+  s = s.replace(/cm\s*³/g,  '세제곱센티미터');
+  s = s.replace(/cm\s*²/g,  '제곱센티미터');
+  s = s.replace(/m\s*²/g,   '제곱미터');
+  s = s.replace(/m\s*³/g,   '세제곱미터');
+  s = s.replace(/(\d[\d.]*)\s*ha\b/g, '$1헥타르');
+  s = s.replace(/(\d[\d.]*)\s*L\b/gi, '$1리터');
+  s = s.replace(/(\d[\d.]*)\s*mL\b/gi,'$1밀리리터');
+  s = s.replace(/(\d[\d.]*)\s*cc\b/gi,'$1시시');
+
+  // ── 질량·농도 ─────────────────────────────────────────────
+  s = s.replace(/(\d[\d.]*)\s*kg\b/g, '$1킬로그램');
+  s = s.replace(/(\d[\d.]*)\s*g\b/g,  '$1그램');
+  s = s.replace(/(\d[\d.]*)\s*mg\b/g, '$1밀리그램');
+  s = s.replace(/(\d[\d.]*)\s*t\b/g,  '$1톤');
+  s = s.replace(/(\d[\d.]*)\s*%/g,    '$1퍼센트');
+  s = s.replace(/(\d[\d.]*)\s*ppm\b/g,'$1피피엠');
+
+  // ── 기타 남은 단독 영문 단위 약어 ─────────────────────────
+  // (위에서 처리 안 된 잔여 단위가 영어로 남지 않도록 보호)
+  s = s.replace(/\bha\b/g,  '헥타르');
+  s = s.replace(/\bL\b/gi,  '리터');
+  s = s.replace(/\bkg\b/g,  '킬로그램');
+  s = s.replace(/\bmm\b/g,  '밀리미터');
+  s = s.replace(/\bcm\b/g,  '센티미터');
+
+  return s;
 }
 
 function speakText(text, onEndCallback = null) {
@@ -782,13 +972,19 @@ function speakText(text, onEndCallback = null) {
   // 2단계: 본문 전체에서 모든 유형의 괄호()와 그 안의 한자/영어 내용 지우기
   cleanText = cleanText.replace(/\([^)]*\)/g, ' ');
 
-  // 3단계: 단위 명사 발음 패치 ("2가지" -> "두가지")
+  // 3단계: 숫자~숫자 범위 표현 → "숫자부터 숫자까지"
+  cleanText = cleanText.replace(/([\d.]+)\s*[~～]\s*([\d.]+)/g, '$1부터 $2까지');
+
+  // 4단계: 단위 발음 변환 (mm → 밀리미터, g/cm³ → 그램 퍼 세제곱센티미터 등)
+  cleanText = applyUnitPronunciation(cleanText);
+
+  // 5단계: 단위 명사 발음 패치 ("2가지" -> "두가지")
   cleanText = cleanText.replace(/(\d+)\s*가지/g, function(match, p1) {
     const numMap = { '1': '한', '2': '두', '3': '세', '4': '네', '5': '다섯', '6': '여섯', '7': '일곱', '8': '여덟', '9': '아홉', '10': '열' };
     return (numMap[p1] || p1) + '가지';
   });
 
-  // 4단계: 문제 번호 중복 발음 차단 정규화 (사십삼삼 방지)
+  // 6단계: 문제 번호 중복 발음 차단 정규화 (사십삼삼 방지)
   cleanText = cleanText.replace(/문제\s*(\d+)번?/g, function(match, p1) {
     return '문제 ' + numberToKorean(p1) + '번';
   });
@@ -873,16 +1069,45 @@ function startQueuePlayback() {
 
 function playSectionAudio() {
   stopSpeaking();
-  if (currentTabIdx > 4) {
-    alert('Ⅰ파트부터 Ⅴ파트까지의 문제 메뉴를 선택하신 후 실행해 주세요.');
+  // 핵심요약 탭 → 요약 읽기로 자동 연결
+  if (currentTabIdx === 6) { playSummaryAudio(); return; }
+  // 암기카드 탭 → 암기카드 읽기
+  if (currentTabIdx === 5) {
+    const items = [];
+    document.querySelectorAll('#sec5 .flash-card').forEach(card => {
+      const front = (card.querySelector('[data-front]') || {}).dataset.front || '';
+      const back  = (card.querySelector('[data-back]')  || {}).dataset.back  || '';
+      if (front) items.push(
+        applyUnitPronunciation(front.replace(/([\d.]+)\s*[~～]\s*([\d.]+)/g,'$1부터 $2까지'))
+        + '.  정답은,  '
+        + applyUnitPronunciation(back.replace(/([\d.]+)\s*[~～]\s*([\d.]+)/g,'$1부터 $2까지'))
+        + '.'
+      );
+    });
+    if (!items.length) { alert('읽을 내용이 없습니다.'); return; }
+    const statusDiv = document.getElementById('audioStatus');
+    statusDiv.style.display = 'block';
+    let idx = 0; isContinuousPlaying = true; isPaused = false;
+    function readNext() {
+      if (!isContinuousPlaying || idx >= items.length) {
+        statusDiv.innerText = '🎉 암기카드 읽기 완료!';
+        setTimeout(() => { statusDiv.style.display = 'none'; }, 2500);
+        isContinuousPlaying = false; return;
+      }
+      statusDiv.innerText = '★ 암기카드 [' + (idx+1) + '/' + items.length + '] 읽는 중';
+      const rate = parseFloat(document.getElementById('ttsRate').value) || 1.0;
+      const u = new SpeechSynthesisUtterance(items[idx]);
+      u.lang='ko-KR'; u.rate=rate*0.85; u.volume=1.0;
+      u.onend  = () => { if (isContinuousPlaying && !isPaused) { idx++; setTimeout(readNext, 600); } };
+      u.onerror = () => { idx++; setTimeout(readNext, 200); };
+      window.speechSynthesis.speak(u);
+    }
+    readNext();
     return;
   }
   audioQueue = QUESTIONS.filter(q => q.cat === currentTabIdx);
   queueIndex = 0;
-  if(audioQueue.length === 0) {
-    alert('해당 메뉴에 로드된 문제가 없습니다.');
-    return;
-  }
+  if (audioQueue.length === 0) { alert('해당 메뉴에 로드된 문제가 없습니다.'); return; }
   startQueuePlayback();
 }
 
@@ -890,10 +1115,91 @@ function playAllAudio() {
   stopSpeaking();
   allOpen = true;
   document.querySelectorAll('.q-card').forEach(c=>c.classList.add('open'));
-  
   audioQueue = [...QUESTIONS];
   queueIndex = 0;
   startQueuePlayback();
+}
+
+// ── 핵심요약 탭 음성 읽기 ──────────────────────────────
+function playSummaryAudio() {
+  stopSpeaking();
+
+  // 핵심요약 탭으로 자동 이동
+  showTab(6);
+
+  const sec = document.getElementById('sec6');
+  if (!sec) { alert('핵심요약 내용을 찾을 수 없습니다.'); return; }
+
+  // 각 note-box를 순서대로 읽기용 텍스트 리스트로 변환
+  const summaryQueue = [];
+
+  sec.querySelectorAll('.note-box').forEach(box => {
+    // 제목
+    const titleEl = box.querySelector('.note-title');
+    if (titleEl) {
+      const title = titleEl.innerText.replace(/[💡🌱🍂🌿🌾📋★⚡🔊🌍]/g, '').trim();
+      summaryQueue.push({ label: title, text: title + '.' });
+    }
+    // 표 행
+    box.querySelectorAll('.note-table tr').forEach(tr => {
+      const cells = tr.querySelectorAll('td');
+      if (cells.length >= 2) {
+        const k = cells[0].innerText.trim();
+        const v = cells[1].innerText.trim();
+        summaryQueue.push({ label: k, text: k + '는, ' + v + '.' });
+      }
+    });
+    // note-key 텍스트 (박스 단위로 묶어서 읽기)
+    box.querySelectorAll('.note-key').forEach(nk => {
+      // innerText 로 읽되 HTML 태그·특수문자 정리
+      let raw = nk.innerHTML
+        .replace(/<br\s*\/?>/gi, '. ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/[✅☑□✓]/g, '')
+        .replace(/[🟡🔴🔵🟠🕷🐜🍄🌾💧🦆🐌]/g, '')
+        .replace(/❌/g, '안됨. ')
+        .replace(/&lt;/g, '미만 ').replace(/&gt;/g, '초과 ')
+        .replace(/\s{2,}/g, ' ').trim();
+      if (raw.length > 5) summaryQueue.push({ label: '상세내용', text: raw });
+    });
+  });
+
+  if (!summaryQueue.length) { alert('읽을 내용이 없습니다.'); return; }
+
+  const statusDiv = document.getElementById('audioStatus');
+  statusDiv.style.display = 'block';
+
+  let idx = 0;
+  isContinuousPlaying = true;
+  isPaused = false;
+
+  function readNext() {
+    if (!isContinuousPlaying || idx >= summaryQueue.length) {
+      statusDiv.innerText = '🎉 핵심요약 읽기 완료!';
+      setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+      isContinuousPlaying = false;
+      return;
+    }
+    const item = summaryQueue[idx];
+    statusDiv.innerText = '📓 핵심요약 읽는 중 [' + (idx+1) + '/' + summaryQueue.length + '] ' + item.label;
+
+    const rate = parseFloat(document.getElementById('ttsRate').value) || 1.0;
+    let txt = item.text
+      .replace(/\(\s*[A-Za-z가-힣\/\-\.%~℃]+\s*\)/g, '')       // 괄호 안 영어/한자 제거
+      .replace(/([\d.]+)\s*[~～]\s*([\d.]+)/g, '$1부터 $2까지') // 숫자~숫자 → 부터~까지
+      .replace(/\s{2,}/g, ' ').trim();
+    txt = applyUnitPronunciation(txt); // 단위 발음 변환
+
+    const u = new SpeechSynthesisUtterance(txt);
+    u.lang = 'ko-KR';
+    u.rate = rate * 0.85;  // 요약은 약간 느리게 (60대 청취 편의)
+    u.volume = 1.0;
+    u.onend  = () => { if (isContinuousPlaying && !isPaused) { idx++; setTimeout(readNext, 400); } };
+    u.onerror = () => { idx++; setTimeout(readNext, 200); };
+    window.speechSynthesis.speak(u);
+  }
+
+  readNext();
 }
 
 function toggleCard(n) {
@@ -927,6 +1233,116 @@ function toggleAll() {
   allOpen = !allOpen;
   document.querySelectorAll('.q-card').forEach(c=>c.classList.toggle('open',allOpen));
   document.querySelector('.action-bar button:nth-child(2)').textContent = allOpen ? '📖 전체접기' : '📖 전체펼치기';
+}
+
+// ── 인쇄 함수 ─────────────────────────────────────────────
+
+const TAB_NAMES = ['Ⅰ. 토양 (1~40번)', 'Ⅱ. 퇴비 (41~80번)', 'Ⅲ. 유기적 재배관리 (81~120번)',
+                   'Ⅳ. 유기작물 재배 (121~160번)', 'Ⅴ. 유기농업 생산·인증 (161~200번)',
+                   '핵심 암기카드', '📓 핵심 요약 노트'];
+
+let _printMode = 'section'; // 'section' | 'all' | 'summary'
+
+// 메뉴별 인쇄 버튼 → 핵심요약이면 바로 인쇄, 아니면 옵션 모달
+function printSection() {
+  if (currentTabIdx === 6) {
+    // 핵심요약: 옵션 없이 화면 그대로 바로 인쇄
+    executeSummaryPrint();
+    return;
+  }
+  _printMode = 'section';
+  document.getElementById('printScopeInfo').textContent =
+    '현재 탭: ' + TAB_NAMES[currentTabIdx];
+  document.querySelector('input[name="printAnswer"][value="with"]').checked = true;
+  document.getElementById('printModal').classList.add('open');
+}
+
+// 전체 인쇄 버튼 → 옵션 모달 (핵심요약 포함 여부 선택)
+function printAll() {
+  _printMode = 'all';
+  document.getElementById('printScopeInfo').textContent =
+    '전체 200문제 + 암기카드 + 핵심요약';
+  document.querySelector('input[name="printAnswer"][value="with"]').checked = true;
+  document.getElementById('printModal').classList.add('open');
+}
+
+function closePrintModal() {
+  document.getElementById('printModal').classList.remove('open');
+}
+
+// 인쇄 실행 (모달 확인 버튼)
+function executePrint() {
+  closePrintModal();
+  const withAnswer = document.querySelector('input[name="printAnswer"]:checked').value === 'with';
+  const sections   = document.querySelectorAll('.section');
+  const ph         = document.getElementById('printHeader');
+
+  if (_printMode === 'section') {
+    // ── 현재 탭만 ───────────────────────────────────────
+    const sec = sections[currentTabIdx];
+    sec.querySelectorAll('.q-card').forEach(card => {
+      card.classList.add('open');
+      // 빈 칸 요소 생성 (아직 없으면)
+      if (!card.querySelector('.answer-blank')) {
+        const blank = document.createElement('div');
+        blank.className = 'answer-blank';
+        card.appendChild(blank);
+      }
+      card.classList.toggle('print-hide-answer', !withAnswer);
+    });
+    sections.forEach((s, i) => s.classList.toggle('print-target', i === currentTabIdx));
+    ph.textContent = '🌱 유기농업기능사 실기 — ' + TAB_NAMES[currentTabIdx]
+                   + (withAnswer ? '' : '  [문제만]');
+
+    window.print();
+
+    // 원상 복원
+    sec.querySelectorAll('.q-card').forEach(card => {
+      card.classList.remove('print-hide-answer');
+      card.classList.toggle('open', allOpen);
+    });
+    sections.forEach(s => s.classList.remove('print-target'));
+
+  } else {
+    // ── 전체 ────────────────────────────────────────────
+    document.querySelectorAll('.q-card').forEach(card => {
+      card.classList.add('open');
+      if (!card.querySelector('.answer-blank')) {
+        const blank = document.createElement('div');
+        blank.className = 'answer-blank';
+        card.appendChild(blank);
+      }
+      card.classList.toggle('print-hide-answer', !withAnswer);
+    });
+    sections.forEach(s => s.classList.add('print-target'));
+    ph.textContent = '🌱 유기농업기능사 실기 200문제 — 전체'
+                   + (withAnswer ? '' : '  [문제만]');
+
+    window.print();
+
+    // 원상 복원
+    document.querySelectorAll('.q-card').forEach(card => {
+      card.classList.remove('print-hide-answer');
+      card.classList.toggle('open', allOpen);
+    });
+    sections.forEach(s => s.classList.remove('print-target'));
+  }
+
+  ph.textContent = '🌱 유기농업기능사 실기 200문제';
+}
+
+// 핵심요약 화면 그대로 인쇄 (답 옵션 없음)
+function executeSummaryPrint() {
+  const sections = document.querySelectorAll('.section');
+  const ph = document.getElementById('printHeader');
+
+  sections.forEach((s, i) => s.classList.toggle('print-target', i === 6));
+  ph.textContent = '🌱 유기농업기능사 실기 — 📓 핵심 요약 노트';
+
+  window.print();
+
+  sections.forEach(s => s.classList.remove('print-target'));
+  ph.textContent = '🌱 유기농업기능사 실기 200문제';
 }
 
 // 랜덤 퀴즈 셋
