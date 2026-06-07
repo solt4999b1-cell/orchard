@@ -404,10 +404,29 @@ function selectBird(name){
         <span class="pdf-img-bar-title">도감 그림</span>
         <span class="pdf-img-bar-sub">p.${b.page} · 클릭하면 원본 크기로 🔍</span>
       </div>
-      <img class="pdf-thumb" src="${pageImg}"
-           alt="${b.name}" onclick="showLb(this.src,'${b.name}')">
+      <img class="pdf-thumb" id="birdImgEl" src=""
+           alt="${b.name}" onclick="showLb(this.src,'${b.name}')"
+           style="min-height:80px;background:#f0f0f0">
       <div class="pdf-img-caption">야외원색도감 한국의 새 · 이사부·구태호·박진영 지음</div>
     </div>`:'';
+
+  // fetch로 이미지 로드 (file:// CORS 우회, 데스크탑/모바일 모두 작동)
+  if(pageImg){
+    fetch(pageImg)
+      .then(r=>r.blob())
+      .then(blob=>{
+        const el=document.getElementById('birdImgEl');
+        if(el){
+          const blobUrl=URL.createObjectURL(blob);
+          el.src=blobUrl;
+          el.onclick=()=>showLb(blobUrl,el.alt);
+        }
+      })
+      .catch(()=>{
+        const el=document.getElementById('birdImgEl');
+        if(el){ el.src=pageImg; }
+      });
+  }
 
   const bLinks = (b.links || []).slice(0, 3); // 최대 3개
 
@@ -442,7 +461,6 @@ function selectBird(name){
       <iframe
         src="${lnk.replace(/\/view.*/, '/preview')}"
         allow="autoplay"
-        sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
         style="width:100%;height:80px;border:none;border-radius:10px;display:block;background:#000;margin-top:4px;margin-bottom:${bLinks.length>1&&i<bLinks.length-1?'10px':'0'}"></iframe>
     `).join('')}
   </div>`;
