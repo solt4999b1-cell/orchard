@@ -397,6 +397,7 @@ function selectBird(name){
   selBird=b;renderList();
 
   const pageImg=b.page?PAGE_IMGS[String(b.page)]:null;
+  // 이미지: 템플릿 안에서 src 직접 설정 (getElementById 타이밍 문제 없음)
   const imgHtml=pageImg?`
     <div class="pdf-img-wrap">
       <div class="pdf-img-bar">
@@ -404,20 +405,11 @@ function selectBird(name){
         <span class="pdf-img-bar-title">도감 그림</span>
         <span class="pdf-img-bar-sub">p.${b.page} · 클릭하면 원본 크기로 🔍</span>
       </div>
-      <img class="pdf-thumb" id="birdImgEl" src=""
-           alt="${b.name}" onclick="showLb(this.src,'${b.name}')"
-           style="min-height:80px;background:#f0f0f0">
+      <img class="pdf-thumb" src="${pageImg}"
+           alt="${b.name}"
+           onclick="showLb('${pageImg}','${b.name}')">
       <div class="pdf-img-caption">야외원색도감 한국의 새 · 이사부·구태호·박진영 지음</div>
-    </div>`:'';
-
-  // 이미지 직접 로드 (img src 직접 대입 - WKWebView 호환)
-  if(pageImg){
-    const el=document.getElementById('birdImgEl');
-    if(el){
-      el.src=pageImg;
-      el.onclick=()=>showLb(pageImg,el.alt);
-    }
-  }
+    </div>`:''
 
   const bLinks = (b.links || []).slice(0, 3); // 최대 3개
 
