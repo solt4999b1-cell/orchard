@@ -336,12 +336,12 @@ function parseAli(raw){
 }
 
 // ===== G마켓 parser (space-tolerant, anchor on 주문상세) =====
-const GM_DATE = /(\d{4})\.(\d{1,2})\.(\d{1,2})\s*주문상세/;
+const GM_DATE = /(\d{4})\.(\d{1,2})\.(\d{1,2})(?:\s*주문상세)?/;
 const GM_AMT = /([\d,]+)\s*원\s*\/\s*(\d+)\s*개/;
 const GM_QTY = /원\s*\/\s*(\d+)\s*개/;
 const GM_STATUS = /(취소완료|배송완료|배송중|구매확정|반품|교환|배송준비)/;
 
-function isGmarket(raw){ return /주문상세/.test(raw) && /주문번호\s*\d{8,}/.test(raw) && /원\s*\/\s*\d+\s*개/.test(raw); }
+function isGmarket(raw){ return /주문번호\s*\d{8,}/.test(raw) && /원\s*\/\s*\d+\s*개/.test(raw) && /\d{4}\.\d{1,2}\.\d{1,2}/.test(raw); }
 
 function gmIsNoise(l){
   if(/Tel\s*:|Fax\s*:|Mail\s*:|사업자등록|통신판매업|대표이사|Copyright|gmarket@|소비자분쟁|호스팅|주식회사지마켓은/.test(l)) return true;
@@ -636,7 +636,7 @@ async function exportXlsx(){
   const CARDBG='FFEAF2EC';
   const PLACES=["알리익스프레스","네이버","현장구매","11번가","G-Market"];
   const ws3=wb.addWorksheet('분석보고서',{views:[{showGridLines:false}]});
-  ws3.columns=[{width:3},{width:20},{width:9},{width:15},{width:30},{width:9},{width:3}];
+  ws3.columns=[{width:3},{width:18},{width:11},{width:13},{width:22},{width:11},{width:11},{width:13}];
   let R=1;
   // Title
   ws3.mergeCells(R,2,R,6);
@@ -756,6 +756,105 @@ async function exportXlsx(){
   ws3.addConditionalFormatting({ref:`D${pStart}:D${pStart+PLACES.length-1}`,
     rules:[{type:'colorScale',cfvo:[{type:'min'},{type:'max'}],color:[{argb:'FFEAF2EC'},{argb:'FF2F6B4F'}]}]});
 
+  // Section C: 주문처별 분류 분석 (cross-tab matrix, 금액 기준)
+  let RC = pTotRow + 3;
+  ws3.mergeCells(RC,2,RC,8);
+  const hC=ws3.getCell(RC,2); hC.value='■ 주문처별 분류 분석 (금액 기준)';
+  hC.font={name:FONT,bold:true,size:13,color:{argb:INK}}; ws3.getRow(RC).height=24; RC++;
+  const PSHORT=["알리","네이버","현장","11번가","G마켓"];
+  ws3.getCell(RC,2).value='분류';
+  PSHORT.forEach((p,i)=>ws3.getCell(RC,3+i).value=p);
+  ws3.getCell(RC,8).value='합계';
+  for(let col=2;col<=8;col++){
+    const c=ws3.getCell(RC,col);
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.alignment={horizontal:col===2?'left':'center',vertical:'middle'};
+    c.border={bottom:{style:'thin',color:{argb:ACCENT}}};
+  }
+  ws3.getRow(RC).height=20; RC++;
+  const mStart=RC;
+  const Dm=`전체주문내역!$D$${first}:$D$${last}`, Gm=`전체주문내역!$G$${first}:$G$${last}`, Hm=`전체주문내역!$H$${first}:$H$${last}`;
+  CATS.forEach((cat,idx)=>{
+    const rr=mStart+idx;
+    ws3.getCell(rr,2).value=cat;
+    PLACES.forEach((p,pi)=>{
+      ws3.getCell(rr,3+pi).value=nData?{formula:`SUMIFS(${Gm},${Dm},$B${rr},${Hm},"${p}")`}:0;
+    });
+    ws3.getCell(rr,8).value=nData?{formula:`SUM(C${rr}:G${rr})`}:0;
+    const stripe=idx%2===1;
+    for(let col=2;col<=8;col++){
+      const cell=ws3.getCell(rr,col);
+      cell.font={name:FONT,size:9.5,color:{argb:INK},bold:col===8};
+      cell.alignment={vertical:'middle',horizontal:col===2?'left':'right'};
+      cell.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(stripe) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+      if(col>=3) cell.numFmt='#,##0;;"-"';
+    }
+    ws3.getRow(rr).height=15;
+  });
+  const mTot=mStart+CATS.length;
+  ws3.getCell(mTot,2).value='합계';
+  for(let pi=0;pi<PLACES.length;pi++){
+    const colL=String.fromCharCode(67+pi); // C,D,E,F,G
+    ws3.getCell(mTot,3+pi).value={formula:`SUM(${colL}${mStart}:${colL}${mTot-1})`};
+  }
+  ws3.getCell(mTot,8).value={formula:`SUM(H${mStart}:H${mTot-1})`};
+  for(let col=2;col<=8;col++){
+    const cell=ws3.getCell(mTot,col);
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
+    cell.font={name:FONT,bold:true,size:10,color:{argb:'FFFFFFFF'}};
+    cell.alignment={vertical:'middle',horizontal:col===2?'left':'right'};
+    if(col>=3) cell.numFmt='#,##0;;"-"';
+  }
+  // heatmap over the matrix body so dominant cells stand out
+  ws3.addConditionalFormatting({ref:`C${mStart}:G${mTot-1}`,
+    rules:[{type:'colorScale',cfvo:[{type:'num',value:0},{type:'max'}],
+      color:[{argb:'FFFFFFFF'},{argb:'FF2F6B4F'}]}]});
+
+  // Section D: 주문처별 최다 구입 분류 (text summary)
+  let RD = mTot + 3;
+  ws3.mergeCells(RD,2,RD,8);
+  const hD=ws3.getCell(RD,2); hD.value='■ 주문처별 최다 구입 분류';
+  hD.font={name:FONT,bold:true,size:13,color:{argb:INK}}; ws3.getRow(RD).height=24; RD++;
+  ['주문처','최다 구입 분류','금액(₩)','주문처 내 비중'].forEach((t,i)=>{
+    const colMap=[2,3,6,7];
+    if(i===1) ws3.mergeCells(RD,3,RD,5);
+    if(i===2) {} // single
+    const c=ws3.getCell(RD,colMap[i]); c.value=t;
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.alignment={horizontal:i===0?'left':(i===1?'left':'center'),vertical:'middle'};
+  });
+  // fill header fills across merged area
+  for(const col of [4,5,8]){ const c=ws3.getCell(RD,col); c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}}; }
+  ws3.getRow(RD).height=20; RD++;
+  // matrix place columns are C..G at rows mStart..mTot-1; category labels in B
+  const catColRange=`$B$${mStart}:$B$${mTot-1}`;
+  PLACES.forEach((p,pi)=>{
+    const colL=String.fromCharCode(67+pi); // C..G
+    const valRange=`${colL}$${mStart}:${colL}$${mTot-1}`;
+    const rr=RD+pi;
+    ws3.getCell(rr,2).value=PSHORT[pi];
+    ws3.mergeCells(rr,3,rr,5);
+    // top category name for this place (by amount). If place total 0 -> "-"
+    ws3.getCell(rr,3).value=nData?{formula:`IF(SUM(${valRange})=0,"-",INDEX(${catColRange},MATCH(MAX(${valRange}),${valRange},0)))`}:'-';
+    ws3.getCell(rr,6).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange}))`}:0;
+    ws3.getCell(rr,7).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange})/SUM(${valRange}))`}:0;
+    const stripe=pi%2===1;
+    for(let col=2;col<=8;col++){
+      const cell=ws3.getCell(rr,col);
+      cell.font={name:FONT,size:10,color:{argb:INK},bold:col===2};
+      cell.alignment={vertical:'middle',horizontal:col===2?'left':(col===3?'left':'center')};
+      cell.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(stripe) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+    }
+    ws3.getCell(rr,6).numFmt='#,##0';
+    ws3.getCell(rr,6).alignment={vertical:'middle',horizontal:'right'};
+    ws3.getCell(rr,7).numFmt='0.0%';
+    ws3.getRow(rr).height=18;
+  });
+
   const buf = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
   const url = URL.createObjectURL(blob);
@@ -854,24 +953,29 @@ function normLine(s){
   return s.replace(/\s+/g,' ').trim();
 }
 
-async function extractPdf(file){
+async function extractPdfRaw(file){
   const buf = await file.arrayBuffer();
   const pdf = await pdfjsLib.getDocument({data:buf}).promise;
-  let text = '';
+  const pages = [];
   for(let p=1; p<=pdf.numPages; p++){
     const page = await pdf.getPage(p);
     const vp = page.getViewport({scale:1});
-    const pageWidth = vp.width;
     const content = await page.getTextContent();
-    const cut = pageWidth * 0.18; // drop left sidebar menu column
-    // collect items with x (transform[4]) and y (transform[5])
     const items = content.items
       .map(it=>({x:it.transform[4], y:it.transform[5], s:it.str}))
-      .filter(it=>it.s.trim() && it.x >= cut);
-    // cluster by y within tolerance (4px), top-to-bottom
-    items.sort((a,b)=> (b.y - a.y) || (a.x - b.x));
-    const rows = [];
-    let cur = [], cy = null;
+      .filter(it=>it.s.trim());
+    pages.push({width:vp.width, items});
+  }
+  return pages;
+}
+
+function buildText(pages, cutFrac){
+  let text='';
+  for(const pg of pages){
+    const cut = pg.width * cutFrac;
+    const items = pg.items.filter(it=>it.x >= cut).slice()
+      .sort((a,b)=> (b.y - a.y) || (a.x - b.x));
+    const rows=[]; let cur=[], cy=null;
     for(const it of items){
       if(cy===null || Math.abs(it.y - cy) <= 4){ cur.push(it); if(cy===null) cy=it.y; }
       else { rows.push(cur); cur=[it]; cy=it.y; }
@@ -884,6 +988,20 @@ async function extractPdf(file){
     text += '\n';
   }
   return text;
+}
+
+// Try both a sidebar-cut version (desktop layouts) and a no-cut version
+// (mobile/full-width layouts); return whichever parses into more orders.
+async function extractPdf(file){
+  const pages = await extractPdfRaw(file);
+  const variants = [buildText(pages, 0.18), buildText(pages, 0)];
+  let best = variants[0], bestN = -1;
+  for(const v of variants){
+    let n = 0;
+    try{ n = parseText(v).length; }catch(e){ n = 0; }
+    if(n > bestN){ bestN = n; best = v; }
+  }
+  return best;
 }
 
 // ---- events ----
