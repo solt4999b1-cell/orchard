@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>주문내역 → 엑셀 변환기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<style>
+  :root{
+    --ink:#1c2620; --ink-soft:#4a564e; --line:#d8ddd6;
+    --paper:#f6f4ed; --card:#ffffff; --accent:#2f6b4f; --accent-soft:#e7f0ea;
+    --warn:#b4612a; --warn-soft:#f6e9df;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    font-family:'Pretendard',-apple-system,'Malgun Gothic','맑은 고딕',sans-serif;
+    background:var(--paper); color:var(--ink); line-height:1.5;
+    -webkit-font-smoothing:antialiased; padding:0 16px;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:36px 0 80px}
+  header{margin-bottom:28px; border-bottom:2px solid var(--ink); padding-bottom:20px}
+  .eyebrow{font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--accent); font-weight:700; margin-bottom:8px}
+  h1{font-size:30px; font-weight:800; letter-spacing:-.02em}
+  .sub{color:var(--ink-soft); margin-top:8px; font-size:14.5px; max-width:640px}
+  .step{
+    background:var(--card); border:1px solid var(--line); border-radius:14px;
+    padding:22px 22px 24px; margin-top:18px;
+  }
+  .step-h{display:flex; align-items:baseline; gap:10px; margin-bottom:14px}
+  .step-n{
+    font-size:12px; font-weight:800; color:#fff; background:var(--accent);
+    width:22px; height:22px; border-radius:6px; display:grid; place-items:center; flex:0 0 auto;
+  }
+  .step-t{font-size:16px; font-weight:700}
+  .step-d{font-size:13px; color:var(--ink-soft); margin-left:auto; text-align:right}
+  textarea{
+    width:100%; min-height:150px; resize:vertical; padding:13px 14px;
+    border:1px solid var(--line); border-radius:10px; font-family:inherit;
+    font-size:13.5px; line-height:1.55; background:#fcfbf7; color:var(--ink);
+  }
+  textarea:focus{outline:2px solid var(--accent-soft); border-color:var(--accent)}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-top:12px}
+  .drop{
+    border:1.5px dashed var(--line); border-radius:10px; padding:18px;
+    text-align:center; color:var(--ink-soft); font-size:13.5px; cursor:pointer;
+    transition:.15s; background:#fcfbf7;
+  }
+  .drop:hover,.drop.over{border-color:var(--accent); background:var(--accent-soft); color:var(--accent)}
+  .drop b{color:var(--accent)}
+  button{
+    font-family:inherit; font-size:14px; font-weight:700; cursor:pointer;
+    border:1px solid var(--accent); background:var(--accent); color:#fff;
+    padding:10px 20px; border-radius:9px; transition:.15s;
+  }
+  button:hover{background:#255840}
+  button.ghost{background:#fff; color:var(--accent)}
+  button.ghost:hover{background:var(--accent-soft)}
+  button:disabled{opacity:.45; cursor:not-allowed}
+  .hint{font-size:12.5px; color:var(--ink-soft)}
+  table{width:100%; border-collapse:collapse; font-size:13px; margin-top:4px}
+  th,td{padding:8px 9px; border-bottom:1px solid var(--line); text-align:left; vertical-align:middle}
+  th{font-size:11px; letter-spacing:.04em; text-transform:uppercase; color:var(--ink-soft); font-weight:700; background:#fbfaf5; position:sticky; top:0}
+  td.num{text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap}
+  .tbl-scroll{max-height:430px; overflow:auto; border:1px solid var(--line); border-radius:10px; margin-top:6px}
+  select.cat{
+    font-family:inherit; font-size:12.5px; padding:5px 6px; border:1px solid var(--line);
+    border-radius:6px; background:#fff; color:var(--ink); max-width:160px;
+  }
+  select.cat.flagged{border-color:var(--warn); background:var(--warn-soft)}
+  .pname{max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+  .summary-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:10px; margin-top:8px}
+  .scard{border:1px solid var(--line); border-radius:10px; padding:11px 13px; background:#fbfaf5}
+  .scard .c-name{font-size:12px; font-weight:700; color:var(--ink); margin-bottom:5px}
+  .scard .c-amt{font-size:17px; font-weight:800; font-variant-numeric:tabular-nums}
+  .scard .c-meta{font-size:11.5px; color:var(--ink-soft); margin-top:2px}
+  .scard.empty{opacity:.45}
+  .totbar{
+    display:flex; gap:24px; flex-wrap:wrap; margin-top:16px; padding:14px 18px;
+    background:var(--ink); color:#fff; border-radius:11px;
+  }
+  .totbar .lab{font-size:11px; letter-spacing:.08em; text-transform:uppercase; opacity:.7}
+  .totbar .val{font-size:20px; font-weight:800; font-variant-numeric:tabular-nums}
+  .empty-state{color:var(--ink-soft); font-size:13.5px; padding:8px 2px}
+  .flag-note{font-size:12.5px; color:var(--warn); margin-top:10px; display:none}
+  .flag-note.show{display:block}
+  .fitem{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line);border-radius:9px;background:#fbfaf5;margin-bottom:6px;font-size:13px}
+  .fitem .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fitem .fmeta{font-size:12px;color:var(--accent);font-weight:700;white-space:nowrap}
+  .fitem .fmeta.err{color:var(--warn)}
+  .fitem .fmeta.pend{color:var(--ink-soft)}
+  .fitem .fx{cursor:pointer;color:var(--ink-soft);font-weight:700;padding:0 4px;border:none;background:none;font-size:15px}
+  .fitem .fx:hover{color:var(--warn)}
+  .src-pill{display:inline-block;font-size:11px;font-weight:700;padding:2px 7px;border-radius:5px;background:var(--accent-soft);color:var(--accent);margin-left:4px}
+  @media(max-width:640px){
+    h1{font-size:24px}
+    .pname{max-width:160px}
+    .step-d{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">농자재 주문 정리</div>
+    <h1>주문내역 → 엑셀 변환기</h1>
+    <p class="sub">네이버 마이쇼핑 · <b>알리익스프레스</b> · <b>G마켓</b> · <b>11번가</b> 주문 내역 <b>PDF를 그대로 올리거나</b>, 복사한 텍스트를 붙여넣으면 형식을 자동 인식해 분류·집계하고 두 장짜리 엑셀(전체주문내역 · 분류별요약)로 내보냅니다.</p>
+  </header>
+
+  <!-- STEP 1 -->
+  <section class="step">
+    <div class="step-h">
+      <span class="step-n">1</span>
+      <span class="step-t">PDF 올리기 (한 번에 최대 20개)</span>
+      <span class="step-d">여러 쇼핑몰 PDF를 한꺼번에 처리합니다</span>
+    </div>
+    <div class="drop" id="drop">주문내역 <b>PDF 파일 여러 개</b>(또는 .txt)를 끌어다 놓거나 <b>클릭해서 선택</b>하세요<br><span style="font-size:12px;opacity:.8">네이버 · 알리 · G마켓 · 11번가 형식을 자동 인식해 합칩니다</span></div>
+    <input type="file" id="file" accept=".pdf,.txt,application/pdf,text/plain" multiple hidden>
+    <div id="fileList" style="margin-top:12px"></div>
+    <div class="hint" id="fileStatus" style="margin-top:8px"></div>
+    <details style="margin-top:12px">
+      <summary style="cursor:pointer;font-size:13px;color:var(--ink-soft)">텍스트 직접 붙여넣기 (선택)</summary>
+      <textarea id="input" style="margin-top:10px" placeholder="PDF 대신 주문 텍스트를 붙여넣어도 됩니다."></textarea>
+      <button class="ghost" id="addTextBtn" style="margin-top:8px">붙여넣은 텍스트 추가</button>
+    </details>
+    <div class="row">
+      <button id="parseBtn">분석하기</button>
+      <button class="ghost" id="resetBtn">초기화</button>
+      <button class="ghost" id="sampleBtn">샘플 넣기</button>
+      <span class="hint" id="parseHint"></span>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step" id="reviewStep" style="display:none">
+    <div class="step-h">
+      <span class="step-n">2</span>
+      <span class="step-t">분류 확인 · 수정</span>
+      <span class="step-d">자동 분류가 애매하면 직접 바꿔주세요</span>
+    </div>
+    <div class="flag-note" id="flagNote"></div>
+    <div class="tbl-scroll">
+      <table id="tbl">
+        <thead><tr>
+          <th style="width:34px">No.</th>
+          <th style="width:84px">날짜</th>
+          <th>상품명</th>
+          <th style="width:170px">분류</th>
+          <th style="width:90px">금액(₩)</th>
+          <th style="width:72px">주문한 곳</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <div class="totbar">
+      <div><div class="lab">총 건수</div><div class="val" id="totCount">0</div></div>
+      <div><div class="lab">총 금액</div><div class="val" id="totAmt">0</div></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step" id="sumStep" style="display:none">
+    <div class="step-h">
+      <span class="step-n">3</span>
+      <span class="step-t">분류별 요약</span>
+    </div>
+    <div class="summary-grid" id="sumGrid"></div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="step" id="exportStep" style="display:none">
+    <div class="step-h">
+      <span class="step-n">4</span>
+      <span class="step-t">엑셀로 내보내기</span>
+    </div>
+    <p class="hint" style="margin-bottom:14px">전체주문내역 시트와 분류별요약 시트가 포함된 .xlsx 파일을 내려받습니다.</p>
+    <button id="exportBtn">엑셀 파일 다운로드</button>
+  </section>
+</div>
+
+<script>
+const CATS = ["관개/배관 부품","관수/수도","기타 농자재","농기계/공구","모종/종자","보안/모니터링",
+  "비료/농약","스마트 관개/센서","스마트 농기기","스마트농사","월동/서리방지","작업보호구",
+  "잡초방지/멀칭","지지대/결박재료","지지대/망","해충/동물 방제","화분/용기","화분/재배용기"];
+
+// keyword → category rules (order matters: first match wins)
+const RULES = [
+  [/보안\s*카메라|cctv|감시\s*카메라|방범|sim\s*카메라/i, "보안/모니터링"],
+  [/토양\s*(센서|테스터|측정|온도|습도)|온습도계|온도\s*및\s*습도|토양\s*수분/, "스마트 농기기"],
+  [/워터\s*타이머|관개\s*시스템|급수\s*타이머|관개\s*타이|관수\s*타이머|타이밍\s*컨트롤러|솔레노이드/, "스마트 관개/센서"],
+  [/점적|드립|스프링클러|스플리터|관개|급수\s*호스/, "관개/배관 부품"],
+  [/철근팩|말뚝|쇠말뚝|천막팩|로프팩|타프팩|스테이플|스테이크|스파이크/, "지지대/결박재료"],
+  [/펌프|압력스위치|개폐기|호스|수도꼭지|분배기|커넥터|커플러|밸브|연결(구|기)|조이너|어댑터|탭\b|전환기/, "관수/수도"],
+  [/니플|엘보|소켓|배관|아답타|부속|이음|피팅|닛불|캡|플러그|티\s*감속/, "관개/배관 부품"],
+  [/삽|호미|낫|가위|전정|예초|드릴|망치|스패너|렌치|괭이|쟁기|갈퀴|결속기|충전식|공구/, "농기계/공구"],
+  [/씨앗|종자|모종(?!\s*커버)|묘목|파종/, "모종/종자"],
+  [/카메라|모니터링|감시/i, "보안/모니터링"],
+  [/상토|배양토|퇴비|비료|농약|살충|살균|제초제|영양제|분무|복합비료|미량요소|칼슘|고토/, "비료/농약"],
+  [/모종\s*커버|서리\s*보호|방풍|동결|부동액|보온|월동|한랭사|방한|난방|수도꼭지\s*커버|절연\s*슬리브/, "월동/서리방지"],
+  [/멀칭(\s*비닐)?|참깨비닐|배색\s*비닐|흑색\s*비닐|잡초|방초|제초\s*매트/, "잡초방지/멀칭"],
+  [/차광|차양|자외선\s*차단|모자|마스크|장갑|고글|방독|작업복|장화|보호\s*안경|안전\s*안경/, "작업보호구"],
+  [/전기릴|전선릴|릴선|누전차단|차단기|콘센트|배선|전선/, "농기계/공구"],
+  [/지주|지지대|결박|유인끈|클립|타이\b/, "지지대/결박재료"],
+  [/유인망|줄기망|오이망|수박망|그물|보호망|메쉬\s*망|망\b/, "지지대/망"],
+  [/퇴치기|설치류|두더지|쥐\b|봉지|과수봉지|배봉지|포획기|트랩|기피|방조|방충|방제|포충/, "해충/동물 방제"],
+  [/화분|용기|포트|트레이|뿌리\s*제어|보육\s*냄비|컨테이너|냄비|대형\s*화분/, "화분/재배용기"],
+];
+
+function classify(name){
+  for(const [re,cat] of RULES){ if(re.test(name)) return [cat, false]; }
+  return ["기타 농자재", true]; // flagged = needs review
+}
+
+let rows = []; // {no,status,date,name,seller,amount,place,note,cat,flagged}
+
+const $ = id => document.getElementById(id);
+
+// noise lines to skip when looking for product name / amount
+const NOISE = /^(상세보기|판매자정보|취소요청|영수증조회|배송지변경|발송준비|배송시작|배송중|도착예정|구매확정|배송조회|반품요청|리뷰쓰기|바로\s*구매|장바구니|네이버페이|카테고리|마이쇼핑|찜한|최근|관심|정기구독|무료체험|상품\s*Q|리뷰\s*작성|작성\s*가능|내가\s*작성|주문\/배송|검색어|전체\s*[\d,]+원\s*적립|자주\s*구매|\d+번\s*구매|배워보자|총\s*\d+건\s*주문|더보기|처음|마지막|네이버파이|로그아웃|쇼핑&|약관|개인정보|신용정보|광고&|^M$|^\d+$)/;
+
+const STATUS = /(상품준비중|결제완료|배송중|구매확정완료|구매확정|배송완료|취소|반품|교환)/;
+const ORDER_LINE = /(\d{1,2})\.\s*(\d{1,2})\.?\s.*?주문/;
+const AMT_LINE = /^[\s]*총?\s*([\d,]+)\s*원/;
+
+function parseNaver(raw){
+  const out = [];
+  const lines = raw.replace(/\r/g,'').split('\n')
+    .map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+
+  let lastStatus = "";
+  for(let i=0; i<lines.length; i++){
+    const line = lines[i];
+    const sm = line.match(STATUS);
+    if(sm && line.length < 12) lastStatus = sm[1];
+
+    const om = line.match(ORDER_LINE);
+    if(!om) continue;
+    const date = `${om[1]}.${om[2]}.`;
+
+    let name = '';
+    let afterOrder = line.split('주문').slice(1).join('주문').trim();
+    afterOrder = afterOrder.replace(/^\s*[:：]?\s*/,'');
+    if(afterOrder && afterOrder.length > 4 && !/^\d/.test(afterOrder) && !NOISE.test(afterOrder)){
+      name = afterOrder;
+    }
+
+    let j = i+1;
+    if(!name){
+      while(j<lines.length){
+        const c = lines[j];
+        if(NOISE.test(c) || STATUS.test(c) && c.length<12 || ORDER_LINE.test(c) || AMT_LINE.test(c)){ j++; continue; }
+        name = c; j++; break;
+      }
+    }
+    if(!name) continue;
+    name = name.replace(/\s*총\s*\d+건.*$/,'').trim();
+
+    let amount = null;
+    const inAmt = name.match(/([\d,]+)\s*원/);
+    if(inAmt){ amount = parseInt(inAmt[1].replace(/,/g,'')); name = name.replace(/([\d,]+)\s*원.*/,'').trim(); }
+    if(amount==null){
+      for(let k=j; k<Math.min(j+5, lines.length); k++){
+        const am = lines[k].match(AMT_LINE);
+        if(am){ amount = parseInt(am[1].replace(/,/g,'')); break; }
+        if(ORDER_LINE.test(lines[k])) break;
+      }
+    }
+    if(amount==null) continue;
+    out.push({date, name, amount, status:lastStatus, seller:"", place:"네이버"});
+  }
+
+  return out.map((o,i)=>{
+    const [cat,flagged] = classify(o.name);
+    return {no:i+1, status:o.status||"", date:o.date, name:o.name, seller:o.seller, amount:o.amount,
+            place:o.place, note:"", cat, flagged};
+  });
+}
+
+// ===== AliExpress parser =====
+// ===== AliExpress parser (space-tolerant, anchor on 총금액) =====
+const ALI_DATE = /주문일자\s*::?\s*(\d{4})\s*년\s*(\d{1,2})\s*월\s*(\d{1,2})\s*일/;
+const ALI_TOTAL = /총\s*금액\s*::?\s*₩\s*(\d[\d,\s]*\d|\d)/;
+const ALI_STORELINE = /\b(Store|Mall)\s*$/;
+
+function isAli(raw){
+  return /주문일자\s*::?\s*\d{4}\s*년/.test(raw) || /총\s*금액\s*::?\s*₩/.test(raw) || /AliExpress/i.test(raw);
+}
+
+function aliCleanName(s){
+  return s.replace(/….*$/,'')
+          .replace(/\s*총\s*금액.*$/,'')
+          .replace(/^\s*(완료|취소|배송\s*중|환불|처리\s*중)\s*/,'')
+          .replace(/배송완료확인.*$/,'')
+          .trim();
+}
+function aliStore(line){
+  // take the trailing run ending with Store/Mall, dropping any leading noise tokens
+  const m = line.match(/([A-Za-z0-9][\w&.''\-]*(?:\s+[\w&.''\-]+)*\s+(?:Store|Mall))\s*$/);
+  let s = m ? m[1] : line;
+  return s.replace(/\s*(Store|Mall)\s*$/,'').trim();
+}
+
+function parseAli(raw){
+  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const out=[];
+  let lastDate='', lastStore='', lastStatus='';
+  for(let i=0;i<lines.length;i++){
+    const l = lines[i];
+    const dm = l.match(ALI_DATE);
+    if(dm){
+      lastDate = `${dm[1]}.${parseInt(dm[2])}.${parseInt(dm[3])}.`;
+      const stm = l.match(/^(완료|취소|배송\s*중|환불)/);
+      if(stm) lastStatus = stm[1].replace(/\s/g,'');
+    }
+    if(ALI_STORELINE.test(l)) lastStore = aliStore(l);
+    const tm = l.match(ALI_TOTAL);
+    if(tm){
+      const total = parseInt(tm[1].replace(/[\s,]/g,''));
+      let name = aliCleanName(l.split(/총\s*금액/)[0]);
+      if(name.length < 4){
+        for(let b=i-1;b>=Math.max(0,i-3);b--){
+          if(ALI_STORELINE.test(lines[b]) || ALI_DATE.test(lines[b])) continue;
+          const c = aliCleanName(lines[b]);
+          if(c.length>4){ name=c; break; }
+        }
+      }
+      if(name.length>=4){
+        const [cat,flagged]=classify(name);
+        out.push({no:0, status:lastStatus, date:lastDate, name, seller:lastStore,
+                  amount:total, place:"알리익스프레스", note:"", cat, flagged});
+      }
+    }
+  }
+  out.forEach((o,idx)=>o.no=idx+1);
+  return out;
+}
+
+// ===== G마켓 parser (space-tolerant, anchor on 주문상세) =====
+const GM_DATE = /(\d{4})\.(\d{1,2})\.(\d{1,2})\s*주문상세/;
+const GM_AMT = /([\d,]+)\s*원\s*\/\s*(\d+)\s*개/;
+const GM_QTY = /원\s*\/\s*(\d+)\s*개/;
+const GM_STATUS = /(취소완료|배송완료|배송중|구매확정|반품|교환|배송준비)/;
+
+function isGmarket(raw){ return /주문상세/.test(raw) && /주문번호\s*\d{8,}/.test(raw) && /원\s*\/\s*\d+\s*개/.test(raw); }
+
+function gmIsNoise(l){
+  if(/Tel\s*:|Fax\s*:|Mail\s*:|사업자등록|통신판매업|대표이사|Copyright|gmarket@|소비자분쟁|호스팅|주식회사지마켓은/.test(l)) return true;
+  const x = l.replace(/[\s\d().,%/원개\-]/g,'')
+             .replace(/(주문상세|취소정보|상품평|배송조회|문의하기|제품명|색상|구분|주문번호|일반|프리미엄|배송주소록관리|개인정보설정|고객센터|이벤트인증번호등록|등록하기|환불예정금|관심상품매장|선물함|쿠폰이벤트|문의내역쪽지함|상담신청내역|항공권|여행호텔|자주구매한상품|번호를입력해주세요|취소완료|배송완료|배송중|구매확정|비닐폭사이즈|영수증계산서조회|주문상품의정보를입력하세요조회하기)/g,'');
+  return x.length<4;
+}
+
+function parseGmarket(raw){
+  const lines = raw.replace(/\r/g,'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const out=[];
+  // find amount anchors: "금액원/수량개주문번호" or split "정 금액 / 수량주문번호"
+  for(let i=0;i<lines.length;i++){
+    let amount=null, qty=1;
+    const full=lines[i].match(/([\d,]{2,})\s*원\s*\/\s*(\d+)\s*개/);
+    const split=lines[i].match(/([\d,]{2,})\s*\/\s*(\d)\d{8,}/); // "38,370 / 34419341878"
+    if(full){ amount=parseInt(full[1].replace(/,/g,'')); qty=parseInt(full[2]); }
+    else if(split && /원\s*개\s*주문번호/.test(lines[i+1]||'')){ amount=parseInt(split[1].replace(/,/g,'')); qty=parseInt(split[2]); }
+    else continue;
+    // date: nearest preceding 주문상세 line
+    let date='';
+    for(let b=i;b>=0;b--){ const dm=lines[b].match(GM_DATE); if(dm){ date=`${dm[1]}.${parseInt(dm[2])}.${parseInt(dm[3])}.`; break; } }
+    // product name: nearest preceding non-noise Korean line
+    let name='', status='';
+    for(let b=i-1;b>=Math.max(0,i-8);b--){
+      const sm=lines[b].match(GM_STATUS); if(sm && !status) status=sm[1];
+      let l=lines[b].replace(/^(배송완료|취소완료|배송조회|배송중|구매확정)+/,'').trim();
+      if(/[가-힣A-Za-z]/.test(l) && !gmIsNoise(l) && !/주문번호/.test(l) && !/^\(/.test(l) && !GM_DATE.test(l)){
+        const clean=l.replace(/\(0\s*원\).*$/,'').replace(/문의하기.*$/,'').replace(/제품명.*$/,'').trim();
+        if(clean.length>5 && !/^(정|장|지함|관리|터|하기|주세요|번호등록)/.test(clean)){ name=clean; break; }
+      }
+    }
+    if(name && amount!=null){
+      // forward-scan status if not found backward
+      if(!status){ for(let f=i;f<Math.min(i+3,lines.length);f++){ const sm=lines[f].match(GM_STATUS); if(sm){status=sm[1];break;} } }
+      const [cat,flagged]=classify(name);
+      out.push({no:0, status, date, name, seller:"", amount, place:"G-Market", note:"", cat, flagged});
+    }
+  }
+  out.forEach((o,idx)=>o.no=idx+1);
+  return out;
+}
+
+// ===== 11번가 parser =====
+const ST_QTY = /\((\d+)\s*개\)/;
+const ST_DATE = /(\d{4})-(\d{1,2})-(\d{1,2})/;
+const ST_STATUS = /(구매확정|배송완료|배송중|취소|반품|교환|배송준비|결제완료)/;
+
+function is11st(raw){ return /11번가/.test(raw) || /주문일자\s*주문\s*상품정보/.test(raw) || /상품금액\(수량\)/.test(raw) || /구매확정\/리뷰작성대기/.test(raw); }
+
+function st11Prep(raw){
+  raw = raw.replace(/\(\s*\d{10,}\s*\n\s*\d+\s*\)/g,' ');
+  let lines = raw.replace(/\r/g,'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  lines = lines.map(l=>{
+    // detach a product price glued right after a 16-digit (date-prefixed) order number
+    l = l.replace(/20\d{14}(?=\d{1,3},\d{3}\s*원)/g,' ');
+    // remove any remaining long order numbers
+    l = l.replace(/\(?20\d{13,17}\)?/g,' ');
+    return l.replace(/^\s*\d{1,3}\)\s*/,'').replace(/\(\s*\)/g,' ').replace(/\s+/g,' ').trim();
+  }).filter(Boolean);
+  return lines;
+}
+function st11FirstPrice(line){
+  if((line.match(/원/g)||[]).length >= 3) return null; // skip recommended-items rows
+  const m = line.match(/(\d{1,3}(?:,\d{3})+|\d{4,6})\s*원/);
+  return m ? parseInt(m[1].replace(/,/g,'')) : null;
+}
+
+function parse11st(raw){
+  const lines = st11Prep(raw);
+  const out=[];
+  for(let i=0;i<lines.length;i++){
+    const qm=lines[i].match(ST_QTY); if(!qm) continue;
+    const qty=parseInt(qm[1]);
+    let seller='';
+    const sm=lines[i].match(/\(\d+\s*개\)\s*([A-Za-z0-9가-힣]+)/);
+    if(sm && !/리뷰작성|배송조회|판매자문의|무료/.test(sm[1])) seller=sm[1];
+    let name='', amount=null, date='', status='';
+    for(let b=i;b>=Math.max(0,i-5);b--){ const p=st11FirstPrice(lines[b]); if(p!=null){ amount=p; break; } }
+    for(let b=i;b>=Math.max(0,i-6);b--){ const dm=lines[b].match(ST_DATE); if(dm){ date=`${dm[1]}.${parseInt(dm[2])}.${parseInt(dm[3])}.`; break; } }
+    if(!date) for(let f=i+1;f<Math.min(i+5,lines.length);f++){ const dm=lines[f].match(ST_DATE); if(dm){ date=`${dm[1]}.${parseInt(dm[2])}.${parseInt(dm[3])}.`; break; } }
+    for(let b=i;b>=Math.max(0,i-6);b--){ const st=lines[b].match(ST_STATUS); if(st){ status=st[1]; break; } }
+    for(let b=i-1;b>=Math.max(0,i-7);b--){
+      let l=lines[b];
+      if(/^사이즈:|^크기:|^옵션:|^색상:|^\(/.test(l)) continue;
+      l=l.replace(/^\d{4}-\d{1,2}-\d{1,2}\s*/,'');
+      if(/[가-힣]/.test(l) && l.replace(/[^가-힣]/g,'').length>3){
+        name=l.replace(/(무료|[\d,]+원)?배송조회.*$/,'').replace(/(구매확정|배송완료|배송중).*$/,'').replace(/[\d,]+원.*/,'').trim();
+        if(name.length>4) break; else name='';
+      }
+    }
+    if(name && amount!=null){
+      const [cat,flagged]=classify(name);
+      out.push({no:0, status, date, name, seller, amount, place:"11번가", note:"", cat, flagged});
+    }
+  }
+  out.forEach((o,idx)=>o.no=idx+1);
+  return out;
+}
+
+// dispatcher: auto-detect format
+function parseText(raw){
+  if(isAli(raw)) return parseAli(raw);
+  if(isGmarket(raw)) return parseGmarket(raw);
+  if(is11st(raw)) return parse11st(raw);
+  return parseNaver(raw);
+}
+
+function thisYear(){ return new Date().getFullYear(); }
+function withYear(d){ return /^\d{4}/.test(d) ? d : `${thisYear()}. ${d}`; }
+function won(n){ return n.toLocaleString('ko-KR'); }
+
+function render(){
+  const tb = $('tbody'); tb.innerHTML='';
+  rows.forEach((r,idx)=>{
+    const tr = document.createElement('tr');
+    const opts = CATS.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('');
+    tr.innerHTML = `
+      <td class="num">${r.no}</td>
+      <td>${withYear(r.date)}</td>
+      <td class="pname" title="${r.name.replace(/"/g,'&quot;')}">${r.name}</td>
+      <td><select class="cat ${r.flagged?'flagged':''}" data-i="${idx}">${opts}</select></td>
+      <td class="num">${won(r.amount)}</td>
+      <td style="font-size:12px;color:var(--ink-soft);white-space:nowrap">${r.place}</td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll('select.cat').forEach(s=>{
+    s.addEventListener('change', e=>{
+      const i = +e.target.dataset.i;
+      rows[i].cat = e.target.value;
+      rows[i].flagged = false;
+      e.target.classList.remove('flagged');
+      renderSummary(); updateFlagNote();
+    });
+  });
+  const total = rows.reduce((a,r)=>a+r.amount,0);
+  $('totCount').textContent = rows.length + '건';
+  $('totAmt').textContent = won(total) + '원';
+  renderSummary(); updateFlagNote();
+  $('reviewStep').style.display = rows.length?'block':'none';
+  $('sumStep').style.display = rows.length?'block':'none';
+  $('exportStep').style.display = rows.length?'block':'none';
+}
+
+function updateFlagNote(){
+  const n = rows.filter(r=>r.flagged).length;
+  const note = $('flagNote');
+  if(n>0){ note.classList.add('show'); note.textContent = `자동 분류가 애매해 ‘기타 농자재’로 둔 항목이 ${n}건 있어요. 강조된 칸을 확인해 주세요.`; }
+  else note.classList.remove('show');
+}
+
+const SRC_COL = {"알리익스프레스":"ali","네이버":"naver","현장구매":"field","11번가":"st11","G-Market":"gmarket"};
+
+function aggregate(){
+  const map = {}; CATS.forEach(c=>map[c]={count:0,amt:0,ali:0,naver:0,field:0,st11:0,gmarket:0});
+  rows.forEach(r=>{
+    const m=map[r.cat]; m.count++; m.amt+=r.amount;
+    const key = SRC_COL[r.place] || "naver";
+    m[key]+=r.amount;
+  });
+  const total = rows.reduce((a,r)=>a+r.amount,0);
+  return {map,total};
+}
+
+function renderSummary(){
+  const {map,total} = aggregate();
+  const g = $('sumGrid'); g.innerHTML='';
+  CATS.forEach(c=>{
+    const d = map[c];
+    const pct = total? (d.amt/total*100):0;
+    const el = document.createElement('div');
+    el.className = 'scard'+(d.count===0?' empty':'');
+    el.innerHTML = `<div class="c-name">${c}</div>
+      <div class="c-amt">${won(d.amt)}</div>
+      <div class="c-meta">${d.count}건 · ${pct.toFixed(1)}%</div>`;
+    g.appendChild(el);
+  });
+}
+
+async function exportXlsx(){
+  const INK='FF1C2620', ACCENT='FF2F6B4F', LINE='FFD8DDD6',
+        HEADBG='FF2F6B4F', STRIPE='FFF6F4ED', TOTBG='FF1C2620';
+  const FONT='맑은 고딕';
+  const wb = new ExcelJS.Workbook();
+  wb.creator = '주문내역 엑셀변환기';
+
+  // ---- Sheet 1: 전체주문내역 ----
+  const ws1 = wb.addWorksheet('전체주문내역', {views:[{state:'frozen', ySplit:1}]});
+  ws1.addRow(["No.","주문상태","주문날짜","분류","상품명","판매자","금액(₩)","주문한 곳","비고"]);
+  rows.forEach(r=>ws1.addRow([r.no, r.status, withYear(r.date), r.cat, r.name, r.seller, r.amount, r.place, r.note]));
+  const nData = rows.length, first = 2, last = nData + 1, sumRow = last + 1;
+  ws1.addRow(["합계","","","","","", nData?{formula:`SUM(G${first}:G${last})`}:0, "", ""]);
+  ws1.columns = [{width:6},{width:12},{width:13},{width:18},{width:58},{width:14},{width:13},{width:14},{width:10}];
+
+  const hr1 = ws1.getRow(1); hr1.height = 24;
+  hr1.eachCell(c=>{
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:11};
+    c.alignment={horizontal:'center',vertical:'middle'};
+    c.border={bottom:{style:'thin',color:{argb:ACCENT}}};
+  });
+  for(let r=first;r<=last;r++){
+    const row=ws1.getRow(r);
+    const stripe=((r-first)%2===1);
+    row.eachCell({includeEmpty:true},(c,col)=>{
+      c.font={name:FONT,size:10,color:{argb:INK}};
+      c.alignment={vertical:'middle',wrapText:col===5};
+      c.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(stripe) c.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+    });
+    row.getCell(1).alignment={horizontal:'center',vertical:'middle'};
+    row.getCell(7).numFmt='#,##0';
+    row.getCell(7).alignment={horizontal:'right',vertical:'middle'};
+    row.getCell(8).alignment={horizontal:'center',vertical:'middle'};
+  }
+  const tr1=ws1.getRow(sumRow); tr1.height=20;
+  tr1.eachCell({includeEmpty:true},c=>{
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:11};
+    c.alignment={vertical:'middle'};
+  });
+  tr1.getCell(1).alignment={horizontal:'center',vertical:'middle'};
+  tr1.getCell(7).numFmt='#,##0'; tr1.getCell(7).alignment={horizontal:'right',vertical:'middle'};
+  ws1.autoFilter={from:{row:1,column:1},to:{row:1,column:9}};
+
+  // ---- Sheet 2: 분류별요약 (formulas reference 전체주문내역) ----
+  const ws2 = wb.addWorksheet('분류별요약', {views:[{state:'frozen', ySplit:1}]});
+  const SH='전체주문내역';
+  const D=`${SH}!$D$${first}:$D$${last}`, G=`${SH}!$G$${first}:$G$${last}`, H=`${SH}!$H$${first}:$H$${last}`;
+  const PLACE={C:"알리익스프레스",D:"네이버",E:"현장구매",F:"11번가",G:"G-Market"};
+  ws2.addRow(["분류","건수","알리익스프레스(₩)","네이버(₩)","현장구매","11번가","G-Market","합계(₩)","비율(%)"]);
+  const totRow = CATS.length + 2;
+  CATS.forEach((c,idx)=>{
+    const r = idx + 2;
+    if(nData){
+      ws2.addRow([c,
+        {formula:`COUNTIF(${D},A${r})`},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.C}")`},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.D}")`},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.E}")`},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.F}")`},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.G}")`},
+        {formula:`C${r}+D${r}+E${r}+F${r}+G${r}`},
+        {formula:`IF($H$${totRow}=0,0,H${r}/$H$${totRow})`}
+      ]);
+    } else { ws2.addRow([c,0,0,0,0,0,0,0,0]); }
+  });
+  const bs=2, be=totRow-1;
+  ws2.addRow(["합계",
+    {formula:`SUM(B${bs}:B${be})`},{formula:`SUM(C${bs}:C${be})`},{formula:`SUM(D${bs}:D${be})`},
+    {formula:`SUM(E${bs}:E${be})`},{formula:`SUM(F${bs}:F${be})`},{formula:`SUM(G${bs}:G${be})`},
+    {formula:`SUM(H${bs}:H${be})`},{formula:`IF($H$${totRow}=0,0,H${totRow}/$H$${totRow})`}
+  ]);
+  ws2.columns=[{width:18},{width:8},{width:18},{width:14},{width:12},{width:10},{width:13},{width:15},{width:11}];
+
+  const hr2=ws2.getRow(1); hr2.height=30;
+  hr2.eachCell(c=>{
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
+    c.alignment={horizontal:'center',vertical:'middle',wrapText:true};
+    c.border={bottom:{style:'thin',color:{argb:ACCENT}}};
+  });
+  for(let r=2;r<totRow;r++){
+    const row=ws2.getRow(r);
+    const stripe=((r-2)%2===1);
+    row.eachCell({includeEmpty:true},(c,col)=>{
+      c.font={name:FONT,size:10,color:{argb:INK}};
+      c.alignment={vertical:'middle',horizontal:col===1?'left':(col===2?'center':'right')};
+      c.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(col>=3&&col<=8) c.numFmt='#,##0';
+      if(col===9) c.numFmt='0.0%';
+      if(stripe) c.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+    });
+    row.getCell(1).font={name:FONT,size:10,bold:true,color:{argb:INK}};
+  }
+  const tr2=ws2.getRow(totRow); tr2.height=22;
+  tr2.eachCell({includeEmpty:true},(c,col)=>{
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:11};
+    c.alignment={vertical:'middle',horizontal:col===1?'left':(col===2?'center':'right')};
+    if(col>=3&&col<=8) c.numFmt='#,##0';
+    if(col===9) c.numFmt='0.0%';
+  });
+  // color scale on 합계(₩) column to visualize relative size
+  ws2.addConditionalFormatting({
+    ref:`H2:${totRow-1>=2?'H'+(totRow-1):'H2'}`,
+    rules:[{type:'colorScale',cfvo:[{type:'min'},{type:'max'}],
+      color:[{argb:'FFEAF2EC'},{argb:'FF2F6B4F'}]}]
+  });
+
+  // ---- Sheet 3: 분석보고서 (charts via in-cell bars + heatmaps, all formula-linked) ----
+  const CARDBG='FFEAF2EC';
+  const PLACES=["알리익스프레스","네이버","현장구매","11번가","G-Market"];
+  const ws3=wb.addWorksheet('분석보고서',{views:[{showGridLines:false}]});
+  ws3.columns=[{width:3},{width:20},{width:9},{width:15},{width:30},{width:9},{width:3}];
+  let R=1;
+  // Title
+  ws3.mergeCells(R,2,R,6);
+  const tcell=ws3.getCell(R,2);
+  tcell.value='주문 분석 보고서';
+  tcell.font={name:FONT,bold:true,size:18,color:{argb:INK}};
+  tcell.alignment={vertical:'middle'}; ws3.getRow(R).height=30; R++;
+  ws3.mergeCells(R,2,R,6);
+  const subc=ws3.getCell(R,2);
+  subc.value=nData?{formula:`"총 "&전체주문내역!A${last}&"건 · 합계 "&TEXT(분류별요약!H${totRow},"#,##0")&"원"`}:'데이터 없음';
+  subc.font={name:FONT,size:11,color:{argb:ACCENT}}; ws3.getRow(R).height=20; R+=2;
+
+  // KPI cards
+  const kpiDefs=[
+    ['총 주문 건수', nData?{formula:`전체주문내역!A${last}&"건"`}:'0건'],
+    ['총 결제 금액', nData?{formula:`TEXT(분류별요약!H${totRow},"#,##0")&"원"`}:'0원'],
+    ['최다 분류',    nData?{formula:`INDEX(분류별요약!A2:A${totRow-1},MATCH(MAX(분류별요약!H2:H${totRow-1}),분류별요약!H2:H${totRow-1},0))`}:'-']
+  ];
+  kpiDefs.forEach((k,i)=>{
+    const rr=R+i;
+    const cL=ws3.getCell(rr,2); cL.value=k[0];
+    cL.font={name:FONT,size:11,color:{argb:INK}};
+    cL.fill={type:'pattern',pattern:'solid',fgColor:{argb:CARDBG}};
+    cL.alignment={vertical:'middle',horizontal:'left',indent:1};
+    ws3.mergeCells(rr,3,rr,4);
+    const cV=ws3.getCell(rr,3); cV.value=k[1];
+    cV.font={name:FONT,bold:true,size:13,color:{argb:ACCENT}};
+    cV.fill={type:'pattern',pattern:'solid',fgColor:{argb:CARDBG}};
+    cV.alignment={vertical:'middle',horizontal:'right',indent:1};
+    ws3.getRow(rr).height=22;
+  });
+  R=R+kpiDefs.length+1;
+
+  // Section A: 분류별 분석
+  ws3.mergeCells(R,2,R,6);
+  const hA=ws3.getCell(R,2); hA.value='■ 분류별 분석';
+  hA.font={name:FONT,bold:true,size:13,color:{argb:INK}}; ws3.getRow(R).height=24; R++;
+  ['분류','건수','금액(₩)','비중','비율'].forEach((h,i)=>{
+    const c=ws3.getCell(R,i+2); c.value=h;
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.alignment={horizontal:i===0?'left':'center',vertical:'middle'};
+  });
+  ws3.getRow(R).height=20; R++;
+  const aStart=R;
+  const maxRef=`MAX(분류별요약!$H$2:$H$${totRow-1})`;
+  CATS.forEach((c,idx)=>{
+    const sr=idx+2, rr=R+idx;
+    ws3.getCell(rr,2).value=nData?{formula:`분류별요약!A${sr}`}:c;
+    ws3.getCell(rr,3).value=nData?{formula:`분류별요약!B${sr}`}:0;
+    ws3.getCell(rr,4).value=nData?{formula:`분류별요약!H${sr}`}:0;
+    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${maxRef}=0,0,ROUND(분류별요약!H${sr}/${maxRef}*22,0)))`}:'';
+    ws3.getCell(rr,6).value=nData?{formula:`분류별요약!I${sr}`}:0;
+    const stripe=idx%2===1;
+    for(let col=2;col<=6;col++){
+      const cell=ws3.getCell(rr,col);
+      cell.font={name:FONT,size:10,color:col===5?{argb:ACCENT}:{argb:INK}};
+      cell.alignment={vertical:'middle',horizontal:col===2?'left':(col===5?'left':'center')};
+      cell.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(stripe&&col!==5) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+      if(col===4) cell.numFmt='#,##0';
+      if(col===6) cell.numFmt='0.0%';
+    }
+    ws3.getRow(rr).height=16;
+  });
+  ws3.addConditionalFormatting({ref:`D${aStart}:D${aStart+CATS.length-1}`,
+    rules:[{type:'colorScale',cfvo:[{type:'min'},{type:'max'}],color:[{argb:'FFEAF2EC'},{argb:'FF2F6B4F'}]}]});
+  R=aStart+CATS.length+2;
+
+  // Section B: 주문한 곳별 분석
+  ws3.mergeCells(R,2,R,6);
+  const hB=ws3.getCell(R,2); hB.value='■ 주문한 곳별 분석';
+  hB.font={name:FONT,bold:true,size:13,color:{argb:INK}}; ws3.getRow(R).height=24; R++;
+  ['주문처','건수','금액(₩)','비중','비율'].forEach((h,i)=>{
+    const c=ws3.getCell(R,i+2); c.value=h;
+    c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
+    c.alignment={horizontal:i===0?'left':'center',vertical:'middle'};
+  });
+  ws3.getRow(R).height=20; R++;
+  const pStart=R;
+  const Dh=`전체주문내역!$D$${first}:$D$${last}`, Gh=`전체주문내역!$G$${first}:$G$${last}`, Hh=`전체주문내역!$H$${first}:$H$${last}`;
+  const pTotRef=`SUM(D${pStart}:D${pStart+PLACES.length-1})`;
+  const pMax=`MAX(`+PLACES.map((_,i)=>`D${pStart+i}`).join(',')+`)`;
+  PLACES.forEach((p,idx)=>{
+    const rr=pStart+idx;
+    ws3.getCell(rr,2).value=p;
+    ws3.getCell(rr,3).value=nData?{formula:`COUNTIF(${Hh},"${p}")`}:0;
+    ws3.getCell(rr,4).value=nData?{formula:`SUMIF(${Hh},"${p}",${Gh})`}:0;
+    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${pMax}=0,0,ROUND(D${rr}/${pMax}*22,0)))`}:'';
+    ws3.getCell(rr,6).value=nData?{formula:`IF(${pTotRef}=0,0,D${rr}/${pTotRef})`}:0;
+    const stripe=idx%2===1;
+    for(let col=2;col<=6;col++){
+      const cell=ws3.getCell(rr,col);
+      cell.font={name:FONT,size:10,color:col===5?{argb:ACCENT}:{argb:INK}};
+      cell.alignment={vertical:'middle',horizontal:col===2?'left':(col===5?'left':'center')};
+      cell.border={bottom:{style:'hair',color:{argb:LINE}}};
+      if(stripe&&col!==5) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
+      if(col===4) cell.numFmt='#,##0';
+      if(col===6) cell.numFmt='0.0%';
+    }
+    ws3.getRow(rr).height=18;
+  });
+  const pTotRow=pStart+PLACES.length;
+  ws3.getCell(pTotRow,2).value='합계';
+  ws3.getCell(pTotRow,3).value={formula:`SUM(C${pStart}:C${pStart+PLACES.length-1})`};
+  ws3.getCell(pTotRow,4).value={formula:`SUM(D${pStart}:D${pStart+PLACES.length-1})`};
+  ws3.getCell(pTotRow,6).value={formula:`IF(D${pTotRow}=0,0,1)`};
+  for(let col=2;col<=6;col++){
+    const cell=ws3.getCell(pTotRow,col);
+    cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
+    cell.font={name:FONT,bold:true,size:10,color:{argb:'FFFFFFFF'}};
+    cell.alignment={vertical:'middle',horizontal:col===2?'left':'center'};
+    if(col===4) cell.numFmt='#,##0';
+    if(col===6) cell.numFmt='0.0%';
+  }
+  ws3.addConditionalFormatting({ref:`D${pStart}:D${pStart+PLACES.length-1}`,
+    rules:[{type:'colorScale',cfvo:[{type:'min'},{type:'max'}],color:[{argb:'FFEAF2EC'},{argb:'FF2F6B4F'}]}]});
+
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const today = new Date().toISOString().slice(0,10);
+  a.href = url; a.download = `주문내역_${today}.xlsx`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+// ---- events ----
+// ---- multi-file registry ----
+// each entry: {id, name, text, parsed:[], src, error}
+let fileEntries = [];
+let fid = 0;
+const MAX_FILES = 20;
+
+function srcLabel(rows){ return rows.length ? rows[0].place : "?"; }
+
+function renderFileList(){
+  const fl = $('fileList'); fl.innerHTML='';
+  fileEntries.forEach(fe=>{
+    const div = document.createElement('div');
+    div.className='fitem';
+    let meta;
+    if(fe.error) meta = `<span class="fmeta err">읽기 실패</span>`;
+    else if(fe.pending) meta = `<span class="fmeta pend">읽는 중…</span>`;
+    else meta = `<span class="fmeta">${srcLabel(fe.parsed)} · ${fe.parsed.length}건</span>`;
+    div.innerHTML = `<span class="fname">${fe.name}</span>${meta}<button class="fx" data-id="${fe.id}" title="제거">✕</button>`;
+    fl.appendChild(div);
+  });
+  fl.querySelectorAll('.fx').forEach(b=>b.addEventListener('click',e=>{
+    const id=+e.target.dataset.id;
+    fileEntries = fileEntries.filter(x=>x.id!==id);
+    renderFileList(); rebuildRows();
+  }));
+}
+
+function rebuildRows(){
+  const all = [];
+  fileEntries.forEach(fe=>{ if(fe.parsed) fe.parsed.forEach(r=>all.push({...r})); });
+  all.forEach((r,i)=>r.no=i+1);
+  rows = all;
+  if(rows.length){ render(); }
+  else { $('reviewStep').style.display='none'; $('sumStep').style.display='none'; $('exportStep').style.display='none'; }
+  const n = rows.length;
+  const byCount = {};
+  fileEntries.forEach(fe=>{ const s=srcLabel(fe.parsed||[]); byCount[s]=(byCount[s]||0)+(fe.parsed?fe.parsed.length:0); });
+  const parts = Object.entries(byCount).filter(([s])=>s!=="?").map(([s,c])=>`${s} ${c}건`);
+  $('parseHint').textContent = n ? `총 ${n}건 (${parts.join(', ')})` : '';
+}
+
+async function ingestFiles(fileObjs){
+  const status = $('fileStatus');
+  const list = Array.from(fileObjs);
+  if(fileEntries.length + list.length > MAX_FILES){
+    status.textContent = `한 번에 최대 ${MAX_FILES}개까지만 처리할 수 있어요. (현재 ${fileEntries.length}개)`;
+    return;
+  }
+  // create pending entries
+  const pendings = list.map(f=>{ const e={id:++fid, name:f.name, file:f, parsed:[], pending:true}; fileEntries.push(e); return e; });
+  renderFileList();
+  status.textContent = `${list.length}개 파일 읽는 중…`;
+
+  for(const e of pendings){
+    try{
+      const isPdf = /\.pdf$/i.test(e.name) || e.file.type==='application/pdf';
+      const text = isPdf ? await extractPdf(e.file) : await e.file.text();
+      e.text = text;
+      e.parsed = parseText(text);
+      e.pending = false;
+      if(e.parsed.length===0){ e.error=false; e.parsed=[]; }
+    }catch(err){
+      e.pending=false; e.error=true; e.parsed=[];
+    }
+    renderFileList();
+  }
+  const okFiles = fileEntries.filter(e=>!e.error);
+  const emptyFiles = okFiles.filter(e=>e.parsed.length===0);
+  status.textContent = emptyFiles.length
+    ? `읽기 완료. 인식된 주문이 없는 파일 ${emptyFiles.length}개는 형식을 확인해 주세요.`
+    : `읽기 완료. ‘분석하기’를 누르거나 아래 결과를 확인하세요.`;
+  rebuildRows();
+}
+
+// ---- PDF / file handling ----
+if(window.pdfjsLib){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+function normLine(s){
+  let p=null;
+  while(s!==p){ p=s; s=s.replace(/([가-힣])\s+([가-힣])/g,'$1$2'); }
+  p=null;
+  while(s!==p){ p=s; s=s.replace(/(\d)\s+([\d,])/g,'$1$2'); }
+  return s.replace(/\s+/g,' ').trim();
+}
+
+async function extractPdf(file){
+  const buf = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data:buf}).promise;
+  let text = '';
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const vp = page.getViewport({scale:1});
+    const pageWidth = vp.width;
+    const content = await page.getTextContent();
+    const cut = pageWidth * 0.18; // drop left sidebar menu column
+    // collect items with x (transform[4]) and y (transform[5])
+    const items = content.items
+      .map(it=>({x:it.transform[4], y:it.transform[5], s:it.str}))
+      .filter(it=>it.s.trim() && it.x >= cut);
+    // cluster by y within tolerance (4px), top-to-bottom
+    items.sort((a,b)=> (b.y - a.y) || (a.x - b.x));
+    const rows = [];
+    let cur = [], cy = null;
+    for(const it of items){
+      if(cy===null || Math.abs(it.y - cy) <= 4){ cur.push(it); if(cy===null) cy=it.y; }
+      else { rows.push(cur); cur=[it]; cy=it.y; }
+    }
+    if(cur.length) rows.push(cur);
+    for(const r of rows){
+      const line = normLine(r.sort((a,b)=>a.x-b.x).map(o=>o.s).join(' '));
+      if(line) text += line + '\n';
+    }
+    text += '\n';
+  }
+  return text;
+}
+
+// ---- events ----
+$('parseBtn').addEventListener('click', ()=>{
+  if(!fileEntries.length && !$('input').value.trim()){
+    $('parseHint').textContent='먼저 PDF를 올리거나 텍스트를 붙여넣어 주세요.'; return;
+  }
+  rebuildRows();
+  if(rows.length){ $('reviewStep').scrollIntoView({behavior:'smooth',block:'start'}); }
+  else { $('parseHint').textContent='인식된 주문이 없어요. 형식을 확인해 주세요.'; }
+});
+
+$('addTextBtn').addEventListener('click', ()=>{
+  const txt = $('input').value.trim();
+  if(!txt){ return; }
+  if(fileEntries.length >= MAX_FILES){ $('fileStatus').textContent=`최대 ${MAX_FILES}개까지만 가능해요.`; return; }
+  const parsed = parseText(txt);
+  fileEntries.push({id:++fid, name:`붙여넣은 텍스트 #${fid}`, text:txt, parsed, pending:false});
+  $('input').value='';
+  renderFileList(); rebuildRows();
+});
+
+$('resetBtn').addEventListener('click', ()=>{
+  fileEntries=[]; rows=[]; $('input').value=''; $('fileStatus').textContent=''; $('parseHint').textContent='';
+  renderFileList();
+  $('reviewStep').style.display='none'; $('sumStep').style.display='none'; $('exportStep').style.display='none';
+});
+
+$('exportBtn').addEventListener('click', async ()=>{
+  const btn=$('exportBtn'); const orig=btn.textContent;
+  btn.disabled=true; btn.textContent='엑셀 생성 중…';
+  try{ await exportXlsx(); }
+  catch(e){ $('fileStatus').textContent='엑셀 생성 중 오류가 발생했어요: '+e.message; }
+  finally{ btn.disabled=false; btn.textContent=orig; }
+});
+
+$('sampleBtn').addEventListener('click', ()=>{
+  $('input').value = `6.12. 10:41 주문 올스텐 텃밭 원예 긴 모종삽 1개 평삽 꽃 화분 가드닝 분갈이 뽀족삽
+4,200원
+6.12. 09:22 주문 애플수박망 수박망 낙하방지 100개 그물 보호망 포장 35cm 레드
+14,600원
+6.10. 22:38 주문 만능깡두 윌로펌프 GS펌프 압력스위치 소형 자동 개폐기
+14,000원
+6.3. 20:16 주문 차광망/차광막(55%) 6mx15m/6mx20m
+13,000원
+5.31. 21:15 주문 동부콩 씨앗 30g / 동부 잡곡 채소씨앗 종자 봄 여름 가을 파종
+4,000원`;
+  $('fileStatus').textContent='샘플 텍스트를 넣었어요. ‘붙여넣은 텍스트 추가’를 눌러주세요.';
+});
+
+const drop = $('drop'), fileInput = $('file');
+drop.addEventListener('click', ()=>fileInput.click());
+fileInput.addEventListener('change', e=>{ ingestFiles(e.target.files); fileInput.value=''; });
+['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
+['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
+drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); ingestFiles(e.dataTransfer.files); });
+</script>
+</body>
+</html>
