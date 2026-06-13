@@ -442,8 +442,47 @@ function parse11st(raw){
   return out;
 }
 
+// ===== Looperget (루퍼젯 / 신진켐텍 자사몰) parser =====
+const LP_DATE=/(\d{4})-(\d{1,2})-(\d{1,2})\s*\(\s*\d{8}-\d+\s*\)/;
+const LP_AMT=/^([\d,]+)\s*원\s*\(\s*(\d+)\s*개\s*\)/;
+const LP_STATUS=/(배송완료|배송중|배송준비|구매확정|취소완료|취소|반품|교환|입금대기)/;
+const LP_NOISE=/^(주문조회|주문내역조회|취소|전체|오늘|조회|기본적으로|완료후|리뉴얼|검색|총결제금액|상품구매금액|정보|상세보기|배송조회|구매후기|Looperget|링클러|홈|Cart|마이쇼핑|\d+\/\d+|배송완료|배송중|신진켐텍|경기도|사업자|통신판매|개인정보|상담|고객센터|결제|무통장|기업은행|회사소개|약관|이용안내|SNS|고객님|토\b|Copyright|Hosting|네비게이션|뒤로가기)/;
+
+function isLooperget(raw){ return /Looperget/i.test(raw) || /looperget\.kr/i.test(raw) || (/루퍼젯/.test(raw) && /신진켐텍/.test(raw)); }
+
+function parseLooperget(raw){
+  const lines=raw.replace(/\r/g,'').split('\n').map(l=>l.replace(/\s+/g,' ').trim()).filter(Boolean);
+  const out=[];
+  let lastDate='';
+  for(let i=0;i<lines.length;i++){
+    const dm=lines[i].match(LP_DATE);
+    if(dm){ lastDate=`${dm[1]}.${parseInt(dm[2])}.${parseInt(dm[3])}.`; continue; }
+    const am=lines[i].match(LP_AMT);
+    if(!am) continue;
+    const amount=parseInt(am[1].replace(/,/g,''));
+    const qty=parseInt(am[2]);
+    // product name may be split across up to 3 preceding lines
+    let parts=[];
+    for(let b=i-1;b>=Math.max(0,i-4);b--){
+      const l=lines[b];
+      if(LP_AMT.test(l)||LP_DATE.test(l)||LP_STATUS.test(l)||LP_NOISE.test(l)) break;
+      parts.unshift(l);
+    }
+    let name=parts.join('').replace(/\s+/g,'');
+    let status='';
+    for(let f=i;f<Math.min(i+3,lines.length);f++){ const sm=lines[f].match(LP_STATUS); if(sm){status=sm[1];break;} }
+    if(name.length>2){
+      const [cat,flagged]=classify(name);
+      out.push({no:0, status, date:lastDate, name, seller:"루퍼젯", amount, place:"루퍼젯", note:"", cat, flagged});
+    }
+  }
+  out.forEach((o,idx)=>o.no=idx+1);
+  return out;
+}
+
 // dispatcher: auto-detect format
 function parseText(raw){
+  if(isLooperget(raw)) return parseLooperget(raw);
   if(isAli(raw)) return parseAli(raw);
   if(isGmarket(raw)) return parseGmarket(raw);
   if(is11st(raw)) return parse11st(raw);
@@ -493,13 +532,14 @@ function updateFlagNote(){
   else note.classList.remove('show');
 }
 
-const SRC_COL = {"알리익스프레스":"ali","네이버":"naver","현장구매":"field","11번가":"st11","G-Market":"gmarket"};
+const SRC_COL = {"알리익스프레스":"ali","네이버":"naver","현장구매":"field","11번가":"st11","G-Market":"gmarket","루퍼젯":"looper"};
 
 function aggregate(){
-  const map = {}; CATS.forEach(c=>map[c]={count:0,amt:0,ali:0,naver:0,field:0,st11:0,gmarket:0});
+  const map = {}; CATS.forEach(c=>map[c]={count:0,amt:0,ali:0,naver:0,field:0,st11:0,gmarket:0,looper:0});
   rows.forEach(r=>{
     const m=map[r.cat]; m.count++; m.amt+=r.amount;
-    const key = SRC_COL[r.place] || "naver";
+    const key = SRC_COL[r.place] || "etc";
+    if(m[key]===undefined) m[key]=0;
     m[key]+=r.amount;
   });
   const total = rows.reduce((a,r)=>a+r.amount,0);
@@ -525,15 +565,32 @@ async function exportXlsx(){
   const INK='FF1C2620', ACCENT='FF2F6B4F', LINE='FFD8DDD6',
         HEADBG='FF2F6B4F', STRIPE='FFF6F4ED', TOTBG='FF1C2620';
   const FONT='맑은 고딕';
+  // Precompute values so formula cells carry a cached result (so 분류별요약·
+  // 분석보고서 show numbers even in viewers that don't auto-recalculate).
+  const {map:AGG, total:GTOTAL} = aggregate();
+  const SRCKEY={"알리익스프레스":"ali","네이버":"naver","현장구매":"field","11번가":"st11","G-Market":"gmarket","루퍼젯":"looper"};
+  const catCount = c => AGG[c] ? AGG[c].count : 0;
+  const catPlaceAmt = (c,place) => { const m=AGG[c]; if(!m) return 0; const k=SRCKEY[place]; return (k&&m[k]!==undefined)?m[k]:0; };
+  const catTotal = c => AGG[c] ? AGG[c].amt : 0;
+  const placeCount = place => rows.filter(r=>r.place===place).length;
+  const placeAmt = place => rows.filter(r=>r.place===place).reduce((a,r)=>a+r.amount,0);
   const wb = new ExcelJS.Workbook();
   wb.creator = '주문내역 엑셀변환기';
+  // Also flag recalc-on-open as a fallback for apps that honor it.
+  wb.calcProperties = wb.calcProperties || {};
+  wb.calcProperties.fullCalcOnLoad = true;
 
   // ---- Sheet 1: 전체주문내역 ----
   const ws1 = wb.addWorksheet('전체주문내역', {views:[{state:'frozen', ySplit:1}]});
   ws1.addRow(["No.","주문상태","주문날짜","분류","상품명","판매자","금액(₩)","주문한 곳","비고"]);
   rows.forEach(r=>ws1.addRow([r.no, r.status, withYear(r.date), r.cat, r.name, r.seller, r.amount, r.place, r.note]));
-  const nData = rows.length, first = 2, last = nData + 1, sumRow = last + 1;
-  ws1.addRow(["합계","","","","","", nData?{formula:`SUM(G${first}:G${last})`}:0, "", ""]);
+  const nData = rows.length, first = 2;
+  const REF_LAST = 299;        // fixed reference range end (요약·보고서가 참조하는 영역)
+  const last = REF_LAST;       // formulas reference $2:$299 so future rows auto-include
+  const dataLast = nData + 1;  // last row that actually has data
+  const sumRow = 301;          // 합계 row fixed at 301
+  ws1.getCell(`A${sumRow}`).value = "합계";
+  ws1.getCell(`G${sumRow}`).value = {formula:`SUM(G${first}:${'G'}${REF_LAST})`, result: GTOTAL};
   ws1.columns = [{width:6},{width:12},{width:13},{width:18},{width:58},{width:14},{width:13},{width:14},{width:10}];
 
   const hr1 = ws1.getRow(1); hr1.height = 24;
@@ -543,7 +600,7 @@ async function exportXlsx(){
     c.alignment={horizontal:'center',vertical:'middle'};
     c.border={bottom:{style:'thin',color:{argb:ACCENT}}};
   });
-  for(let r=first;r<=last;r++){
+  for(let r=first;r<=dataLast;r++){
     const row=ws1.getRow(r);
     const stripe=((r-first)%2===1);
     row.eachCell({includeEmpty:true},(c,col)=>{
@@ -557,12 +614,18 @@ async function exportXlsx(){
     row.getCell(7).alignment={horizontal:'right',vertical:'middle'};
     row.getCell(8).alignment={horizontal:'center',vertical:'middle'};
   }
+  // hide the empty rows between data and the 합계 row (incl. spacer row 300).
+  // set both hidden and a height so ExcelJS actually serializes the hidden flag.
+  for(let r=dataLast+1; r<sumRow; r++){
+    const er=ws1.getRow(r); er.hidden = true; er.height = 15;
+  }
   const tr1=ws1.getRow(sumRow); tr1.height=20;
-  tr1.eachCell({includeEmpty:true},c=>{
+  for(let col=1;col<=9;col++){
+    const c=tr1.getCell(col);
     c.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
     c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:11};
     c.alignment={vertical:'middle'};
-  });
+  }
   tr1.getCell(1).alignment={horizontal:'center',vertical:'middle'};
   tr1.getCell(7).numFmt='#,##0'; tr1.getCell(7).alignment={horizontal:'right',vertical:'middle'};
   ws1.autoFilter={from:{row:1,column:1},to:{row:1,column:9}};
@@ -571,31 +634,42 @@ async function exportXlsx(){
   const ws2 = wb.addWorksheet('분류별요약', {views:[{state:'frozen', ySplit:1}]});
   const SH='전체주문내역';
   const D=`${SH}!$D$${first}:$D$${last}`, G=`${SH}!$G$${first}:$G$${last}`, H=`${SH}!$H$${first}:$H$${last}`;
-  const PLACE={C:"알리익스프레스",D:"네이버",E:"현장구매",F:"11번가",G:"G-Market"};
-  ws2.addRow(["분류","건수","알리익스프레스(₩)","네이버(₩)","현장구매","11번가","G-Market","합계(₩)","비율(%)"]);
+  const PLACE={C:"알리익스프레스",D:"네이버",E:"현장구매",F:"11번가",G:"G-Market",H:"루퍼젯"};
+  ws2.addRow(["분류","건수","알리익스프레스(₩)","네이버(₩)","현장구매","11번가","G-Market","루퍼젯(₩)","합계(₩)","비율(%)"]);
   const totRow = CATS.length + 2;
   CATS.forEach((c,idx)=>{
     const r = idx + 2;
     if(nData){
+      const cnt=catCount(c), aAli=catPlaceAmt(c,PLACE.C), aNav=catPlaceAmt(c,PLACE.D),
+            aFld=catPlaceAmt(c,PLACE.E), a11=catPlaceAmt(c,PLACE.F), aGm=catPlaceAmt(c,PLACE.G),
+            aLp=catPlaceAmt(c,PLACE.H), aSum=catTotal(c), pct=GTOTAL?aSum/GTOTAL:0;
       ws2.addRow([c,
-        {formula:`COUNTIF(${D},A${r})`},
-        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.C}")`},
-        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.D}")`},
-        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.E}")`},
-        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.F}")`},
-        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.G}")`},
-        {formula:`C${r}+D${r}+E${r}+F${r}+G${r}`},
-        {formula:`IF($H$${totRow}=0,0,H${r}/$H$${totRow})`}
+        {formula:`COUNTIF(${D},A${r})`, result:cnt},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.C}")`, result:aAli},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.D}")`, result:aNav},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.E}")`, result:aFld},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.F}")`, result:a11},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.G}")`, result:aGm},
+        {formula:`SUMIFS(${G},${D},A${r},${H},"${PLACE.H}")`, result:aLp},
+        {formula:`C${r}+D${r}+E${r}+F${r}+G${r}+H${r}`, result:aSum},
+        {formula:`IF($I$${totRow}=0,0,I${r}/$I$${totRow})`, result:pct}
       ]);
-    } else { ws2.addRow([c,0,0,0,0,0,0,0,0]); }
+    } else { ws2.addRow([c,0,0,0,0,0,0,0,0,0]); }
   });
   const bs=2, be=totRow-1;
+  const sumKey=k=>CATS.reduce((a,c)=>a+(AGG[c]?AGG[c][k]:0),0);
   ws2.addRow(["합계",
-    {formula:`SUM(B${bs}:B${be})`},{formula:`SUM(C${bs}:C${be})`},{formula:`SUM(D${bs}:D${be})`},
-    {formula:`SUM(E${bs}:E${be})`},{formula:`SUM(F${bs}:F${be})`},{formula:`SUM(G${bs}:G${be})`},
-    {formula:`SUM(H${bs}:H${be})`},{formula:`IF($H$${totRow}=0,0,H${totRow}/$H$${totRow})`}
+    {formula:`SUM(B${bs}:B${be})`, result:rows.length},
+    {formula:`SUM(C${bs}:C${be})`, result:sumKey('ali')},
+    {formula:`SUM(D${bs}:D${be})`, result:sumKey('naver')},
+    {formula:`SUM(E${bs}:E${be})`, result:sumKey('field')},
+    {formula:`SUM(F${bs}:F${be})`, result:sumKey('st11')},
+    {formula:`SUM(G${bs}:G${be})`, result:sumKey('gmarket')},
+    {formula:`SUM(H${bs}:H${be})`, result:sumKey('looper')},
+    {formula:`SUM(I${bs}:I${be})`, result:GTOTAL},
+    {formula:`IF($I$${totRow}=0,0,I${totRow}/$I$${totRow})`, result:GTOTAL?1:0}
   ]);
-  ws2.columns=[{width:18},{width:8},{width:18},{width:14},{width:12},{width:10},{width:13},{width:15},{width:11}];
+  ws2.columns=[{width:18},{width:8},{width:17},{width:13},{width:11},{width:10},{width:12},{width:12},{width:14},{width:10}];
 
   const hr2=ws2.getRow(1); hr2.height=30;
   hr2.eachCell(c=>{
@@ -611,8 +685,8 @@ async function exportXlsx(){
       c.font={name:FONT,size:10,color:{argb:INK}};
       c.alignment={vertical:'middle',horizontal:col===1?'left':(col===2?'center':'right')};
       c.border={bottom:{style:'hair',color:{argb:LINE}}};
-      if(col>=3&&col<=8) c.numFmt='#,##0';
-      if(col===9) c.numFmt='0.0%';
+      if(col>=3&&col<=9) c.numFmt='#,##0';
+      if(col===10) c.numFmt='0.0%';
       if(stripe) c.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
     });
     row.getCell(1).font={name:FONT,size:10,bold:true,color:{argb:INK}};
@@ -622,19 +696,19 @@ async function exportXlsx(){
     c.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
     c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:11};
     c.alignment={vertical:'middle',horizontal:col===1?'left':(col===2?'center':'right')};
-    if(col>=3&&col<=8) c.numFmt='#,##0';
-    if(col===9) c.numFmt='0.0%';
+    if(col>=3&&col<=9) c.numFmt='#,##0';
+    if(col===10) c.numFmt='0.0%';
   });
-  // color scale on 합계(₩) column to visualize relative size
+  // color scale on 합계(₩) column (now column I) to visualize relative size
   ws2.addConditionalFormatting({
-    ref:`H2:${totRow-1>=2?'H'+(totRow-1):'H2'}`,
+    ref:`I2:${totRow-1>=2?'I'+(totRow-1):'I2'}`,
     rules:[{type:'colorScale',cfvo:[{type:'min'},{type:'max'}],
       color:[{argb:'FFEAF2EC'},{argb:'FF2F6B4F'}]}]
   });
 
   // ---- Sheet 3: 분석보고서 (charts via in-cell bars + heatmaps, all formula-linked) ----
   const CARDBG='FFEAF2EC';
-  const PLACES=["알리익스프레스","네이버","현장구매","11번가","G-Market"];
+  const PLACES=["알리익스프레스","네이버","현장구매","11번가","G-Market","루퍼젯"];
   const ws3=wb.addWorksheet('분석보고서',{views:[{showGridLines:false}]});
   ws3.columns=[{width:3},{width:18},{width:11},{width:13},{width:22},{width:11},{width:11},{width:13}];
   let R=1;
@@ -646,14 +720,15 @@ async function exportXlsx(){
   tcell.alignment={vertical:'middle'}; ws3.getRow(R).height=30; R++;
   ws3.mergeCells(R,2,R,6);
   const subc=ws3.getCell(R,2);
-  subc.value=nData?{formula:`"총 "&전체주문내역!A${last}&"건 · 합계 "&TEXT(분류별요약!H${totRow},"#,##0")&"원"`}:'데이터 없음';
+  const topCat = nData ? CATS.slice().sort((a,b)=>catTotal(b)-catTotal(a))[0] : '-';
+  subc.value=nData?{formula:`"총 "&분류별요약!B${totRow}&"건 · 합계 "&TEXT(분류별요약!I${totRow},"#,##0")&"원"`, result:`총 ${rows.length}건 · 합계 ${GTOTAL.toLocaleString()}원`}:'데이터 없음';
   subc.font={name:FONT,size:11,color:{argb:ACCENT}}; ws3.getRow(R).height=20; R+=2;
 
   // KPI cards
   const kpiDefs=[
-    ['총 주문 건수', nData?{formula:`전체주문내역!A${last}&"건"`}:'0건'],
-    ['총 결제 금액', nData?{formula:`TEXT(분류별요약!H${totRow},"#,##0")&"원"`}:'0원'],
-    ['최다 분류',    nData?{formula:`INDEX(분류별요약!A2:A${totRow-1},MATCH(MAX(분류별요약!H2:H${totRow-1}),분류별요약!H2:H${totRow-1},0))`}:'-']
+    ['총 주문 건수', nData?{formula:`분류별요약!B${totRow}&"건"`, result:`${rows.length}건`}:'0건'],
+    ['총 결제 금액', nData?{formula:`TEXT(분류별요약!I${totRow},"#,##0")&"원"`, result:`${GTOTAL.toLocaleString()}원`}:'0원'],
+    ['최다 분류',    nData?{formula:`INDEX(분류별요약!A2:A${totRow-1},MATCH(MAX(분류별요약!I2:I${totRow-1}),분류별요약!I2:I${totRow-1},0))`, result:topCat}:'-']
   ];
   kpiDefs.forEach((k,i)=>{
     const rr=R+i;
@@ -682,14 +757,17 @@ async function exportXlsx(){
   });
   ws3.getRow(R).height=20; R++;
   const aStart=R;
-  const maxRef=`MAX(분류별요약!$H$2:$H$${totRow-1})`;
+  const maxRef=`MAX(분류별요약!$I$2:$I$${totRow-1})`;
+  const maxCatAmt = Math.max(0, ...CATS.map(c=>catTotal(c)));
   CATS.forEach((c,idx)=>{
     const sr=idx+2, rr=R+idx;
-    ws3.getCell(rr,2).value=nData?{formula:`분류별요약!A${sr}`}:c;
-    ws3.getCell(rr,3).value=nData?{formula:`분류별요약!B${sr}`}:0;
-    ws3.getCell(rr,4).value=nData?{formula:`분류별요약!H${sr}`}:0;
-    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${maxRef}=0,0,ROUND(분류별요약!H${sr}/${maxRef}*22,0)))`}:'';
-    ws3.getCell(rr,6).value=nData?{formula:`분류별요약!I${sr}`}:0;
+    const amt=catTotal(c), cnt=catCount(c), pct=GTOTAL?amt/GTOTAL:0;
+    const barN = maxCatAmt? Math.round(amt/maxCatAmt*22):0;
+    ws3.getCell(rr,2).value=nData?{formula:`분류별요약!A${sr}`, result:c}:c;
+    ws3.getCell(rr,3).value=nData?{formula:`분류별요약!B${sr}`, result:cnt}:0;
+    ws3.getCell(rr,4).value=nData?{formula:`분류별요약!I${sr}`, result:amt}:0;
+    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${maxRef}=0,0,ROUND(분류별요약!I${sr}/${maxRef}*22,0)))`, result:'■'.repeat(barN)}:'';
+    ws3.getCell(rr,6).value=nData?{formula:`분류별요약!J${sr}`, result:pct}:0;
     const stripe=idx%2===1;
     for(let col=2;col<=6;col++){
       const cell=ws3.getCell(rr,col);
@@ -721,13 +799,16 @@ async function exportXlsx(){
   const Dh=`전체주문내역!$D$${first}:$D$${last}`, Gh=`전체주문내역!$G$${first}:$G$${last}`, Hh=`전체주문내역!$H$${first}:$H$${last}`;
   const pTotRef=`SUM(D${pStart}:D${pStart+PLACES.length-1})`;
   const pMax=`MAX(`+PLACES.map((_,i)=>`D${pStart+i}`).join(',')+`)`;
+  const maxPlaceAmt = Math.max(0, ...PLACES.map(p=>placeAmt(p)));
   PLACES.forEach((p,idx)=>{
     const rr=pStart+idx;
+    const cnt=placeCount(p), amt=placeAmt(p), pct=GTOTAL?amt/GTOTAL:0;
+    const barN = maxPlaceAmt? Math.round(amt/maxPlaceAmt*22):0;
     ws3.getCell(rr,2).value=p;
-    ws3.getCell(rr,3).value=nData?{formula:`COUNTIF(${Hh},"${p}")`}:0;
-    ws3.getCell(rr,4).value=nData?{formula:`SUMIF(${Hh},"${p}",${Gh})`}:0;
-    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${pMax}=0,0,ROUND(D${rr}/${pMax}*22,0)))`}:'';
-    ws3.getCell(rr,6).value=nData?{formula:`IF(${pTotRef}=0,0,D${rr}/${pTotRef})`}:0;
+    ws3.getCell(rr,3).value=nData?{formula:`COUNTIF(${Hh},"${p}")`, result:cnt}:0;
+    ws3.getCell(rr,4).value=nData?{formula:`SUMIF(${Hh},"${p}",${Gh})`, result:amt}:0;
+    ws3.getCell(rr,5).value=nData?{formula:`REPT("■",IF(${pMax}=0,0,ROUND(D${rr}/${pMax}*22,0)))`, result:'■'.repeat(barN)}:'';
+    ws3.getCell(rr,6).value=nData?{formula:`IF(${pTotRef}=0,0,D${rr}/${pTotRef})`, result:pct}:0;
     const stripe=idx%2===1;
     for(let col=2;col<=6;col++){
       const cell=ws3.getCell(rr,col);
@@ -742,9 +823,9 @@ async function exportXlsx(){
   });
   const pTotRow=pStart+PLACES.length;
   ws3.getCell(pTotRow,2).value='합계';
-  ws3.getCell(pTotRow,3).value={formula:`SUM(C${pStart}:C${pStart+PLACES.length-1})`};
-  ws3.getCell(pTotRow,4).value={formula:`SUM(D${pStart}:D${pStart+PLACES.length-1})`};
-  ws3.getCell(pTotRow,6).value={formula:`IF(D${pTotRow}=0,0,1)`};
+  ws3.getCell(pTotRow,3).value={formula:`SUM(C${pStart}:C${pStart+PLACES.length-1})`, result:rows.length};
+  ws3.getCell(pTotRow,4).value={formula:`SUM(D${pStart}:D${pStart+PLACES.length-1})`, result:GTOTAL};
+  ws3.getCell(pTotRow,6).value={formula:`IF(D${pTotRow}=0,0,1)`, result:GTOTAL?1:0};
   for(let col=2;col<=6;col++){
     const cell=ws3.getCell(pTotRow,col);
     cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
@@ -758,14 +839,16 @@ async function exportXlsx(){
 
   // Section C: 주문처별 분류 분석 (cross-tab matrix, 금액 기준)
   let RC = pTotRow + 3;
-  ws3.mergeCells(RC,2,RC,8);
+  ws3.mergeCells(RC,2,RC,9);
   const hC=ws3.getCell(RC,2); hC.value='■ 주문처별 분류 분석 (금액 기준)';
   hC.font={name:FONT,bold:true,size:13,color:{argb:INK}}; ws3.getRow(RC).height=24; RC++;
-  const PSHORT=["알리","네이버","현장","11번가","G마켓"];
+  const PSHORT=["알리","네이버","현장","11번가","G마켓","루퍼젯"];
+  const nPlace=PLACES.length;            // 6
+  const sumColIdx=3+nPlace;              // column index of 합계 (=9)
   ws3.getCell(RC,2).value='분류';
   PSHORT.forEach((p,i)=>ws3.getCell(RC,3+i).value=p);
-  ws3.getCell(RC,8).value='합계';
-  for(let col=2;col<=8;col++){
+  ws3.getCell(RC,sumColIdx).value='합계';
+  for(let col=2;col<=sumColIdx;col++){
     const c=ws3.getCell(RC,col);
     c.font={name:FONT,bold:true,color:{argb:'FFFFFFFF'},size:10};
     c.fill={type:'pattern',pattern:'solid',fgColor:{argb:HEADBG}};
@@ -774,18 +857,19 @@ async function exportXlsx(){
   }
   ws3.getRow(RC).height=20; RC++;
   const mStart=RC;
+  const lastPlaceCol=String.fromCharCode(66+nPlace); // C..H -> 'H' for 6 places
   const Dm=`전체주문내역!$D$${first}:$D$${last}`, Gm=`전체주문내역!$G$${first}:$G$${last}`, Hm=`전체주문내역!$H$${first}:$H$${last}`;
   CATS.forEach((cat,idx)=>{
     const rr=mStart+idx;
     ws3.getCell(rr,2).value=cat;
     PLACES.forEach((p,pi)=>{
-      ws3.getCell(rr,3+pi).value=nData?{formula:`SUMIFS(${Gm},${Dm},$B${rr},${Hm},"${p}")`}:0;
+      ws3.getCell(rr,3+pi).value=nData?{formula:`SUMIFS(${Gm},${Dm},$B${rr},${Hm},"${p}")`, result:catPlaceAmt(cat,p)}:0;
     });
-    ws3.getCell(rr,8).value=nData?{formula:`SUM(C${rr}:G${rr})`}:0;
+    ws3.getCell(rr,sumColIdx).value=nData?{formula:`SUM(C${rr}:${lastPlaceCol}${rr})`, result:catTotal(cat)}:0;
     const stripe=idx%2===1;
-    for(let col=2;col<=8;col++){
+    for(let col=2;col<=sumColIdx;col++){
       const cell=ws3.getCell(rr,col);
-      cell.font={name:FONT,size:9.5,color:{argb:INK},bold:col===8};
+      cell.font={name:FONT,size:9.5,color:{argb:INK},bold:col===sumColIdx};
       cell.alignment={vertical:'middle',horizontal:col===2?'left':'right'};
       cell.border={bottom:{style:'hair',color:{argb:LINE}}};
       if(stripe) cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:STRIPE}};
@@ -795,12 +879,15 @@ async function exportXlsx(){
   });
   const mTot=mStart+CATS.length;
   ws3.getCell(mTot,2).value='합계';
-  for(let pi=0;pi<PLACES.length;pi++){
-    const colL=String.fromCharCode(67+pi); // C,D,E,F,G
-    ws3.getCell(mTot,3+pi).value={formula:`SUM(${colL}${mStart}:${colL}${mTot-1})`};
+  const placeKeys=["ali","naver","field","st11","gmarket","looper"];
+  for(let pi=0;pi<nPlace;pi++){
+    const colL=String.fromCharCode(67+pi);
+    ws3.getCell(mTot,3+pi).value={formula:`SUM(${colL}${mStart}:${colL}${mTot-1})`, result:sumKey(placeKeys[pi])};
   }
-  ws3.getCell(mTot,8).value={formula:`SUM(H${mStart}:H${mTot-1})`};
-  for(let col=2;col<=8;col++){
+  // 합계 column total: sum the 합계 column itself (column index sumColIdx)
+  const sumColL=String.fromCharCode(64+sumColIdx); // 9 -> 'I'
+  ws3.getCell(mTot,sumColIdx).value={formula:`SUM(${sumColL}${mStart}:${sumColL}${mTot-1})`, result:GTOTAL};
+  for(let col=2;col<=sumColIdx;col++){
     const cell=ws3.getCell(mTot,col);
     cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:TOTBG}};
     cell.font={name:FONT,bold:true,size:10,color:{argb:'FFFFFFFF'}};
@@ -808,7 +895,7 @@ async function exportXlsx(){
     if(col>=3) cell.numFmt='#,##0;;"-"';
   }
   // heatmap over the matrix body so dominant cells stand out
-  ws3.addConditionalFormatting({ref:`C${mStart}:G${mTot-1}`,
+  ws3.addConditionalFormatting({ref:`C${mStart}:${lastPlaceCol}${mTot-1}`,
     rules:[{type:'colorScale',cfvo:[{type:'num',value:0},{type:'max'}],
       color:[{argb:'FFFFFFFF'},{argb:'FF2F6B4F'}]}]});
 
@@ -835,12 +922,16 @@ async function exportXlsx(){
     const colL=String.fromCharCode(67+pi); // C..G
     const valRange=`${colL}$${mStart}:${colL}$${mTot-1}`;
     const rr=RD+pi;
+    // precompute this place's top category by amount
+    let topName='-', topAmt=0, placeSum=placeAmt(p);
+    CATS.forEach(c=>{ const v=catPlaceAmt(c,p); if(v>topAmt){topAmt=v; topName=c;} });
+    if(placeSum===0){ topName='-'; topAmt=0; }
+    const share = placeSum? topAmt/placeSum : 0;
     ws3.getCell(rr,2).value=PSHORT[pi];
     ws3.mergeCells(rr,3,rr,5);
-    // top category name for this place (by amount). If place total 0 -> "-"
-    ws3.getCell(rr,3).value=nData?{formula:`IF(SUM(${valRange})=0,"-",INDEX(${catColRange},MATCH(MAX(${valRange}),${valRange},0)))`}:'-';
-    ws3.getCell(rr,6).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange}))`}:0;
-    ws3.getCell(rr,7).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange})/SUM(${valRange}))`}:0;
+    ws3.getCell(rr,3).value=nData?{formula:`IF(SUM(${valRange})=0,"-",INDEX(${catColRange},MATCH(MAX(${valRange}),${valRange},0)))`, result:topName}:'-';
+    ws3.getCell(rr,6).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange}))`, result:topAmt}:0;
+    ws3.getCell(rr,7).value=nData?{formula:`IF(SUM(${valRange})=0,0,MAX(${valRange})/SUM(${valRange}))`, result:share}:0;
     const stripe=pi%2===1;
     for(let col=2;col<=8;col++){
       const cell=ws3.getCell(rr,col);
