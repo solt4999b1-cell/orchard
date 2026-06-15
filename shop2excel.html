@@ -219,8 +219,10 @@
   #ledgerTbl th .si { font-size: 10px; margin-left: 4px; display: inline-block; width: 12px; opacity: 0.8; }
   #ledgerTbl td,#anOrdersTbl td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
   #ledgerTbl tr:nth-child(even),#anOrdersTbl tr:nth-child(even){background:var(--stripe,#f6f4ed)}
-  .tx-del{border:none;background:none;color:var(--warn);font-weight:700;cursor:pointer;font-size:14px}
-  .tx-edit{border:none;background:none;color:var(--accent);font-weight:700;cursor:pointer;font-size:13px}
+  .tx-del{...;font-size:16px;padding:6px 8px;border-radius:6px;-webkit-tap-highlight-color:transparent}
+  .tx-edit{...;padding:6px 8px;border-radius:6px;-webkit-tap-highlight-color:transparent}
+  .tx-del:active,.tx-edit:active{background:var(--accent-soft)}
+  .tx-del:focus,.tx-edit:focus{outline:none}
   .ledger-foot{margin-top:10px;font-weight:700;color:var(--ink);text-align:right;font-size:14px}
   .ledger-amt{text-align:right;white-space:nowrap}
   /* 서브탭 */
@@ -2330,16 +2332,17 @@ function renderLedger(){
       <td>${t.cat}</td><td>${t.qty||1}</td>
       <td class="ledger-amt">${won(t.amount)}</td>
       <td>${t.place||''}</td>
-      <td style="white-space:nowrap"><button class="tx-edit" data-id="${t.id}">수정</button> <button class="tx-del" data-id="${t.id}">✕</button></td>`;
+      <td style="white-space:nowrap"><button type="button" class="tx-edit" data-id="${t.id}">수정</button> <button type="button" class="tx-del" data-id="${t.id}">✕</button></td>`;
     tb.appendChild(tr);
   });
   const sum=list.reduce((a,t)=>a+t.amount,0);
   $('ledgerSum').textContent = `${list.length}건 · 합계 ${won(sum)}원`;
   tb.querySelectorAll('.tx-del').forEach(b=>b.addEventListener('click', e=>{
-    const id=+e.target.dataset.id;
+    const id=+e.currentTarget.dataset.id;
+    if(Number.isNaN(id)) return;
     if(confirm('이 내역을 삭제할까요?')){ store=store.filter(t=>t.id!==id); saveStore(); renderLedger(); }
-  }));
-  tb.querySelectorAll('.tx-edit').forEach(b=>b.addEventListener('click', e=>openTxEditor(+e.target.dataset.id)));
+}));
+tb.querySelectorAll('.tx-edit').forEach(b=>b.addEventListener('click', e=>openTxEditor(+e.currentTarget.dataset.id)));
 
   // --- 정렬 방향에 맞춰 테이블 헤더 아이콘(▲/▼) 업데이트 ---
   document.querySelectorAll('#ledgerTbl th.sortable').forEach(th => {
