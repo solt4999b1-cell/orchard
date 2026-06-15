@@ -625,12 +625,14 @@ function saveStore(){
 function saveSettings(){
   try{ Storage.set(SETTINGS_KEY, JSON.stringify({cats:CATS, learned:learnedMap, budget:monthlyBudget})); }catch(e){}
 }
-// add an array of parsed rows into the persistent store (dedupe by date+name+amount+place)
+// add an array of parsed rows into the persistent store.
+// 중복 기준: 상품명 + 수량 + 금액 + 날짜가 모두 같으면 중복으로 보고 제외
 function addToStore(newRows){
-  const seen = new Set(store.map(t=>`${t.date}|${normName(t.name)}|${t.amount}|${t.place}`));
+  const dupKey = (name, qty, amount, date) => `${normName(name)}|${qty||1}|${amount}|${withYear(date)}`;
+  const seen = new Set(store.map(t=>dupKey(t.name, t.qty, t.amount, t.date)));
   let added=0, dup=0;
   for(const r of newRows){
-    const key=`${withYear(r.date)}|${normName(r.name)}|${r.amount}|${r.place}`;
+    const key=dupKey(r.name, r.qty, r.amount, r.date);
     if(seen.has(key)){ dup++; continue; }
     seen.add(key);
     store.push({ id: nextTxId++, status:r.status||'', date:withYear(r.date), name:r.name,
@@ -1130,7 +1132,7 @@ function render(){
   rows.forEach((r,idx)=>{
     const tr = document.createElement('tr');
     const opts = CATS.map(c=>`<option ${c===r.cat?'selected':''}>${c}</option>`).join('');
-    const dupBadge = r.dup ? ` <span title="같은 날짜·상품·금액이 중복되었을 수 있어요" style="color:#b4612a;font-size:11px;">⚠중복?</span>` : '';
+    const dupBadge = r.dup ? ` <span title="상품명·수량·금액·날짜가 모두 같은 중복일 수 있어요" style="color:#b4612a;font-size:11px;">⚠중복?</span>` : '';
     tr.innerHTML = `
       <td class="num">${r.no}</td>
       <td>${withYear(r.date)}</td>
@@ -1165,11 +1167,11 @@ function render(){
   $('exportStep').style.display = rows.length?'block':'none';
 }
 
-// item 4: flag likely duplicate rows (same date+name+amount) for user review.
+// flag likely duplicate rows (same 상품명+수량+금액+날짜) for user review.
 function markDuplicates(list){
   const seen = {};
   list.forEach(r=>{
-    const key = `${r.date}|${r.name}|${r.amount}`;
+    const key = `${normName(r.name)}|${r.qty||1}|${r.amount}|${withYear(r.date)}`;
     if(seen[key]){ r.dup = true; } else { seen[key] = true; r.dup = false; }
   });
 }
