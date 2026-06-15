@@ -214,6 +214,9 @@
   .ledger-filterbar select{flex:1;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px;background:#fff}
   #ledgerTbl,#anOrdersTbl{width:100%;border-collapse:collapse;font-size:13px}
   #ledgerTbl th,#anOrdersTbl th{position:sticky;top:0;background:var(--accent);color:#fff;padding:8px 6px;text-align:left;font-size:12px;white-space:nowrap}
+  #ledgerTbl th.sortable { cursor: pointer; user-select: none; transition: background 0.15s; }
+  #ledgerTbl th.sortable:hover { background: #255840; }
+  #ledgerTbl th .si { font-size: 10px; margin-left: 4px; display: inline-block; width: 12px; opacity: 0.8; }
   #ledgerTbl td,#anOrdersTbl td{padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:middle}
   #ledgerTbl tr:nth-child(even),#anOrdersTbl tr:nth-child(even){background:var(--stripe,#f6f4ed)}
   .tx-del{border:none;background:none;color:var(--warn);font-weight:700;cursor:pointer;font-size:14px}
@@ -445,7 +448,15 @@
       </div>
       <div class="tbl-scroll">
         <table id="ledgerTbl">
-          <thead><tr><th>날짜</th><th>상품명</th><th>분류</th><th>수량</th><th>금액</th><th>구입처</th><th></th></tr></thead>
+          <thead><tr>
+            <th class="sortable" data-sort="date" title="클릭하여 정렬">날짜<span class="si"></span></th>
+            <th>상품명</th>
+            <th class="sortable" data-sort="cat" title="클릭하여 정렬">분류<span class="si"></span></th>
+            <th>수량</th>
+            <th class="sortable" data-sort="amount" title="클릭하여 정렬">금액<span class="si"></span></th>
+            <th class="sortable" data-sort="place" title="클릭하여 정렬">구입처<span class="si"></span></th>
+            <th></th>
+          </tr></thead>
           <tbody id="ledgerBody"></tbody>
         </table>
       </div>
@@ -594,9 +605,24 @@ const Storage = (()=>{
   const mem = {};
   return {
     available: ok,
-    get(k){ try{ return ok ? localStorage.getItem(k) : (mem[k]??null); }catch(e){ return mem[k]??null; } },
-    set(k,v){ try{ if(ok) localStorage.setItem(k,v); else mem[k]=v; }catch(e){ mem[k]=v; } },
-    del(k){ try{ if(ok) localStorage.removeItem(k); else delete mem[k]; }catch(e){ delete mem[k]; } },
+    get(k){
+      try {
+        let val = null;
+        if(ok) val = localStorage.getItem(k);
+        // localStorage가 비어있더라도 임시 메모리에 값이 있다면 우선 사용
+        return val !== null ? val : (mem[k] ?? null);
+      } catch(e){ return mem[k] ?? null; }
+    },
+    set(k,v){
+      try { 
+        if(ok) localStorage.setItem(k,v); 
+        else mem[k]=v; 
+      } catch(e){ mem[k]=v; } // iOS Safari 할당량 초과 에러 시 메모리에 저장
+    },
+    del(k){
+      try { if(ok) localStorage.removeItem(k); } catch(e){}
+      delete mem[k];
+    },
   };
 })();
 
@@ -1060,8 +1086,19 @@ function detectFormat(raw){
 function parseText(raw){
   if(!raw || !raw.trim()) return [];
   const best = detectFormat(raw);
-  if(best.score <= 0) return parseNaver(raw); // unknown → try the most lenient parser
-  return best.parser(raw);
+  let parsedRows = best.score <= 0 ? parseNaver(raw) : best.parser(raw);
+
+  // --- 추가된 필터링 로직 ---
+  parsedRows = parsedRows.filter(r => {
+    const name = (r.name || '').trim();
+    // 상품명이 정확히 "내역 23"이거나 "최대"인 경우 제외
+    return name !== "내역 23" && name !== "최대";
+  });
+
+  // 항목이 제외되었을 수 있으므로 No.를 다시 순서대로 매김
+  parsedRows.forEach((o, idx) => o.no = idx + 1);
+  
+  return parsedRows;
 }
 
 function thisYear(){ return new Date().getFullYear(); }
@@ -2187,29 +2224,46 @@ function ym(dateStr){ const s=ymd(dateStr); return s? s.slice(0,7):''; } // YYYY
 function fmtDate(dateStr){ const s=ymd(dateStr); return s? s.replace(/-/g,'.'):dateStr; }
 
 // ---- 저장(메모리에 추가) ----
-$('saveToMemoryBtn') && $('saveToMemoryBtn').addEventListener('click', ()=>{
-  if(!rows.length){ return; }
+$('saveToMemoryBtn') && $('saveToMemoryBtn').addEventListener('click', function() {
+  // 이미 실행 중이면 중단 (더블 탭 방지)
+  if (this.disabled) return;
+  if (!rows.length) return;
+
+  // 버튼 비활성화 및 텍스트 변경
+  this.disabled = true;
+  const origText = this.textContent;
+  this.textContent = '💾 저장 중...';
+
   const {added,dup}=addToStore(rows);
   saveSettings();
-  // verify the write actually persisted (iOS private mode can report storage
-  // available but silently drop writes). Re-read and compare counts.
+
   let persisted = true;
   try{
     const raw = Storage.get(STORE_KEY);
     const back = raw ? (JSON.parse(raw).tx||[]) : [];
     persisted = back.length >= store.length;
   }catch(e){ persisted = false; }
+
   let persistMsg;
   if(!Storage.available || !persisted){
-    persistMsg = '⚠ 이 브라우저에서는 영구 저장이 제한될 수 있어요(사파리 ‘프라이빗 브라우징’이면 해제하거나, 공유→홈 화면에 추가로 앱 설치 후 사용하세요). 지금 세션에서는 아래 ‘내역 관리’에서 바로 확인됩니다.';
+    persistMsg = '⚠ 이 환경에서는 영구 저장이 제한될 수 있습니다 (사파리 ‘프라이빗 브라우징’ 해제 또는 홈 화면에 앱 추가 권장).';
   } else {
-    persistMsg = '초기화하기 전까지 앱에 계속 저장됩니다.';
+    persistMsg = '앱에 안정적으로 저장되었습니다.';
   }
-  $('saveNote').innerHTML = `${added}건을 저장했어요${dup?` (중복 ${dup}건 제외)`:''}. ${persistMsg} `+
+  
+  // 저장 결과 안내 문구 업데이트
+  $('saveNote').innerHTML = `${added}건을 새로 저장했어요${dup?` (이미 저장된 중복 ${dup}건 제외)`:''}. ${persistMsg} `+
     `<button class="ghost sm" id="gotoLedgerBtn" style="margin-top:8px">📋 내역 관리에서 보기</button>`;
+    
   const gb=document.getElementById('gotoLedgerBtn');
   if(gb) gb.addEventListener('click', ()=>switchTab('ledger'));
   updateStoreStatus();
+
+  // 1초 후 버튼 다시 활성화
+  setTimeout(() => {
+    this.disabled = false;
+    this.textContent = origText;
+  }, 1000);
 });
 
 // ---- 기간 지정 UI ----
@@ -2219,6 +2273,8 @@ document.querySelectorAll('input[name="rangeMode"]').forEach(r=>{
 
 // ===== 내역 관리 (CRUD) =====
 let ledgerFilter = {q:'', month:'', cat:''};
+let ledgerSort = {col: 'date', dir: 'asc'}; // 정렬 상태 관리 변수 추가
+
 function storeFiltered(){
   return store.filter(t=>{
     if(ledgerFilter.month && ym(t.date)!==ledgerFilter.month) return false;
@@ -2228,7 +2284,29 @@ function storeFiltered(){
       if(!(`${t.name} ${t.cat} ${t.place}`.toLowerCase().includes(q))) return false;
     }
     return true;
-  }).sort((a,b)=> ymd(a.date).localeCompare(ymd(b.date)));
+  }).sort((a,b)=> {
+    // 선택된 컬럼에 따라 정렬 값 설정
+    let valA, valB;
+    if (ledgerSort.col === 'date') {
+      valA = ymd(a.date); valB = ymd(b.date);
+    } else if (ledgerSort.col === 'cat') {
+      valA = a.cat || ''; valB = b.cat || '';
+    } else if (ledgerSort.col === 'amount') {
+      valA = a.amount || 0; valB = b.amount || 0;
+    } else if (ledgerSort.col === 'place') {
+      valA = a.place || ''; valB = b.place || '';
+    }
+
+    // 숫자 비교 vs 문자열 비교
+    let cmp = 0;
+    if (typeof valA === 'number') {
+      cmp = valA - valB;
+    } else {
+      cmp = String(valA).localeCompare(String(valB), 'ko');
+    }
+    
+    return ledgerSort.dir === 'asc' ? cmp : -cmp; // 오름차순/내림차순 토글
+  });
 }
 function populateMonthSelect(sel, withAllLabel){
   const months=[...new Set(store.map(t=>ym(t.date)).filter(Boolean))].sort().reverse();
@@ -2262,7 +2340,37 @@ function renderLedger(){
     if(confirm('이 내역을 삭제할까요?')){ store=store.filter(t=>t.id!==id); saveStore(); renderLedger(); }
   }));
   tb.querySelectorAll('.tx-edit').forEach(b=>b.addEventListener('click', e=>openTxEditor(+e.target.dataset.id)));
-}
+
+  // --- 정렬 방향에 맞춰 테이블 헤더 아이콘(▲/▼) 업데이트 ---
+  document.querySelectorAll('#ledgerTbl th.sortable').forEach(th => {
+    const col = th.dataset.sort;
+    const icon = th.querySelector('.si');
+    if (icon) {
+      if (col === ledgerSort.col) {
+        icon.textContent = ledgerSort.dir === 'asc' ? '▲' : '▼';
+      } else {
+        icon.textContent = '';
+      }
+    }
+  });
+} // renderLedger() 함수의 끝
+
+  // --- 테이블 헤더 클릭 시 정렬 상태 변경 및 리렌더링 이벤트 등록 ---
+  document.querySelectorAll('#ledgerTbl th.sortable').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.sort;
+      if (ledgerSort.col === col) {
+        // 같은 컬럼을 다시 누르면 방향 토글
+        ledgerSort.dir = ledgerSort.dir === 'asc' ? 'desc' : 'asc';
+      } else {
+        // 다른 컬럼을 누르면 오름차순으로 초기화
+        ledgerSort.col = col;
+        ledgerSort.dir = 'asc';
+      }
+      renderLedger(); // 테이블 다시 그리기
+    });
+  });
+
 $('ledgerSearch') && $('ledgerSearch').addEventListener('input', e=>{ ledgerFilter.q=e.target.value; renderLedger(); });
 $('ledgerMonth') && $('ledgerMonth').addEventListener('change', e=>{ ledgerFilter.month=e.target.value; renderLedger(); });
 $('ledgerCatFilter') && $('ledgerCatFilter').addEventListener('change', e=>{ ledgerFilter.cat=e.target.value; renderLedger(); });
