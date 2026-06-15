@@ -192,6 +192,9 @@
   /* 저장 박스 */
   .save-box{display:flex;flex-direction:column;gap:8px;background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;padding:14px}
   #saveToMemoryBtn{align-self:flex-start}
+  .source-buttons{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .source-buttons button{flex:1 1 auto}
+  .cloud-hint{margin-top:8px;line-height:1.5}
   .range-opt{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:14px 0;font-size:14px}
   .range-opt label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
   .range-inputs input{padding:7px 9px;border:1px solid var(--line);border-radius:7px;font-size:13px}
@@ -216,6 +219,8 @@
   .subpanel.active{display:block}
   .analysis-month{margin-bottom:12px;font-size:14px}
   .analysis-month select{padding:7px 10px;border:1px solid var(--line);border-radius:7px;margin-left:6px}
+  .order-sortbar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:12px;font-size:13.5px}
+  .order-sortbar label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
   /* 백업/위험 영역 */
   .danger-zone{border-color:#d9a98e}
   button.danger{background:#b4452a;border-color:#b4452a}
@@ -318,6 +323,11 @@
     </div>
     <div class="drop" id="drop">주문내역 <b>PDF 파일 여러 개</b>(또는 .txt)를 끌어다 놓거나 <b>클릭해서 선택</b>하세요<br><span style="font-size:12px;opacity:.8">네이버 · 알리 · G마켓 · 11번가 · 루퍼젯 형식을 자동 인식해 분류·집계합니다</span></div>
     <input type="file" id="file" accept=".pdf,.txt,.xlsx,application/pdf,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple hidden>
+    <div class="source-buttons">
+      <button class="ghost sm" id="pickFileBtn">📁 파일 선택</button>
+      <button class="ghost sm" id="pickCloudBtn">☁️ 클라우드에서 불러오기</button>
+    </div>
+    <p class="hint cloud-hint">☁️ 버튼을 누르면 아이폰 ‘파일’ 앱이 열려 <b>iCloud Drive · Google Drive · Dropbox</b> 등에서 바로 PDF를 고를 수 있어요. (구글 드라이브는 앱이 설치되어 있어야 목록에 보입니다.)</p>
     <div id="fileList" style="margin-top:12px"></div>
     <div class="hint" id="fileStatus" style="margin-top:8px"></div>
     <details style="margin-top:12px">
@@ -440,7 +450,14 @@
       <div class="analysis-month">
         <label>월 선택 <select id="analysisMonth"><option value="">전체</option></select></label>
       </div>
-      <div class="subpanel active" id="sub-orders"><div class="tbl-scroll"><table id="anOrdersTbl"><thead><tr><th>날짜</th><th>상품명</th><th>분류</th><th>수량</th><th>금액</th><th>구입처</th></tr></thead><tbody id="anOrdersBody"></tbody></table></div></div>
+      <div class="subpanel active" id="sub-orders">
+        <div class="order-sortbar">
+          <span class="sort-lab">날짜 정렬</span>
+          <label><input type="radio" name="anOrderSort" value="asc" checked> 오래된순</label>
+          <label><input type="radio" name="anOrderSort" value="desc"> 최신순(역순)</label>
+        </div>
+        <div class="tbl-scroll"><table id="anOrdersTbl"><thead><tr><th>날짜</th><th>상품명</th><th>분류</th><th>수량</th><th>금액</th><th>구입처</th></tr></thead><tbody id="anOrdersBody"></tbody></table></div>
+      </div>
       <div class="subpanel" id="sub-bycat"><div class="summary-grid" id="anByCatGrid"></div></div>
       <div class="subpanel" id="sub-report"><div id="anReport"></div></div>
     </section>
@@ -2119,6 +2136,10 @@ fileInput.addEventListener('change', e=>{ ingestFiles(e.target.files); fileInput
 ['dragenter','dragover'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.add('over');}));
 ['dragleave','drop'].forEach(ev=>drop.addEventListener(ev,e=>{e.preventDefault();drop.classList.remove('over');}));
 drop.addEventListener('drop', e=>{ e.preventDefault(); drop.classList.remove('over'); ingestFiles(e.dataTransfer.files); });
+// 파일 선택 / 클라우드 불러오기 — 둘 다 같은 파일 선택창을 열며, iOS에서는
+// ‘파일’ 앱을 통해 iCloud Drive·Google Drive·Dropbox 등 클라우드에 접근됩니다.
+$('pickFileBtn') && $('pickFileBtn').addEventListener('click', ()=>fileInput.click());
+$('pickCloudBtn') && $('pickCloudBtn').addEventListener('click', ()=>fileInput.click());
 
 // ===================== 가계부 앱 기능 =====================
 const $$ = sel => document.querySelector(sel);
@@ -2150,8 +2171,24 @@ $('saveToMemoryBtn') && $('saveToMemoryBtn').addEventListener('click', ()=>{
   if(!rows.length){ return; }
   const {added,dup}=addToStore(rows);
   saveSettings();
-  const msg = `${added}건을 앱에 저장했어요${dup?` (중복 ${dup}건 제외)`:''}. ‘내역 관리’ 탭에서 보고 수정할 수 있어요.`;
-  $('saveNote').textContent = msg;
+  // verify the write actually persisted (iOS private mode can report storage
+  // available but silently drop writes). Re-read and compare counts.
+  let persisted = true;
+  try{
+    const raw = Storage.get(STORE_KEY);
+    const back = raw ? (JSON.parse(raw).tx||[]) : [];
+    persisted = back.length >= store.length;
+  }catch(e){ persisted = false; }
+  let persistMsg;
+  if(!Storage.available || !persisted){
+    persistMsg = '⚠ 이 브라우저에서는 영구 저장이 제한될 수 있어요(사파리 ‘프라이빗 브라우징’이면 해제하거나, 공유→홈 화면에 추가로 앱 설치 후 사용하세요). 지금 세션에서는 아래 ‘내역 관리’에서 바로 확인됩니다.';
+  } else {
+    persistMsg = '초기화하기 전까지 앱에 계속 저장됩니다.';
+  }
+  $('saveNote').innerHTML = `${added}건을 저장했어요${dup?` (중복 ${dup}건 제외)`:''}. ${persistMsg} `+
+    `<button class="ghost sm" id="gotoLedgerBtn" style="margin-top:8px">📋 내역 관리에서 보기</button>`;
+  const gb=document.getElementById('gotoLedgerBtn');
+  if(gb) gb.addEventListener('click', ()=>switchTab('ledger'));
   updateStoreStatus();
 });
 
@@ -2258,6 +2295,7 @@ document.querySelectorAll('.subtab-btn').forEach(b=>b.addEventListener('click', 
   renderAnalysis();
 }));
 $('analysisMonth') && $('analysisMonth').addEventListener('change', renderAnalysis);
+document.querySelectorAll('input[name="anOrderSort"]').forEach(r=>r.addEventListener('change', renderAnalysis));
 function analysisRows(){
   const mo=$('analysisMonth').value;
   return store.filter(t=>!mo || ym(t.date)===mo).sort((a,b)=>ymd(a.date).localeCompare(ymd(b.date)));
@@ -2270,8 +2308,13 @@ function renderAnalysis(){
   else renderAnReport(data);
 }
 function renderAnOrders(data){
+  const dir = (document.querySelector('input[name="anOrderSort"]:checked')||{}).value || 'asc';
+  const rows = data.slice().sort((a,b)=>{
+    const c = ymd(a.date).localeCompare(ymd(b.date));
+    return dir==='desc' ? -c : c;
+  });
   const tb=$('anOrdersBody'); tb.innerHTML='';
-  data.forEach(t=>{ const tr=document.createElement('tr');
+  rows.forEach(t=>{ const tr=document.createElement('tr');
     tr.innerHTML=`<td>${fmtDate(t.date)}</td><td class="pname">${t.name}</td><td>${t.cat}</td><td>${t.qty||1}</td><td class="ledger-amt">${won(t.amount)}</td><td>${t.place||''}</td>`;
     tb.appendChild(tr); });
 }
