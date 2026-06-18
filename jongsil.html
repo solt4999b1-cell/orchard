@@ -327,7 +327,7 @@
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 </div>
 
-<div class="tabs" id="tabBar">
+<div class="tabs" id="tabBar" style="position: relative;">
   <button class="tab-btn active" onclick="showTab(0)">Ⅰ 토양</button>
   <button class="tab-btn" onclick="showTab(1)">Ⅱ 퇴비</button>
   <button class="tab-btn" onclick="showTab(2)">Ⅲ 재배관리</button>
@@ -336,6 +336,26 @@
   <button class="tab-btn" onclick="showTab(5)">★ 암기카드</button>
   <button class="tab-btn" onclick="showTab(6)">📓 핵심요약</button>
   <button class="tab-btn" onclick="showTab(7)">🎵 노래로 암기</button>
+  <!-- ⭐️ 새로 추가된 화면 유지 탭 버튼 -->
+  <button class="tab-btn" id="wakeLockTabBtn" onclick="openWakeLockModal()" style="font-weight: bold; color: #007AFF;">🔒 화면 유지</button>
+</div>
+
+<!-- ⭐️ 화면 유지 시간 설정 모달 (평소엔 숨겨져 있음) -->
+<div id="wakeLockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
+  <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 300px; width: 80%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+    <h3 style="margin-top: 0; margin-bottom: 5px; font-size: 18px;">화면 유지 시간 설정</h3>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">학습하실 시간을 선택해 주세요.</p>
+    
+    <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
+      <button onclick="startWakeLock(0)" style="padding: 12px; border-radius: 8px; border: 1px solid #007AFF; background: white; color: #007AFF; font-size: 15px; cursor: pointer;">∞ 무제한 계속 켜짐</button>
+      <button onclick="startWakeLock(10)" style="padding: 12px; border-radius: 8px; border: 1px solid #007AFF; background: white; color: #007AFF; font-size: 15px; cursor: pointer;">⏳ 10분 유지</button>
+      <button onclick="startWakeLock(30)" style="padding: 12px; border-radius: 8px; border: 1px solid #007AFF; background: white; color: #007AFF; font-size: 15px; cursor: pointer;">⏳ 30분 유지</button>
+      <button onclick="startWakeLock(60)" style="padding: 12px; border-radius: 8px; border: 1px solid #007AFF; background: white; color: #007AFF; font-size: 15px; cursor: pointer;">⏳ 60분 유지</button>
+      <button onclick="stopWakeLock()" style="padding: 12px; border-radius: 8px; border: none; background: #FF3B30; color: white; font-size: 15px; cursor: pointer; margin-top: 10px;">끄기 (기능 해제)</button>
+    </div>
+    
+    <button onclick="closeWakeLockModal()" style="padding: 12px; width: 100%; border-radius: 8px; border: none; background: #E5E5EA; color: #333; font-size: 15px; cursor: pointer;">취소</button>
+  </div>
 </div>
 
 <div id="statBar" style="padding:10px 12px 0">
@@ -1517,6 +1537,101 @@ function showToast(msg) {
 // 렌더링 가동
 buildCards();
 buildFlashCards();
+</script>
+
+<script>
+  let wakeLock = null;
+  let isWakeLockEnabledByUser = false; 
+  let targetEndTime = null;
+  let timerInterval = null;
+
+  const wakeLockTabBtn = document.getElementById('wakeLockTabBtn');
+  const wakeLockModal = document.getElementById('wakeLockModal');
+
+  // 모달(팝업창) 열기 및 닫기
+  const openWakeLockModal = () => {
+    wakeLockModal.style.display = 'flex';
+  };
+  const closeWakeLockModal = () => {
+    wakeLockModal.style.display = 'none';
+  };
+
+  // ⭐️ 화면 유지 종료 및 초기화
+  const stopWakeLock = async () => {
+    isWakeLockEnabledByUser = false;
+    targetEndTime = null;
+    
+    if (timerInterval) clearInterval(timerInterval);
+    if (wakeLock !== null) {
+      await wakeLock.release().catch(console.error);
+    }
+    
+    // 버튼 텍스트와 색상 원상복구
+    wakeLockTabBtn.innerHTML = '🔒 화면 유지';
+    wakeLockTabBtn.style.color = '#007AFF'; 
+    closeWakeLockModal();
+  };
+
+  // ⭐️ 타이머 체크 (1초마다 실행)
+  const checkTimer = () => {
+    if (!targetEndTime) return;
+
+    const now = Date.now();
+    if (now >= targetEndTime) {
+      stopWakeLock();
+      alert('예약된 시간이 종료되어 화면 유지가 해제되었습니다.');
+    } else {
+      const remainingMs = targetEndTime - now;
+      const remainingMins = Math.floor(remainingMs / 60000);
+      const remainingSecs = Math.floor((remainingMs % 60000) / 1000);
+      // 탭 버튼 자체에 남은 시간 표시
+      wakeLockTabBtn.innerHTML = `🔓 ${remainingMins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
+    }
+  };
+
+  // API 요청 함수
+  const requestWakeLock = async () => {
+    try {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    } catch (err) {
+      console.error(err);
+      alert('현재 기기 또는 브라우저에서는 화면 켜짐 유지를 지원하지 않습니다.');
+      stopWakeLock();
+    }
+  };
+
+  // ⭐️ 시간을 선택했을 때 실행되는 함수
+  const startWakeLock = async (duration) => {
+    closeWakeLockModal(); // 선택창 닫기
+    isWakeLockEnabledByUser = true;
+    wakeLockTabBtn.style.color = '#34C759'; // 활성화 시 탭 글자를 초록색으로 변경
+
+    if (duration > 0) {
+      targetEndTime = Date.now() + (duration * 60 * 1000);
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(checkTimer, 1000);
+      checkTimer(); // 남은 시간 즉시 표시
+    } else {
+      targetEndTime = null;
+      if (timerInterval) clearInterval(timerInterval);
+      wakeLockTabBtn.innerHTML = '🔓 무제한 켜짐'; // 탭 텍스트 변경
+    }
+    
+    await requestWakeLock();
+  };
+
+  // 사용자가 다른 탭(카톡 등)으로 이동했다가 돌아왔을 때의 처리
+  document.addEventListener('visibilitychange', async () => {
+    if (isWakeLockEnabledByUser && document.visibilityState === 'visible') {
+      if (targetEndTime && Date.now() >= targetEndTime) {
+        await stopWakeLock();
+        alert('다른 앱을 사용하는 동안 화면 유지 시간이 종료되었습니다.');
+      } else {
+        await requestWakeLock();
+      }
+    }
+  });
 </script>
 </body>
 </html>
