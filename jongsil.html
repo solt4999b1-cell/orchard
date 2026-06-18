@@ -341,10 +341,25 @@
 </div>
 
 <!-- ⭐️ 화면 유지 시간 설정 모달 (평소엔 숨겨져 있음) -->
+<div id="dimmerOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black; opacity: 0.6; z-index: 9990; pointer-events: none; transition: opacity 0.5s ease;"></div>
+
 <div id="wakeLockModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center;">
   <div style="background: white; padding: 25px; border-radius: 12px; text-align: center; max-width: 300px; width: 80%; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-    <h3 style="margin-top: 0; margin-bottom: 5px; font-size: 18px;">화면 유지 시간 설정</h3>
-    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">학습하실 시간을 선택해 주세요.</p>
+    <h3 style="margin-top: 0; margin-bottom: 5px; font-size: 18px;">화면 유지 설정</h3>
+    <p style="font-size: 13px; color: #666; margin-bottom: 20px;">학습 환경을 설정해 주세요.</p>
+    
+    <div style="margin-bottom: 20px; text-align: left;">
+      <label for="dimmerRange" style="font-size: 14px; color: #333; font-weight: bold; display: block; margin-bottom: 8px;">
+        절전 모드 화면 어둡기
+      </label>
+      <input type="range" id="dimmerRange" min="0" max="90" value="60" style="width: 100%; cursor: pointer;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #888; margin-top: 5px;">
+        <span>밝게</span>
+        <span>어둡게</span>
+      </div>
+    </div>
+
+    <hr style="border: 0; border-top: 1px solid #eee; margin-bottom: 15px;">
     
     <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px;">
       <button onclick="startWakeLock(0)" style="padding: 12px; border-radius: 8px; border: 1px solid #007AFF; background: white; color: #007AFF; font-size: 15px; cursor: pointer;">∞ 무제한 계속 켜짐</button>
@@ -354,7 +369,7 @@
       <button onclick="stopWakeLock()" style="padding: 12px; border-radius: 8px; border: none; background: #FF3B30; color: white; font-size: 15px; cursor: pointer; margin-top: 10px;">끄기 (기능 해제)</button>
     </div>
     
-    <button onclick="closeWakeLockModal()" style="padding: 12px; width: 100%; border-radius: 8px; border: none; background: #E5E5EA; color: #333; font-size: 15px; cursor: pointer;">취소</button>
+    <button onclick="closeWakeLockModal()" style="padding: 12px; width: 100%; border-radius: 8px; border: none; background: #E5E5EA; color: #333; font-size: 15px; cursor: pointer;">닫기</button>
   </div>
 </div>
 
@@ -1547,16 +1562,21 @@ buildFlashCards();
 
   const wakeLockTabBtn = document.getElementById('wakeLockTabBtn');
   const wakeLockModal = document.getElementById('wakeLockModal');
+  const dimmerOverlay = document.getElementById('dimmerOverlay'); 
+  const dimmerRange = document.getElementById('dimmerRange'); // ⭐️ 슬라이더 요소 가져오기
 
-  // 모달(팝업창) 열기 및 닫기
-  const openWakeLockModal = () => {
-    wakeLockModal.style.display = 'flex';
-  };
-  const closeWakeLockModal = () => {
-    wakeLockModal.style.display = 'none';
-  };
+  // 모달 제어
+  const openWakeLockModal = () => { wakeLockModal.style.display = 'flex'; };
+  const closeWakeLockModal = () => { wakeLockModal.style.display = 'none'; };
 
-  // ⭐️ 화면 유지 종료 및 초기화
+  // ⭐️ 슬라이더를 움직일 때 실시간으로 밝기 적용 (화면 유지가 켜져 있을 때만)
+  dimmerRange.addEventListener('input', (e) => {
+    if (isWakeLockEnabledByUser) {
+      dimmerOverlay.style.opacity = e.target.value / 100;
+    }
+  });
+
+  // 화면 유지 해제 (기능 끄기 & 밝기 복원)
   const stopWakeLock = async () => {
     isWakeLockEnabledByUser = false;
     targetEndTime = null;
@@ -1566,30 +1586,29 @@ buildFlashCards();
       await wakeLock.release().catch(console.error);
     }
     
-    // 버튼 텍스트와 색상 원상복구
     wakeLockTabBtn.innerHTML = '🔒 화면 유지';
     wakeLockTabBtn.style.color = '#007AFF'; 
+    dimmerOverlay.style.display = 'none'; 
     closeWakeLockModal();
   };
 
-  // ⭐️ 타이머 체크 (1초마다 실행)
+  // 타이머 체크
   const checkTimer = () => {
     if (!targetEndTime) return;
 
     const now = Date.now();
     if (now >= targetEndTime) {
-      stopWakeLock();
-      alert('예약된 시간이 종료되어 화면 유지가 해제되었습니다.');
+      stopWakeLock(); 
+      alert('예약된 시간이 종료되어 화면 유지가 해제되고 밝기가 복원되었습니다.');
     } else {
       const remainingMs = targetEndTime - now;
       const remainingMins = Math.floor(remainingMs / 60000);
       const remainingSecs = Math.floor((remainingMs % 60000) / 1000);
-      // 탭 버튼 자체에 남은 시간 표시
       wakeLockTabBtn.innerHTML = `🔓 ${remainingMins}:${remainingSecs < 10 ? '0' : ''}${remainingSecs}`;
     }
   };
 
-  // API 요청 함수
+  // API 요청
   const requestWakeLock = async () => {
     try {
       wakeLock = await navigator.wakeLock.request('screen');
@@ -1601,27 +1620,31 @@ buildFlashCards();
     }
   };
 
-  // ⭐️ 시간을 선택했을 때 실행되는 함수
+  // 화면 유지 시작 (기능 켜기 & 화면 어둡게)
   const startWakeLock = async (duration) => {
-    closeWakeLockModal(); // 선택창 닫기
+    closeWakeLockModal();
     isWakeLockEnabledByUser = true;
-    wakeLockTabBtn.style.color = '#34C759'; // 활성화 시 탭 글자를 초록색으로 변경
+    wakeLockTabBtn.style.color = '#34C759'; 
+    
+    // ⭐️ 슬라이더에서 사용자가 설정한 값을 가져와서 투명도(opacity)로 변환 (예: 60 -> 0.6)
+    dimmerOverlay.style.opacity = dimmerRange.value / 100;
+    dimmerOverlay.style.display = 'block'; 
 
     if (duration > 0) {
       targetEndTime = Date.now() + (duration * 60 * 1000);
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(checkTimer, 1000);
-      checkTimer(); // 남은 시간 즉시 표시
+      checkTimer();
     } else {
       targetEndTime = null;
       if (timerInterval) clearInterval(timerInterval);
-      wakeLockTabBtn.innerHTML = '🔓 무제한 켜짐'; // 탭 텍스트 변경
+      wakeLockTabBtn.innerHTML = '🔓 무제한 켜짐';
     }
     
     await requestWakeLock();
   };
 
-  // 사용자가 다른 탭(카톡 등)으로 이동했다가 돌아왔을 때의 처리
+  // 탭 이동 보정 로직
   document.addEventListener('visibilitychange', async () => {
     if (isWakeLockEnabledByUser && document.visibilityState === 'visible') {
       if (targetEndTime && Date.now() >= targetEndTime) {
