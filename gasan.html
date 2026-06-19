@@ -431,7 +431,7 @@
         if (!url) {
             syncStatus.textContent = "입력된 URL이 없어 수동 모드를 유지합니다.";
             syncStatus.style.color = "#64748b";
-            schoolDB = []; // DB 초기화
+            schoolDB = []; 
             return;
         }
 
@@ -449,7 +449,6 @@
             syncStatus.textContent = `동기화 성공! (${schoolDB.length}개 데이터 연결됨)`;
             syncStatus.style.color = "var(--success-color)";
         } catch (error) {
-            // 프록시 우회
             try {
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
                 const proxyResponse = await fetch(proxyUrl);
@@ -468,25 +467,104 @@
         }
     });
 
+    // [핵심 변경] 표의 형식이 일그러져도 정확히 찾아내는 스마트 DB 파서
     function parseSchoolDB(csvText) {
         schoolDB = [];
         const lines = csvText.split('\n');
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i].trim();
+        let currentCategory = "기타";
+        let currentRegion = "";
+        let currentSchool = "";
+        
+        for (let i = 0; i < lines.length; i++) {
+            let line = lines[i].trim();
             if (!line) continue;
-            let cols = line.split(',');
-            if (cols.length >= 6) {
+            
+            // CSV 따옴표 파싱 (쉼표로 묶인 학교명 처리)
+            let inQuotes = false;
+            let cols = [];
+            let currentWord = '';
+            for(let char of line) {
+                if(char === '"') { inQuotes = !inQuotes; }
+                else if(char === ',' && !inQuotes) { cols.push(currentWord); currentWord = ''; }
+                else { currentWord += char; }
+            }
+            cols.push(currentWord);
+            
+            let colA = cols[0] ? cols[0].trim() : "";
+            let colB = cols[1] ? cols[1].trim() : "";
+            
+            // 대분류 추적 유지
+            if (colA.includes("도서") || colA.includes("벽지")) currentCategory = "도서/벽지";
+            if (colA.includes("농․어촌") || colA.includes("농어촌") || colA.includes("공단")) currentCategory = "농어촌/공단";
+            if (colA.includes("접경지역") || colA.includes("접적")) currentCategory = "접경/접적";
+            
+            // 불필요한 헤더 및 찌꺼기 패스
+            if (colA === "구분" || colA === "지역" || colB === "학교명" || colB === "지역" || colA.includes("󰊱") || colA.includes("󰊲") || colA.includes("󰊳") || colA.includes("󰊴") || colA.includes("󰊵") || colA.includes("󰊶") || colA.includes("󰊷") || colA.includes("󰊸") || colA.includes("󰊹")) continue;
+            
+            // 기간(~)이 있는 셀을 탐색하여 모든 위치의 기준점으로 삼음
+            let dateIndex = -1;
+            for(let j = 0; j < cols.length; j++) {
+                if(cols[j] && cols[j].includes("~")) { dateIndex = j; break; }
+            }
+            
+            if(dateIndex === -1) continue; 
+            
+            let schoolStr = "";
+            let regionStr = "";
+            
+            // 기간 앞의 열들에서 지역과 학교 추출 (4칸이든 5칸이든 유연하게 대처)
+            if (dateIndex >= 2) {
+                schoolStr = cols[dateIndex - 1].trim();
+                regionStr = cols[dateIndex - 2].trim();
+            } else if (dateIndex === 1) { 
+                schoolStr = cols[0].trim();
+            }
+            
+            if (regionStr !== "" && regionStr !== " ") currentRegion = regionStr;
+            if (schoolStr !== "" && schoolStr !== " ") currentSchool = schoolStr;
+            
+            // 기간 뒤의 열들 중에서 빈칸이 아닌 첫 번째 값을 급지(공단)로 추출
+            let grade = "";
+            for(let j = dateIndex + 1; j < cols.length; j++) {
+                if(cols[j].trim() !== "") { grade = cols[j].trim(); break; }
+            }
+            
+            let dates = cols[dateIndex].split("~");
+            let startRaw = dates[0].trim();
+            let endRaw = dates[1] ? dates[1].trim() : "2099-12-31";
+            
+            let startDate = parseRawDate(startRaw);
+            let endDate = parseRawDate(endRaw);
+            
+            // "고산,송양" 처럼 쉼표로 묶인 여러 학교를 쪼개어 각각 DB화
+            let schools = currentSchool.split(/,|·/).map(s => s.trim()).filter(s => s);
+            
+            for(let s of schools) {
+                let cleanDbSchool = s.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
                 schoolDB.push({
-                    category: cols[0].trim(),
-                    region: cols[1].trim(),
-                    schoolName: cols[2].trim(),
-                    startDate: new Date(cols[3].trim()),
-                    endDate: new Date(cols[4].trim()),
-                    grade: cols[5].trim()
+                    category: currentCategory,
+                    region: currentRegion,
+                    schoolName: cleanDbSchool,
+                    startDate: new Date(startDate),
+                    endDate: new Date(endDate),
+                    grade: grade // 여기에 '공단A' 혹은 '공단'이 정확하게 들어갑니다.
                 });
             }
         }
-    }
+        
+        function parseRawDate(str) {
+            if (!str || str.includes("현재") || str.includes("이후")) return "2099-12-31";
+            let clean = str.replace(/[^0-9.]/g, '');
+            let parts = clean.split('.').filter(p => p);
+            if (parts.length < 3) return "2099-12-31";
+            let y = parseInt(parts[0], 10);
+            let m = parseInt(parts[1], 10);
+            let d = parseInt(parts[2], 10);
+            if (y < 100) { y += (y >= 50 ? 1900 : 2000); }
+            let mm = m < 10 ? '0'+m : m;
+            let dd = d < 10 ? '0'+d : d;
+            return `${y}-${mm}-${dd}`;
+        }
 
     // --- 3. 엑셀(XLSX) 및 CSV 파일 업로드 파싱 ---
     const dropZone = document.getElementById('dropZone');
