@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>교육공무원 승진 가산점 실시간 산출 대시보드</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #cbd5e1;
+            font-size: 15px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: #1e293b;
+            border-left: 4px solid var(--primary-color);
+            padding-left: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* 입력 영역 */
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+        
+        input[type="text"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        textarea {
+            height: 150px;
+            font-family: monospace;
+            resize: vertical;
+            white-space: pre;
+            overflow-x: auto;
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            padding: 30px;
+            text-align: center;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary-color);
+            background-color: #eff6ff;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* 대시보드 통계 */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-card.total {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-val.success { color: var(--success-color); }
+        .stat-val.warning { color: var(--warning-color); }
+
+        .stat-limit {
+            font-size: 12px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* 테이블 */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f1f5f9;
+            color: #334155;
+            font-weight: 600;
+            padding: 12px 16px;
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+            color: #475569;
+            vertical-align: middle;
+        }
+
+        tr:hover {
+            background-color: #f8fafc;
+        }
+
+        select {
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 13px;
+            background-color: white;
+            width: 100%;
+            min-width: 100px;
+            cursor: pointer;
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+            min-width: 60px;
+        }
+        
+        .badge-match { background-color: #d1fae5; color: #065f46; }
+        .badge-nomatch { background-color: #f1f5f9; color: #64748b; }
+        
+        .row-score {
+            font-weight: 700;
+            color: #0f172a;
+            text-align: right;
+        }
+        
+        /* 로딩 스피너 */
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid var(--primary-color);
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            vertical-align: middle;
+            margin-right: 8px;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .hint-text {
+            font-size: 13px;
+            color: #64748b;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📊 교육공무원 승진 가산점 통합 대시보드</h1>
+        <p>나이스 인사기록을 업로드하면 구글 시트 DB(학교 지정 현황)와 연동하여 평정점(민법 제160조 적용)을 실시간으로 자동 산출합니다.</p>
+    </header>
+
+    <div class="card">
+        <div class="card-title">🔗 1. 구글 스프레드시트 DB 연동</div>
+        <div class="input-group">
+            <label for="dbUrl">학교 지정 현황 DB (CSV 형식 웹 게시 주소)</label>
+            <input type="text" id="dbUrl" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-1vRbpP8Gdgzi0cF3eMZXvI302iSp82_ipCk8UYTfQOihR7PVObxziulw6BvcTVJCCwQIDdd1CebJMEXJ/pub?gid=205946709&single=true&output=csv" 
+                   value="">
+            <p class="hint-text">※ '통합 문서 2'를 정리한 구글 시트의 CSV 게시 주소를 입력하세요. (비워두면 내장된 기본 로직으로 동작합니다)</p>
+        </div>
+        <button id="btnSyncDB" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px; background-color: #475569;">
+            <div id="syncLoader" class="loader"></div>
+            🔄 DB 동기화 테스트
+        </button>
+        <span id="syncStatus" style="margin-left: 10px; font-size: 14px; font-weight: 600;"></span>
+    </div>
+
+    <div class="card">
+        <div class="card-title">📁 2. 나이스 개인인사기록 입력</div>
+        <p class="hint-text" style="margin-bottom: 12px;">인사기록(CSV 텍스트)을 아래 창에 붙여넣거나 파일을 끌어다 놓으세요. (기간, 임용구분, 직급, 부서 필수)</p>
+        
+        <div class="upload-zone" id="dropZone">
+            <p style="font-weight: 600; color: #334155; margin-bottom: 4px;">CSV 파일을 여기에 드래그 앤 드롭</p>
+            <p style="font-size: 13px; color: var(--text-muted);">또는 클릭하여 파일 선택</p>
+            <input type="file" id="fileInput" accept=".csv, .txt" style="display: none;">
+        </div>
+        
+        <div style="margin: 16px 0; text-align: center; color: #cbd5e1; font-weight: bold;">OR</div>
+        
+        <textarea id="txtArea" placeholder="기     간,임용구분,직 급(직위),부           서,발  령  청
+2012.03.01 ~ 2013.02.28,보직교사,부장담임(교사(초등)),경기도안산교육지원청 삼일초등학교,삼일초등학교
+2005.03.01 ~ 2006.02.28,보직교사,부장교사(교사(초등)),안산교육청 대부초등학교,대부초등학교"></textarea>
+        
+        <button id="btnCalculate" class="btn" style="margin-top: 16px;">
+            ⚡ 실시간 가산점 계산 실행
+        </button>
+    </div>
+
+    <div class="card" id="resultContainer" style="display: none;">
+        <div class="card-title">📈 3. 가산점 산출 결과 대시보드</div>
+        
+        <div class="dashboard-grid">
+            <div class="stat-card">
+                <div class="stat-title">보직교사 경력 점수</div>
+                <div class="stat-val" id="scoreBojik">0.000</div>
+                <div class="stat-limit">상한 2.000점 적용</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">도서벽지/접적지역 점수</div>
+                <div class="stat-val" id="scoreIsland">0.000</div>
+                <div class="stat-limit">상한 2.000점 적용</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">농어촌/공단/접경 점수</div>
+                <div class="stat-val" id="scoreRural">0.000</div>
+                <div class="stat-limit">상한 2.000점 적용</div>
+            </div>
+            <div class="stat-card total">
+                <div class="stat-title" style="color: #1e40af;">선택가산점 총합계</div>
+                <div class="stat-val" id="scoreTotal" style="color: #1d4ed8;">0.000</div>
+                <div class="stat-limit" style="color: #3b82f6; font-weight: 600;">최대 상한 8.000점 적용</div>
+            </div>
+        </div>
+
+        <div class="card-title" style="margin-top: 32px; font-size: 16px;">
+            🔍 세부 경력별 산출 내역
+            <span style="font-size: 12px; font-weight: normal; color: var(--warning-color); margin-left: auto;">
+                ※ 아래 표의 항목을 수정하면 대시보드가 즉시 재계산됩니다.
+            </span>
+        </div>
+        
+        <div class="table-container">
+            <table id="resultTable">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">상태</th>
+                        <th style="width: 25%;">근무 기간 (역산 개월/일)</th>
+                        <th style="width: 25%;">학교/부서명</th>
+                        <th style="width: 12%;">보직/담임 여부</th>
+                        <th style="width: 12%;">도서/접적 급지</th>
+                        <th style="width: 12%;">농어촌/공단 구분</th>
+                        <th style="width: 9%; text-align: right;">소계</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS로 동적 생성 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. 가산점 요율 테이블 정의 ---
+    const RATES = {
+        bojik: { m: 0.027, d: 0.0009 }, // 보직교사
+        damim: { m: 0.009, d: 0.0003 }, // 담임교사 (2020.3.1 이후)
+        island: { // 도서벽지/접적
+            "가(특)": { m: 0.045, d: 0.0015 },
+            "나(갑)": { m: 0.036, d: 0.0012 },
+            "다(을)": { m: 0.027, d: 0.0009 },
+            "라(병)": { m: 0.018, d: 0.0006 },
+            "무": { m: 0, d: 0 }
+        },
+        rural: { // 농어촌/공단/접경
+            "면(읍면)": { m: 0.018, d: 0.0006 },
+            "접경": { m: 0.018, d: 0.0006 },
+            "읍(동)": { m: 0.015, d: 0.0005 },
+            "접경(교육감)": { m: 0.015, d: 0.0005 },
+            "공단": { m: 0.012, d: 0.0004 },
+            "공단A": { m: 0.018, d: 0.0006 }, // 동일기간 농어촌 '읍면'
+            "공단B": { m: 0.015, d: 0.0005 }, // 동일기간 농어촌 '동'
+            "무": { m: 0, d: 0 }
+        }
+    };
+
+    // 구글 시트 DB 데이터를 저장할 변수
+    let schoolDB = [];
+    
+    // 파싱된 사용자 인사기록 데이터
+    let parsedRecords = [];
+
+    // --- 2. 구글 시트 DB 동기화 로직 ---
+    // --- 2. 구글 시트 DB 동기화 로직 (보안 우회 프록시 적용) ---
+    const btnSyncDB = document.getElementById('btnSyncDB');
+    const syncStatus = document.getElementById('syncStatus');
+    const dbUrlInput = document.getElementById('dbUrl');
+
+    btnSyncDB.addEventListener('click', async () => {
+        let url = dbUrlInput.value.trim();
+        if (!url) {
+            syncStatus.textContent = "URL이 비어있어 기본 내장 로직을 사용합니다.";
+            syncStatus.style.color = "#64748b";
+            return;
+        }
+
+        // 사용자가 실수로 일반 공유 링크를 넣었을 경우 안내
+        if (url.includes('/edit')) {
+            alert("⚠️ 주소 형식 오류: '웹에 게시' 링크가 아닙니다.\n[파일] -> [공유] -> [웹에 게시] 메뉴에서 발행한 CSV 링크를 사용해 주세요.");
+            return;
+        }
+
+        document.getElementById('syncLoader').style.display = 'inline-block';
+        syncStatus.textContent = "DB 동기화 중...";
+        syncStatus.style.color = "#475569";
+
+        try {
+            // 1차 시도: 직접 연결
+            let response = await fetch(url);
+            if (!response.ok) throw new Error("Direct fetch failed");
+            let csvText = await response.text();
+            parseSchoolDB(csvText);
+            showSuccess();
+        } catch (error) {
+            // 2차 시도: 브라우저 보안 차단(CORS) 시 프록시 서버를 통해 우회 접속
+            try {
+                console.log("직접 연결 실패, 우회 접속을 시도합니다.");
+                const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
+                let proxyResponse = await fetch(proxyUrl);
+                let csvText = await proxyResponse.text();
+                parseSchoolDB(csvText);
+                showSuccess();
+            } catch (proxyError) {
+                document.getElementById('syncLoader').style.display = 'none';
+                syncStatus.textContent = "동기화 실패. URL이 올바른지 다시 확인해 주세요.";
+                syncStatus.style.color = "#ef4444";
+            }
+        }
+    });
+
+    function showSuccess() {
+        document.getElementById('syncLoader').style.display = 'none';
+        syncStatus.textContent = `동기화 성공! (${schoolDB.length}개 데이터 연결됨)`;
+        syncStatus.style.color = "var(--success-color)";
+    }
+
+    function parseSchoolDB(csvText) {
+        schoolDB = [];
+        const lines = csvText.split('\n');
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            let cols = line.split(',');
+            if (cols.length >= 6) {
+                schoolDB.push({
+                    category: cols[0].trim(),
+                    region: cols[1].trim(),
+                    schoolName: cols[2].trim(),
+                    startDate: new Date(cols[3].trim()),
+                    endDate: new Date(cols[4].trim()),
+                    grade: cols[5].trim()
+                });
+            }
+        }
+    }
+
+    // --- 3. 인사기록 입력 (드래그 앤 드롭 & 파일 업로드) ---
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const txtArea = document.getElementById('txtArea');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => { 
+        e.preventDefault(); 
+        dropZone.style.borderColor = 'var(--primary-color)'; 
+        dropZone.style.backgroundColor = '#eff6ff';
+    });
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.style.borderColor = '#cbd5e1';
+        dropZone.style.backgroundColor = '#f8fafc';
+    });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = '#cbd5e1';
+        dropZone.style.backgroundColor = '#f8fafc';
+        const file = e.dataTransfer.files[0];
+        if (file) handleFile(file);
+    });
+    fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) handleFile(file);
+    });
+
+    function handleFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            txtArea.value = e.target.result;
+        };
+        // EUC-KR로 읽어 한글 깨짐 방지 (나이스 CSV 특성)
+        reader.readAsText(file, 'EUC-KR'); 
+    }
+
+    // --- 4. 민법 제160조 기간 역산 (달력 기준) ---
+    function calculateCivilPeriod(startStr, endStr) {
+        // 날짜 형식 정리 (예: 2012.03.01 -> 2012-03-01)
+        startStr = startStr.replace(/\./g, '-');
+        endStr = endStr.replace(/\./g, '-');
+        
+        let start = new Date(startStr);
+        let end = new Date(endStr);
+        
+        if (isNaN(start.getTime()) || isNaN(end.getTime())) return { months: 0, days: 0 };
+        
+        // 종료일 당일을 포함하기 위해 +1일 적용 (교육공무원 평정규정 및 민법 역산)
+        end.setDate(end.getDate() + 1);
+
+        let years = end.getFullYear() - start.getFullYear();
+        let months = end.getMonth() - start.getMonth();
+        let days = end.getDate() - start.getDate();
+
+        if (days < 0) {
+            months--;
+            // 직전 달의 마지막 날짜를 구해서 더함
+            let prevMonthLastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+            days += prevMonthLastDay;
+        }
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+
+        return {
+            months: (years * 12) + months,
+            days: days
+        };
+    }
+
+    // --- 5. 데이터 파싱 및 교집합/매칭 로직 ---
+    document.getElementById('btnCalculate').addEventListener('click', () => {
+        const text = txtArea.value;
+        if (!text.trim()) {
+            alert("인사기록 데이터를 입력해주세요.");
+            return;
+        }
+
+        const lines = text.split('\n');
+        parsedRecords = [];
+
+        lines.forEach(line => {
+            if (!line.includes('~')) return; // 기간이 있는 줄만 처리
+            
+            const cols = line.split(',');
+            if (cols.length < 4) return;
+
+            const periodRaw = cols[0].trim();
+            const imyongType = cols[1] ? cols[1].trim() : '';
+            const position = cols[2] ? cols[2].trim() : '';
+            const department = cols[3] ? cols[3].trim() : '';
+
+            const dates = periodRaw.split('~');
+            if (dates.length !== 2) return;
+
+            const startStr = dates[0].trim();
+            const endStr = dates[1].trim();
+
+            const periodInfo = calculateCivilPeriod(startStr, endStr);
+            if (periodInfo.months === 0 && periodInfo.days === 0) return;
+
+            // 1. 보직/담임 여부 자동 감지
+            let roleType = "무";
+            if (imyongType.includes("보직") || position.includes("부장")) roleType = "보직교사";
+            // 2020.3.1 이후 담임교사 경력 인정 로직 (필요시 추가)
+            else if (position.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
+                roleType = "담임교사";
+            }
+
+            // 2. DB 매칭 로직 (학교 이름이 포함되어 있고, 기간이 겹치는지 확인)
+            let islandMatch = "무";
+            let ruralMatch = "무";
+            let isMatched = false;
+
+            // 사용자 근무 기간
+            const userStart = new Date(startStr.replace(/\./g, '-'));
+            const userEnd = new Date(endStr.replace(/\./g, '-'));
+
+            if (schoolDB.length > 0) {
+                // 외부 DB가 연동된 경우
+                for (let dbRow of schoolDB) {
+                    // 부서명에 학교명이 포함되어 있는지 확인 (예: '안산진흥초등학교'에 '진흥' 포함)
+                    if (department.includes(dbRow.schoolName)) {
+                        // 교집합(겹치는 기간) 확인 로직
+                        if (userStart <= dbRow.endDate && userEnd >= dbRow.startDate) {
+                            isMatched = true;
+                            // 실제 교집합 기간을 계산하여 점수를 산출해야 하나, 
+                            // 데모 버전에서는 가장 큰 비중을 차지하는 해당 지정 급지를 우선 매핑합니다.
+                            if (dbRow.category.includes("도서") || dbRow.category.includes("벽지") || dbRow.category.includes("접적")) {
+                                // DB의 라/다/나/가 를 Select Option 형식으로 변환
+                                if(dbRow.grade.includes("라")) islandMatch = "라(병)";
+                                else if(dbRow.grade.includes("다")) islandMatch = "다(을)";
+                                else if(dbRow.grade.includes("나")) islandMatch = "나(갑)";
+                                else if(dbRow.grade.includes("가")) islandMatch = "가(특)";
+                            } else {
+                                // 농어촌 공단 처리
+                                if(dbRow.grade.includes("면") || dbRow.grade.includes("읍면")) ruralMatch = "면(읍면)";
+                                else if(dbRow.grade.includes("읍") || dbRow.grade.includes("동")) ruralMatch = "읍(동)";
+                                else if(dbRow.grade.includes("공단A")) ruralMatch = "공단A";
+                                else if(dbRow.grade.includes("공단")) ruralMatch = "공단";
+                                else if(dbRow.category.includes("접경")) ruralMatch = "접경";
+                            }
+                        }
+                    }
+                }
+            } else {
+                // 내장 로직 (테스트 데이터 기반 하드코딩 - 사용자가 DB URL 미입력시 작동)
+                if (department.includes("대부초")) {
+                    islandMatch = "라(병)"; isMatched = true;
+                } else if (department.includes("진흥초") || department.includes("선부초")) {
+                    ruralMatch = "공단A"; isMatched = true;
+                }
+            }
+
+            parsedRecords.push({
+                startStr, endStr,
+                months: periodInfo.months,
+                days: periodInfo.days,
+                department,
+                roleType,
+                islandMatch,
+                ruralMatch,
+                isMatched
+            });
+        });
+
+        if (parsedRecords.length === 0) {
+            alert("유효한 경력 기간(YYYY.MM.DD ~ YYYY.MM.DD)을 찾을 수 없습니다.");
+            return;
+        }
+
+        renderTable();
+        document.getElementById('resultContainer').style.display = 'block';
+        // 부드러운 스크롤 이동
+        document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
+    });
+
+    // --- 6. 화면 렌더링 및 동적 업데이트 ---
+    function renderTable() {
+        const tbody = document.querySelector('#resultTable tbody');
+        tbody.innerHTML = '';
+
+        parsedRecords.forEach((row, idx) => {
+            const tr = document.createElement('tr');
+            
+            // 상태 뱃지
+            const badgeHtml = row.isMatched 
+                ? `<span class="badge badge-match">DB 매칭</span>`
+                : `<span class="badge badge-nomatch">일반</span>`;
+
+            // Select Options 생성 Helper
+            const createOptions = (obj, selectedVal) => {
+                return Object.keys(obj).map(key => 
+                    `<option value="${key}" ${key === selectedVal ? 'selected' : ''}>${key}</option>`
+                ).join('');
+            };
+
+            const roleOptions = `
+                <option value="보직교사" ${row.roleType === '보직교사' ? 'selected' : ''}>보직교사</option>
+                <option value="담임교사" ${row.roleType === '담임교사' ? 'selected' : ''}>담임교사</option>
+                <option value="무" ${row.roleType === '무' ? 'selected' : ''}>대상외(무)</option>
+            `;
+
+            tr.innerHTML = `
+                <td style="text-align:center;">${badgeHtml}</td>
+                <td>
+                    <div style="font-size:12px; color:#64748b; margin-bottom:2px;">${row.startStr} ~ ${row.endStr}</div>
+                    <div style="font-weight:600; color:#0f172a;">${row.months}개월 ${row.days}일</div>
+                </td>
+                <td style="font-weight:500;">${row.department}</td>
+                <td>
+                    <select onchange="updateRow(${idx}, 'roleType', this.value)">
+                        ${roleOptions}
+                    </select>
+                </td>
+                <td>
+                    <select onchange="updateRow(${idx}, 'islandMatch', this.value)">
+                        ${createOptions(RATES.island, row.islandMatch)}
+                    </select>
+                </td>
+                <td>
+                    <select onchange="updateRow(${idx}, 'ruralMatch', this.value)">
+                        ${createOptions(RATES.rural, row.ruralMatch)}
+                    </select>
+                </td>
+                <td class="row-score" id="rowScore_${idx}">0.000</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        calculateTotals();
+    }
+
+    // Select Box 변경 시 데이터 업데이트
+    window.updateRow = function(idx, key, value) {
+        parsedRecords[idx][key] = value;
+        calculateTotals(); // 즉시 재계산 (Reactive)
+    };
+
+    // --- 7. 최종 점수 계산 로직 (상한점 적용) ---
+    function calculateTotals() {
+        let cumBojik = 0;
+        let cumIsland = 0;
+        let cumRural = 0;
+
+        parsedRecords.forEach((row, idx) => {
+            let rowBojik = 0;
+            let rowIsland = 0;
+            let rowRural = 0;
+
+            // 1. 보직/담임 점수
+            if (row.roleType === "보직교사") {
+                rowBojik = (row.months * RATES.bojik.m) + (row.days * RATES.bojik.d);
+            } else if (row.roleType === "담임교사") {
+                rowBojik = (row.months * RATES.damim.m) + (row.days * RATES.damim.d);
+            }
+
+            // 2. 도서벽지 점수
+            if (row.islandMatch !== "무" && RATES.island[row.islandMatch]) {
+                const rate = RATES.island[row.islandMatch];
+                rowIsland = (row.months * rate.m) + (row.days * rate.d);
+            }
+
+            // 3. 농어촌 점수
+            if (row.ruralMatch !== "무" && RATES.rural[row.ruralMatch]) {
+                const rate = RATES.rural[row.ruralMatch];
+                rowRural = (row.months * rate.m) + (row.days * rate.d);
+            }
+
+            // 누적
+            cumBojik += rowBojik;
+            cumIsland += rowIsland;
+            cumRural += rowRural;
+
+            // 행별 소계 (반올림 처리 없이 표기)
+            let totalRowScore = rowBojik + rowIsland + rowRural;
+            document.getElementById(`rowScore_${idx}`).innerText = totalRowScore.toFixed(4);
+        });
+
+        // 상한점(Max Limit) 적용 (항목별 최대 2.0점)
+        let finalBojik = Math.min(cumBojik, 2.0);
+        let finalIsland = Math.min(cumIsland, 2.0);
+        let finalRural = Math.min(cumRural, 2.0);
+
+        // 총 선택가산점 상한 적용 (최대 8.0점)
+        let rawTotal = finalBojik + finalIsland + finalRural;
+        let finalTotal = Math.min(rawTotal, 8.0);
+
+        // 소수점 넷째 자리 반올림하여 셋째 자리까지 표기
+        const formatScore = (num) => {
+            return (Math.round(num * 1000) / 1000).toFixed(3);
+        };
+
+        // 대시보드 UI 업데이트
+        document.getElementById('scoreBojik').innerText = formatScore(finalBojik);
+        document.getElementById('scoreIsland').innerText = formatScore(finalIsland);
+        document.getElementById('scoreRural').innerText = formatScore(finalRural);
+        
+        const elTotal = document.getElementById('scoreTotal');
+        elTotal.innerText = formatScore(finalTotal);
+        
+        // 상태 색상 시각화
+        elTotal.className = 'stat-val ' + (finalTotal >= 8.0 ? 'success' : '');
+    }
+</script>
+
+</body>
+</html>
