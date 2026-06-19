@@ -614,6 +614,11 @@
             school = school.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
             return [sido, region, school].filter(Boolean).join(' ');
         } else {
+            // [수정포인트] 학교가 아니더라도 엑셀 E열 등에 '공단' 문구가 있으면 명시적으로 살림
+            if (rawStr.includes("공단")) {
+                let gongdan = rawStr.match(/공단[A-Z]?/)?.[0] || "공단";
+                return [sido, region, gongdan].filter(Boolean).join(' ');
+            }
             return [sido, region, "행정기관"].filter(Boolean).join(' ');
         }
     }
@@ -634,16 +639,22 @@
             
             const cleanLine = line.replace(/\"/g, '');
             const rawCols = cleanLine.split(',');
-            const cols = rawCols.map(c => c.trim()).filter(c => c !== '');
+            
+            // [핵심 수정] 무작정 빈칸을 지우지 않고 엑셀 D열, E열의 원래 위치를 보존합니다!
+            const cols = rawCols.map(c => c.trim());
             if (cols.length < 2) return;
 
             const periodRaw = cols[0];
-            const imyongType = cols.length > 1 ? cols[1] : '';
-            const position = cols.length > 2 ? cols[2] : '';
-            const rawDept = cols.length > 3 ? cols[3] : cols[2];
+            const imyongType = cols[1] || '';
+            const position = cols[2] || '';
+            const rawDept = cols[3] || ''; // 엑셀 D열 (부서)
+            const officeStr = cols[4] || ''; // 엑셀 E열 (발령청)
             
-            let department = formatDepartmentStr(rawDept);
-            let cleanForMatch = rawDept.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ').trim();
+            // D열이 비어있고 E열에만 '공단'이 적힌 경우를 위해 두 열의 텍스트를 합침
+            const fullDeptStr = rawDept + " " + officeStr;
+            
+            let department = formatDepartmentStr(fullDeptStr);
+            let cleanForMatch = fullDeptStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ').trim();
             let deptParts = cleanForMatch.split(/\s+/);
             let schoolName = /초|중|고|분교|유치원/.test(cleanForMatch) ? deptParts.pop() : "";
 
@@ -652,7 +663,6 @@
             const startStr = dates[0].trim();
             const endStr = dates[1].trim();
 
-            // 기간 산출 및 0개월 1일 허수(행정기관 발령) 자동 삭제
             const pInfo = calculateCivilPeriod(startStr, endStr);
             if (pInfo.months === 0 && pInfo.days <= 1 && department.includes("행정기관")) return;
             if (pInfo.months === 0 && pInfo.days === 0) return;
@@ -667,7 +677,7 @@
                 startStr, endStr,
                 start: new Date(startStr.replace(/\./g, '-')),
                 end: new Date(endStr.replace(/\./g, '-')),
-                department, schoolName, officeName: rawDept,
+                department, schoolName, officeName: fullDeptStr, // D열 E열 통합 원본 보존
                 roleType,
                 months: pInfo.months,
                 days: pInfo.days
@@ -679,7 +689,7 @@
             return;
         }
 
-        // 2차 파싱: 연속된 동일 근무지 병합 (순방향 정렬)
+        // 2차 파싱: 연속된 동일 근무지 병합 (오름차순 묶기)
         tempRecords.sort((a, b) => a.start - b.start);
         let mergedRecords = [];
         let currentMerge = null;
@@ -701,7 +711,7 @@
         }
         if (currentMerge) mergedRecords.push(currentMerge);
 
-        // 3차 파싱: 병합된 줄 내에서 보직/담임 기간 정확히 합산 및 DB 교차 검증
+        // 3차 파싱: 병합된 줄 내에서 보직/담임 기간 정확히 합산 및 키워드/DB 교차 검증
         parsedRecords = [];
         mergedRecords.forEach(mRec => {
             const totalP = calculateCivilPeriod(mRec.startStr, mRec.endStr);
@@ -710,7 +720,6 @@
             let bMonths = 0, bDays = 0;
             let dMonths = 0, dDays = 0;
 
-            // 병합된 학교 기간 내에서 보직/담임 기간만 핀셋으로 뽑아 더함
             mRec.rawRecords.forEach(raw => {
                 if (raw.roleType === "보직교사") {
                     bMonths += raw.months; bDays += raw.days;
@@ -719,7 +728,6 @@
                 }
             });
 
-            // 일수가 30일이 넘어가면 월로 환산
             if (bDays >= 30) { bMonths += Math.floor(bDays / 30); bDays = bDays % 30; }
             if (dDays >= 30) { dMonths += Math.floor(dDays / 30); dDays = dDays % 30; }
 
@@ -764,9 +772,17 @@
                         }
                     }
                 }
-            } else if (!isMatched && mRec.schoolName) {
-                if (mRec.schoolName.includes("대부") && mRec.officeName.includes("안산")) { islandMatch = "라(병)"; isMatched = true; } 
-                else if (mRec.schoolName.includes("진흥") || mRec.schoolName.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
+            } 
+            
+            // [핵심 보완] DB 매칭이 안 되더라도, 엑셀 D~E열에 특정 키워드가 수기로 적혀있으면 자동 감지!
+            if (!isMatched) {
+                const fullText = mRec.officeName; 
+                if (fullText.includes("대부") || fullText.includes("라급지") || fullText.includes("라(병)")) { islandMatch = "라(병)"; isMatched = true; } 
+                else if (fullText.includes("진흥") || fullText.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
+                else if (fullText.includes("공단A")) { ruralMatch = "공단A"; isMatched = true; }
+                else if (fullText.includes("공단B")) { ruralMatch = "공단B"; isMatched = true; }
+                else if (fullText.includes("공단")) { ruralMatch = "공단"; isMatched = true; }
+                else if (fullText.includes("농어촌") || fullText.includes("읍면")) { ruralMatch = "면(읍면)"; isMatched = true; }
             }
 
             parsedRecords.push({
@@ -775,13 +791,16 @@
                 totalMonths: totalP.months,
                 totalDays: totalP.days,
                 department: mRec.department, 
-                bMonths, bDays, // 발라낸 보직 기간
-                dMonths, dDays, // 발라낸 담임 기간
+                bMonths, bDays, 
+                dMonths, dDays, 
                 islandMatch,
                 ruralMatch,
                 isMatched: (schoolDB.length > 0 && mRec.schoolName) ? isMatched : false
             });
         });
+
+        // [핵심 추가] 출력 직전 배열 순서를 뒤집어, 가장 최근 경력이 1번 줄에 표시되게 합니다!
+        parsedRecords.reverse();
 
         renderTable();
         document.getElementById('resultContainer').style.display = 'block';
