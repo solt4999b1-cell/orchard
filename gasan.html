@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>교육공무원 승진 가산점 실시간 산출 대시보드</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --primary-color: #2563eb;
@@ -75,6 +76,15 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
+        }
+
+        .optional-badge {
+            background-color: #e2e8f0;
+            color: #475569;
+            font-size: 13px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: normal;
         }
 
         /* 입력 영역 */
@@ -183,7 +193,6 @@
         }
         
         .stat-val.success { color: var(--success-color); }
-        .stat-val.warning { color: var(--warning-color); }
 
         .stat-limit {
             font-size: 12px;
@@ -265,7 +274,6 @@
             border-top: 3px solid var(--primary-color);
             width: 20px;
             height: 20px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
             animation: spin 1s linear infinite;
             display: inline-block;
             vertical-align: middle;
@@ -290,35 +298,39 @@
 <div class="container">
     <header>
         <h1>📊 교육공무원 승진 가산점 통합 대시보드</h1>
-        <p>나이스 인사기록을 업로드하면 구글 시트 DB(학교 지정 현황)와 연동하여 평정점(민법 제160조 적용)을 실시간으로 자동 산출합니다.</p>
+        <p>인사기록(XLSX, CSV)을 업로드하면 민법 제160조가 적용된 평정점이 자동 산출됩니다.</p>
     </header>
 
     <div class="card">
-        <div class="card-title">🔗 1. 구글 스프레드시트 DB 연동</div>
+        <div class="card-title">
+            <span>🔗 1. 구글 스프레드시트 DB 연동</span>
+            <span class="optional-badge">선택 사항</span>
+        </div>
+        <p class="hint-text" style="margin-bottom: 12px;">※ 공용 DB가 구축된 경우에만 주소를 입력하세요. 비워두셔도 직접 수동 계산이 가능합니다.</p>
         <div class="input-group">
-            <label for="dbUrl">학교 지정 현황 DB (CSV 형식 웹 게시 주소)</label>
-            <input type="text" id="dbUrl" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-1vRbpP8Gdgzi0cF3eMZXvI302iSp82_ipCk8UYTfQOihR7PVObxziulw6BvcTVJCCwQIDdd1CebJMEXJ/pub?gid=205946709&single=true&output=csv" 
-                   value="">
-            <p class="hint-text">※ '통합 문서 2'를 정리한 구글 시트의 CSV 게시 주소를 입력하세요. (비워두면 내장된 기본 로직으로 동작합니다)</p>
+            <input type="text" id="dbUrl" placeholder="https://docs.google.com/spreadsheets/d/e/2PACX-1vRbpP8Gdgzi0cF3eMZXvI302iSp82_ipCk8UYTfQOihR7PVObxziulw6BvcTVJCCwQIDdd1CebJMEXJ/pubhtml?gid=205946709&single=true" value="https://docs.google.com/spreadsheets/d/e/2PACX-1vRbpP8Gdgzi0cF3eMZXvI302iSp82_ipCk8UYTfQOihR7PVObxziulw6BvcTVJCCwQIDdd1CebJMEXJ/pubhtml?gid=205946709&single=true">
         </div>
         <button id="btnSyncDB" class="btn" style="width: auto; padding: 8px 16px; font-size: 14px; background-color: #475569;">
             <div id="syncLoader" class="loader"></div>
-            🔄 DB 동기화 테스트
+            🔄 DB 동기화 실행
         </button>
-        <span id="syncStatus" style="margin-left: 10px; font-size: 14px; font-weight: 600;"></span>
+        <span id="syncStatus" style="margin-left: 10px; font-size: 14px; font-weight: 600; color: #64748b;">DB 미사용 (수동 모드)</span>
     </div>
 
     <div class="card">
-        <div class="card-title">📁 2. 나이스 개인인사기록 입력</div>
-        <p class="hint-text" style="margin-bottom: 12px;">인사기록(CSV 텍스트)을 아래 창에 붙여넣거나 파일을 끌어다 놓으세요. (기간, 임용구분, 직급, 부서 필수)</p>
+        <div class="card-title">
+            <span>📁 2. 나이스 개인인사기록 입력</span>
+            <span class="optional-badge" style="background-color:#dbeafe; color:#1e40af;">필수 항목</span>
+        </div>
+        <p class="hint-text" style="margin-bottom: 12px;">엑셀 파일(.xlsx) 또는 CSV 파일을 아래 영역에 끌어다 놓으세요.</p>
         
         <div class="upload-zone" id="dropZone">
-            <p style="font-weight: 600; color: #334155; margin-bottom: 4px;">CSV 파일을 여기에 드래그 앤 드롭</p>
+            <p style="font-weight: 600; color: #334155; margin-bottom: 4px;">XLSX, CSV 파일을 여기에 드래그 앤 드롭</p>
             <p style="font-size: 13px; color: var(--text-muted);">또는 클릭하여 파일 선택</p>
-            <input type="file" id="fileInput" accept=".csv, .txt" style="display: none;">
+            <input type="file" id="fileInput" accept=".csv, .txt, .xlsx, .xls" style="display: none;">
         </div>
         
-        <div style="margin: 16px 0; text-align: center; color: #cbd5e1; font-weight: bold;">OR</div>
+        <div style="margin: 16px 0; text-align: center; color: #cbd5e1; font-weight: bold;">OR 데이터 직접 붙여넣기</div>
         
         <textarea id="txtArea" placeholder="기     간,임용구분,직 급(직위),부           서,발  령  청
 2012.03.01 ~ 2013.02.28,보직교사,부장담임(교사(초등)),경기도안산교육지원청 삼일초등학교,삼일초등학교
@@ -358,7 +370,7 @@
         <div class="card-title" style="margin-top: 32px; font-size: 16px;">
             🔍 세부 경력별 산출 내역
             <span style="font-size: 12px; font-weight: normal; color: var(--warning-color); margin-left: auto;">
-                ※ 아래 표의 항목을 수정하면 대시보드가 즉시 재계산됩니다.
+                ※ 매칭되지 않은 학교는 직접 등급을 선택하시면 대시보드가 즉시 반영됩니다.
             </span>
         </div>
         
@@ -376,8 +388,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- JS로 동적 생성 -->
-                </tbody>
+                    </tbody>
             </table>
         </div>
     </div>
@@ -388,48 +399,39 @@
     const RATES = {
         bojik: { m: 0.027, d: 0.0009 }, // 보직교사
         damim: { m: 0.009, d: 0.0003 }, // 담임교사 (2020.3.1 이후)
-        island: { // 도서벽지/접적
+        island: {
             "가(특)": { m: 0.045, d: 0.0015 },
             "나(갑)": { m: 0.036, d: 0.0012 },
             "다(을)": { m: 0.027, d: 0.0009 },
             "라(병)": { m: 0.018, d: 0.0006 },
             "무": { m: 0, d: 0 }
         },
-        rural: { // 농어촌/공단/접경
+        rural: {
             "면(읍면)": { m: 0.018, d: 0.0006 },
             "접경": { m: 0.018, d: 0.0006 },
             "읍(동)": { m: 0.015, d: 0.0005 },
             "접경(교육감)": { m: 0.015, d: 0.0005 },
             "공단": { m: 0.012, d: 0.0004 },
-            "공단A": { m: 0.018, d: 0.0006 }, // 동일기간 농어촌 '읍면'
-            "공단B": { m: 0.015, d: 0.0005 }, // 동일기간 농어촌 '동'
+            "공단A": { m: 0.018, d: 0.0006 },
+            "공단B": { m: 0.015, d: 0.0005 },
             "무": { m: 0, d: 0 }
         }
     };
 
-    // 구글 시트 DB 데이터를 저장할 변수
     let schoolDB = [];
-    
-    // 파싱된 사용자 인사기록 데이터
     let parsedRecords = [];
 
-    // --- 2. 구글 시트 DB 동기화 로직 ---
-    // --- 2. 구글 시트 DB 동기화 로직 (보안 우회 프록시 적용) ---
+    // --- 2. 구글 시트 DB 동기화 로직 (선택사항) ---
     const btnSyncDB = document.getElementById('btnSyncDB');
     const syncStatus = document.getElementById('syncStatus');
     const dbUrlInput = document.getElementById('dbUrl');
 
     btnSyncDB.addEventListener('click', async () => {
-        let url = dbUrlInput.value.trim();
+        const url = dbUrlInput.value.trim();
         if (!url) {
-            syncStatus.textContent = "URL이 비어있어 기본 내장 로직을 사용합니다.";
+            syncStatus.textContent = "입력된 URL이 없어 수동 모드를 유지합니다.";
             syncStatus.style.color = "#64748b";
-            return;
-        }
-
-        // 사용자가 실수로 일반 공유 링크를 넣었을 경우 안내
-        if (url.includes('/edit')) {
-            alert("⚠️ 주소 형식 오류: '웹에 게시' 링크가 아닙니다.\n[파일] -> [공유] -> [웹에 게시] 메뉴에서 발행한 CSV 링크를 사용해 주세요.");
+            schoolDB = []; // DB 초기화
             return;
         }
 
@@ -438,34 +440,33 @@
         syncStatus.style.color = "#475569";
 
         try {
-            // 1차 시도: 직접 연결
-            let response = await fetch(url);
-            if (!response.ok) throw new Error("Direct fetch failed");
-            let csvText = await response.text();
+            const response = await fetch(url);
+            if(!response.ok) throw new Error("Fetch failed");
+            const csvText = await response.text();
             parseSchoolDB(csvText);
-            showSuccess();
+            
+            document.getElementById('syncLoader').style.display = 'none';
+            syncStatus.textContent = `동기화 성공! (${schoolDB.length}개 데이터 연결됨)`;
+            syncStatus.style.color = "var(--success-color)";
         } catch (error) {
-            // 2차 시도: 브라우저 보안 차단(CORS) 시 프록시 서버를 통해 우회 접속
+            // 프록시 우회
             try {
-                console.log("직접 연결 실패, 우회 접속을 시도합니다.");
                 const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent(url);
-                let proxyResponse = await fetch(proxyUrl);
-                let csvText = await proxyResponse.text();
-                parseSchoolDB(csvText);
-                showSuccess();
-            } catch (proxyError) {
+                const proxyResponse = await fetch(proxyUrl);
+                const proxyText = await proxyResponse.text();
+                parseSchoolDB(proxyText);
+                
                 document.getElementById('syncLoader').style.display = 'none';
-                syncStatus.textContent = "동기화 실패. URL이 올바른지 다시 확인해 주세요.";
+                syncStatus.textContent = `동기화 성공! (${schoolDB.length}개 데이터 연결됨)`;
+                syncStatus.style.color = "var(--success-color)";
+            } catch (e) {
+                document.getElementById('syncLoader').style.display = 'none';
+                syncStatus.textContent = "동기화 실패. URL 형식이나 권한을 확인하세요.";
                 syncStatus.style.color = "#ef4444";
+                schoolDB = [];
             }
         }
     });
-
-    function showSuccess() {
-        document.getElementById('syncLoader').style.display = 'none';
-        syncStatus.textContent = `동기화 성공! (${schoolDB.length}개 데이터 연결됨)`;
-        syncStatus.style.color = "var(--success-color)";
-    }
 
     function parseSchoolDB(csvText) {
         schoolDB = [];
@@ -487,7 +488,7 @@
         }
     }
 
-    // --- 3. 인사기록 입력 (드래그 앤 드롭 & 파일 업로드) ---
+    // --- 3. 엑셀(XLSX) 및 CSV 파일 업로드 파싱 ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const txtArea = document.getElementById('txtArea');
@@ -515,26 +516,41 @@
     });
 
     function handleFile(file) {
+        const ext = file.name.split('.').pop().toLowerCase();
         const reader = new FileReader();
-        reader.onload = function(e) {
-            txtArea.value = e.target.result;
-        };
-        // EUC-KR로 읽어 한글 깨짐 방지 (나이스 CSV 특성)
-        reader.readAsText(file, 'EUC-KR'); 
+
+        if (ext === 'xlsx' || ext === 'xls') {
+            // SheetJS를 사용하여 Excel 파싱
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                // 엑셀을 콤마 구분자 CSV 텍스트로 변환
+                const csvText = XLSX.utils.sheet_to_csv(worksheet);
+                txtArea.value = csvText;
+            };
+            reader.readAsArrayBuffer(file);
+        } else {
+            // 일반 CSV, 텍스트 파싱
+            reader.onload = function(e) {
+                txtArea.value = e.target.result;
+            };
+            reader.readAsText(file, 'EUC-KR'); 
+        }
     }
 
-    // --- 4. 민법 제160조 기간 역산 (달력 기준) ---
+    // --- 4. 민법 제160조 기간 역산 ---
     function calculateCivilPeriod(startStr, endStr) {
-        // 날짜 형식 정리 (예: 2012.03.01 -> 2012-03-01)
-        startStr = startStr.replace(/\./g, '-');
-        endStr = endStr.replace(/\./g, '-');
+        startStr = startStr.replace(/\./g, '-').replace(/\//g, '-');
+        endStr = endStr.replace(/\./g, '-').replace(/\//g, '-');
         
         let start = new Date(startStr);
         let end = new Date(endStr);
         
         if (isNaN(start.getTime()) || isNaN(end.getTime())) return { months: 0, days: 0 };
         
-        // 종료일 당일을 포함하기 위해 +1일 적용 (교육공무원 평정규정 및 민법 역산)
+        // 종료일 당일을 포함하기 위해 +1일 적용
         end.setDate(end.getDate() + 1);
 
         let years = end.getFullYear() - start.getFullYear();
@@ -543,7 +559,6 @@
 
         if (days < 0) {
             months--;
-            // 직전 달의 마지막 날짜를 구해서 더함
             let prevMonthLastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
             days += prevMonthLastDay;
         }
@@ -558,11 +573,11 @@
         };
     }
 
-    // --- 5. 데이터 파싱 및 교집합/매칭 로직 ---
+    // --- 5. 데이터 매칭 및 분석 로직 ---
     document.getElementById('btnCalculate').addEventListener('click', () => {
         const text = txtArea.value;
         if (!text.trim()) {
-            alert("인사기록 데이터를 입력해주세요.");
+            alert("인사기록 데이터를 입력하거나 파일을 업로드해주세요.");
             return;
         }
 
@@ -570,9 +585,11 @@
         parsedRecords = [];
 
         lines.forEach(line => {
-            if (!line.includes('~')) return; // 기간이 있는 줄만 처리
+            if (!line.includes('~')) return; 
             
-            const cols = line.split(',');
+            // CSV 표준 파싱(엑셀 변환시 발생할 수 있는 따옴표 제거)
+            const cleanLine = line.replace(/\"/g, '');
+            const cols = cleanLine.split(',');
             if (cols.length < 4) return;
 
             const periodRaw = cols[0].trim();
@@ -592,38 +609,30 @@
             // 1. 보직/담임 여부 자동 감지
             let roleType = "무";
             if (imyongType.includes("보직") || position.includes("부장")) roleType = "보직교사";
-            // 2020.3.1 이후 담임교사 경력 인정 로직 (필요시 추가)
             else if (position.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
                 roleType = "담임교사";
             }
 
-            // 2. DB 매칭 로직 (학교 이름이 포함되어 있고, 기간이 겹치는지 확인)
+            // 2. DB 매칭 및 기본값 세팅
             let islandMatch = "무";
             let ruralMatch = "무";
             let isMatched = false;
 
-            // 사용자 근무 기간
             const userStart = new Date(startStr.replace(/\./g, '-'));
             const userEnd = new Date(endStr.replace(/\./g, '-'));
 
             if (schoolDB.length > 0) {
-                // 외부 DB가 연동된 경우
+                // 외부 DB가 연동된 경우 매칭 진행
                 for (let dbRow of schoolDB) {
-                    // 부서명에 학교명이 포함되어 있는지 확인 (예: '안산진흥초등학교'에 '진흥' 포함)
                     if (department.includes(dbRow.schoolName)) {
-                        // 교집합(겹치는 기간) 확인 로직
                         if (userStart <= dbRow.endDate && userEnd >= dbRow.startDate) {
                             isMatched = true;
-                            // 실제 교집합 기간을 계산하여 점수를 산출해야 하나, 
-                            // 데모 버전에서는 가장 큰 비중을 차지하는 해당 지정 급지를 우선 매핑합니다.
                             if (dbRow.category.includes("도서") || dbRow.category.includes("벽지") || dbRow.category.includes("접적")) {
-                                // DB의 라/다/나/가 를 Select Option 형식으로 변환
                                 if(dbRow.grade.includes("라")) islandMatch = "라(병)";
                                 else if(dbRow.grade.includes("다")) islandMatch = "다(을)";
                                 else if(dbRow.grade.includes("나")) islandMatch = "나(갑)";
                                 else if(dbRow.grade.includes("가")) islandMatch = "가(특)";
                             } else {
-                                // 농어촌 공단 처리
                                 if(dbRow.grade.includes("면") || dbRow.grade.includes("읍면")) ruralMatch = "면(읍면)";
                                 else if(dbRow.grade.includes("읍") || dbRow.grade.includes("동")) ruralMatch = "읍(동)";
                                 else if(dbRow.grade.includes("공단A")) ruralMatch = "공단A";
@@ -634,12 +643,9 @@
                     }
                 }
             } else {
-                // 내장 로직 (테스트 데이터 기반 하드코딩 - 사용자가 DB URL 미입력시 작동)
-                if (department.includes("대부초")) {
-                    islandMatch = "라(병)"; isMatched = true;
-                } else if (department.includes("진흥초") || department.includes("선부초")) {
-                    ruralMatch = "공단A"; isMatched = true;
-                }
+                // DB 미사용 시 (수동 처리용 임시 매칭)
+                if (department.includes("대부초")) { islandMatch = "라(병)"; isMatched = true; } 
+                else if (department.includes("진흥초") || department.includes("선부초")) { ruralMatch = "공단A"; isMatched = true; }
             }
 
             parsedRecords.push({
@@ -650,7 +656,7 @@
                 roleType,
                 islandMatch,
                 ruralMatch,
-                isMatched
+                isMatched: (schoolDB.length > 0) ? isMatched : false // DB 연결 안했으면 뱃지 끄기
             });
         });
 
@@ -661,7 +667,6 @@
 
         renderTable();
         document.getElementById('resultContainer').style.display = 'block';
-        // 부드러운 스크롤 이동
         document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
     });
 
@@ -674,11 +679,13 @@
             const tr = document.createElement('tr');
             
             // 상태 뱃지
-            const badgeHtml = row.isMatched 
-                ? `<span class="badge badge-match">DB 매칭</span>`
-                : `<span class="badge badge-nomatch">일반</span>`;
+            let badgeHtml = `<span class="badge badge-nomatch">일반</span>`;
+            if (row.isMatched) {
+                badgeHtml = `<span class="badge badge-match">DB 매칭</span>`;
+            } else if (schoolDB.length === 0) {
+                badgeHtml = `<span class="badge badge-nomatch" style="background-color:#e2e8f0; color:#475569">수동</span>`;
+            }
 
-            // Select Options 생성 Helper
             const createOptions = (obj, selectedVal) => {
                 return Object.keys(obj).map(key => 
                     `<option value="${key}" ${key === selectedVal ? 'selected' : ''}>${key}</option>`
@@ -721,13 +728,13 @@
         calculateTotals();
     }
 
-    // Select Box 변경 시 데이터 업데이트
+    // Select Box 변경 시 즉각 반영
     window.updateRow = function(idx, key, value) {
         parsedRecords[idx][key] = value;
-        calculateTotals(); // 즉시 재계산 (Reactive)
+        calculateTotals(); 
     };
 
-    // --- 7. 최종 점수 계산 로직 (상한점 적용) ---
+    // --- 7. 최종 점수 계산 로직 ---
     function calculateTotals() {
         let cumBojik = 0;
         let cumIsland = 0;
@@ -738,58 +745,47 @@
             let rowIsland = 0;
             let rowRural = 0;
 
-            // 1. 보직/담임 점수
             if (row.roleType === "보직교사") {
                 rowBojik = (row.months * RATES.bojik.m) + (row.days * RATES.bojik.d);
             } else if (row.roleType === "담임교사") {
                 rowBojik = (row.months * RATES.damim.m) + (row.days * RATES.damim.d);
             }
 
-            // 2. 도서벽지 점수
             if (row.islandMatch !== "무" && RATES.island[row.islandMatch]) {
                 const rate = RATES.island[row.islandMatch];
                 rowIsland = (row.months * rate.m) + (row.days * rate.d);
             }
 
-            // 3. 농어촌 점수
             if (row.ruralMatch !== "무" && RATES.rural[row.ruralMatch]) {
                 const rate = RATES.rural[row.ruralMatch];
                 rowRural = (row.months * rate.m) + (row.days * rate.d);
             }
 
-            // 누적
             cumBojik += rowBojik;
             cumIsland += rowIsland;
             cumRural += rowRural;
 
-            // 행별 소계 (반올림 처리 없이 표기)
             let totalRowScore = rowBojik + rowIsland + rowRural;
             document.getElementById(`rowScore_${idx}`).innerText = totalRowScore.toFixed(4);
         });
 
-        // 상한점(Max Limit) 적용 (항목별 최대 2.0점)
         let finalBojik = Math.min(cumBojik, 2.0);
         let finalIsland = Math.min(cumIsland, 2.0);
         let finalRural = Math.min(cumRural, 2.0);
 
-        // 총 선택가산점 상한 적용 (최대 8.0점)
         let rawTotal = finalBojik + finalIsland + finalRural;
         let finalTotal = Math.min(rawTotal, 8.0);
 
-        // 소수점 넷째 자리 반올림하여 셋째 자리까지 표기
         const formatScore = (num) => {
             return (Math.round(num * 1000) / 1000).toFixed(3);
         };
 
-        // 대시보드 UI 업데이트
         document.getElementById('scoreBojik').innerText = formatScore(finalBojik);
         document.getElementById('scoreIsland').innerText = formatScore(finalIsland);
         document.getElementById('scoreRural').innerText = formatScore(finalRural);
         
         const elTotal = document.getElementById('scoreTotal');
         elTotal.innerText = formatScore(finalTotal);
-        
-        // 상태 색상 시각화
         elTotal.className = 'stat-val ' + (finalTotal >= 8.0 ? 'success' : '');
     }
 </script>
