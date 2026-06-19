@@ -395,6 +395,36 @@
 </div>
 
 <script>
+    // --- 가장 먼저 함수들을 정의합니다 (호출하기 전에 있어야 함) ---
+
+    // [1] 스마트 텍스트 포맷팅 함수
+    function formatDepartmentStr(rawStr) {
+        // (이전 코드의 formatDepartmentStr 전체 내용)
+        let sido = "";
+        if (/경기/.test(rawStr)) sido = "경기";
+        else if (/서울/.test(rawStr)) sido = "서울";
+        else if (/인천/.test(rawStr)) sido = "인천";
+        // ... (이하 동일하게 붙여넣기)
+        return [sido, region, school].filter(Boolean).join(' ');
+    }
+
+    // [2] 기간 계산 함수
+    function calculateCivilPeriod(startStr, endStr) {
+        // (이전 코드의 calculateCivilPeriod 전체 내용)
+    }
+
+    // [3] DB 파싱 함수
+    function parseSchoolDB(csvText) {
+        // (이전 코드의 parseSchoolDB 전체 내용)
+    }
+
+    // --- 여기까지 함수를 먼저 정의한 후, 그 아래에 버튼 이벤트 리스너를 배치합니다 ---
+
+    // --- 5. 데이터 매칭 및 분석 로직 (버튼 클릭) ---
+    document.getElementById('btnCalculate').addEventListener('click', () => {
+        // 이제 여기서 위에서 정의한 formatDepartmentStr 함수를 안전하게 호출할 수 있습니다.
+        // (이하 데이터 매칭 로직 전체)
+    });
     // --- 1. 가산점 요율 테이블 정의 ---
     const RATES = {
         bojik: { m: 0.027, d: 0.0009 }, // 보직교사
