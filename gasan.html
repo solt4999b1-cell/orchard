@@ -589,19 +589,18 @@
             
             const cleanLine = line.replace(/\"/g, '');
             const rawCols = cleanLine.split(',');
-            
-            // 핵심 수정: 나이스 엑셀 병합셀로 인한 빈 열(,,,)을 모두 제거하고 글자가 있는 데이터만 순서대로 모음
             const cols = rawCols.map(c => c.trim()).filter(c => c !== '');
             
-            // 데이터가 기간 하나밖에 없으면 패스
             if (cols.length < 2) return;
 
-            // 순서대로 데이터 할당 (빈칸이 제거되었으므로 정확히 위치를 찾아감)
             const periodRaw = cols[0];
             const imyongType = cols.length > 1 ? cols[1] : '';
             const position = cols.length > 2 ? cols[2] : '';
-            // 부서명(학교명)은 보통 4번째에 오지만, 간혹 직급이 생략된 경우 3번째에 올 수 있으므로 보완
-            const department = cols.length > 3 ? cols[3] : cols[2];
+            
+            // 핵심 1: 학교명만 추출 ("경기도안산교육지원청 삼일초등학교" -> "삼일초등학교")
+            const rawDept = cols.length > 3 ? cols[3] : cols[2];
+            let department = rawDept.split(' ').pop().trim();
+            if (!department) department = rawDept;
 
             const dates = periodRaw.split('~');
             if (dates.length !== 2) return;
@@ -612,14 +611,12 @@
             const periodInfo = calculateCivilPeriod(startStr, endStr);
             if (periodInfo.months === 0 && periodInfo.days === 0) return;
 
-            // 1. 보직/담임 여부 자동 감지
             let roleType = "무";
             if (imyongType.includes("보직") || position.includes("부장")) roleType = "보직교사";
             else if (position.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
                 roleType = "담임교사";
             }
 
-            // 2. DB 매칭 및 기본값 세팅
             let islandMatch = "무";
             let ruralMatch = "무";
             let isMatched = false;
@@ -628,9 +625,7 @@
             const userEnd = new Date(endStr.replace(/\./g, '-'));
 
             if (schoolDB.length > 0) {
-                // 외부 DB가 연동된 경우 매칭 진행
                 for (let dbRow of schoolDB) {
-                    // 부서명(예: 경기도안산교육지원청 삼일초등학교)에 DB 학교명(예: 삼일)이 포함되어 있는지 확인
                     if (department.includes(dbRow.schoolName)) {
                         if (userStart <= dbRow.endDate && userEnd >= dbRow.startDate) {
                             isMatched = true;
@@ -651,7 +646,6 @@
                     }
                 }
             } else {
-                // DB 미사용 시 테스트용 수동 로직
                 if (department.includes("대부초") || department.includes("대부")) { islandMatch = "라(병)"; isMatched = true; } 
                 else if (department.includes("진흥초") || department.includes("선부초") || department.includes("진흥") || department.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
             }
@@ -673,6 +667,21 @@
             return;
         }
 
+        // 핵심 2: 연속된 동일 학교명 병합(Rowspan)을 위한 그룹화 처리
+        for (let i = 0; i < parsedRecords.length; i++) {
+            if (parsedRecords[i].skipSchool) continue;
+            let spanCount = 1;
+            for (let j = i + 1; j < parsedRecords.length; j++) {
+                if (parsedRecords[i].department === parsedRecords[j].department) {
+                    spanCount++;
+                    parsedRecords[j].skipSchool = true;
+                } else {
+                    break;
+                }
+            }
+            parsedRecords[i].rowSpan = spanCount;
+        }
+
         renderTable();
         document.getElementById('resultContainer').style.display = 'block';
         document.getElementById('resultContainer').scrollIntoView({ behavior: 'smooth' });
@@ -686,7 +695,6 @@
         parsedRecords.forEach((row, idx) => {
             const tr = document.createElement('tr');
             
-            // 상태 뱃지
             let badgeHtml = `<span class="badge badge-nomatch">일반</span>`;
             if (row.isMatched) {
                 badgeHtml = `<span class="badge badge-match">DB 매칭</span>`;
@@ -706,13 +714,19 @@
                 <option value="무" ${row.roleType === '무' ? 'selected' : ''}>대상외(무)</option>
             `;
 
+            // 핵심 3: 병합된 셀(학교명) 렌더링 처리
+            let schoolHtml = '';
+            if (!row.skipSchool) {
+                schoolHtml = `<td rowspan="${row.rowSpan}" style="font-weight:700; color:#1e293b; text-align:center; vertical-align:middle; background-color:#ffffff; border-left:1px solid var(--border-color); border-right:1px solid var(--border-color); box-shadow: inset 0 0 0 1px #f1f5f9;">${row.department}</td>`;
+            }
+
             tr.innerHTML = `
                 <td style="text-align:center;">${badgeHtml}</td>
                 <td>
                     <div style="font-size:12px; color:#64748b; margin-bottom:2px;">${row.startStr} ~ ${row.endStr}</div>
                     <div style="font-weight:600; color:#0f172a;">${row.months}개월 ${row.days}일</div>
                 </td>
-                <td style="font-weight:500;">${row.department}</td>
+                ${schoolHtml}
                 <td>
                     <select onchange="updateRow(${idx}, 'roleType', this.value)">
                         ${roleOptions}
