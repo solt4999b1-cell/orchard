@@ -397,97 +397,65 @@
 <script>
     // --- 가장 먼저 함수들을 정의합니다 (호출하기 전에 있어야 함) ---
 
-    // [1] 스마트 텍스트 포맷팅 함수
+    // [2] 학교명/지역 분리 로직 (데이터 보존형)
     function formatDepartmentStr(rawStr) {
-        let sido = "";
-        if (/경기/.test(rawStr)) sido = "경기";
-        else if (/서울/.test(rawStr)) sido = "서울";
-        else if (/인천/.test(rawStr)) sido = "인천";
-        else if (/강원/.test(rawStr)) sido = "강원";
-        else if (/충북|충청북도/.test(rawStr)) sido = "충북";
-        else if (/충남|충청남도/.test(rawStr)) sido = "충남";
-        else if (/대전/.test(rawStr)) sido = "대전";
-        else if (/세종/.test(rawStr)) sido = "세종";
-        else if (/경북|경상북도/.test(rawStr)) sido = "경북";
-        else if (/경남|경상남도/.test(rawStr)) sido = "경남";
-        else if (/대구/.test(rawStr)) sido = "대구";
-        else if (/울산/.test(rawStr)) sido = "울산";
-        else if (/부산/.test(rawStr)) sido = "부산";
-        else if (/전북|전라북도/.test(rawStr)) sido = "전북";
-        else if (/전남|전라남도/.test(rawStr)) sido = "전남";
-        else if (/광주/.test(rawStr)) sido = "광주";
-        else if (/제주/.test(rawStr)) sido = "제주";
-
-        // [오류 해결] region 변수를 여기서 먼저 안전하게 초기화합니다.
-        let region = ""; 
-        let regionMatch = rawStr.match(/([가-힣]+)(교육지원청|교육청|지원청|시\s|군\s|구\s|시$|군$|구$)/);
-        if (regionMatch) {
-            let possibleRegion = regionMatch[1].replace(/경기도|경기|경상북도|경북|서울특별시|서울|인천광역시|인천|강원특별자치도|강원도|강원|충청북도|충북|충청남도|충남|대전광역시|대전|세종특별자치시|세종|경상남도|경남|대구광역시|대구|울산광역시|울산|부산광역시|부산|전라북도|전북|전라남도|전남|광주광역시|광주|제주특별자치도|제주/g, '').replace(/교육$/g, '').trim();
-            if (possibleRegion) region = possibleRegion;
-        }
-
-        // 공단 키워드 우선 체크
-        if (rawStr.includes("공단A")) return [sido, region, "공단A"].filter(Boolean).join(' ');
-        if (rawStr.includes("공단B")) return [sido, region, "공단B"].filter(Boolean).join(' ');
-        if (rawStr.includes("공단")) return [sido, region, "공단"].filter(Boolean).join(' ');
-        if (rawStr.includes("농어촌") || rawStr.includes("읍면")) return [sido, region, "농어촌"].filter(Boolean).join(' ');
-
-        // 학교명 추출
-        let isSchool = /초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(rawStr);
-        if (isSchool) {
-            let cleanStr = rawStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원|연수원)/g, ' ').trim();
-            let parts = cleanStr.split(/\s+/);
-            let school = "";
-            for(let p of parts) {
-                if(/(초등학교|중학교|고등학교|초|중|고|분교|유치원|학교)$/.test(p)) {
-                    school = p.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
-                    break;
-                }
-            }
-            return [sido, region, school].filter(Boolean).join(' ');
-        }
-        
-        return [sido, region].filter(Boolean).join(' ') || "기타이력";
+        // 행정기관 키워드 분리
+        let clean = rawStr.replace(/(경기도|경상북도|서울특별시|인천|안산|군포|의정부|안동|부천)\w*(교육지원청|교육청|지원청|본청)/g, ' ').trim();
+        // 학교명 핵심어 추출 (띄어쓰기 기준 마지막 단어에서 꼬리표 제거)
+        let parts = clean.split(/\s+/);
+        let school = parts.pop() || "";
+        school = school.replace(/(초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교)$/, '');
+        return school || clean;
     }
 
+    // [3] 버튼 이벤트 (데이터 매칭 및 계산)
     document.getElementById('btnCalculate').addEventListener('click', () => {
         const text = txtArea.value;
-        if (!text.trim()) { alert("인사기록 데이터를 입력해주세요."); return; }
-
         const lines = text.split('\n');
         let tempRecords = [];
 
         lines.forEach(line => {
-            if (!line.includes('~')) return; 
-            const cleanLine = line.replace(/\"/g, '');
-            const rawCols = cleanLine.split(',');
-            const cols = rawCols.map(c => c.trim()).filter(c => c !== '');
-            if (cols.length < 2) return;
+            if (!line.includes('~')) return;
+            const cols = line.split(',').map(c => c.trim()).filter(c => c !== '');
+            const periodRaw = cols[0];
+            const dates = periodRaw.split('~');
+            const fullText = cols.slice(1).join(' ');
 
-            const dates = cols[0].split('~');
-            const startStr = dates[0].trim();
-            const endStr = dates[1].trim();
-
-            const fullText = cols.slice(1).join(' '); // 엑셀의 모든 열을 하나의 텍스트로 합침
-            const pInfo = calculateCivilPeriod(startStr, endStr);
-            if (pInfo.months === 0 && pInfo.days <= 1 && !/초등학교|중학교|고등학교|초|중|고|분교|유치원|공단/.test(fullText)) return;
-            if (pInfo.months === 0 && pInfo.days === 0) return;
-
-            // [핵심] 여기서 위에서 고친 formatDepartmentStr를 안전하게 호출
+            const pInfo = calculateCivilPeriod(dates[0].trim(), dates[1].trim());
             let department = formatDepartmentStr(fullText);
-
-            let roleType = "무";
-            if (fullText.includes("보직") || fullText.includes("부장")) roleType = "보직교사";
-            else if (fullText.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) roleType = "담임교사";
+            
+            // "공단" 자동 인식
+            let ruralMatch = fullText.includes("공단") ? "공단지역" : "무";
 
             tempRecords.push({
-                startStr, endStr,
-                start: new Date(startStr.replace(/\./g, '-')),
-                end: new Date(endStr.replace(/\./g, '-')),
-                department, fullText, roleType,
-                months: pInfo.months, days: pInfo.days
+                start: new Date(dates[0].trim().replace(/\./g, '-')),
+                end: new Date(dates[1].trim().replace(/\./g, '-')),
+                startStr: dates[0].trim(), endStr: dates[1].trim(),
+                department, ruralMatch, months: pInfo.months, days: pInfo.days,
+                role: fullText.includes("보직") || fullText.includes("부장") ? "보직교사" : "무"
             });
         });
+
+        // 4. 기간 병합 및 점수 계산 (민법 역산 기준)
+        parsedRecords = [];
+        tempRecords.sort((a,b) => a.start - b.start);
+        
+        let merged = [];
+        tempRecords.forEach(rec => {
+            let last = merged[merged.length - 1];
+            if (last && last.department === rec.department) {
+                last.end = rec.end;
+                last.endStr = rec.endStr;
+                let p = calculateCivilPeriod(last.startStr, last.endStr);
+                last.months = p.months; last.days = p.days;
+            } else {
+                merged.push(rec);
+            }
+        });
+
+        parsedRecords = merged.reverse(); // 최신순 정렬
+        renderTable();
+        document.getElementById('resultContainer').style.display = 'block';
     });
     // --- 1. 가산점 요율 테이블 정의 ---
     const RATES = {
@@ -684,21 +652,16 @@
 
     // --- 4. 민법 제160조 기간 역산 (기존과 동일) ---
     function calculateCivilPeriod(startStr, endStr) {
-        let start = new Date(startStr.replace(/\./g, '-').replace(/\//g, '-'));
-        let end = new Date(endStr.replace(/\./g, '-').replace(/\//g, '-'));
-        if (isNaN(start.getTime()) || isNaN(end.getTime())) return { months: 0, days: 0 };
-        end.setDate(end.getDate() + 1);
-
-        let years = end.getFullYear() - start.getFullYear();
-        let months = end.getMonth() - start.getMonth();
-        let days = end.getDate() - start.getDate();
-
-        if (days < 0) {
-            months--;
-            days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
-        }
-        if (months < 0) { years--; months += 12; }
-        return { months: (years * 12) + months, days: days };
+        let start = new Date(startStr.replace(/\./g, '-'));
+        let end = new Date(endStr.replace(/\./g, '-'));
+        end.setDate(end.getDate() + 1); // 종료일 당일 포함
+        
+        let y = end.getFullYear() - start.getFullYear();
+        let m = end.getMonth() - start.getMonth();
+        let d = end.getDate() - start.getDate();
+        if (d < 0) { m--; d += new Date(end.getFullYear(), end.getMonth(), 0).getDate(); }
+        if (m < 0) { y--; m += 12; }
+        return { months: (y * 12) + m, days: d };
     }
 
     // --- 5. 데이터 매칭 및 분석 로직 ---
