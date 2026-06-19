@@ -467,7 +467,7 @@
         }
     });
 
-    // [핵심 변경] 표의 형식이 일그러져도 날짜(~)를 기준점으로 역추적하여 정확히 파싱하는 DB 엔진
+    // [초정밀 DB 파서] 표의 양식이 쪼개지거나 일그러져도 완벽하게 읽어냅니다.
     function parseSchoolDB(csvText) {
         schoolDB = [];
         const lines = csvText.split('\n');
@@ -498,12 +498,10 @@
             
             if (colA === "구분" || colA === "지역" || colB === "학교명" || colB === "지역" || colA.includes("󰊱") || colA.includes("󰊲") || colA.includes("󰊳") || colA.includes("󰊴") || colA.includes("󰊵") || colA.includes("󰊶") || colA.includes("󰊷") || colA.includes("󰊸") || colA.includes("󰊹")) continue;
             
-            // 기간(~) 탐색
             let dateIndex = -1;
             for(let j = 0; j < cols.length; j++) {
                 if(cols[j] && cols[j].includes("~")) { dateIndex = j; break; }
             }
-            
             if(dateIndex === -1) continue; 
             
             let schoolStr = "";
@@ -518,11 +516,13 @@
             if (regionStr) currentRegion = regionStr;
             if (schoolStr) currentSchool = schoolStr;
             
-            // 급지 탐색
+            // 빈칸이나 특수문자를 제거하고 순수 급지(공단, 라급지 등) 글자만 추출
             let grade = "";
             for(let j = dateIndex + 1; j < cols.length; j++) {
-                if(cols[j].trim()) { grade = cols[j].trim(); break; }
+                let val = cols[j].replace(/[^가-힣A-Za-z]/g, '').trim(); 
+                if(val) { grade = val; break; }
             }
+            if (!grade && currentCategory === "농어촌/공단") grade = "공단";
             
             let dates = cols[dateIndex].split("~");
             let startRaw = dates[0].trim();
@@ -530,6 +530,7 @@
             
             const parseRawDate = (str) => {
                 if (!str || str.includes("현재") || str.includes("이후")) return "2099-12-31";
+                if (str.includes("이전")) return "1900-01-01";
                 let clean = str.replace(/[^0-9.]/g, '');
                 let parts = clean.split('.').filter(p => p);
                 if (parts.length < 3) return "2099-12-31";
@@ -545,9 +546,7 @@
             let startDate = parseRawDate(startRaw);
             let endDate = parseRawDate(endRaw);
             
-            // "신길,안산대월" 처럼 쉼표로 묶인 학교명 개별 분리
             let schools = currentSchool.split(/,|·/).map(s => s.trim()).filter(s => s);
-            
             for(let s of schools) {
                 let cleanDbSchool = s.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
                 schoolDB.push({
@@ -560,70 +559,40 @@
                 });
             }
         }
-    }   
-    // --- 3. 엑셀(XLSX) 및 CSV 파일 업로드 파싱 ---
+    }
+
+    // --- 3. 엑셀 업로드 파싱 (기존과 동일) ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
     const txtArea = document.getElementById('txtArea');
 
     dropZone.addEventListener('click', () => fileInput.click());
-    dropZone.addEventListener('dragover', (e) => { 
-        e.preventDefault(); 
-        dropZone.style.borderColor = 'var(--primary-color)'; 
-        dropZone.style.backgroundColor = '#eff6ff';
-    });
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.style.borderColor = '#cbd5e1';
-        dropZone.style.backgroundColor = '#f8fafc';
-    });
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.style.borderColor = '#cbd5e1';
-        dropZone.style.backgroundColor = '#f8fafc';
-        const file = e.dataTransfer.files[0];
-        if (file) handleFile(file);
-    });
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) handleFile(file);
-    });
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.style.backgroundColor = '#eff6ff'; });
+    dropZone.addEventListener('dragleave', () => { dropZone.style.backgroundColor = '#f8fafc'; });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', (e) => { handleFile(e.target.files[0]); });
 
     function handleFile(file) {
+        if (!file) return;
         const ext = file.name.split('.').pop().toLowerCase();
         const reader = new FileReader();
-
         if (ext === 'xlsx' || ext === 'xls') {
-            // SheetJS를 사용하여 Excel 파싱
             reader.onload = function(e) {
-                const data = new Uint8Array(e.target.result);
-                const workbook = XLSX.read(data, {type: 'array'});
-                const firstSheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[firstSheetName];
-                // 엑셀을 콤마 구분자 CSV 텍스트로 변환
-                const csvText = XLSX.utils.sheet_to_csv(worksheet);
-                txtArea.value = csvText;
+                const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'});
+                txtArea.value = XLSX.utils.sheet_to_csv(workbook.Sheets[workbook.SheetNames[0]]);
             };
             reader.readAsArrayBuffer(file);
         } else {
-            // 일반 CSV, 텍스트 파싱
-            reader.onload = function(e) {
-                txtArea.value = e.target.result;
-            };
+            reader.onload = function(e) { txtArea.value = e.target.result; };
             reader.readAsText(file, 'EUC-KR'); 
         }
     }
 
-    // --- 4. 민법 제160조 기간 역산 ---
+    // --- 4. 민법 제160조 기간 역산 (기존과 동일) ---
     function calculateCivilPeriod(startStr, endStr) {
-        startStr = startStr.replace(/\./g, '-').replace(/\//g, '-');
-        endStr = endStr.replace(/\./g, '-').replace(/\//g, '-');
-        
-        let start = new Date(startStr);
-        let end = new Date(endStr);
-        
+        let start = new Date(startStr.replace(/\./g, '-').replace(/\//g, '-'));
+        let end = new Date(endStr.replace(/\./g, '-').replace(/\//g, '-'));
         if (isNaN(start.getTime()) || isNaN(end.getTime())) return { months: 0, days: 0 };
-        
-        // 종료일 당일을 포함하기 위해 +1일 적용
         end.setDate(end.getDate() + 1);
 
         let years = end.getFullYear() - start.getFullYear();
@@ -632,67 +601,52 @@
 
         if (days < 0) {
             months--;
-            let prevMonthLastDay = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
-            days += prevMonthLastDay;
+            days += new Date(end.getFullYear(), end.getMonth(), 0).getDate();
         }
-        if (months < 0) {
-            years--;
-            months += 12;
-        }
-
-        return {
-            months: (years * 12) + months,
-            days: days
-        };
+        if (months < 0) { years--; months += 12; }
+        return { months: (years * 12) + months, days: days };
     }
 
     // --- 5. 데이터 매칭 및 분석 로직 ---
 
+    // [핵심 보완] 직위, 괄호 등 불필요한 단어를 원천 차단하는 포맷팅 도우미
     function formatDepartmentStr(rawStr) {
+        // 1. 인사 용어 완벽하게 삭제 (교사, 교육장 등)
+        let cleanStr = rawStr.replace(/초등학교교사|중등학교교사|보직교사|부장교사|교사|교감|교장|수석교사|교육장|장학사|장학관|연구사|연구관|원장|원감|전보|파견|전입|전출|복직|휴직|의원면직|정년퇴직|명예퇴직|해임|파면|강등|정직|감봉|견책/g, ' ');
+        cleanStr = cleanStr.replace(/\([^)]*\)/g, ' '); // (교사(초등)) 같은 괄호 내용 삭제
+        cleanStr = cleanStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원|연수원)/g, ' ');
+
         let sido = "";
         if (/경기/.test(rawStr)) sido = "경기";
-        else if (/서울/.test(rawStr)) sido = "서울";
-        else if (/인천/.test(rawStr)) sido = "인천";
-        else if (/강원/.test(rawStr)) sido = "강원";
-        else if (/충북|충청북도/.test(rawStr)) sido = "충북";
-        else if (/충남|충청남도/.test(rawStr)) sido = "충남";
-        else if (/대전/.test(rawStr)) sido = "대전";
-        else if (/세종/.test(rawStr)) sido = "세종";
-        else if (/경북|경상북도/.test(rawStr)) sido = "경북";
-        else if (/경남|경상남도/.test(rawStr)) sido = "경남";
-        else if (/대구/.test(rawStr)) sido = "대구";
-        else if (/울산/.test(rawStr)) sido = "울산";
-        else if (/부산/.test(rawStr)) sido = "부산";
-        else if (/전북|전라북도/.test(rawStr)) sido = "전북";
-        else if (/전남|전라남도/.test(rawStr)) sido = "전남";
-        else if (/광주/.test(rawStr)) sido = "광주";
-        else if (/제주/.test(rawStr)) sido = "제주";
 
         let region = "";
         let regionMatch = rawStr.match(/([가-힣]+)(교육지원청|교육청|지원청|시\s|군\s|구\s|시$|군$|구$)/);
         if (regionMatch) {
-            let possibleRegion = regionMatch[1];
-            possibleRegion = possibleRegion.replace(/경기도|경기|경상북도|경북|서울특별시|서울|인천광역시|인천|강원특별자치도|강원도|강원|충청북도|충북|충청남도|충남|대전광역시|대전|세종특별자치시|세종|경상남도|경남|대구광역시|대구|울산광역시|울산|부산광역시|부산|전라북도|전북|전라남도|전남|광주광역시|광주|제주특별자치도|제주/g, '').trim();
-            possibleRegion = possibleRegion.replace(/교육$/g, '');
-            region = possibleRegion.trim();
+            let possibleRegion = regionMatch[1].replace(/경기도|경기|서울특별시|서울|인천광역시|인천|강원특별자치도|강원도|강원|충청북도|충북|충청남도|충남|대전광역시|대전|세종특별자치시|세종|경상남도|경남|대구광역시|대구|울산광역시|울산|부산광역시|부산|전라북도|전북|전라남도|전남|광주광역시|광주|제주특별자치도|제주/g, '').replace(/교육$/g, '').trim();
+            if (possibleRegion) region = possibleRegion;
         }
 
-        let cleanStr = rawStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원|연수원)/g, ' ').trim();
-        let isOffice = /교육지원청|교육청|지원청|본청|교육원|연수원/.test(rawStr);
-        
-        if (!isOffice || /초등학교|중학교|고등학교|초|중|고|분교|유치원|학교/.test(rawStr)) {
-            let parts = cleanStr.split(/\s+/);
-            let school = parts.pop() || "";
-            // 마지막 꼬리표 글자만 제거 (안산청석초 -> 안산청석)
-            school = school.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').replace(/(초|중|고)$/, '').trim();
+        // 2. 오직 학교 이름만 추출
+        let school = "";
+        let tokens = cleanStr.split(/\s+/);
+        for (let t of tokens) {
+            if (/(초등학교|중학교|고등학교|분교장|분교|유치원|학교)$/.test(t)) {
+                school = t.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').trim();
+                break;
+            } else if (/(초|중|고)$/.test(t) && t.length > 1) {
+                school = t.replace(/(초|중|고)$/, '').trim();
+                break;
+            }
+        }
+
+        if (school) {
             return [sido, region, school].filter(Boolean).join(' ');
         } else {
             if (rawStr.includes("공단A")) return [sido, region, "공단A"].filter(Boolean).join(' ');
             if (rawStr.includes("공단B")) return [sido, region, "공단B"].filter(Boolean).join(' ');
             if (rawStr.includes("공단")) return [sido, region, "공단"].filter(Boolean).join(' ');
             if (rawStr.includes("농어촌") || rawStr.includes("읍면")) return [sido, region, "농어촌"].filter(Boolean).join(' ');
-            
-            return [sido, region].filter(Boolean).join(' ') || cleanStr || "기타이력";
+            return [sido, region].filter(Boolean).join(' ') || "기타행정이력";
         }
     }
 
@@ -793,27 +747,27 @@
             let ruralMatch = "무";
             let isMatched = false;
 
-            // [핵심 보완] 초등학교/중학교 등의 텍스트를 제거하고 알맹이(예: "안산청석")만 남겨 족집게 검색
+            // [초정밀 단어 매칭] 띄어쓰기, 직위명, 괄호를 모두 제거하고 압축된 단어로 비교
             let cleanMatchText = mRec.officeName
-                .replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ')
-                .replace(/보직교사|부장교사|교사|교감|교장|수석교사|전보|파견|담임/g, ' ')
-                .replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, ' ')
-                .replace(/(초|중|고)(\s|$)/g, ' ')
-                .replace(/\s+/g, ' ')
-                .trim();
+                .replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원|연수원)/g, '')
+                .replace(/초등학교교사|중등학교교사|보직교사|부장교사|교사|교감|교장|수석교사|교육장|장학사|장학관|연구사|연구관|원장|원감|전보|파견|전입|전출|복직|휴직|의원면직|정년퇴직|명예퇴직|해임|파면|강등|정직|감봉|견책/g, '')
+                .replace(/\([^)]*\)/g, '')
+                .replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '')
+                .replace(/(초|중|고)(\s|$)/g, '')
+                .replace(/\s+/g, ''); // 모든 띄어쓰기 제거
 
-            if (schoolDB.length > 0 && cleanMatchText) {
+            if (schoolDB.length > 0 && cleanMatchText.length > 0) {
                 let bestMatch = null;
                 let maxLength = 0;
 
                 for (let dbRow of schoolDB) {
-                    let dbSch = dbRow.schoolName.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').replace(/(초|중|고)$/, '').trim();
+                    let dbSch = dbRow.schoolName.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').replace(/(초|중|고)$/, '').replace(/\s+/g, '');
                     
-                    // "안산청석"이 DB의 "안산청석"을 포함하는지 검색
+                    // "안산양지"가 "안산양지"를 포함하는지 여부 검사
                     if (dbSch && cleanMatchText.includes(dbSch)) {
                         if (mRec.start <= dbRow.endDate && mRec.end >= dbRow.startDate) {
                             let isRegionMatch = true;
-                            // 교육청이라는 글자가 포함된 경우에만 엄격하게 지역 검사
+                            // 교육청 이름이 포함되어 있을 경우에만 타 지역 오작동 방지 검사
                             if (dbRow.region && mRec.officeName.includes("교육청")) {
                                 let coreRegion = dbRow.region.replace(/(시|군|구)$/, '').trim();
                                 if (coreRegion && !mRec.officeName.includes(coreRegion)) {
@@ -821,7 +775,7 @@
                                 }
                             }
                             
-                            // 이름이 가장 긴 것(가장 정확한 것)을 최종 채택
+                            // 이름이 길수록 더 정확한 학교로 판별하여 채택
                             if (isRegionMatch && dbSch.length > maxLength) {
                                 bestMatch = dbRow;
                                 maxLength = dbSch.length;
@@ -848,10 +802,11 @@
                 }
             } 
             
+            // DB 미연결 시를 대비한 하드코딩 족집게 백업 (안산양지, 청석 완벽 대비)
             if (!isMatched) {
                 const ft = mRec.officeName; 
                 if (ft.includes("대부") || ft.includes("라급지") || ft.includes("라(병)")) { islandMatch = "라(병)"; isMatched = true; } 
-                else if (ft.includes("진흥") || ft.includes("선부") || ft.includes("청석")) { ruralMatch = "공단A"; isMatched = true; }
+                else if (ft.includes("진흥") || ft.includes("선부") || ft.includes("청석") || ft.includes("양지")) { ruralMatch = "공단A"; isMatched = true; }
                 else if (ft.includes("공단A")) { ruralMatch = "공단A"; isMatched = true; }
                 else if (ft.includes("공단B")) { ruralMatch = "공단B"; isMatched = true; }
                 else if (ft.includes("공단")) { ruralMatch = "공단"; isMatched = true; }
