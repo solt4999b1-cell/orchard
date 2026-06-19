@@ -467,7 +467,7 @@
         }
     });
 
-    // [핵심 변경] 표의 형식이 일그러져도 정확히 찾아내는 스마트 DB 파서
+    // [핵심 변경] 표의 형식이 일그러져도 날짜(~)를 기준점으로 역추적하여 정확히 파싱하는 DB 엔진
     function parseSchoolDB(csvText) {
         schoolDB = [];
         const lines = csvText.split('\n');
@@ -479,7 +479,6 @@
             let line = lines[i].trim();
             if (!line) continue;
             
-            // CSV 따옴표 파싱 (쉼표로 묶인 학교명 처리)
             let inQuotes = false;
             let cols = [];
             let currentWord = '';
@@ -493,15 +492,13 @@
             let colA = cols[0] ? cols[0].trim() : "";
             let colB = cols[1] ? cols[1].trim() : "";
             
-            // 대분류 추적 유지
             if (colA.includes("도서") || colA.includes("벽지")) currentCategory = "도서/벽지";
             if (colA.includes("농․어촌") || colA.includes("농어촌") || colA.includes("공단")) currentCategory = "농어촌/공단";
             if (colA.includes("접경지역") || colA.includes("접적")) currentCategory = "접경/접적";
             
-            // 불필요한 헤더 및 찌꺼기 패스
             if (colA === "구분" || colA === "지역" || colB === "학교명" || colB === "지역" || colA.includes("󰊱") || colA.includes("󰊲") || colA.includes("󰊳") || colA.includes("󰊴") || colA.includes("󰊵") || colA.includes("󰊶") || colA.includes("󰊷") || colA.includes("󰊸") || colA.includes("󰊹")) continue;
             
-            // 기간(~)이 있는 셀을 탐색하여 모든 위치의 기준점으로 삼음
+            // 기간(~) 탐색
             let dateIndex = -1;
             for(let j = 0; j < cols.length; j++) {
                 if(cols[j] && cols[j].includes("~")) { dateIndex = j; break; }
@@ -511,8 +508,6 @@
             
             let schoolStr = "";
             let regionStr = "";
-            
-            // 기간 앞의 열들에서 지역과 학교 추출 (4칸이든 5칸이든 유연하게 대처)
             if (dateIndex >= 2) {
                 schoolStr = cols[dateIndex - 1].trim();
                 regionStr = cols[dateIndex - 2].trim();
@@ -520,23 +515,37 @@
                 schoolStr = cols[0].trim();
             }
             
-            if (regionStr !== "" && regionStr !== " ") currentRegion = regionStr;
-            if (schoolStr !== "" && schoolStr !== " ") currentSchool = schoolStr;
+            if (regionStr) currentRegion = regionStr;
+            if (schoolStr) currentSchool = schoolStr;
             
-            // 기간 뒤의 열들 중에서 빈칸이 아닌 첫 번째 값을 급지(공단)로 추출
+            // 급지 탐색
             let grade = "";
             for(let j = dateIndex + 1; j < cols.length; j++) {
-                if(cols[j].trim() !== "") { grade = cols[j].trim(); break; }
+                if(cols[j].trim()) { grade = cols[j].trim(); break; }
             }
             
             let dates = cols[dateIndex].split("~");
             let startRaw = dates[0].trim();
             let endRaw = dates[1] ? dates[1].trim() : "2099-12-31";
             
+            const parseRawDate = (str) => {
+                if (!str || str.includes("현재") || str.includes("이후")) return "2099-12-31";
+                let clean = str.replace(/[^0-9.]/g, '');
+                let parts = clean.split('.').filter(p => p);
+                if (parts.length < 3) return "2099-12-31";
+                let y = parseInt(parts[0], 10);
+                let m = parseInt(parts[1], 10);
+                let d = parseInt(parts[2], 10);
+                if (y < 100) { y += (y >= 50 ? 1900 : 2000); }
+                let mm = m < 10 ? '0'+m : m;
+                let dd = d < 10 ? '0'+d : d;
+                return `${y}-${mm}-${dd}`;
+            };
+
             let startDate = parseRawDate(startRaw);
             let endDate = parseRawDate(endRaw);
             
-            // "고산,송양" 처럼 쉼표로 묶인 여러 학교를 쪼개어 각각 DB화
+            // "신길,안산대월" 처럼 쉼표로 묶인 학교명 개별 분리
             let schools = currentSchool.split(/,|·/).map(s => s.trim()).filter(s => s);
             
             for(let s of schools) {
@@ -547,25 +556,10 @@
                     schoolName: cleanDbSchool,
                     startDate: new Date(startDate),
                     endDate: new Date(endDate),
-                    grade: grade // 여기에 '공단A' 혹은 '공단'이 정확하게 들어갑니다.
+                    grade: grade
                 });
             }
         }
-        
-        function parseRawDate(str) {
-            if (!str || str.includes("현재") || str.includes("이후")) return "2099-12-31";
-            let clean = str.replace(/[^0-9.]/g, '');
-            let parts = clean.split('.').filter(p => p);
-            if (parts.length < 3) return "2099-12-31";
-            let y = parseInt(parts[0], 10);
-            let m = parseInt(parts[1], 10);
-            let d = parseInt(parts[2], 10);
-            if (y < 100) { y += (y >= 50 ? 1900 : 2000); }
-            let mm = m < 10 ? '0'+m : m;
-            let dd = d < 10 ? '0'+d : d;
-            return `${y}-${mm}-${dd}`;
-        }
-    }
     // --- 3. 엑셀(XLSX) 및 CSV 파일 업로드 파싱 ---
     const dropZone = document.getElementById('dropZone');
     const fileInput = document.getElementById('fileInput');
@@ -682,32 +676,22 @@
             region = possibleRegion.trim();
         }
 
-        let isSchool = /초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(rawStr);
-        let school = "";
+        let cleanStr = rawStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원|연수원)/g, ' ').trim();
+        let isOffice = /교육지원청|교육청|지원청|본청|교육원|연수원/.test(rawStr);
         
-        if (isSchool) {
-            let parts = rawStr.split(/\s+/);
-            for (let part of parts) {
-                if (/초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(part)) {
-                    school = part.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
-                    school = school.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, '').trim();
-                }
-            }
+        if (!isOffice || /초등학교|중학교|고등학교|초|중|고|분교|유치원|학교/.test(rawStr)) {
+            let parts = cleanStr.split(/\s+/);
+            let school = parts.pop() || "";
+            // 마지막 꼬리표 글자만 제거 (안산청석초 -> 안산청석)
+            school = school.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').replace(/(초|중|고)$/, '').trim();
             return [sido, region, school].filter(Boolean).join(' ');
         } else {
-            // 특수 키워드(공단, 농어촌)는 살림
             if (rawStr.includes("공단A")) return [sido, region, "공단A"].filter(Boolean).join(' ');
             if (rawStr.includes("공단B")) return [sido, region, "공단B"].filter(Boolean).join(' ');
             if (rawStr.includes("공단")) return [sido, region, "공단"].filter(Boolean).join(' ');
             if (rawStr.includes("농어촌") || rawStr.includes("읍면")) return [sido, region, "농어촌"].filter(Boolean).join(' ');
             
-            // [핵심 변경] "행정기관" 글자 삭제. 지역명(예: 경기 부천)만 깔끔하게 남김
-            let result = [sido, region].filter(Boolean).join(' ');
-            if (result) return result;
-            
-            // 지역명조차 없는 경우 쓸데없는 글자만 빼고 원본 표시
-            let cleanRaw = rawStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, '').trim();
-            return cleanRaw || "기타이력";
+            return [sido, region].filter(Boolean).join(' ') || cleanStr || "기타이력";
         }
     }
 
@@ -726,7 +710,6 @@
             
             const cleanLine = line.replace(/\"/g, '');
             const rawCols = cleanLine.split(',');
-            
             const cols = rawCols.map(c => c.trim()).filter(c => c !== '');
             if (cols.length < 2) return;
 
@@ -737,21 +720,11 @@
             const endStr = dates[1].trim();
 
             const fullText = cols.slice(1).join(' ');
-
             const pInfo = calculateCivilPeriod(startStr, endStr);
             if (pInfo.months === 0 && pInfo.days <= 1 && !/초등학교|중학교|고등학교|초|중|고|분교|유치원|공단/.test(fullText)) return;
             if (pInfo.months === 0 && pInfo.days === 0) return;
 
             let department = formatDepartmentStr(fullText);
-            
-            let schoolName = "";
-            let parts = fullText.split(/\s+/);
-            for (let part of parts) {
-                if (/초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(part)) {
-                    schoolName = part.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
-                    schoolName = schoolName.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, '').trim();
-                }
-            }
 
             let roleType = "무";
             if (fullText.includes("보직") || fullText.includes("부장")) roleType = "보직교사";
@@ -763,7 +736,7 @@
                 startStr, endStr,
                 start: new Date(startStr.replace(/\./g, '-')),
                 end: new Date(endStr.replace(/\./g, '-')),
-                department, schoolName, officeName: fullText,
+                department, officeName: fullText,
                 roleType,
                 months: pInfo.months,
                 days: pInfo.days
@@ -819,53 +792,69 @@
             let ruralMatch = "무";
             let isMatched = false;
 
-            if (mRec.schoolName && schoolDB.length > 0) {
-                const cleanUserSchool = mRec.schoolName;
+            // [핵심 보완] 초등학교/중학교 등의 텍스트를 제거하고 알맹이(예: "안산청석")만 남겨 족집게 검색
+            let cleanMatchText = mRec.officeName
+                .replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ')
+                .replace(/보직교사|부장교사|교사|교감|교장|수석교사|전보|파견|담임/g, ' ')
+                .replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, ' ')
+                .replace(/(초|중|고)(\s|$)/g, ' ')
+                .replace(/\s+/g, ' ')
+                .trim();
+
+            if (schoolDB.length > 0 && cleanMatchText) {
+                let bestMatch = null;
+                let maxLength = 0;
 
                 for (let dbRow of schoolDB) {
-                    const cleanDbSchool = dbRow.schoolName.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
-                    let isNameMatch = false;
-                    if (cleanUserSchool && cleanDbSchool && (cleanUserSchool === cleanDbSchool || cleanUserSchool.includes(cleanDbSchool) || cleanDbSchool.includes(cleanUserSchool))) {
-                        isNameMatch = true;
-                    }
-
-                    let isRegionMatch = true;
-                    if (mRec.officeName && dbRow.region) {
-                        const coreRegion = dbRow.region.replace(/(시|군|구)$/, '').trim();
-                        if (coreRegion && !mRec.officeName.includes(coreRegion)) {
-                            isRegionMatch = false; 
-                        }
-                    }
-
-                    if (isNameMatch && isRegionMatch) {
+                    let dbSch = dbRow.schoolName.replace(/초등학교|중학교|고등학교|분교장|분교|유치원|학교/g, '').replace(/(초|중|고)$/, '').trim();
+                    
+                    // "안산청석"이 DB의 "안산청석"을 포함하는지 검색
+                    if (dbSch && cleanMatchText.includes(dbSch)) {
                         if (mRec.start <= dbRow.endDate && mRec.end >= dbRow.startDate) {
-                            isMatched = true;
-                            if (dbRow.category.includes("도서") || dbRow.category.includes("벽지") || dbRow.category.includes("접적")) {
-                                if(dbRow.grade.includes("라")) islandMatch = "라(병)";
-                                else if(dbRow.grade.includes("다")) islandMatch = "다(을)";
-                                else if(dbRow.grade.includes("나")) islandMatch = "나(갑)";
-                                else if(dbRow.grade.includes("가")) islandMatch = "가(특)";
-                            } else {
-                                if(dbRow.grade.includes("면") || dbRow.grade.includes("읍면")) ruralMatch = "면(읍면)";
-                                else if(dbRow.grade.includes("읍") || dbRow.grade.includes("동")) ruralMatch = "읍(동)";
-                                else if(dbRow.grade.includes("공단A")) ruralMatch = "공단A";
-                                else if(dbRow.grade.includes("공단B")) ruralMatch = "공단B";
-                                else if(dbRow.grade.includes("공단")) ruralMatch = "공단";
-                                else if(dbRow.category.includes("접경")) ruralMatch = "접경";
+                            let isRegionMatch = true;
+                            // 교육청이라는 글자가 포함된 경우에만 엄격하게 지역 검사
+                            if (dbRow.region && mRec.officeName.includes("교육청")) {
+                                let coreRegion = dbRow.region.replace(/(시|군|구)$/, '').trim();
+                                if (coreRegion && !mRec.officeName.includes(coreRegion)) {
+                                    isRegionMatch = false;
+                                }
+                            }
+                            
+                            // 이름이 가장 긴 것(가장 정확한 것)을 최종 채택
+                            if (isRegionMatch && dbSch.length > maxLength) {
+                                bestMatch = dbRow;
+                                maxLength = dbSch.length;
                             }
                         }
+                    }
+                }
+
+                if (bestMatch) {
+                    isMatched = true;
+                    if (bestMatch.category.includes("도서") || bestMatch.category.includes("벽지") || bestMatch.category.includes("접적")) {
+                        if(bestMatch.grade.includes("라")) islandMatch = "라(병)";
+                        else if(bestMatch.grade.includes("다")) islandMatch = "다(을)";
+                        else if(bestMatch.grade.includes("나")) islandMatch = "나(갑)";
+                        else if(bestMatch.grade.includes("가")) islandMatch = "가(특)";
+                    } else {
+                        if(bestMatch.grade.includes("면") || bestMatch.grade.includes("읍면")) ruralMatch = "면(읍면)";
+                        else if(bestMatch.grade.includes("읍") || bestMatch.grade.includes("동")) ruralMatch = "읍(동)";
+                        else if(bestMatch.grade.includes("공단A")) ruralMatch = "공단A";
+                        else if(bestMatch.grade.includes("공단B")) ruralMatch = "공단B";
+                        else if(bestMatch.grade.includes("공단")) ruralMatch = "공단";
+                        else if(bestMatch.category.includes("접경")) ruralMatch = "접경";
                     }
                 }
             } 
             
             if (!isMatched) {
-                const fullText = mRec.officeName; 
-                if (fullText.includes("대부") || fullText.includes("라급지") || fullText.includes("라(병)")) { islandMatch = "라(병)"; isMatched = true; } 
-                else if (fullText.includes("진흥") || fullText.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
-                else if (fullText.includes("공단A")) { ruralMatch = "공단A"; isMatched = true; }
-                else if (fullText.includes("공단B")) { ruralMatch = "공단B"; isMatched = true; }
-                else if (fullText.includes("공단")) { ruralMatch = "공단"; isMatched = true; }
-                else if (fullText.includes("농어촌") || fullText.includes("읍면")) { ruralMatch = "면(읍면)"; isMatched = true; }
+                const ft = mRec.officeName; 
+                if (ft.includes("대부") || ft.includes("라급지") || ft.includes("라(병)")) { islandMatch = "라(병)"; isMatched = true; } 
+                else if (ft.includes("진흥") || ft.includes("선부") || ft.includes("청석")) { ruralMatch = "공단A"; isMatched = true; }
+                else if (ft.includes("공단A")) { ruralMatch = "공단A"; isMatched = true; }
+                else if (ft.includes("공단B")) { ruralMatch = "공단B"; isMatched = true; }
+                else if (ft.includes("공단")) { ruralMatch = "공단"; isMatched = true; }
+                else if (ft.includes("농어촌") || ft.includes("읍면")) { ruralMatch = "면(읍면)"; isMatched = true; }
             }
 
             parsedRecords.push({
@@ -878,7 +867,7 @@
                 dMonths, dDays, 
                 islandMatch,
                 ruralMatch,
-                isMatched: (schoolDB.length > 0 && mRec.schoolName) ? isMatched : false
+                isMatched: (schoolDB.length > 0 && isMatched)
             });
         });
 
