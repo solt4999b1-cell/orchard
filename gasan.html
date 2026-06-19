@@ -584,7 +584,7 @@
         const lines = text.split('\n');
         let tempRecords = [];
 
-        // 1차 파싱: 텍스트에서 유효한 데이터를 추출하여 임시 배열에 저장
+        // 1차 파싱: 텍스트에서 유효한 데이터를 추출
         lines.forEach(line => {
             if (!line.includes('~')) return; 
             
@@ -598,10 +598,28 @@
             const imyongType = cols.length > 1 ? cols[1] : '';
             const position = cols.length > 2 ? cols[2] : '';
             
-            // 교육청 이름 제거 후 학교명만 추출
+            // 핵심 1: 교육청(발령청)과 학교명 분리 알고리즘
             const rawDept = cols.length > 3 ? cols[3] : cols[2];
-            let department = rawDept.split(' ').pop().trim();
-            if (!department) department = rawDept;
+            let deptParts = rawDept.split(' ').map(p => p.trim()).filter(p => p !== '');
+            
+            let officeName = "";
+            let schoolName = "";
+
+            if (deptParts.length > 1) {
+                schoolName = deptParts.pop(); // 보통 마지막 띄어쓰기 이후가 학교명 (예: 삼일초등학교)
+                officeName = deptParts.join(' '); // 앞부분은 지역/교육청 (예: 경기도안산교육지원청)
+            } else if (deptParts.length === 1) {
+                let singleName = deptParts[0];
+                // 학교 없이 교육청만 있는 경우 (행정 근무)
+                if (singleName.endsWith('교육청') || singleName.endsWith('지원청') || singleName.endsWith('교육원') || singleName.includes('본청')) {
+                    officeName = singleName;
+                } else {
+                    schoolName = singleName;
+                }
+            }
+            
+            // 화면에 표시될 대표 부서명 (학교가 있으면 학교, 없으면 교육청)
+            let department = schoolName ? schoolName : officeName;
 
             const dates = periodRaw.split('~');
             if (dates.length !== 2) return;
@@ -620,6 +638,8 @@
                 start: new Date(startStr.replace(/\./g, '-')),
                 end: new Date(endStr.replace(/\./g, '-')),
                 department,
+                officeName,
+                schoolName,
                 roleType
             });
         });
@@ -629,8 +649,7 @@
             return;
         }
 
-        // 2차 파싱: 연속된 동일 학교 기록을 시작일~마지막일 1줄로 병합
-        // (최신 날짜부터 내림차순 정렬하여 순차적으로 병합)
+        // 2차 파싱: 연속된 동일 부서 기록을 1줄로 병합
         tempRecords.sort((a, b) => b.end - a.end);
         
         let mergedRecords = [];
@@ -642,7 +661,6 @@
                 currentMerge = {...rec};
             } else {
                 if (currentMerge.department === rec.department) {
-                    // 동일 학교면 기간 갱신 (가장 빠른 시작일, 가장 늦은 종료일)
                     if (rec.start < currentMerge.start) {
                         currentMerge.start = rec.start;
                         currentMerge.startStr = rec.startStr;
@@ -651,7 +669,6 @@
                         currentMerge.end = rec.end;
                         currentMerge.endStr = rec.endStr;
                     }
-                    // 하나라도 보직교사 기록이 있으면 보직으로 표기
                     if (rec.roleType === "보직교사") currentMerge.roleType = "보직교사";
                     else if (rec.roleType === "담임교사" && currentMerge.roleType !== "보직교사") currentMerge.roleType = "담임교사";
                 } else {
@@ -662,7 +679,7 @@
         }
         if (currentMerge) mergedRecords.push(currentMerge);
 
-        // 3차 파싱: 병합된 줄을 기준으로 기간 역산 및 DB 매칭 수행
+        // 핵심 2: DB 크로스체크 매칭 (지역 필터링 및 학교명 핵심어 추출)
         parsedRecords = [];
         mergedRecords.forEach(rec => {
             const periodInfo = calculateCivilPeriod(rec.startStr, rec.endStr);
@@ -672,10 +689,33 @@
             let ruralMatch = "무";
             let isMatched = false;
 
-            if (schoolDB.length > 0) {
+            // 학교 근무인 경우에만 DB 매칭 수행 (교육청만 있는 기록은 매칭 제외)
+            if (rec.schoolName && schoolDB.length > 0) {
+                // 불필요한 꼬리표를 떼어내고 '핵심 이름'만 추출 (예: '대부초등학교' -> '대부')
+                const cleanUserSchool = rec.schoolName.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
+
                 for (let dbRow of schoolDB) {
-                    if (rec.department.includes(dbRow.schoolName)) {
-                        // 교집합 확인
+                    const cleanDbSchool = dbRow.schoolName.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
+
+                    // 조건 1. 핵심 학교 이름이 서로 포함되는지 확인
+                    let isNameMatch = false;
+                    if (cleanUserSchool && cleanDbSchool) {
+                        if (cleanUserSchool === cleanDbSchool || cleanUserSchool.includes(cleanDbSchool) || cleanDbSchool.includes(cleanUserSchool)) {
+                            isNameMatch = true;
+                        }
+                    }
+
+                    // 조건 2. 타 지역 동명이교 방지를 위한 지역청 교차 확인 (예: '파주'가 '경기도파주교육청'에 포함되는지)
+                    let isRegionMatch = true;
+                    if (rec.officeName && dbRow.region) {
+                        const coreRegion = dbRow.region.replace(/(시|군|구)$/, '').trim(); // '파주시' -> '파주'
+                        if (coreRegion && !rec.officeName.includes(coreRegion)) {
+                            isRegionMatch = false; 
+                        }
+                    }
+
+                    // 이름과 지역이 일치하고, 지정 기간이 겹치면 매칭 성공!
+                    if (isNameMatch && isRegionMatch) {
                         if (rec.start <= dbRow.endDate && rec.end >= dbRow.startDate) {
                             isMatched = true;
                             if (dbRow.category.includes("도서") || dbRow.category.includes("벽지") || dbRow.category.includes("접적")) {
@@ -694,9 +734,10 @@
                         }
                     }
                 }
-            } else {
-                if (rec.department.includes("대부초") || rec.department.includes("대부")) { islandMatch = "라(병)"; isMatched = true; } 
-                else if (rec.department.includes("진흥초") || rec.department.includes("선부초") || rec.department.includes("진흥") || rec.department.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
+            } else if (!isMatched && rec.schoolName) {
+                // DB가 연결되지 않았을 때의 임시 수동 매칭
+                if (rec.schoolName.includes("대부") && (!rec.officeName || rec.officeName.includes("안산"))) { islandMatch = "라(병)"; isMatched = true; } 
+                else if (rec.schoolName.includes("진흥") || rec.schoolName.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
             }
 
             parsedRecords.push({
@@ -704,11 +745,11 @@
                 endStr: rec.endStr,
                 months: periodInfo.months,
                 days: periodInfo.days,
-                department: rec.department,
+                department: rec.department, // 화면에는 학교명(없으면 교육청명) 표시
                 roleType: rec.roleType,
                 islandMatch,
                 ruralMatch,
-                isMatched: (schoolDB.length > 0) ? isMatched : false
+                isMatched: (schoolDB.length > 0 && rec.schoolName) ? isMatched : false
             });
         });
 
