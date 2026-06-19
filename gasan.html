@@ -608,17 +608,22 @@
         let school = "";
         
         if (isSchool) {
-            let cleanStr = rawStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ').trim();
-            let parts = cleanStr.split(/\s+/);
-            school = parts.pop(); 
-            school = school.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
+            let parts = rawStr.split(/\s+/);
+            for (let part of parts) {
+                if (/초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(part)) {
+                    school = part.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
+                    // "안산청석초" 처럼 교육청 이름이 붙어있는 경우 강제 제거
+                    school = school.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, '').trim();
+                }
+            }
             return [sido, region, school].filter(Boolean).join(' ');
         } else {
-            // [수정포인트] 학교가 아니더라도 엑셀 E열 등에 '공단' 문구가 있으면 명시적으로 살림
-            if (rawStr.includes("공단")) {
-                let gongdan = rawStr.match(/공단[A-Z]?/)?.[0] || "공단";
-                return [sido, region, gongdan].filter(Boolean).join(' ');
-            }
+            // [핵심 보완] 학교가 아니더라도 전체 텍스트에서 공단 등 특수 키워드 살리기
+            if (rawStr.includes("공단A")) return [sido, region, "공단A"].filter(Boolean).join(' ');
+            if (rawStr.includes("공단B")) return [sido, region, "공단B"].filter(Boolean).join(' ');
+            if (rawStr.includes("공단")) return [sido, region, "공단"].filter(Boolean).join(' ');
+            if (rawStr.includes("농어촌") || rawStr.includes("읍면")) return [sido, region, "농어촌"].filter(Boolean).join(' ');
+            
             return [sido, region, "행정기관"].filter(Boolean).join(' ');
         }
     }
@@ -633,43 +638,46 @@
         const lines = text.split('\n');
         let tempRecords = [];
 
-        // 1차 파싱: 각 줄의 기간과 직위 개별 추출
+        // 1차 파싱
         lines.forEach(line => {
             if (!line.includes('~')) return; 
             
             const cleanLine = line.replace(/\"/g, '');
             const rawCols = cleanLine.split(',');
             
-            // [핵심 수정] 무작정 빈칸을 지우지 않고 엑셀 D열, E열의 원래 위치를 보존합니다!
-            const cols = rawCols.map(c => c.trim());
+            // [오류 해결의 핵심] 엑셀의 투명한 빈칸(,,,,)을 완벽히 소거하여 데이터 누락 방지!
+            const cols = rawCols.map(c => c.trim()).filter(c => c !== '');
             if (cols.length < 2) return;
 
             const periodRaw = cols[0];
-            const imyongType = cols[1] || '';
-            const position = cols[2] || '';
-            const rawDept = cols[3] || ''; // 엑셀 D열 (부서)
-            const officeStr = cols[4] || ''; // 엑셀 E열 (발령청)
-            
-            // D열이 비어있고 E열에만 '공단'이 적힌 경우를 위해 두 열의 텍스트를 합침
-            const fullDeptStr = rawDept + " " + officeStr;
-            
-            let department = formatDepartmentStr(fullDeptStr);
-            let cleanForMatch = fullDeptStr.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, ' ').trim();
-            let deptParts = cleanForMatch.split(/\s+/);
-            let schoolName = /초|중|고|분교|유치원/.test(cleanForMatch) ? deptParts.pop() : "";
-
             const dates = periodRaw.split('~');
             if (dates.length !== 2) return;
             const startStr = dates[0].trim();
             const endStr = dates[1].trim();
 
+            // 기간을 제외한 나머지 모든 텍스트(직위, 부서, 발령청, 공단 등)를 하나로 뭉침
+            const fullText = cols.slice(1).join(' ');
+
             const pInfo = calculateCivilPeriod(startStr, endStr);
-            if (pInfo.months === 0 && pInfo.days <= 1 && department.includes("행정기관")) return;
+            // 0개월 1일짜리 허수 필터링 (단, 학교명이나 공단 키워드가 있으면 살림)
+            if (pInfo.months === 0 && pInfo.days <= 1 && !/초등학교|중학교|고등학교|초|중|고|분교|유치원|공단/.test(fullText)) return;
             if (pInfo.months === 0 && pInfo.days === 0) return;
+
+            // 하나로 뭉친 텍스트에서 족집게처럼 이름과 지역 추출
+            let department = formatDepartmentStr(fullText);
             
+            let schoolName = "";
+            let parts = fullText.split(/\s+/);
+            for (let part of parts) {
+                if (/초등학교|중학교|고등학교|초|중|고|분교|유치원/.test(part)) {
+                    schoolName = part.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원|학교/g, '').trim();
+                    schoolName = schoolName.replace(/[가-힣]*(교육지원청|교육청|지원청|본청|교육원)/g, '').trim();
+                }
+            }
+
             let roleType = "무";
-            if (imyongType.includes("보직") || position.includes("부장")) roleType = "보직교사";
-            else if (position.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
+            if (fullText.includes("보직") || fullText.includes("부장")) roleType = "보직교사";
+            else if (fullText.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
                 roleType = "담임교사";
             }
 
@@ -677,7 +685,7 @@
                 startStr, endStr,
                 start: new Date(startStr.replace(/\./g, '-')),
                 end: new Date(endStr.replace(/\./g, '-')),
-                department, schoolName, officeName: fullDeptStr, // D열 E열 통합 원본 보존
+                department, schoolName, officeName: fullText,
                 roleType,
                 months: pInfo.months,
                 days: pInfo.days
@@ -689,7 +697,7 @@
             return;
         }
 
-        // 2차 파싱: 연속된 동일 근무지 병합 (오름차순 묶기)
+        // 2차 파싱: 연속된 동일 근무지 병합 (오름차순)
         tempRecords.sort((a, b) => a.start - b.start);
         let mergedRecords = [];
         let currentMerge = null;
@@ -711,11 +719,11 @@
         }
         if (currentMerge) mergedRecords.push(currentMerge);
 
-        // 3차 파싱: 병합된 줄 내에서 보직/담임 기간 정확히 합산 및 키워드/DB 교차 검증
+        // 3차 파싱: DB 교차 검증 및 발라낸 보직/담임 기간 산출
         parsedRecords = [];
         mergedRecords.forEach(mRec => {
             const totalP = calculateCivilPeriod(mRec.startStr, mRec.endStr);
-            if (mRec.department.includes("행정기관") && totalP.months === 0 && totalP.days <= 1) return;
+            if (!/초등학교|중학교|고등학교|초|중|고|분교|유치원|공단/.test(mRec.department) && totalP.months === 0 && totalP.days <= 1) return;
 
             let bMonths = 0, bDays = 0;
             let dMonths = 0, dDays = 0;
@@ -736,7 +744,7 @@
             let isMatched = false;
 
             if (mRec.schoolName && schoolDB.length > 0) {
-                const cleanUserSchool = mRec.schoolName.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
+                const cleanUserSchool = mRec.schoolName;
 
                 for (let dbRow of schoolDB) {
                     const cleanDbSchool = dbRow.schoolName.replace(/초등학교|중학교|고등학교|초|중|고|분교장|분교|유치원/g, '').trim();
@@ -774,7 +782,7 @@
                 }
             } 
             
-            // [핵심 보완] DB 매칭이 안 되더라도, 엑셀 D~E열에 특정 키워드가 수기로 적혀있으면 자동 감지!
+            // 수동 키워드 감지 (DB가 없거나 매칭되지 않은 경우)
             if (!isMatched) {
                 const fullText = mRec.officeName; 
                 if (fullText.includes("대부") || fullText.includes("라급지") || fullText.includes("라(병)")) { islandMatch = "라(병)"; isMatched = true; } 
@@ -799,7 +807,7 @@
             });
         });
 
-        // [핵심 추가] 출력 직전 배열 순서를 뒤집어, 가장 최근 경력이 1번 줄에 표시되게 합니다!
+        // [핵심 추가] 출력 직전 배열을 뒤집어 최신 경력이 1번 줄(맨 위)에 오도록 만듭니다.
         parsedRecords.reverse();
 
         renderTable();
