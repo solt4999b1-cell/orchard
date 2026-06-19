@@ -582,8 +582,9 @@
         }
 
         const lines = text.split('\n');
-        parsedRecords = [];
+        let tempRecords = [];
 
+        // 1차 파싱: 텍스트에서 유효한 데이터를 추출하여 임시 배열에 저장
         lines.forEach(line => {
             if (!line.includes('~')) return; 
             
@@ -597,7 +598,7 @@
             const imyongType = cols.length > 1 ? cols[1] : '';
             const position = cols.length > 2 ? cols[2] : '';
             
-            // 핵심 1: 학교명만 추출 ("경기도안산교육지원청 삼일초등학교" -> "삼일초등학교")
+            // 교육청 이름 제거 후 학교명만 추출
             const rawDept = cols.length > 3 ? cols[3] : cols[2];
             let department = rawDept.split(' ').pop().trim();
             if (!department) department = rawDept;
@@ -607,27 +608,75 @@
 
             const startStr = dates[0].trim();
             const endStr = dates[1].trim();
-
-            const periodInfo = calculateCivilPeriod(startStr, endStr);
-            if (periodInfo.months === 0 && periodInfo.days === 0) return;
-
+            
             let roleType = "무";
             if (imyongType.includes("보직") || position.includes("부장")) roleType = "보직교사";
             else if (position.includes("담임") && new Date(startStr.replace(/\./g, '-')) >= new Date('2020-03-01')) {
                 roleType = "담임교사";
             }
 
+            tempRecords.push({
+                startStr, endStr,
+                start: new Date(startStr.replace(/\./g, '-')),
+                end: new Date(endStr.replace(/\./g, '-')),
+                department,
+                roleType
+            });
+        });
+
+        if (tempRecords.length === 0) {
+            alert("유효한 경력 기간(YYYY.MM.DD ~ YYYY.MM.DD)을 찾을 수 없습니다.");
+            return;
+        }
+
+        // 2차 파싱: 연속된 동일 학교 기록을 시작일~마지막일 1줄로 병합
+        // (최신 날짜부터 내림차순 정렬하여 순차적으로 병합)
+        tempRecords.sort((a, b) => b.end - a.end);
+        
+        let mergedRecords = [];
+        let currentMerge = null;
+
+        for (let i = 0; i < tempRecords.length; i++) {
+            let rec = tempRecords[i];
+            if (!currentMerge) {
+                currentMerge = {...rec};
+            } else {
+                if (currentMerge.department === rec.department) {
+                    // 동일 학교면 기간 갱신 (가장 빠른 시작일, 가장 늦은 종료일)
+                    if (rec.start < currentMerge.start) {
+                        currentMerge.start = rec.start;
+                        currentMerge.startStr = rec.startStr;
+                    }
+                    if (rec.end > currentMerge.end) {
+                        currentMerge.end = rec.end;
+                        currentMerge.endStr = rec.endStr;
+                    }
+                    // 하나라도 보직교사 기록이 있으면 보직으로 표기
+                    if (rec.roleType === "보직교사") currentMerge.roleType = "보직교사";
+                    else if (rec.roleType === "담임교사" && currentMerge.roleType !== "보직교사") currentMerge.roleType = "담임교사";
+                } else {
+                    mergedRecords.push(currentMerge);
+                    currentMerge = {...rec};
+                }
+            }
+        }
+        if (currentMerge) mergedRecords.push(currentMerge);
+
+        // 3차 파싱: 병합된 줄을 기준으로 기간 역산 및 DB 매칭 수행
+        parsedRecords = [];
+        mergedRecords.forEach(rec => {
+            const periodInfo = calculateCivilPeriod(rec.startStr, rec.endStr);
+            if (periodInfo.months === 0 && periodInfo.days === 0) return;
+
             let islandMatch = "무";
             let ruralMatch = "무";
             let isMatched = false;
 
-            const userStart = new Date(startStr.replace(/\./g, '-'));
-            const userEnd = new Date(endStr.replace(/\./g, '-'));
-
             if (schoolDB.length > 0) {
                 for (let dbRow of schoolDB) {
-                    if (department.includes(dbRow.schoolName)) {
-                        if (userStart <= dbRow.endDate && userEnd >= dbRow.startDate) {
+                    if (rec.department.includes(dbRow.schoolName)) {
+                        // 교집합 확인
+                        if (rec.start <= dbRow.endDate && rec.end >= dbRow.startDate) {
                             isMatched = true;
                             if (dbRow.category.includes("도서") || dbRow.category.includes("벽지") || dbRow.category.includes("접적")) {
                                 if(dbRow.grade.includes("라")) islandMatch = "라(병)";
@@ -646,41 +695,22 @@
                     }
                 }
             } else {
-                if (department.includes("대부초") || department.includes("대부")) { islandMatch = "라(병)"; isMatched = true; } 
-                else if (department.includes("진흥초") || department.includes("선부초") || department.includes("진흥") || department.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
+                if (rec.department.includes("대부초") || rec.department.includes("대부")) { islandMatch = "라(병)"; isMatched = true; } 
+                else if (rec.department.includes("진흥초") || rec.department.includes("선부초") || rec.department.includes("진흥") || rec.department.includes("선부")) { ruralMatch = "공단A"; isMatched = true; }
             }
 
             parsedRecords.push({
-                startStr, endStr,
+                startStr: rec.startStr, 
+                endStr: rec.endStr,
                 months: periodInfo.months,
                 days: periodInfo.days,
-                department,
-                roleType,
+                department: rec.department,
+                roleType: rec.roleType,
                 islandMatch,
                 ruralMatch,
                 isMatched: (schoolDB.length > 0) ? isMatched : false
             });
         });
-
-        if (parsedRecords.length === 0) {
-            alert("유효한 경력 기간(YYYY.MM.DD ~ YYYY.MM.DD)을 찾을 수 없습니다.");
-            return;
-        }
-
-        // 핵심 2: 연속된 동일 학교명 병합(Rowspan)을 위한 그룹화 처리
-        for (let i = 0; i < parsedRecords.length; i++) {
-            if (parsedRecords[i].skipSchool) continue;
-            let spanCount = 1;
-            for (let j = i + 1; j < parsedRecords.length; j++) {
-                if (parsedRecords[i].department === parsedRecords[j].department) {
-                    spanCount++;
-                    parsedRecords[j].skipSchool = true;
-                } else {
-                    break;
-                }
-            }
-            parsedRecords[i].rowSpan = spanCount;
-        }
 
         renderTable();
         document.getElementById('resultContainer').style.display = 'block';
@@ -714,19 +744,13 @@
                 <option value="무" ${row.roleType === '무' ? 'selected' : ''}>대상외(무)</option>
             `;
 
-            // 핵심 3: 병합된 셀(학교명) 렌더링 처리
-            let schoolHtml = '';
-            if (!row.skipSchool) {
-                schoolHtml = `<td rowspan="${row.rowSpan}" style="font-weight:700; color:#1e293b; text-align:center; vertical-align:middle; background-color:#ffffff; border-left:1px solid var(--border-color); border-right:1px solid var(--border-color); box-shadow: inset 0 0 0 1px #f1f5f9;">${row.department}</td>`;
-            }
-
             tr.innerHTML = `
                 <td style="text-align:center;">${badgeHtml}</td>
                 <td>
                     <div style="font-size:12px; color:#64748b; margin-bottom:2px;">${row.startStr} ~ ${row.endStr}</div>
                     <div style="font-weight:600; color:#0f172a;">${row.months}개월 ${row.days}일</div>
                 </td>
-                ${schoolHtml}
+                <td style="font-weight:700; color:#1e293b;">${row.department}</td>
                 <td>
                     <select onchange="updateRow(${idx}, 'roleType', this.value)">
                         ${roleOptions}
@@ -755,7 +779,7 @@
         parsedRecords[idx][key] = value;
         calculateTotals(); 
     };
-
+    
     // --- 7. 최종 점수 계산 로직 ---
     function calculateTotals() {
         let cumBojik = 0;
