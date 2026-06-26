@@ -1264,21 +1264,18 @@ async function callGemini(messages, maxTokens, imageBase64, imageMediaType) {
     return { ok: false, error: '구글 API 키가 입력되지 않았습니다.' };
   }
 
-  // Gemini API URL (가르고 빠르고 저렴한 gemini-1.5-flash 모델 사용)
-  // 💡 모델 이름을 'gemini-pro-vision' 으로 변경했습니다.
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=' + key;
-  
-  // base64 데이터에서 'data:image/jpeg;base64,' 부분을 제외한 순수 데이터만 추출
+  // 💡 가장 빠르고 정확한 1.5-flash 모델을 사용합니다.
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' + key;
+
   var pureBase64 = imageBase64 ? imageBase64.split(',')[1] : '';
 
-  // Gemini에게 보낼 데이터 구조 만들기
   var parts = [];
-  
-  // 1. 프롬프트 텍스트 (기존 messages 배열에서 텍스트 추출)
   var promptText = typeof messages === 'string' ? messages : messages[0].text;
+  
+  // JSON 포맷 오류를 막기 위해 프롬프트에 강력한 지시를 추가합니다.
+  promptText += "\n\n반드시 순수한 JSON 형식으로만 응답해주세요. ```json 같은 마크다운 기호도 절대 쓰지 마세요.";
   parts.push({ "text": promptText });
 
-  // 2. 이미지 데이터 추가
   if (pureBase64) {
     parts.push({
       "inline_data": {
@@ -1288,12 +1285,9 @@ async function callGemini(messages, maxTokens, imageBase64, imageMediaType) {
     });
   }
 
+  // 에러를 유발하던 generationConfig(JSON 강제 옵션)를 완전히 제거하여 안정성을 높였습니다.
   var payload = {
-    "contents": [{ "parts": parts }],
-    "generationConfig": {
-      "temperature": 0.1, // 사실 기반으로만 대답하도록 온도 낮춤
-      "response_mime_type": "application/json" // 무조건 JSON 형태로 대답하도록 강제
-    }
+    "contents": [{ "parts": parts }]
   };
 
   try {
@@ -1306,23 +1300,21 @@ async function callGemini(messages, maxTokens, imageBase64, imageMediaType) {
     if (!resp.ok) {
       var errJson = await resp.json().catch(function(){ return {}; });
       var errMsg  = (errJson.error && errJson.error.message) || ('HTTP ' + resp.status);
-      return { ok: false, error: errMsg };
+      return { ok: false, error: 'API 오류: ' + errMsg };
     }
 
     var data = await resp.json();
-    
-    // Gemini의 응답 텍스트 추출
     var text = data.candidates[0].content.parts[0].text;
     
+    // 혹시라도 AI가 마크다운(```)을 붙여서 대답할 경우를 대비해 깨끗하게 지워줍니다.
+    text = text.replace(/```json/gi, '').replace(/```/g, '').trim();
+
     return { ok: true, text: text };
 
   } catch(e) {
     var msg = e.message || String(e);
-    if (msg.includes('Load failed') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
-      return {
-        ok: false,
-        error: '네트워크 통신 오류가 발생했습니다. 아이폰 보안 설정이나 인터넷 연결을 확인해주세요. (' + msg + ')'
-      };
+    if (msg.includes('Load failed') || msg.includes('Failed to fetch')) {
+      return { ok: false, error: '네트워크 통신 오류가 발생했습니다. (' + msg + ')' };
     }
     return { ok: false, error: msg };
   }
