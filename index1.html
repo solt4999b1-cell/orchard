@@ -1265,8 +1265,9 @@ async function callGemini(messages, maxTokens, imageBase64, imageMediaType) {
   }
 
   // Gemini API URL (가르고 빠르고 저렴한 gemini-1.5-flash 모델 사용)
-  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=' + key;
-
+  // 💡 모델 이름을 'gemini-pro-vision' 으로 변경했습니다.
+  var url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent?key=' + key;
+  
   // base64 데이터에서 'data:image/jpeg;base64,' 부분을 제외한 순수 데이터만 추출
   var pureBase64 = imageBase64 ? imageBase64.split(',')[1] : '';
 
