@@ -551,6 +551,67 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 @media screen and (max-width:430px){
   .db-action-btn { font-size:10px; padding:6px 4px; }
 }
+
+/* ── 스캔 모드 탭 ───────────────────────────── */
+.scan-mode-tabs    { display:flex; border-bottom:1px solid var(--gray-200); margin-bottom:10px; }
+.scan-mode-tab     { flex:1; padding:7px 4px; font-size:12px; border:none; background:none;
+                     color:var(--gray-400); cursor:pointer; border-bottom:2px solid transparent;
+                     white-space:nowrap; font-weight:500; }
+.scan-mode-tab.active { color:var(--green-dark); border-bottom-color:var(--green-dark); }
+
+/* ── 스캔 비디오 ─────────────────────────────── */
+.scan-hint { position:absolute; bottom:8px; left:0; right:0; text-align:center;
+             font-size:11px; color:rgba(255,255,255,.85); background:rgba(0,0,0,.35);
+             padding:4px; }
+#scan-video-wrap { border-radius:var(--radius-sm); overflow:hidden; }
+
+/* ── OCR 결과 카드 ───────────────────────────── */
+.ocr-result-card { background:var(--card); border:1px solid var(--green-mid);
+                   border-radius:var(--radius); padding:12px 14px; }
+.ocr-field-row   { display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; }
+.ocr-field-item  { flex:1; min-width:140px; }
+.ocr-field-item label { font-size:10px; font-weight:600; color:var(--gray-400);
+                         display:block; margin-bottom:3px; }
+.ocr-field-item input, .ocr-field-item select, .ocr-field-item textarea {
+  width:100%; font-size:12px; padding:5px 8px;
+  border:1px solid var(--gray-200); border-radius:4px; }
+.ocr-field-item textarea { height:54px; resize:vertical; }
+.ocr-confidence  { font-size:10px; padding:2px 7px; border-radius:10px;
+                   background:var(--green-light); color:var(--green-dark); font-weight:500; }
+.ocr-raw-toggle  { font-size:11px; color:var(--blue-dark); cursor:pointer;
+                   margin-top:6px; display:inline-block; }
+.ocr-raw-box     { display:none; margin-top:6px; background:var(--gray-100);
+                   border-radius:4px; padding:8px; font-size:10px;
+                   color:var(--gray-400); white-space:pre-wrap; max-height:120px; overflow-y:auto; }
+.ocr-loading     { display:flex; align-items:center; gap:10px; padding:16px;
+                   color:var(--gray-400); font-size:12px; }
+.ocr-spinner     { width:20px; height:20px; border:2px solid var(--gray-200);
+                   border-top-color:var(--green-dark); border-radius:50%;
+                   animation:spin .7s linear infinite; flex-shrink:0; }
+.scan-capture-preview-wrap { position:relative; }
+.scan-retake-btn { position:absolute; top:6px; right:6px; font-size:11px;
+                   padding:3px 10px; border-radius:12px; border:none;
+                   background:rgba(0,0,0,.55); color:#fff; cursor:pointer; }
+
+@media screen and (max-width:430px){
+  .scan-mode-tab { font-size:11px; padding:6px 2px; }
+  .ocr-field-row { flex-direction:column; }
+  .ocr-field-item { min-width:unset; }
+}
+
+/* ── 수확기간 조회 ───────────────────────────── */
+.harvest-lookup-btn { font-size:11px; padding:5px 10px; border-radius:var(--radius-sm);
+  border:1px solid var(--blue-dark); background:var(--blue-light); color:var(--blue-dark);
+  cursor:pointer; font-weight:500; white-space:nowrap; }
+.harvest-lookup-btn:hover { background:#BBDEFB; }
+.harvest-lookup-btn.loading { opacity:.6; pointer-events:none; }
+.harvest-preset-chip { display:inline-flex; flex-direction:column; align-items:flex-start;
+  padding:5px 9px; border-radius:var(--radius-sm); border:1px solid var(--gray-200);
+  background:#fff; cursor:pointer; font-size:11px; transition:all .12s; }
+.harvest-preset-chip:hover { border-color:var(--green-mid); background:var(--green-light); }
+.harvest-preset-chip.selected { border-color:var(--green-dark); background:var(--green-light); font-weight:600; }
+.harvest-preset-chip .hpc-days { font-size:13px; font-weight:700; color:var(--green-dark); }
+.harvest-preset-chip .hpc-label { font-size:10px; color:var(--gray-400); margin-top:1px; }
 </style>
 </head>
 <body>
@@ -591,7 +652,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 
   <!-- 식물 관리 -->
   <div id="panel-plants" class="panel">
-    <div class="section-title">🌳 재배 식물 관리</div>
+    <div class="today-header" style="margin-bottom:10px;">
+      <div class="section-title" style="margin-bottom:0;">🌳 재배 식물 관리</div>
+      <button class="db-action-btn btn-bulk" style="font-size:11px;padding:5px 10px;border-radius:var(--radius-sm);" onclick="openBulkDateModal()">📅 날짜 일괄 적용</button>
+    </div>
     <div class="filter-row">
       <button class="filter-btn on" onclick="setPlantFilter('all',this)">전체</button>
       <button class="filter-btn" onclick="setPlantFilter('유실수',this)">🌳 유실수</button>
@@ -629,7 +693,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
     <div class="db-action-row">
       <button class="db-action-btn btn-rescan" onclick="openRescanModal()">🔄 인터넷 재검색</button>
       <button class="db-action-btn btn-scan"   onclick="openScanModal()">📷 바코드 스캔</button>
-      <button class="db-action-btn btn-bulk"   onclick="openBulkDateModal()">📅 날짜 일괄 적용</button>
     </div>
     <input class="db-search" id="db-search" placeholder="이름·성분·효과 검색..." oninput="renderDb()">
     <div id="db-count" style="font-size:11px;color:var(--gray-400);margin-bottom:8px;"></div>
@@ -665,7 +728,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
     <div class="pm-section-title">기본 정보</div>
     <div class="modal-field">
       <label>식물명</label>
-      <input id="pm-name" type="text" placeholder="예: 블루베리, 토마토">
+      <input id="pm-name" type="text" placeholder="예: 블루베리, 토마토" oninput="onPlantNameInput()">
     </div>
     <div style="display:flex;gap:8px;">
       <div class="modal-field" style="width:60px;flex-shrink:0;">
@@ -703,6 +766,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
       <div class="modal-field" style="flex:1;">
         <label>재배기간 총 (일수)</label>
         <input id="pm-tdays" type="number" value="0" min="0" placeholder="0">
+      </div>
+    </div>
+    <!-- 수확기간 조회 (60일 이상 작물) -->
+    <div id="pm-harvest-lookup" style="display:none;margin-top:4px;">
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+        <button type="button" class="harvest-lookup-btn" onclick="lookupHarvestDays()">
+          🔍 수확기간 자동 조회
+        </button>
+        <span style="font-size:10px;color:var(--gray-400);" id="pm-harvest-lookup-hint">
+          작물명 입력 후 조회
+        </span>
+      </div>
+      <!-- 조회 결과 선택 -->
+      <div id="pm-harvest-presets" style="display:none;margin-top:8px;">
+        <div style="font-size:11px;font-weight:600;color:var(--gray-700);margin-bottom:5px;">
+          📋 수확기간 선택 (인터넷 검색 결과)
+        </div>
+        <div id="pm-harvest-preset-list" style="display:flex;flex-wrap:wrap;gap:4px;"></div>
       </div>
     </div>
 
@@ -870,26 +951,76 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 
 <!-- 바코드/QR 스캔 모달 -->
 <div class="modal-bg hidden" id="scan-modal">
-  <div class="modal">
-    <div class="modal-title">📷 바코드·QR 스캔</div>
-    <p style="font-size:12px;color:var(--gray-400);margin-bottom:10px;">
-      농약·비료 포장지의 바코드 또는 QR을 카메라로 스캔하거나 코드를 직접 입력하세요.
-    </p>
+  <div class="modal" style="max-height:92vh;">
+    <div class="modal-title">📷 바코드·QR·OCR 스캔</div>
+
+    <!-- 스캔 모드 탭 -->
+    <div class="scan-mode-tabs">
+      <button class="scan-mode-tab active" id="smt-barcode" onclick="setScanMode('barcode',this)">🔲 바코드·QR</button>
+      <button class="scan-mode-tab" id="smt-ocr" onclick="setScanMode('ocr',this)">📝 OCR 텍스트</button>
+      <button class="scan-mode-tab" id="smt-photo" onclick="setScanMode('photo',this)">🖼 사진 업로드</button>
+    </div>
+
+    <!-- 카메라 뷰 (바코드·OCR 공용) -->
     <div id="scan-video-wrap" style="display:none;">
       <video id="scan-video" autoplay playsinline muted></video>
-      <div class="scan-overlay"><div class="scan-frame"></div></div>
+      <div class="scan-overlay">
+        <div class="scan-frame" id="scan-frame-el"></div>
+      </div>
+      <div class="scan-hint" id="scan-hint">바코드/QR을 사각형 안에 맞춰주세요</div>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
-      <button class="btn-primary" style="flex:1;" onclick="startScan()">📷 카메라 스캔</button>
+
+    <!-- 캡처 캔버스 (숨김) -->
+    <canvas id="scan-canvas" style="display:none;"></canvas>
+
+    <!-- 캡처된 이미지 미리보기 -->
+    <div id="scan-capture-preview" style="display:none;margin:8px 0;">
+      <img id="scan-capture-img" style="width:100%;border-radius:var(--radius-sm);max-height:200px;object-fit:contain;">
+      <div style="font-size:11px;color:var(--gray-400);margin-top:4px;text-align:center;" id="scan-capture-label"></div>
+    </div>
+
+    <!-- 바코드 모드 버튼 -->
+    <div id="scan-barcode-btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="btn-primary" style="flex:1;" onclick="startScan('barcode')">📷 바코드 스캔 시작</button>
       <button class="btn-secondary" style="flex:1;" onclick="stopScan()">⏹ 중지</button>
     </div>
-    <div style="font-size:12px;font-weight:500;color:var(--gray-700);margin-bottom:6px;">또는 코드 직접 입력</div>
-    <div class="scan-input-row">
-      <input type="text" id="scan-code-input" placeholder="바코드 번호 또는 농약 등록번호 입력">
-      <button class="btn-primary" onclick="lookupScanCode()">검색</button>
+
+    <!-- OCR 모드 버튼 -->
+    <div id="scan-ocr-btns" style="display:none;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
+      <button class="btn-primary" style="flex:1;" onclick="startScan('ocr')">📷 촬영 시작</button>
+      <button class="btn-primary" style="flex:1;background:var(--blue-dark);" onclick="captureOcr()">📸 지금 촬영</button>
+      <button class="btn-secondary" style="flex:1;" onclick="stopScan()">⏹ 중지</button>
     </div>
-    <div id="scan-result" style="margin-top:10px;"></div>
-    <div class="modal-btns" style="margin-top:12px;">
+
+    <!-- 사진 업로드 모드 -->
+    <div id="scan-photo-btns" style="display:none;margin-bottom:8px;">
+      <label style="display:block;width:100%;padding:12px;border:2px dashed var(--gray-200);border-radius:var(--radius-sm);text-align:center;cursor:pointer;font-size:13px;color:var(--gray-400);">
+        🖼 포장지 사진을 선택하세요<br>
+        <span style="font-size:11px;">(JPG·PNG·HEIC 지원)</span>
+        <input type="file" id="scan-photo-input" accept="image/*" style="display:none;" onchange="handlePhotoUpload(this)">
+      </label>
+    </div>
+
+    <!-- 코드 직접 입력 -->
+    <div id="scan-code-section" style="margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:500;color:var(--gray-400);margin-bottom:5px;">바코드 번호 또는 농약 등록번호 직접 입력</div>
+      <div class="scan-input-row">
+        <input type="text" id="scan-code-input" placeholder="예: 8801234567890 또는 제2023-0123">
+        <button class="btn-primary" onclick="lookupScanCode()">검색</button>
+      </div>
+    </div>
+
+    <!-- OCR 텍스트 직접 입력/편집 -->
+    <div id="scan-ocr-text-section" style="display:none;margin-bottom:8px;">
+      <div style="font-size:11px;font-weight:500;color:var(--gray-400);margin-bottom:5px;">인식된 텍스트 (수정 후 분석 가능)</div>
+      <textarea id="scan-ocr-textarea" style="width:100%;height:100px;font-size:12px;padding:8px;border:1px solid var(--gray-200);border-radius:var(--radius-sm);resize:vertical;" placeholder="포장지 텍스트를 여기에 직접 붙여넣거나 OCR 결과를 수정하세요..."></textarea>
+      <button class="btn-primary" style="width:100%;margin-top:6px;" onclick="analyzeOcrText()">🔍 텍스트 분석</button>
+    </div>
+
+    <!-- 결과 표시 -->
+    <div id="scan-result" style="margin-top:6px;max-height:260px;overflow-y:auto;"></div>
+
+    <div class="modal-btns" style="margin-top:10px;">
       <button class="btn-secondary" onclick="stopScan();closeModal('scan-modal')">닫기</button>
     </div>
   </div>
@@ -1146,12 +1277,9 @@ function initFirebase(cfg) {
   try {
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
-    db.collection('_ping').limit(1).get()
-      .then(function(){ launchApp(); })
-      .catch(function(e){
-        if (e.code==='permission-denied'||e.code==='unavailable') launchApp();
-        else showSetupError('Firebase 연결 실패: '+e.message);
-      });
+    // ping 제거 → 바로 앱 실행 (첫 로딩 시간 단축)
+    // Firestore 실제 오류는 loadAllData 내에서 각 컬렉션 catch로 처리
+    launchApp();
   } catch(e){ showSetupError('초기화 오류: '+e.message); }
 }
 
@@ -1163,48 +1291,7 @@ function showSetupError(msg) {
 // ══════════════════════════════════════════════════
 // 데이터 로드
 // ══════════════════════════════════════════════════
-async function loadAllData() {
-  var results = await Promise.all([
-    db.collection('plants').orderBy('no').get().catch(function(){ return {docs:[]}; }),
-    db.collection('doneTasks').where('date','==',TODAY_STR).get().catch(function(){ return {docs:[]}; }),
-    db.collection('workLogs').orderBy('date','desc').limit(200).get().catch(function(){ return {docs:[]}; }),
-    db.collection('growRecords').orderBy('date','desc').limit(200).get().catch(function(){ return {docs:[]}; }),
-  ]);
-  var plantsSnap=results[0], doneSnap=results[1], wlSnap=results[2], grSnap=results[3];
-
-  if (plantsSnap.docs.length === 0) {
-    await seedPlants();
-    var s2 = await db.collection('plants').orderBy('no').get().catch(function(){ return {docs:[]}; });
-    APP.plants = s2.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-  } else {
-    APP.plants = plantsSnap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
-  }
-
-  APP.doneTasks = {};
-  doneSnap.docs.forEach(function(d){ APP.doneTasks[d.id]=d.data(); });
-
-  var wlRows = wlSnap.docs.map(function(d){ return Object.assign({id:d.id,_col:'workLogs'},d.data()); });
-  var grRows = grSnap.docs.map(function(d){
-    var x = d.data();
-    return Object.assign({id:d.id, _col:'growRecords',
-      date:      typeof x.date==='string' ? x.date.slice(0,10) : x.date||'',
-      plantName: x.plantName||x.name||'',
-      type:      x.eventType||x.type||'기타',
-      material:  x.material||'',
-      detail:    x.note||x.detail||'',
-      time:      x.time||'',
-    }, x);
-  });
-
-  APP.logs = wlRows.concat(grRows).sort(function(a,b){
-    var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
-    if(da!==db_) return da>db_?-1:1;
-    var ta=a.time||'', tb=b.time||'';
-    return ta>tb?-1:1;
-  });
-  await loadUserDb();
-  setSyncStatus(true);
-}
+// (loadAllData → 위 단계적 로딩으로 대체됨)
 
 async function seedPlants() {
   var batch = db.batch();
@@ -1931,118 +2018,385 @@ async function applyBulkDate() {
 // ══════════════════════════════════════════════════
 // ④ 바코드·QR 스캔
 // ══════════════════════════════════════════════════
-var scanStream = null;
+var scanStream   = null;
 var scanInterval = null;
+var scanMode     = 'barcode';   // 'barcode' | 'ocr'
+var ocrParsed    = null;        // OCR 파싱 결과 임시 보관
 
-function openScanModal() {
+// ── 모드 전환 ─────────────────────────────────────
+function setScanMode(mode, btn) {
+  scanMode = mode;
+  stopScan();
+  document.querySelectorAll('.scan-mode-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+
+  // 섹션 표시/숨김
+  var show = function(id){ document.getElementById(id).style.display=''; };
+  var hide = function(id){ document.getElementById(id).style.display='none'; };
+
+  // 공통 초기화
+  hide('scan-capture-preview');
+  hide('scan-ocr-text-section');
   document.getElementById('scan-result').innerHTML = '';
-  document.getElementById('scan-code-input').value = '';
-  document.getElementById('scan-modal').classList.remove('hidden');
+
+  if (mode === 'barcode') {
+    show('scan-barcode-btns'); hide('scan-ocr-btns'); hide('scan-photo-btns');
+    show('scan-code-section');
+    document.getElementById('scan-frame-el').style.borderRadius = '4px';
+    document.getElementById('scan-hint').textContent = '바코드/QR을 사각형 안에 맞춰주세요';
+  } else if (mode === 'ocr') {
+    hide('scan-barcode-btns'); show('scan-ocr-btns'); hide('scan-photo-btns');
+    hide('scan-code-section');
+    document.getElementById('scan-frame-el').style.borderRadius = '8px';
+    document.getElementById('scan-frame-el').style.width = '90%';
+    document.getElementById('scan-frame-el').style.aspectRatio = '4/3';
+    document.getElementById('scan-hint').textContent = '포장지 전체가 사각형 안에 들어오도록 맞춰주세요';
+  } else { // photo
+    hide('scan-barcode-btns'); hide('scan-ocr-btns'); show('scan-photo-btns');
+    hide('scan-code-section');
+    hide('scan-video-wrap');
+  }
 }
 
-async function startScan() {
+// ── 카메라 시작 ───────────────────────────────────
+async function startScan(mode) {
+  if (mode) scanMode = mode;
   stopScan();
   var wrap  = document.getElementById('scan-video-wrap');
   var video = document.getElementById('scan-video');
   wrap.style.display = '';
+  hide('scan-capture-preview');
+
   try {
     scanStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+      video: { facingMode:'environment', width:{ideal:1920}, height:{ideal:1080} }
     });
     video.srcObject = scanStream;
     await video.play();
 
-    // BarcodeDetector API 지원 여부 확인
-    if ('BarcodeDetector' in window) {
-      var detector = new BarcodeDetector({ formats: ['ean_13','ean_8','qr_code','code_128','code_39','upc_a','upc_e'] });
-      scanInterval = setInterval(async function() {
-        try {
-          var barcodes = await detector.detect(video);
-          if (barcodes.length > 0) {
-            var code = barcodes[0].rawValue;
-            stopScan();
-            document.getElementById('scan-code-input').value = code;
-            lookupScanCode();
-          }
-        } catch(e) {}
-      }, 500);
-    } else {
-      // BarcodeDetector 미지원 — 수동 입력 안내
-      document.getElementById('scan-result').innerHTML =
-        '<div style="background:var(--amber-light);border-radius:var(--radius-sm);padding:10px;font-size:12px;color:var(--orange);">'
-        +'⚠️ 이 브라우저는 자동 바코드 감지를 지원하지 않습니다.<br>'
-        +'카메라로 바코드를 확인 후 하단 입력란에 번호를 직접 입력하세요.</div>';
+    if (scanMode === 'barcode') {
+      // BarcodeDetector API
+      if ('BarcodeDetector' in window) {
+        var detector = new BarcodeDetector({
+          formats:['ean_13','ean_8','qr_code','code_128','code_39','upc_a','upc_e','data_matrix']
+        });
+        scanInterval = setInterval(async function() {
+          try {
+            var barcodes = await detector.detect(video);
+            if (barcodes.length > 0) {
+              var code = barcodes[0].rawValue;
+              stopScan();
+              document.getElementById('scan-code-input').value = code;
+              showToast('✅ 코드 감지: '+code);
+              lookupScanCode();
+            }
+          } catch(e) {}
+        }, 400);
+      } else {
+        setResult('<div class="ocr-loading" style="background:var(--amber-light);border-radius:6px;color:var(--orange);">'
+          +'⚠️ 이 브라우저는 자동 바코드 감지를 지원하지 않습니다.<br>'
+          +'바코드 번호를 하단에 직접 입력하거나 OCR 모드를 사용하세요.</div>');
+      }
     }
+    // OCR 모드는 captureOcr() 버튼으로 수동 촬영
   } catch(e) {
-    document.getElementById('scan-result').innerHTML =
-      '<div style="color:var(--red-dark);font-size:12px;">📷 카메라 접근 오류: '+esc(e.message)+'<br>브라우저 설정에서 카메라 권한을 허용해주세요.</div>';
+    setResult('<div style="color:var(--red-dark);font-size:12px;">📷 카메라 접근 오류: '+esc(e.message)+'<br>설정에서 카메라 권한을 허용해주세요.</div>');
+    wrap.style.display = 'none';
   }
 }
 
+// ── 카메라 중지 ───────────────────────────────────
 function stopScan() {
   if (scanInterval) { clearInterval(scanInterval); scanInterval=null; }
-  if (scanStream) { scanStream.getTracks().forEach(function(t){ t.stop(); }); scanStream=null; }
+  if (scanStream)   { scanStream.getTracks().forEach(function(t){ t.stop(); }); scanStream=null; }
   document.getElementById('scan-video-wrap').style.display = 'none';
 }
 
-async function lookupScanCode() {
-  var code = document.getElementById('scan-code-input').value.trim();
-  if (!code) { showToast('코드를 입력하세요'); return; }
+// ── OCR 촬영 ─────────────────────────────────────
+function captureOcr() {
+  var video  = document.getElementById('scan-video');
+  var canvas = document.getElementById('scan-canvas');
+  if (!video.srcObject) { showToast('먼저 카메라를 시작하세요'); return; }
 
-  var result = document.getElementById('scan-result');
-  result.innerHTML = '<div style="font-size:12px;color:var(--gray-400);">🔍 검색 중...</div>';
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
 
-  // 1. 기존 DB에서 먼저 검색
-  var found = null;
-  var allItems = getMergedDb('pest').concat(getMergedDb('fert')).concat(getMergedDb('micro'));
-  found = allItems.find(function(x){ return x.barcode===code || x.regNo===code; });
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+  stopScan();
+  showCapturedImage(dataUrl, '촬영된 포장지');
+  runOcrOnImage(dataUrl);
+}
 
-  if (found) {
-    result.innerHTML = '<div class="scan-result-box">'
-      +'<div style="font-size:13px;font-weight:600;color:var(--green-dark);">✅ DB에서 찾았습니다!</div>'
-      +'<div style="font-size:12px;margin-top:4px;">'+esc(found.name)+' — '+esc(found.type||'')+'</div>'
-      +'</div>';
-    return;
+// ── 사진 업로드 처리 ─────────────────────────────
+function handlePhotoUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  var file   = input.files[0];
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    var dataUrl = e.target.result;
+    showCapturedImage(dataUrl, '업로드된 사진: '+file.name);
+    runOcrOnImage(dataUrl);
+  };
+  reader.readAsDataURL(file);
+  input.value = '';
+}
+
+// ── 촬영 이미지 미리보기 표시 ────────────────────
+function showCapturedImage(dataUrl, label) {
+  var preview = document.getElementById('scan-capture-preview');
+  document.getElementById('scan-capture-img').src = dataUrl;
+  document.getElementById('scan-capture-label').textContent = label;
+  preview.style.display = '';
+  // 재촬영 버튼 추가
+  var existing = preview.querySelector('.scan-retake-btn');
+  if (!existing) {
+    var btn = document.createElement('button');
+    btn.className = 'scan-retake-btn';
+    btn.textContent = '🔄 다시 촬영';
+    btn.onclick = function(){
+      preview.style.display = 'none';
+      document.getElementById('scan-result').innerHTML = '';
+      document.getElementById('scan-ocr-text-section').style.display = 'none';
+      if (scanMode==='ocr') startScan('ocr');
+    };
+    preview.style.position = 'relative';
+    preview.appendChild(btn);
+  }
+}
+
+// ── Claude Vision API로 OCR + 정보 추출 ──────────
+async function runOcrOnImage(dataUrl) {
+  setResult('<div class="ocr-loading"><div class="ocr-spinner"></div>포장지에서 텍스트 인식 중...</div>');
+
+  // base64 추출 (data:image/jpeg;base64,... 에서 , 이후)
+  var base64 = dataUrl.split(',')[1];
+  var mType  = dataUrl.split(';')[0].split(':')[1] || 'image/jpeg';
+
+  var prompt = '이 이미지는 한국 농업 자재(농약·비료·영양제·미생물균)의 포장지입니다.\n'
+    + '이미지에서 다음 정보를 추출하여 JSON으로 반환해주세요.\n'
+    + '텍스트가 보이지 않으면 null 값을 사용하세요.\n\n'
+    + '{\n'
+    + '  "name": "제품명",\n'
+    + '  "tab": "pest(농약)/fert(비료·퇴비·영양제)/micro(미생물균) 중 하나",\n'
+    + '  "type": "세부분류 예: 살충제, 복합비료, 고초균",\n'
+    + '  "regNo": "등록번호 (농약 등록번호 등)",\n'
+    + '  "ingredient": "주성분·함량",\n'
+    + '  "target": "방제대상 또는 주요효과",\n'
+    + '  "method": "사용방법·희석배수",\n'
+    + '  "amount": "사용량",\n'
+    + '  "timing": "사용시기",\n'
+    + '  "warning": "주의사항·안전정보",\n'
+    + '  "manufacturer": "제조사",\n'
+    + '  "barcode": "바코드번호 (보이는 경우)",\n'
+    + '  "raw_text": "이미지에서 읽힌 전체 텍스트 (줄바꿈 포함)",\n'
+    + '  "confidence": "high/medium/low (인식 신뢰도)"\n'
+    + '}';
+
+  try {
+    var resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6', max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mType, data: base64 } },
+            { type: 'text', text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if (!resp.ok) {
+      var errData = await resp.json().catch(function(){ return {}; });
+      throw new Error(errData.error ? errData.error.message : 'API 오류 '+resp.status);
+    }
+
+    var data = await resp.json();
+    var text = (data.content||[]).map(function(b){ return b.text||''; }).join('');
+    var clean = text.replace(/```json|```/g,'').trim();
+    var parsed = JSON.parse(clean);
+
+    ocrParsed = parsed;
+    renderOcrResult(parsed);
+
+    // OCR 텍스트 편집 섹션도 표시
+    if (parsed.raw_text) {
+      document.getElementById('scan-ocr-textarea').value = parsed.raw_text;
+      document.getElementById('scan-ocr-text-section').style.display = '';
+    }
+
+    // 바코드가 인식됐으면 자동으로 DB 검색도 시도
+    if (parsed.barcode) {
+      document.getElementById('scan-code-input').value = parsed.barcode;
+    }
+
+  } catch(e) {
+    setResult('<div style="color:var(--red-dark);font-size:12px;padding:10px;">OCR 오류: '+esc(e.message)+'<br>'
+      +'<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 텍스트 직접 입력</button></div>');
+  }
+}
+
+// ── OCR 결과 카드 렌더링 ─────────────────────────
+function renderOcrResult(p) {
+  if (!p) return;
+  var conf    = p.confidence||'low';
+  var confCls = conf==='high'?'background:#C8E6C9;color:#1B5E20;':conf==='medium'?'background:#FFF9C4;color:#E65100;':'background:#FFCDD2;color:#B71C1C;';
+
+  window._scanResult = p;  // 저장용 전역 변수
+
+  var html2 = '<div class="ocr-result-card">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    + '<div style="font-size:13px;font-weight:600;color:var(--green-dark);">📝 OCR 인식 결과</div>'
+    + '<span class="ocr-confidence" style="'+confCls+'">신뢰도: '+conf+'</span>'
+    + '</div>';
+
+  // 편집 가능한 폼
+  html2 += '<div class="ocr-field-row">'
+    + ocrField('제품명 *',    'ocr-f-name',       p.name||'',       'input',  '제품명 입력')
+    + ocrField('분류 탭',     'ocr-f-tab',        p.tab||'pest',    'select-tab', '')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('세부분류',    'ocr-f-type',       p.type||'',       'input',  '예: 살충제, 복합비료')
+    + ocrField('등록번호',    'ocr-f-regno',      p.regNo||p.barcode||'', 'input', '')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('성분·함량',   'ocr-f-ingredient', p.ingredient||'', 'input',  '예: 이미다클로프리드 8%')
+    + ocrField('제조사',      'ocr-f-mfr',        p.manufacturer||'','input', '')
+    + '</div>'
+    + '<div class="ocr-field-row">'
+    + ocrFieldFull('방제대상·효과', 'ocr-f-target', p.target||'',   '예: 진딧물, 나방류 유충...')
+    + '</div><div class="ocr-field-row">'
+    + ocrFieldFull('사용방법',      'ocr-f-method', p.method||'',   '예: 2,000배 경엽살포')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('사용량',      'ocr-f-amount',  p.amount||'',  'input', '예: 20kg/10a')
+    + ocrField('사용시기',    'ocr-f-timing',  p.timing||'',  'input', '예: 생육기 전반')
+    + '</div>'
+    + '<div class="ocr-field-row">'
+    + ocrFieldFull('주의사항', 'ocr-f-warning', p.warning||'', '주의사항·안전정보')
+    + '</div>';
+
+  // 원문 텍스트 토글
+  if (p.raw_text) {
+    html2 += '<span class="ocr-raw-toggle" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display?\'\':(this.nextElementSibling.style.display=\'block\',\'\')">▶ 원문 텍스트 보기</span>'
+      + '<div class="ocr-raw-box">'+esc(p.raw_text)+'</div>';
   }
 
-  // 2. Claude AI로 코드 기반 제품 정보 추론
-  try {
-    var prompt = '바코드/등록번호 "'+code+'"에 해당하는 한국 농업 자재(농약·비료·영양제)를 아는 경우 JSON으로 알려주세요.\n'
-      +'모르면 {"found":false}를 반환하세요.\n'
-      +'{"found":true,"name":"제품명","type":"농약종류또는비료종류","ingredient":"성분","target":"방제대상또는효과","method":"사용법","tab":"pest또는fert또는micro"}';
+  html2 += '<div style="display:flex;gap:6px;margin-top:12px;">'
+    + '<button class="btn-primary" style="flex:2;" onclick="saveOcrResult()">✅ DB에 등록</button>'
+    + '<button class="btn-secondary" style="flex:1;" onclick="retakeOcr()">🔄 재촬영</button>'
+    + '</div></div>';
 
+  setResult(html2);
+}
+
+function ocrField(label, id, val, type, ph) {
+  var inner = type==='select-tab'
+    ? '<select id="'+id+'"><option value="pest"'+(val==='pest'?' selected':'')+'>농약</option><option value="fert"'+(val==='fert'?' selected':'')+'>비료·퇴비·영양제</option><option value="micro"'+(val==='micro'?' selected':'')+'>미생물균</option></select>'
+    : '<input id="'+id+'" type="text" value="'+esc(val)+'" placeholder="'+esc(ph)+'">';
+  return '<div class="ocr-field-item"><label>'+label+'</label>'+inner+'</div>';
+}
+function ocrFieldFull(label, id, val, ph) {
+  return '<div class="ocr-field-item" style="flex:100%;min-width:100%;"><label>'+label+'</label>'
+    + '<textarea id="'+id+'" placeholder="'+esc(ph)+'">'+esc(val)+'</textarea></div>';
+}
+
+// ── OCR 결과 저장 ─────────────────────────────────
+async function saveOcrResult() {
+  var name = (document.getElementById('ocr-f-name')||{}).value||'';
+  if (!name.trim()) { showToast('제품명을 입력하세요'); return; }
+
+  var tab = (document.getElementById('ocr-f-tab')||{}).value||'pest';
+  var data = {
+    name:        name.trim(),
+    tab:         tab,
+    type:        getV('ocr-f-type'),
+    regNo:       getV('ocr-f-regno'),
+    ingredient:  getV('ocr-f-ingredient'),
+    target:      getV('ocr-f-target'),
+    method:      getV('ocr-f-method'),
+    amount:      getV('ocr-f-amount'),
+    timing:      getV('ocr-f-timing'),
+    warning:     getV('ocr-f-warning'),
+    manufacturer:getV('ocr-f-mfr'),
+    barcode:     document.getElementById('scan-code-input').value.trim(),
+    ocrScanned:  true,
+    createdAt:   new Date().toISOString(),
+  };
+
+  var ref = await db.collection('userDb_'+tab).add(data).catch(function(e){ showToast('저장 오류: '+e.message); return null; });
+  if (ref) {
+    data.id = ref.id;
+    if (!USER_DB[tab]) USER_DB[tab]=[];
+    USER_DB[tab].push(data);
+    showToast('✅ '+name+' DB에 등록 완료');
+    closeModal('scan-modal');
+    APP.dbTab = tab; renderDb();
+  }
+}
+
+function getV(id) { var el=document.getElementById(id); return el?(el.value||el.textContent||'').trim():''; }
+
+// ── 텍스트 직접 분석 ─────────────────────────────
+async function analyzeOcrText() {
+  var text = document.getElementById('scan-ocr-textarea').value.trim();
+  if (!text) { showToast('텍스트를 입력하세요'); return; }
+
+  setResult('<div class="ocr-loading"><div class="ocr-spinner"></div>텍스트 분석 중...</div>');
+
+  var prompt = '다음은 한국 농업 자재 포장지에서 OCR로 읽은 텍스트입니다.\n'
+    + '이 텍스트에서 제품 정보를 추출하여 JSON으로 반환해주세요.\n\n'
+    + '텍스트:\n'+text+'\n\n'
+    + '{"name":"제품명","tab":"pest/fert/micro","type":"세부분류","regNo":"등록번호",'
+    + '"ingredient":"성분","target":"방제대상 또는 효과","method":"사용방법",'
+    + '"amount":"사용량","timing":"사용시기","warning":"주의사항","manufacturer":"제조사","confidence":"high/medium/low"}';
+
+  try {
     var resp = await fetch('https://api.anthropic.com/v1/messages', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:300,
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:800,
         messages:[{role:'user',content:prompt}] })
     });
     var data = await resp.json();
-    var text = (data.content||[]).map(function(b){ return b.text||''; }).join('');
-    var info = JSON.parse(text.replace(/```json|```/g,'').trim());
-
-    if (info.found) {
-      // 결과를 전역 변수에 임시 보관 (onclick에 JSON 직접 넣지 않음)
-      window._scanResult = info;
-      result.innerHTML = '<div class="scan-result-box">'
-        +'<div style="font-size:13px;font-weight:600;color:var(--green-dark);">🔍 AI 검색 결과</div>'
-        +'<div style="font-size:12px;margin-top:6px;line-height:1.7;">'
-        +'<b>제품명:</b> '+esc(info.name||'')+'<br>'
-        +'<b>분류:</b> '+esc(info.type||'')+'<br>'
-        +'<b>성분:</b> '+esc(info.ingredient||'')+'<br>'
-        +'<b>방제/효과:</b> '+esc(info.target||'')+'<br>'
-        +'<b>사용법:</b> '+esc(info.method||'')+'</div>'
-        +'<button class="btn-primary" style="width:100%;margin-top:10px;font-size:13px;" onclick="addScannedItem()">+ DB에 등록</button>'
-        +'</div>';
-    } else {
-      result.innerHTML = '<div style="font-size:12px;color:var(--gray-400);padding:10px;">'
-        +'코드 '+esc(code)+'에 해당하는 제품을 찾지 못했습니다.<br>'
-        +'직접 등록 버튼으로 수동 입력하세요.</div>'
-        +'<button class="btn-secondary" style="width:100%;margin-top:8px;" onclick="openDbAdd()">+ 직접 등록</button>';
-    }
+    var raw  = (data.content||[]).map(function(b){ return b.text||''; }).join('');
+    var parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    parsed.raw_text = text;
+    ocrParsed = parsed;
+    renderOcrResult(parsed);
   } catch(e) {
-    result.innerHTML = '<div style="font-size:12px;color:var(--red-dark);">검색 오류: '+esc(e.message)+'</div>';
+    setResult('<div style="color:var(--red-dark);font-size:12px;">분석 오류: '+esc(e.message)+'</div>');
   }
+}
+
+// ── OCR 모달에서 재촬영 ───────────────────────────
+function retakeOcr() {
+  document.getElementById('scan-capture-preview').style.display = 'none';
+  document.getElementById('scan-result').innerHTML = '';
+  document.getElementById('scan-ocr-text-section').style.display = 'none';
+  startScan('ocr');
+}
+
+function showOcrTextInput() {
+  document.getElementById('scan-ocr-text-section').style.display = '';
+  document.getElementById('scan-ocr-textarea').value = '';
+  document.getElementById('scan-ocr-textarea').focus();
+}
+
+function setResult(html2) { document.getElementById('scan-result').innerHTML = html2; }
+function hide(id) { var e=document.getElementById(id); if(e) e.style.display='none'; }
+function show2(id) { var e=document.getElementById(id); if(e) e.style.display=''; }
+
+// ── 모달 열기 (초기화) ────────────────────────────
+function openScanModal() {
+  stopScan();
+  document.getElementById('scan-result').innerHTML = '';
+  document.getElementById('scan-code-input').value = '';
+  document.getElementById('scan-capture-preview').style.display = 'none';
+  document.getElementById('scan-ocr-text-section').style.display = 'none';
+  document.getElementById('scan-ocr-textarea').value = '';
+  // 바코드 모드로 초기화
+  setScanMode('barcode', document.getElementById('smt-barcode'));
+  document.getElementById('scan-modal').classList.remove('hidden');
 }
 
 async function addScannedItem() {
@@ -2473,6 +2827,7 @@ function openAddPlant(){
   ['pm-poll-date','pm-last-spray','pm-last-spray-name','pm-last-fert','pm-last-fert-name'].forEach(function(id){ document.getElementById(id).value=''; });
   document.getElementById('pm-edit-id').value='';
   document.getElementById('pm-delete-btn').style.display='none';
+  resetHarvestLookup();
   document.getElementById('plant-modal').classList.remove('hidden');
 }
 function openEditPlant(el){
@@ -2496,6 +2851,7 @@ function openEditPlant(el){
   document.getElementById('pm-note').value=p.note||'';
   document.getElementById('pm-edit-id').value=id;
   document.getElementById('pm-delete-btn').style.display='block';
+  resetHarvestLookup();
   document.getElementById('plant-modal').classList.remove('hidden');
 }
 async function savePlant(){
@@ -2746,7 +3102,216 @@ async function launchApp(){
   document.getElementById('loading').classList.add('hidden');
   var days=['일','월','화','수','목','금','토'];
   document.getElementById('topbar-date').textContent=TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일 ('+days[TODAY.getDay()]+')';
-  await loadAllData(); renderAll(); setupSync();
+  await loadAllData();  // 내부에서 단계적 renderToday+renderPlants → renderLogs+renderDb
+  setupSync();
+}
+
+// ══════════════════════════════════════════════════
+// Fix 2: 수확기간 자동 조회
+// ══════════════════════════════════════════════════
+
+// 로컬 수확기간 DB (60일 이상 주요 작물)
+var HARVEST_DB = {
+  // 과채류
+  '수박':    [{days:80,  label:'소형 수박 (씨없는)'},{days:90,  label:'일반 수박'},{days:100, label:'대형 수박'}],
+  '참외':    [{days:55,  label:'조생종'},{days:65,  label:'일반'},{days:75,  label:'만생종'}],
+  '멜론':    [{days:80,  label:'얼스 멜론'},{days:90,  label:'네트멜론'},{days:100, label:'만생종'}],
+  '호박':    [{days:45,  label:'애호박·주키니'},{days:90,  label:'단호박'},{days:120, label:'늙은호박'}],
+  '토마토':  [{days:70,  label:'방울토마토'},{days:80,  label:'일반 토마토'},{days:90,  label:'대형 토마토'}],
+  '고추':    [{days:75,  label:'풋고추'},{days:90,  label:'홍고추 (건고추 120일)'}],
+  '가지':    [{days:65,  label:'가지'}],
+  '오이':    [{days:45,  label:'오이'}],
+  '파프리카':[{days:80,  label:'파프리카'}],
+  // 두류·곡류
+  '콩':      [{days:100, label:'조생종'},{days:120, label:'중생종'},{days:140, label:'만생종'}],
+  '팥':      [{days:100, label:'조생종'},{days:120, label:'일반'}],
+  '옥수수':  [{days:75,  label:'초당 옥수수'},{days:85,  label:'일반 찰옥수수'}],
+  '땅콩':    [{days:120, label:'조생종'},{days:150, label:'일반'}],
+  '동부콩':  [{days:70,  label:'동부콩'}],
+  '작두콩':  [{days:90,  label:'작두콩'}],
+  // 서류
+  '고구마':  [{days:100, label:'조생종'},{days:120, label:'일반'},{days:140, label:'만생종'}],
+  '감자':    [{days:70,  label:'조생종'},{days:90,  label:'일반'},{days:110, label:'만생종'}],
+  '생강':    [{days:150, label:'생강'}],
+  // 유실수 (정식 후 첫 수확까지)
+  '사과':    [{days:150, label:'조생종 (홍로)'},{days:170, label:'중생종 (후지)'},{days:200, label:'만생종'}],
+  '배':      [{days:140, label:'조생종'},{days:160, label:'신고배'},{days:180, label:'만생종'}],
+  '포도':    [{days:90,  label:'캠벨 (색택기 30일)'},{days:110, label:'거봉'},{days:130, label:'샤인머스켓'}],
+  '복숭아':  [{days:75,  label:'조생종'},{days:100, label:'중생종'},{days:130, label:'만생종'}],
+  '자두':    [{days:80,  label:'조생종'},{days:100, label:'중생종'}],
+  '블루베리':[{days:70,  label:'하이부시 조생'},{days:90,  label:'하이부시 중생'},{days:110, label:'래빗아이'}],
+  '살구':    [{days:80,  label:'살구'}],
+  '매실':    [{days:70,  label:'청매실'},{days:90,  label:'황매실'}],
+  '감':      [{days:150, label:'단감 조생'},{days:180, label:'단감 일반'},{days:210, label:'홍시·곶감용'}],
+  '키위':    [{days:150, label:'키위 (헤이워드)'}],
+  '무화과':  [{days:90,  label:'여름 무화과'},{days:180, label:'가을 무화과'}],
+  '대추':    [{days:120, label:'대추'}],
+  '모과':    [{days:150, label:'모과'}],
+  '다래':    [{days:120, label:'다래'}],
+  '블랙베리':[{days:60,  label:'블랙베리'}],
+  '머루포도':[{days:110, label:'머루포도'}],
+  // 엽채·근채
+  '배추':    [{days:60,  label:'봄배추'},{days:70,  label:'가을배추'}],
+  '무':      [{days:60,  label:'봄·여름무'},{days:70,  label:'가을무'}],
+  '양파':    [{days:150, label:'조생종'},{days:180, label:'중만생종'}],
+  '마늘':    [{days:180, label:'한지형 마늘'},{days:210, label:'난지형 마늘'}],
+  '대파':    [{days:90,  label:'여름 대파'},{days:120, label:'겨울 대파'}],
+};
+
+// 60일 이상인지 확인해 조회 버튼 표시
+function onPlantNameInput() {
+  var name = (document.getElementById('pm-name').value||'').trim();
+  var lookupDiv = document.getElementById('pm-harvest-lookup');
+  var hint = document.getElementById('pm-harvest-lookup-hint');
+  if (!name) { lookupDiv.style.display='none'; return; }
+  // 로컬 DB에 있으면 바로 표시
+  var localKey = findHarvestKey(name);
+  if (localKey) {
+    lookupDiv.style.display = '';
+    hint.textContent = localKey+' 데이터 있음 — 조회 클릭';
+  } else {
+    lookupDiv.style.display = '';
+    hint.textContent = name+' — 인터넷 조회';
+  }
+  // 프리셋 숨김 초기화
+  document.getElementById('pm-harvest-presets').style.display = 'none';
+}
+
+function findHarvestKey(name) {
+  var keys = Object.keys(HARVEST_DB);
+  return keys.find(function(k){ return name.includes(k)||k.includes(name); }) || null;
+}
+
+async function lookupHarvestDays() {
+  var name = (document.getElementById('pm-name').value||'').trim();
+  if (!name) { showToast('식물명을 먼저 입력하세요'); return; }
+
+  var btn = document.querySelector('.harvest-lookup-btn');
+  btn.textContent = '🔍 조회 중...'; btn.classList.add('loading');
+
+  var presets = [];
+
+  // 1. 로컬 DB 우선 확인
+  var localKey = findHarvestKey(name);
+  if (localKey) {
+    presets = HARVEST_DB[localKey].map(function(p){ return Object.assign({source:'로컬DB'}, p); });
+  }
+
+  // 2. AI 보완 조회 (로컬에 없거나 보완 필요)
+  if (presets.length === 0) {
+    try {
+      var prompt = '한국 농업에서 "'+name+'"의 파종·정식 후 수확까지 걸리는 일수를 품종별로 알려주세요.\n'
+        + '60일 미만은 제외하고, 대표 3~5개 품종·유형을 JSON 배열로만 반환하세요:\n'
+        + '[{"days":80,"label":"품종명 또는 유형 설명"},...]';
+      var resp = await fetch('https://api.anthropic.com/v1/messages', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ model:'claude-sonnet-4-6', max_tokens:300,
+          messages:[{role:'user',content:prompt}] })
+      });
+      var data = await resp.json();
+      var text = (data.content||[]).map(function(b){ return b.text||''; }).join('');
+      var parsed = JSON.parse(text.replace(/```json|```/g,'').trim());
+      if (Array.isArray(parsed)) {
+        presets = parsed.map(function(p){ return Object.assign({source:'AI 검색'}, p); });
+      }
+    } catch(e) { console.warn('harvest lookup error', e); }
+  }
+
+  btn.textContent = '🔍 수확기간 자동 조회'; btn.classList.remove('loading');
+
+  if (presets.length === 0) {
+    showToast(name+' 수확기간 정보를 찾지 못했습니다. 직접 입력해 주세요.');
+    return;
+  }
+  renderHarvestPresets(presets);
+}
+
+function renderHarvestPresets(presets) {
+  var container = document.getElementById('pm-harvest-preset-list');
+  var section   = document.getElementById('pm-harvest-presets');
+  container.innerHTML = presets.map(function(p, i){
+    return '<div class="harvest-preset-chip" data-days="'+p.days+'" data-total="'+(p.totalDays||p.days)+'" onclick="selectHarvestPreset(this)">'
+      + '<span class="hpc-days">'+p.days+'일</span>'
+      + '<span class="hpc-label">'+esc(p.label)+'</span>'
+      + (p.source==='AI 검색' ? '<span style="font-size:9px;color:var(--blue-dark);">AI</span>' : '')
+      + '</div>';
+  }).join('');
+  section.style.display = '';
+}
+
+function selectHarvestPreset(chip) {
+  document.querySelectorAll('.harvest-preset-chip').forEach(function(c){ c.classList.remove('selected'); });
+  chip.classList.add('selected');
+  var days  = parseInt(chip.getAttribute('data-days'))||0;
+  var total = parseInt(chip.getAttribute('data-total'))||days;
+  document.getElementById('pm-fdays').value = days;
+  if (!document.getElementById('pm-tdays').value || document.getElementById('pm-tdays').value==='0') {
+    document.getElementById('pm-tdays').value = total;
+  }
+  showToast('✅ 수확까지 '+days+'일 적용');
+}
+
+function resetHarvestLookup() {
+  var lup = document.getElementById('pm-harvest-lookup');
+  var pre = document.getElementById('pm-harvest-presets');
+  if (lup) lup.style.display='none';
+  if (pre) pre.style.display='none';
+}
+
+// ══════════════════════════════════════════════════
+// Fix 3: 빠른 초기 로딩 — 단계적 렌더링
+// ══════════════════════════════════════════════════
+// loadAllData를 plants 우선 → 나머지 비동기로 처리
+async function loadAllData() {
+  // ── 1단계: plants + doneTasks 먼저 (핵심 데이터) ──
+  var plantsPromise = db.collection('plants').orderBy('no').get()
+    .catch(function(){ return {docs:[]}; });
+  var donePromise = db.collection('doneTasks')
+    .where('date','==',TODAY_STR).get().catch(function(){ return {docs:[]}; });
+
+  var plantsSnap = await plantsPromise;
+  var doneSnap   = await donePromise;
+
+  if (plantsSnap.docs.length === 0) {
+    await seedPlants();
+    plantsSnap = await db.collection('plants').orderBy('no').get()
+      .catch(function(){ return {docs:[]}; });
+  }
+  APP.plants = plantsSnap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+  APP.doneTasks = {};
+  doneSnap.docs.forEach(function(d){ APP.doneTasks[d.id]=d.data(); });
+
+  // ── 1단계 완료: 오늘 할 일 + 식물 즉시 렌더링 ──────
+  renderToday(); renderPlants();
+  setSyncStatus(true);
+
+  // ── 2단계: 기록 + userDB 병렬 로드 ────────────────
+  var results2 = await Promise.all([
+    db.collection('workLogs').orderBy('date','desc').limit(100)
+      .get().catch(function(){ return {docs:[]}; }),
+    db.collection('growRecords').orderBy('date','desc').limit(100)
+      .get().catch(function(){ return {docs:[]}; }),
+    loadUserDb(),
+  ]);
+  var wlSnap = results2[0], grSnap = results2[1];
+
+  var wlRows = wlSnap.docs.map(function(d){ return Object.assign({id:d.id,_col:'workLogs'},d.data()); });
+  var grRows = grSnap.docs.map(function(d){
+    var x=d.data();
+    return Object.assign({id:d.id, _col:'growRecords',
+      date: typeof x.date==='string'?x.date.slice(0,10):x.date||'',
+      plantName:x.plantName||x.name||'', type:x.eventType||x.type||'기타',
+      material:x.material||'', detail:x.note||x.detail||'', time:x.time||'',
+    }, x);
+  });
+  APP.logs = wlRows.concat(grRows).sort(function(a,b){
+    var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+    if(da!==db_) return da>db_?-1:1;
+    return (a.time||'')>(b.time||'')?-1:1;
+  });
+
+  // ── 2단계 완료: 기록 + DB 패널 갱신 ───────────────
+  renderLogs(); renderDb();
 }
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
