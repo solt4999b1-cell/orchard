@@ -1775,19 +1775,48 @@ function calcTodayTasks() {
 
 function parseInterval(s) {
   if (!s) return 0;
-  if (s.includes('연')||s.includes('2~3년')) return 365;
-  if (s.includes('주')) { var m=s.match(/(\d+)/); return m?parseInt(m[1])*7:0; }
-  var m2=s.match(/(\d+)/); return m2?parseInt(m2[1]):0;
+  // 연 단위 → 365일로 고정 (연 1회, 2~3년 1회 등)
+  if (s.includes('연') || s.includes('년')) return 365;
+  // "N주" → N×7일
+  if (s.includes('주')) { var mw=s.match(/(\d+)/); return mw ? parseInt(mw[1])*7 : 0; }
+  // "N~M일 간격" → 작은 숫자 사용
+  var rangeM = s.match(/(\d+)~(\d+)일/);
+  if (rangeM) return parseInt(rangeM[1]);
+  // "N일 간격" / "N일마다"
+  var dayM = s.match(/(\d+)일/);
+  if (dayM) return parseInt(dayM[1]);
+  // "식재전", "정식전", "파종전" → 시즌 1회 (90일)
+  if (s.includes('식재전') || s.includes('정식전') || s.includes('파종전')) return 90;
+  // "개화전" → 봄 1회 (90일)
+  if (s.includes('개화전') || s.includes('개화기')) return 90;
+  // "착색기 N회", "웃거름 N회" 등 — 횟수만 있는 경우 → 30일 간격으로 처리
+  if (s.includes('회') && !s.match(/\d+일/)) return 30;
+  // 숫자만 있으면 그대로 (최소 7일 보정)
+  var nm = s.match(/(\d+)/);
+  if (nm) {
+    var val = parseInt(nm[1]);
+    return val < 3 ? 30 : val;  // 1~2는 횟수이므로 30일로 보정
+  }
+  return 0;
 }
 function isInSeason(iv, date) {
-  var m=date.getMonth()+1;
-  if (iv.includes('연')||iv.includes('년')) return m>=3&&m<=5;
-  if (iv.includes('착색')) return m>=7&&m<=9;
-  if (iv.includes('개화')) return m>=3&&m<=5;
-  if (iv.includes('파종')) return m>=4&&m<=6;
-  if (iv.includes('밑거름')) return m>=3&&m<=5;
-  if (iv.includes('웃거름')) return m>=5&&m<=9;
-  return m>=4&&m<=10;
+  var m = date.getMonth() + 1;  // 1~12
+  // 연 1회 / N년 1회 → 봄 한 번 (3~5월)
+  if (iv.includes('연') || iv.includes('년')) return m>=3 && m<=5;
+  // 착색기 → 7~9월
+  if (iv.includes('착색')) return m>=7 && m<=9;
+  // 개화전·개화기 → 3~5월
+  if (iv.includes('개화')) return m>=3 && m<=5;
+  // 식재전·파종전·정식전 → 4~6월 (봄 정식 시기)
+  if (iv.includes('식재전') || iv.includes('파종전') || iv.includes('정식전')) return m>=4 && m<=6;
+  // 밑거름 → 3~5월
+  if (iv.includes('밑거름')) return m>=3 && m<=5;
+  // 웃거름 → 5~9월
+  if (iv.includes('웃거름')) return m>=5 && m<=9;
+  // "N~M일 간격" 또는 "N일 간격" → 일반 생육기 4~10월
+  if (iv.match(/\d+[~-]?\d*일/)) return m>=4 && m<=10;
+  // 기본: 생육기 4~10월
+  return m>=4 && m<=10;
 }
 
 function calcWeekTasks() {
@@ -4099,7 +4128,10 @@ async function loadAllData() {
   doneSnap.docs.forEach(function(d){ APP.doneTasks[d.id]=d.data(); });
 
   // ── 1단계 완료: 오늘 할 일 + 식물 즉시 렌더링 ──────
-  renderToday(); renderPlants();
+  // APP.plants가 채워진 후 렌더링 (비어있으면 스킵)
+  if (APP.plants.length > 0) {
+    renderToday(); renderPlants();
+  }
   setSyncStatus(true);
 
   // ── 2단계: 기록 + userDB 병렬 로드 ────────────────
@@ -4127,8 +4159,8 @@ async function loadAllData() {
     return (a.time||'')>(b.time||'')?-1:1;
   });
 
-  // ── 2단계 완료: 기록 + DB 패널 갱신 ───────────────
-  renderLogs(); renderDb();
+  // ── 2단계 완료: 전체 재렌더 (기록 반영해서 오늘 할 일 재계산) ──
+  renderToday(); renderPlants(); renderLogs(); renderDb();
 }
 
 // ══════════════════════════════════════════════════
