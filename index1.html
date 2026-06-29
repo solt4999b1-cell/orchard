@@ -2873,380 +2873,319 @@ function showCapturedImage(dataUrl, label) {
 // ── 농약병 특화 OCR 강화 엔진 ─────────────────────
 // 옵션: 이미지 선명화 / 4방향 회전 / 영역 분할 / 고해상도
 async function runOcrOnImage(dataUrl) {
-  var optEnhance = getOpt('opt-enhance');
-  var optRotate  = getOpt('opt-rotate');
-  var optRegion  = getOpt('opt-region');
-  var optScale   = getOpt('opt-scale');
-
-  // 단계 목록 표시
-  var steps = [];
-  if (optEnhance) steps.push('이미지 전처리 (대비·선명화·이진화)');
-  steps.push('기본 OCR (0°)');
-  if (optRotate)  steps.push('회전 인식 (90° / 180° / 270°)');
-  if (optRegion)  steps.push('영역 분할 인식 (상·중·하)');
-  steps.push('결과 통합 및 파싱');
-
-  setResult(
-    '<div class="ocr-loading"><div class="ocr-spinner"></div>'
+  setResult('<div class="ocr-loading"><div class="ocr-spinner"></div>'
     + '<div style="flex:1;">'
-    + '<div style="font-weight:500;margin-bottom:6px;">🔬 농약병 OCR 분석 중...</div>'
-    + '<div class="ocr-step-list" id="ocr-step-list">'
-    + steps.map(function(s,i){
-        return '<div class="ocr-step-item" id="ocr-step-'+i+'">'
-          + '<span class="step-icon">'+(i+1)+'</span>'
-          + '<span>'+s+'</span>'
-          + '<span class="ocr-step-chars" id="ocr-step-chars-'+i+'"></span>'
-          + '</div>';
-      }).join('')
-    + '</div>'
-    + '<div class="rescan-progress" style="margin-top:8px;">'
-    + '<div class="rescan-progress-bar" id="ocr-prog-bar" style="width:0%"></div>'
-    + '</div>'
-    + '<div id="ocr-progress-txt" style="font-size:10px;color:var(--gray-400);margin-top:3px;">준비 중...</div>'
-    + '</div></div>'
-  );
+    + '<div style="font-weight:500;margin-bottom:5px;">🔬 농약 포장 OCR 분석 중...</div>'
+    + '<div id="ocr-progress-txt" style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:5px;">준비 중...</div>'
+    + '<div class="rescan-progress"><div class="rescan-progress-bar" id="ocr-prog-bar" style="width:0%"></div></div>'
+    + '</div></div>');
 
-  function setStep(i, state, chars) {
-    var el = document.getElementById('ocr-step-'+i);
-    if (!el) return;
-    el.className = 'ocr-step-item ' + state;
-    el.querySelector('.step-icon').textContent = state==='done' ? '✓' : (i+1);
-    var cc = document.getElementById('ocr-step-chars-'+i);
-    if (cc && chars) cc.textContent = chars+'자';
-  }
-  function setProgress(pct, msg) {
-    var bar = document.getElementById('ocr-prog-bar');
-    var txt = document.getElementById('ocr-progress-txt');
-    if (bar) bar.style.width = pct+'%';
-    if (txt) txt.textContent = msg||'';
-  }
-  function addPreviewSlot(label, imgDataUrl, isBest) {
-    var slots = document.getElementById('ocr-preview-slots');
-    if (!slots) return;
-    var div = document.createElement('div');
-    div.className = 'ocr-preview-slot' + (isBest?' best':'');
-    div.innerHTML = '<div class="slot-label">'+ label +'</div>'
-      + '<img src="'+imgDataUrl+'" style="height:120px;border-radius:4px;border:1px solid var(--gray-200);">';
-    slots.appendChild(div);
+  function setP(pct, msg) {
+    var bar=document.getElementById('ocr-prog-bar');
+    var txt=document.getElementById('ocr-progress-txt');
+    if(bar) bar.style.width=pct+'%';
+    if(txt) txt.textContent=msg||'';
   }
 
   try {
-    var canvas  = document.getElementById('ocr-canvas-work') || document.createElement('canvas');
-    var allTexts = [];  // {text, conf, label, dataUrl}
-    var stepIdx  = 0;
+    // ── STEP 1: 이미지 축소 + Otsu 이진화 전처리 ──────
+    setP(5, '이미지 전처리 중...');
+    var MAX_PX = 1100;
+    var processedVariants = preprocessForOcr(dataUrl, MAX_PX);
+    // processedVariants: [{dataUrl, label}, ...]
 
-    // ── STEP 1: 이미지 전처리 ──────────────────────
-    var processedUrls = [{ url: dataUrl, label: '원본' }];
-    if (optEnhance) {
-      setStep(stepIdx, 'active');
-      setProgress(5, '이미지 전처리 중...');
-      var enhanced = enhanceImage(dataUrl, canvas);
-      processedUrls.push({ url: enhanced.contrast, label: '대비강화' });
-      processedUrls.push({ url: enhanced.sharpen,  label: '선명화' });
-      processedUrls.push({ url: enhanced.binary,   label: '이진화' });
-      // 전처리 프리뷰 추가
-      var previewEl = document.getElementById('scan-capture-preview');
-      if (previewEl) previewEl.style.display = '';
-      var slotsEl = document.getElementById('ocr-preview-slots');
-      if (slotsEl) slotsEl.innerHTML = '';
-      addPreviewSlot('대비강화', enhanced.contrast, false);
-      addPreviewSlot('선명화',   enhanced.sharpen,  false);
-      addPreviewSlot('이진화',   enhanced.binary,   false);
-      setStep(stepIdx, 'done', '3종 생성');
-      setProgress(15, '전처리 완료');
-    }
-    stepIdx++;
-
-    // ── STEP 2: Tesseract 워커 생성 (1회만) ─────────
-    setProgress(18, 'OCR 엔진 초기화...');
-    setProgress(18, 'OCR 엔진 초기화 (한글 최적화)...');
+    // ── STEP 2: Tesseract 워커 (tessdata_best, kor 우선) ─
+    setP(15, 'OCR 엔진 초기화...');
     var worker;
     try {
-      // tessdata_best: 한글 LSTM 정확도 향상
-      worker = await Tesseract.createWorker(['kor','eng'], 1, {
+      worker = await Tesseract.createWorker('kor', 1, {
         logger: function(m) {
-          if (m.status==='recognizing text') {
-            var pct = Math.round((m.progress||0)*100);
-            setProgress(18 + Math.round(pct*0.5), '인식 중 '+pct+'%');
-          }
+          if (m.status==='recognizing text')
+            setP(20 + Math.round((m.progress||0)*55), '인식 중 '+Math.round((m.progress||0)*100)+'%');
         },
         langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
       });
     } catch(e) {
-      // fallback: 기본 tessdata
-      worker = await Tesseract.createWorker(['kor','eng'], 1, {
+      worker = await Tesseract.createWorker('kor', 1, {
         logger: function(m) {
-          if (m.status==='recognizing text') {
-            var pct = Math.round((m.progress||0)*100);
-            setProgress(18 + Math.round(pct*0.5), '인식 중 '+pct+'%');
-          }
+          if (m.status==='recognizing text')
+            setP(20 + Math.round((m.progress||0)*55), '인식 중 '+Math.round((m.progress||0)*100)+'%');
         },
       });
     }
-    // PSM 11: sparse text — 곡면 라벨에 최적 (기존 PSM6보다 한글 추출 우수)
-    await worker.setParameters({
-      tessedit_pageseg_mode: '11',
-      preserve_interword_spaces: '1',
-    });
 
-    // ── STEP 3: 기본 OCR (전처리 이미지들 각각) ────
-    setStep(stepIdx, 'active');
-    var urls0 = optEnhance ? processedUrls : [{ url: dataUrl, label: '원본' }];
-    for (var ui=0; ui<urls0.length; ui++) {
-      var r0 = await worker.recognize(urls0[ui].url);
-      var t0 = (r0.data.text||'').trim();
-      if (t0) allTexts.push({ text:t0, conf:r0.data.confidence||0, label:urls0[ui].label+'0°' });
-      setProgress(20 + Math.round((ui+1)/urls0.length*20), urls0[ui].label+' 인식 완료');
-    }
-    var best0chars = allTexts.length ? Math.max.apply(null, allTexts.map(function(x){return x.text.length;})) : 0;
-    setStep(stepIdx, 'done', best0chars);
-    stepIdx++;
+    // ── STEP 3: 여러 전처리 버전 × PSM 6/3으로 인식 ──
+    setP(20, '텍스트 인식 중...');
+    var allTexts = [];
 
-    // ── STEP 4: 4방향 회전 인식 ────────────────────
-    if (optRotate) {
-      setStep(stepIdx, 'active');
-      var angles = [90, 180, 270];
-      var bestSrc = allTexts.length ? allTexts.reduce(function(a,b){ return a.text.length>b.text.length?a:b; }).text : '';
-      for (var ai=0; ai<angles.length; ai++) {
-        var ang = angles[ai];
-        // 원본 + 선명화 이미지로 회전 시도
-        var srcUrls = optEnhance
-          ? [{ url: processedUrls[0].url, label:'원본' }, { url: processedUrls[2].url, label:'선명화' }]
-          : [{ url: dataUrl, label:'원본' }];
-        for (var si2=0; si2<srcUrls.length; si2++) {
-          var rotUrl = rotateImage(srcUrls[si2].url, ang, canvas);
-          var rr = await worker.recognize(rotUrl);
-          var rt = (rr.data.text||'').trim();
-          if (rt && rt.length > 10) {
-            allTexts.push({ text:rt, conf:rr.data.confidence||0, label:srcUrls[si2].label+ang+'°' });
-          }
-        }
-        setProgress(42 + Math.round((ai+1)/3*18), ang+'° 회전 인식 완료');
+    for (var vi=0; vi<processedVariants.length; vi++) {
+      var variant = processedVariants[vi];
+      for (var pi=0; pi<2; pi++) {
+        var psm = pi===0 ? '6' : '3';
+        await worker.setParameters({ tessedit_pageseg_mode: psm, preserve_interword_spaces: '1' });
+        var res = await worker.recognize(variant.dataUrl);
+        var txt = (res.data.text||'').trim();
+        var kor = (txt.match(/[가-힣]/g)||[]).length;
+        if (kor >= 3) allTexts.push({ text: txt, conf: res.data.confidence||0, kor: kor, label: variant.label+'_PSM'+psm });
       }
-      var bestRotChars = Math.max.apply(null, allTexts.map(function(x){return x.text.length;}));
-      setStep(stepIdx, 'done', bestRotChars);
-      stepIdx++;
+      setP(20 + Math.round((vi+1)/processedVariants.length*50), variant.label+' 완료');
     }
-
-    // ── STEP 5: 영역 분할 인식 ────────────────────
-    if (optRegion) {
-      setStep(stepIdx, 'active');
-      var srcForRegion = optEnhance ? processedUrls[2].url : dataUrl; // 선명화 사용
-      var regions = splitRegions(srcForRegion, canvas);
-      var regionTexts = [];
-      for (var ri=0; ri<regions.length; ri++) {
-        var rr2 = await worker.recognize(regions[ri].url);
-        var rt2 = (rr2.data.text||'').trim();
-        if (rt2) regionTexts.push(rt2);
-        setProgress(62 + Math.round((ri+1)/regions.length*15), regions[ri].label+' 인식');
-      }
-      // 영역 병합 텍스트도 후보에 추가
-      var mergedRegion = regionTexts.join('\n');
-      if (mergedRegion.trim()) {
-        allTexts.push({ text: mergedRegion, conf: 60, label: '영역분할병합' });
-      }
-      var bestRegChars = regionTexts.reduce(function(s,t){ return s+t.length; }, 0);
-      setStep(stepIdx, 'done', bestRegChars);
-      stepIdx++;
-    }
-
     await worker.terminate();
 
-    // ── STEP 6: 최적 결과 선택 + 텍스트 병합 ───────
-    setStep(stepIdx, 'active');
-    setProgress(80, '결과 통합 중...');
+    setP(75, 'OCR 결과 교정 중...');
 
     if (allTexts.length === 0) {
       setResult('<div class="ai-error-box">텍스트를 인식하지 못했습니다.<br>'
-        + '💡 <b>개선 팁:</b> 밝은 곳에서 병 전체를 정면으로 · 흔들리지 않게 고정 후 촬영<br>'
-        + '<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 텍스트 직접 입력</button></div>');
+        +'💡 라벨을 정면으로, 밝은 곳에서, 흔들리지 않게 촬영해 주세요.<br>'
+        +'<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 직접 입력</button></div>');
       return;
     }
 
-    // 점수 = 텍스트 길이 × 신뢰도 가중치
-    allTexts.sort(function(a,b){
-      return (b.text.length * (b.conf/100+0.5)) - (a.text.length * (a.conf/100+0.5));
-    });
+    // 한글 수 × 신뢰도 점수로 정렬
+    allTexts.sort(function(a,b){ return (b.kor*(b.conf+10)) - (a.kor*(a.conf+10)); });
 
-    // 상위 후보들의 텍스트를 병합 (중복 제거)
-    var bestText = allTexts[0].text;
-    var mergedLines = {};
-    allTexts.slice(0, Math.min(4, allTexts.length)).forEach(function(item){
+    // 상위 3개 결과 병합 (중복 라인 투표)
+    var lineVotes = {};
+    allTexts.slice(0,3).forEach(function(item){
       item.text.split('\n').forEach(function(line){
         var l = line.trim();
-        if (l.length >= 2) mergedLines[l] = (mergedLines[l]||0) + 1;
+        if (l.length >= 2) lineVotes[l] = (lineVotes[l]||0)+1;
       });
     });
-    // 2회 이상 등장한 라인 우선 + bestText 병합
-    var confirmedLines = Object.keys(mergedLines)
-      .filter(function(l){ return mergedLines[l] >= 2; })
-      .join('\n');
-    var finalText = confirmedLines
-      ? confirmedLines + '\n---\n' + bestText
-      : bestText;
+    // 2회 이상 등장한 라인 + 최고 점수 텍스트 병합
+    var confirmedLines = Object.keys(lineVotes).filter(function(l){ return lineVotes[l]>=2; }).join('\n');
+    var rawText = (confirmedLines ? confirmedLines+'\n' : '') + allTexts[0].text;
 
-    var bestConf = allTexts[0].conf || 50;
-    var confStr  = bestConf >= 70 ? 'high' : bestConf >= 40 ? 'medium' : 'low';
+    setP(85, 'OCR 오류 교정 적용 중...');
 
-    setStep(stepIdx, 'done', finalText.replace(/\s/g,'').length);
-    setProgress(95, '파싱 중...');
+    // OCR 오류 교정 사전 적용
+    var corrected = applyOcrCorrections(rawText);
 
-    // 결과 표시
-    document.getElementById('scan-ocr-textarea').value = finalText;
+    // 텍스트 편집창에 표시
+    document.getElementById('scan-ocr-textarea').value = corrected;
     document.getElementById('scan-ocr-text-section').style.display = '';
 
-    var parsed = parseAgriText(finalText, confStr);
+    setP(95, '제품 정보 파싱 중...');
 
-    // 시도별 요약 표시
-    var summary = '<div style="font-size:10px;color:var(--gray-400);margin-bottom:8px;background:var(--gray-100);border-radius:4px;padding:6px 8px;">'
-      + '🔬 <b>OCR 시도 '+allTexts.length+'회</b> · 최고 점수: '+allTexts[0].label
-      + ' ('+allTexts[0].text.replace(/\s/g,'').length+'자, 신뢰도 '+Math.round(bestConf)+'%)'
-      + (allTexts.length>1 ? ' · 병합 라인: '+Object.keys(mergedLines).filter(function(l){ return mergedLines[l]>=2; }).length+'개' : '')
-      + '</div>';
+    // 파싱 및 결과 표시
+    var parsed = parseAgriText(corrected, allTexts[0].conf>=70?'high':allTexts[0].conf>=40?'medium':'low');
+    parsed._ocrSummary = '<div style="font-size:10px;color:var(--gray-400);margin-bottom:8px;background:var(--gray-100);border-radius:4px;padding:6px 8px;">'
+      +'🔬 OCR 시도 '+allTexts.length+'회 · 최고: '+allTexts[0].label+' (한글 '+allTexts[0].kor+'자)</div>';
 
     ocrParsed = parsed;
-    setProgress(100, '완료!');
-
-    // 결과 렌더링 전 요약 먼저 표시
-    setResult(summary);
-    setTimeout(function(){
-      setResult(summary + document.getElementById('scan-result').innerHTML);
-      renderOcrResult(parsed);
-    }, 50);
-    // 실제로는 renderOcrResult가 innerHTML을 덮어씀 → 요약을 parsed.summary에 포함
-    parsed._ocrSummary = summary;
+    setP(100, '완료!');
     renderOcrResult(parsed);
 
-    if (parsed.barcode) {
-      document.getElementById('scan-code-input').value = parsed.barcode;
-    }
+    if (parsed.barcode) document.getElementById('scan-code-input').value = parsed.barcode;
 
   } catch(e) {
     setResult('<div class="ai-error-box">OCR 오류: '+esc(e.message)+'<br>'
-      +'<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 텍스트 직접 입력</button></div>');
+      +'<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 직접 입력</button></div>');
   }
 }
 
-// ── 이미지 전처리 함수들 ─────────────────────────────
-function enhanceImage(dataUrl, workCanvas) {
+// ── 이미지 전처리: Canvas Otsu 이진화 ─────────────────
+function preprocessForOcr(dataUrl, maxPx) {
   var img = new Image();
   img.src = dataUrl;
-  var W = workCanvas.width  || 800;
-  var H = workCanvas.height || 600;
+  var iw = img.naturalWidth  || 800;
+  var ih = img.naturalHeight || 600;
+  var scale = Math.min(maxPx/iw, maxPx/ih, 1.0);
+  var W = Math.round(iw*scale), H = Math.round(ih*scale);
 
-  function process(filterFn, label) {
-    workCanvas.width = W; workCanvas.height = H;
-    var ctx = workCanvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, W, H);
-    var id = ctx.getImageData(0, 0, W, H);
-    filterFn(id.data, W, H);
-    ctx.putImageData(id, 0, 0);
-    return workCanvas.toDataURL('image/jpeg', 0.92);
-  }
+  var c = document.createElement('canvas');
+  c.width=W; c.height=H;
+  var ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, W, H);
 
-  // 대비 강화 (S커브)
-  var contrastUrl = process(function(d) {
-    for (var i=0; i<d.length; i+=4) {
-      d[i]   = Math.min(255, Math.max(0, (d[i]   - 128) * 1.6 + 128));
-      d[i+1] = Math.min(255, Math.max(0, (d[i+1] - 128) * 1.6 + 128));
-      d[i+2] = Math.min(255, Math.max(0, (d[i+2] - 128) * 1.6 + 128));
-    }
-  });
+  // full 이미지 + 상단 60% 두 영역
+  var regions = [
+    { y1: Math.round(H*0.05), y2: Math.round(H*0.65), label: 'full' },
+    { y1: Math.round(H*0.10), y2: Math.round(H*0.50), label: 'top' },
+  ];
 
-  // 선명화 (언샵마스킹 근사)
-  var sharpenUrl = process(function(d, w, h) {
-    var copy = new Uint8ClampedArray(d);
-    var kernel = [0,-1,0,-1,5,-1,0,-1,0];
-    for (var y=1; y<h-1; y++) {
-      for (var x=1; x<w-1; x++) {
-        for (var c=0; c<3; c++) {
-          var val = 0;
-          for (var ky=-1; ky<=1; ky++) {
-            for (var kx=-1; kx<=1; kx++) {
-              val += copy[((y+ky)*w+(x+kx))*4+c] * kernel[(ky+1)*3+(kx+1)];
-            }
-          }
-          d[(y*w+x)*4+c] = Math.min(255, Math.max(0, val));
-        }
-      }
-    }
-  });
+  var variants = [];
+  regions.forEach(function(reg) {
+    var rH = reg.y2 - reg.y1;
+    var rc = document.createElement('canvas');
+    rc.width=W; rc.height=rH;
+    var rctx = rc.getContext('2d');
+    rctx.drawImage(c, 0, reg.y1, W, rH, 0, 0, W, rH);
+    var imgData = rctx.getImageData(0,0,W,rH);
+    var d = imgData.data;
 
-  // 적응형 이진화 (Otsu 근사)
-  var binaryUrl = process(function(d, w, h) {
-    // 그레이스케일 변환 + 히스토그램
-    var gray = new Uint8Array(w*h);
+    // 그레이스케일 변환
+    var gray = new Uint8Array(W*rH);
     var hist = new Int32Array(256);
-    for (var i=0; i<d.length; i+=4) {
-      var g = Math.round(d[i]*0.299 + d[i+1]*0.587 + d[i+2]*0.114);
-      gray[i/4] = g; hist[g]++;
+    for (var i=0;i<d.length;i+=4) {
+      var g = Math.round(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
+      gray[i/4]=g; hist[g]++;
     }
+
     // Otsu 임계값 계산
-    var total = w*h, sum=0, sumB=0, wB=0, max=0, thresh=128;
-    for (var t=0; t<256; t++) sum += t*hist[t];
-    for (var t2=0; t2<256; t2++) {
-      wB += hist[t2]; if (!wB) continue;
-      var wF = total - wB; if (!wF) break;
-      sumB += t2*hist[t2];
-      var mB = sumB/wB, mF = (sum-sumB)/wF;
-      var between = wB*wF*(mB-mF)*(mB-mF);
-      if (between > max) { max=between; thresh=t2; }
+    var total=W*rH, sumT=0, sumB=0, wB=0, maxV=0, thr=128;
+    for (var t=0;t<256;t++) sumT+=t*hist[t];
+    for (var t2=0;t2<256;t2++) {
+      wB+=hist[t2]; if(!wB) continue;
+      var wF=total-wB; if(!wF) break;
+      sumB+=t2*hist[t2];
+      var mB=sumB/wB, mF=(sumT-sumB)/wF;
+      var v=wB*wF*(mB-mF)*(mB-mF);
+      if(v>maxV){maxV=v;thr=t2;}
     }
-    // 이진화 적용
-    for (var j=0; j<gray.length; j++) {
-      var v = gray[j] > thresh ? 255 : 0;
-      d[j*4]=d[j*4+1]=d[j*4+2]=v;
+
+    // 대비 강화 이진화 (Otsu 임계값 기준)
+    for (var j=0;j<d.length;j+=4) {
+      var v2 = gray[j/4] > thr ? 255 : 0;
+      d[j]=d[j+1]=d[j+2]=v2; d[j+3]=255;
     }
+    rctx.putImageData(imgData,0,0);
+    variants.push({ dataUrl: rc.toDataURL('image/png'), label: reg.label+'_otsu('+thr+')' });
+
+    // 원본 그레이스케일도 추가 (Otsu가 실패할 경우 대비)
+    var rc2 = document.createElement('canvas');
+    rc2.width=W; rc2.height=rH;
+    var rctx2 = rc2.getContext('2d');
+    rctx2.drawImage(c, 0, reg.y1, W, rH, 0, 0, W, rH);
+    var imgData2 = rctx2.getImageData(0,0,W,rH);
+    var d2=imgData2.data;
+    for (var k=0;k<d2.length;k+=4) {
+      var g2=Math.round(d2[k]*0.299+d2[k+1]*0.587+d2[k+2]*0.114);
+      // 대비 강화 (S커브)
+      g2 = Math.min(255,Math.max(0,Math.round((g2-128)*1.8+128)));
+      d2[k]=d2[k+1]=d2[k+2]=g2;
+    }
+    rctx2.putImageData(imgData2,0,0);
+    variants.push({ dataUrl: rc2.toDataURL('image/png'), label: reg.label+'_contrast' });
   });
-
-  return { contrast: contrastUrl, sharpen: sharpenUrl, binary: binaryUrl };
-}
-
-// ── 이미지 회전 함수 ─────────────────────────────────
-function rotateImage(dataUrl, angle, workCanvas) {
-  var img = new Image();
-  img.src = dataUrl;
-  var W = img.naturalWidth  || workCanvas.width  || 800;
-  var H = img.naturalHeight || workCanvas.height || 600;
-  var rad = angle * Math.PI / 180;
-  var newW = (angle===90||angle===270) ? H : W;
-  var newH = (angle===90||angle===270) ? W : H;
-  workCanvas.width = newW; workCanvas.height = newH;
-  var ctx = workCanvas.getContext('2d');
-  ctx.clearRect(0, 0, newW, newH);
-  ctx.save();
-  ctx.translate(newW/2, newH/2);
-  ctx.rotate(rad);
-  ctx.drawImage(img, -W/2, -H/2, W, H);
-  ctx.restore();
-  return workCanvas.toDataURL('image/jpeg', 0.90);
-}
-
-// ── 이미지 영역 분할 함수 ────────────────────────────
-function splitRegions(dataUrl, workCanvas) {
-  var img = new Image();
-  img.src = dataUrl;
-  var W = img.naturalWidth  || workCanvas.width  || 800;
-  var H = img.naturalHeight || workCanvas.height || 600;
-  var regions = [];
-  var labels = ['상단', '중단', '하단'];
-  for (var i=0; i<3; i++) {
-    // 각 구역을 약간 겹치게 (10% 오버랩)
-    var yStart = Math.max(0,    Math.round(H * (i/3 - 0.05)));
-    var yEnd   = Math.min(H,    Math.round(H * ((i+1)/3 + 0.05)));
-    var rH = yEnd - yStart;
-    workCanvas.width = W; workCanvas.height = rH;
-    var ctx = workCanvas.getContext('2d');
-    ctx.clearRect(0, 0, W, rH);
-    ctx.drawImage(img, 0, yStart, W, rH, 0, 0, W, rH);
-    // 영역 이미지를 1.5배 확대 (작은 텍스트 인식 향상)
-    var enlarged = document.createElement('canvas');
-    enlarged.width  = W * 1.5;
-    enlarged.height = rH * 1.5;
-    enlarged.getContext('2d').drawImage(workCanvas, 0, 0, enlarged.width, enlarged.height);
-    regions.push({ url: enlarged.toDataURL('image/jpeg', 0.92), label: labels[i] });
+  // 추가: 수평 프로파일로 "큰 글자 행" 영역 찾기
+  var bigRow = findBigTextRow(c, W, H);
+  if (bigRow) {
+    var br = document.createElement('canvas');
+    br.width=W; br.height=bigRow.h+20;
+    var brctx=br.getContext('2d');
+    brctx.drawImage(c, 0, bigRow.y-10, W, bigRow.h+20, 0, 0, W, bigRow.h+20);
+    // 3배 확대
+    var br3=document.createElement('canvas');
+    br3.width=W*3; br3.height=(bigRow.h+20)*3;
+    br3.getContext('2d').drawImage(br, 0,0, br3.width, br3.height);
+    // Otsu 이진화
+    var brid=br3.getContext('2d').getImageData(0,0,br3.width,br3.height);
+    var brd=brid.data;
+    var brg=new Uint8Array(br3.width*br3.height);
+    var brh2=new Int32Array(256);
+    for(var i=0;i<brd.length;i+=4){ var g=Math.round(brd[i]*.299+brd[i+1]*.587+brd[i+2]*.114); brg[i/4]=g; brh2[g]++; }
+    var brthr=128, brsT=0,brwB=0,brsB=0,brmxV=0,brtot=br3.width*br3.height;
+    for(var t=0;t<256;t++) brsT+=t*brh2[t];
+    for(var t2=0;t2<256;t2++){
+      brwB+=brh2[t2]; if(!brwB) continue;
+      var brwF=brtot-brwB; if(!brwF) break;
+      brsB+=t2*brh2[t2]; var brmB=brsB/brwB,brmF=(brsT-brsB)/brwF;
+      var brv=brwB*brwF*(brmB-brmF)*(brmB-brmF);
+      if(brv>brmxV){brmxV=brv;brthr=t2;}
+    }
+    for(var j=0;j<brd.length;j+=4){ var v3=brg[j/4]>brthr?255:0; brd[j]=brd[j+1]=brd[j+2]=v3; }
+    br3.getContext('2d').putImageData(brid,0,0);
+    variants.push({dataUrl:br3.toDataURL('image/png'), label:'bigrow_y'+bigRow.y+'_3x'});
   }
-  return regions;
+
+  return variants;
+}
+
+// 수평 프로파일로 가장 높이가 큰 텍스트 밴드 탐지 (Canvas 버전)
+function findBigTextRow(canvas, W, H) {
+  var ctx=canvas.getContext('2d');
+  var cropH=Math.round(H*.65);
+  var imgData=ctx.getImageData(0,0,W,cropH);
+  var d=imgData.data;
+
+  // 그레이 + Otsu
+  var gray=new Uint8Array(W*cropH), hist=new Int32Array(256);
+  for(var i=0;i<d.length;i+=4){ var g=Math.round(d[i]*.299+d[i+1]*.587+d[i+2]*.114); gray[i/4]=g; hist[g]++; }
+  var total=W*cropH,sumT=0,sumB=0,wB=0,maxV=0,thr=128;
+  for(var t=0;t<256;t++) sumT+=t*hist[t];
+  for(var t2=0;t2<256;t2++){
+    wB+=hist[t2]; if(!wB) continue;
+    var wF=total-wB; if(!wF) break;
+    sumB+=t2*hist[t2]; var mB=sumB/wB,mF=(sumT-sumB)/wF;
+    var v=wB*wF*(mB-mF)*(mB-mF); if(v>maxV){maxV=v;thr=t2;}
+  }
+
+  // 각 행의 어두운 픽셀 수 계산
+  var rowDark=new Int32Array(cropH);
+  for(var y=0;y<cropH;y++){
+    for(var x=0;x<W;x++){ if(gray[y*W+x]<thr) rowDark[y]++; }
+  }
+
+  // 어두운 픽셀이 W의 5% 이상인 행 = 텍스트 행
+  var minDark=Math.round(W*.05);
+  var bands=[], inBand=false, bStart=0;
+  for(var y2=0;y2<cropH;y2++){
+    if(rowDark[y2]>=minDark && !inBand){ inBand=true; bStart=y2; }
+    else if(rowDark[y2]<minDark && inBand){
+      inBand=false;
+      var bh=y2-bStart;
+      if(bh>=10) bands.push({y:bStart, h:bh});
+    }
+  }
+  if(inBand && cropH-bStart>=10) bands.push({y:bStart, h:cropH-bStart});
+
+  if(!bands.length) return null;
+  // 가장 높은 밴드 반환
+  bands.sort(function(a,b){return b.h-a.h;});
+  return bands[0];
+}
+
+// ── OCR 오류 교정 사전 ───────────────────────────────
+function applyOcrCorrections(text) {
+  var fixes = [
+    // 성분명 교정
+    [/트리플록시스트로\s*빈/g,              '트리플록시스트로빈'],
+    [/에스[떼뗴][둥틱톡]라클로르/g,         '에스메톨라클로르'],
+    [/에스피농라클로르/g,                    '에스메톨라클로르'],
+    [/에스메[톨놀]라클로르/g,               '에스메톨라클로르'],
+    [/플룩사메[티터]마이[트드]\s*유[티위테]세/g, '플룩사메타마이드 유탁제'],
+    [/플룩사메타마이[트드]/g,               '플룩사메타마이드'],
+    [/플루아지님/g,                          '플루아지남'],
+    [/플루아지[나내냐]/g,                   '플루아지남'],
+    [/메[탈달]락[실씰][엠옘앰]/g,          '메탈락실엠'],
+    [/디[페패]노코[나다][졸족]/g,          '디페노코나졸'],
+    [/이미녹[타다][딘딘]/g,                 '이미녹타딘'],
+    [/에토프로[포파][스즈]/g,               '에토프로포스'],
+    // 제품명 교정
+    [/리도[딜밀][골굴]드/g,                '리도밀골드'],
+    [/영[밀믿]\s*리도/g,                   '영일 리도'],
+    [/삼진[학환왜왕]/g,                     '삼진왕'],
+    [/후[론롬롤]사이[드트]/g,              '후론사이드'],
+    [/다트[를를]/g,                         '다트롤'],
+    [/듀[알앨]골[드트]/g,                  '듀알골드'],
+    // 공통 표현 교정
+    [/품봄[랑명]/g,                         '품목명'],
+    [/품봄/g,                               '품목'],
+    [/액상수[헤헤에]/g,                    '액상수화제'],
+    [/저[특특독]성/g,                       '저독성'],
+    [/살[군균]제/g,                         '살균제'],
+    [/살[충종]제/g,                         '살충제'],
+    [/농[악아]/g,                           '농약'],
+    [/입[재제]/g,                           '입제'],
+    [/유[탁탑]제/g,                         '유탁제'],
+    // 추가 교정 패턴 (실제 이미지 분석 기반)
+    [/피노[큐쿼]나졸/g,                     '디페노코나졸'],
+    [/트리[세테]트/g,                       '트리아세테이트'],
+    [/미탁[서]/g,                           '미탁제'],
+    [/[무봄봄]목명/g,                       '품목명'],
+    [/에스[피]농라클로르/g,                 '에스메톨라클로르'],
+    [/에스피[농롱통]라클로르/g,             '에스메톨라클로르'],
+    [/에스메[톨]라클[오로]르/g,             '에스메톨라클로르'],
+    [/에토프로[파][스]/g,                   '에토프로포스'],
+    [/다트[를뢸]/g,                         '다트롤'],
+    [/후[론]사이[트]/g,                     '후론사이드'],
+    [/리도[딜][골]드/g,                     '리도밀골드'],
+    [/삼진[학환]/g,                         '삼진왕'],
+  ];
+  var result = text;
+  fixes.forEach(function(pair) { result = result.replace(pair[0], pair[1]); });
+  return result;
 }
 
 // ── OCR 결과 카드 렌더링 ─────────────────────────
@@ -4411,61 +4350,55 @@ function parseAgriText(rawText, confStr) {
     confidence: confStr || 'medium',
   };
 
-  // ── 제품명 추출 ───────────────────────────────
-  // OCR 기호 오류 보정 테이블 (한/영 혼용 농약명 특성 반영)
-  var ocrFix = t
-    // 자주 오인되는 기호→문자 변환
-    .replace(/[|ㅣ!ｌ]/g, function(c,i,s){
-      // 문자 사이에 있으면 'l' 또는 'I'로 추정
-      var prev = s[i-1]||'', next = s[i+1]||'';
-      if (/[a-zA-Z가-힣]/.test(prev) || /[a-zA-Z가-힣]/.test(next)) return 'l';
-      return c;
-    })
-    .replace(/([a-zA-Z가-힣])0/g, '$1o').replace(/0([a-zA-Z가-힣])/g, 'o$1')  // O↔0 혼동
-    .replace(/\$/g, 'S')   // $→S
-    .replace(/€/g, 'E')    // €→E
-    .replace(/¥/g, 'Y')    // ¥→Y
-    .replace(/＊/g, '*')
-    .replace(/[®™©℃㎖㎎㎏㎝㎞]/g, ' ')  // 등록상표·단위 기호 공백 처리
-    .replace(/\s{2,}/g, ' ');
-
-  // 첫 번째 줄을 제품명 후보로 (최대 25자)
-  var lines_t = ocrFix.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
-  var nameCand = lines_t[0] || '';
-
-  // 제품명 정제: 한글/영문/숫자/하이픈/플러스만 허용, 나머지 기호 제거
-  var cleanName = nameCand
-    .replace(/[^가-힣a-zA-Z0-9\-\+\s\.]/g, ' ')  // 허용 문자 외 공백
-    .replace(/\s{2,}/g, ' ')
-    .trim()
-    .substring(0, 25);
-
-  // 의미 없는 짧은 결과(1자 이하) 또는 숫자만인 경우 2번째 줄 시도
-  if (cleanName.replace(/\s/g,'').length < 2 || /^\d+$/.test(cleanName)) {
-    cleanName = (lines_t[1]||'').replace(/[^가-힣a-zA-Z0-9\-\+\s\.]/g,' ').trim().substring(0,25);
+  // ── 제품명 추출 (OCR 교정 적용 후) ──────────────
+  // 1. '품목명:' 이전 줄에서 제품명 탐색
+  // 2. 브랜드 접두어 제거 후 재매칭
+  var BRAND_PREFIXES = ['영일','팜한농','동방아그로','경농','농협케미칼','바이엘','신젠타'];
+  function removeBrandPrefix(name) {
+    for (var bi=0; bi<BRAND_PREFIXES.length; bi++) {
+      if (name.indexOf(BRAND_PREFIXES[bi])===0) return name.substring(BRAND_PREFIXES[bi].length).trim();
+    }
+    return name;
   }
-  result.name = cleanName;
 
-  // MASTER_DB 매칭: 이름 → 성분명 역방향 → 다중 줄 순서
-  var quickMatch = matchMasterDb(cleanName);
-  if (!quickMatch && result.ingredient) {
-    quickMatch = matchMasterDb(result.ingredient.substring(0,12));
+  var lines_t = t.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+
+  // '품목명:' 위치 찾기 → 그 이전 줄이 제품명 후보
+  var productLineIdx = -1;
+  for (var li=0; li<lines_t.length; li++) {
+    if (/품목명/.test(lines_t[li])) { productLineIdx=li; break; }
   }
-  if (!quickMatch) {
-    for (var li2=1; li2<Math.min(lines_t.length,8); li2++) {
-      var cand2 = lines_t[li2].replace(/[^\uAC00-\uD7A3a-zA-Z0-9\-\s]/g,' ').trim();
-      if (cand2.length >= 2) { quickMatch = matchMasterDb(cand2); if (quickMatch) break; }
+
+  // 제품명 후보: 품목명 바로 앞 줄 우선, 없으면 첫 줄
+  var nameCandidates = [];
+  if (productLineIdx > 0) {
+    for (var pi2=productLineIdx-1; pi2>=Math.max(0,productLineIdx-3); pi2--) {
+      var cline = lines_t[pi2].replace(/[^가-힣a-zA-Z0-9\-\+\s]/g,' ').trim();
+      if (cline.length >= 2) nameCandidates.push(removeBrandPrefix(cline));
     }
   }
-  if (quickMatch) {
-    result.name       = quickMatch.name;
-    result.tab        = quickMatch.tab        || result.tab;
-    result.type       = result.type           || quickMatch.type       || '';
-    result.ingredient = result.ingredient     || quickMatch.ingredient || '';
-    result.target     = result.target         || quickMatch.target     || '';
-    result.method     = result.method         || quickMatch.method     || '';
-    result.warning    = result.warning        || quickMatch.warning    || '';
-    result.confidence = 'high';
+  // 첫 번째 줄도 후보에 추가
+  var firstLine = (lines_t[0]||'').replace(/[^가-힣a-zA-Z0-9\-\+\s]/g,' ').trim();
+  if (firstLine.length >= 2) nameCandidates.push(removeBrandPrefix(firstLine));
+
+  // 가장 긴 한글 이름 후보 선택
+  nameCandidates.sort(function(a,b){
+    var ak=(a.match(/[가-힣]/g)||[]).length, bk=(b.match(/[가-힣]/g)||[]).length;
+    return bk-ak;
+  });
+  var cleanName = nameCandidates.length>0 ? nameCandidates[0].substring(0,25) : '';
+  result.name = cleanName;
+
+  // '품목명:' 다음 텍스트를 성분명으로 추출
+  if (productLineIdx >= 0) {
+    var pmLine = lines_t[productLineIdx];
+    var pmMatch = pmLine.match(/품목명[:\s]+(.{4,60})/);
+    if (pmMatch) result.ingredient = pmMatch[1].trim();
+    // 다음 줄이 성분명일 수도 있음
+    if (!result.ingredient && lines_t[productLineIdx+1]) {
+      var nextLine = lines_t[productLineIdx+1].trim();
+      if (nextLine.length >= 4 && !/사용/.test(nextLine)) result.ingredient = nextLine;
+    }
   }
 
   // ── 탭 분류 (원본 + 기호 제거 텍스트 모두 검사) ──
