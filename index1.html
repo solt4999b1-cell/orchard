@@ -1565,12 +1565,22 @@ function showSetupError(msg) {
 // (loadAllData → 위 단계적 로딩으로 대체됨)
 
 async function seedPlants() {
-  var batch = db.batch();
-  MASTER_DB.plants.forEach(function(p){
-    batch.set(db.collection('plants').doc(p.id), p, {merge:true});
-  });
-  await batch.commit().catch(function(e){ console.warn('seed',e); });
-  showToast('식물 DB 초기화 완료 ('+MASTER_DB.plants.length+'개)');
+  var plants = MASTER_DB.plants;
+  var chunkSize = 20;  // 한 번에 20개씩 → 빠른 첫 응답
+  for (var i=0; i<plants.length; i+=chunkSize) {
+    var chunk = plants.slice(i, i+chunkSize);
+    var batch = db.batch();
+    chunk.forEach(function(p){
+      batch.set(db.collection('plants').doc(p.id), p, {merge:true});
+    });
+    await batch.commit().catch(function(e){ console.warn('seed chunk',e); });
+    // 첫 청크 완료 후 즉시 렌더 (나머지는 백그라운드)
+    if (i === 0) {
+      APP.plants = chunk.map(function(p){ return Object.assign({},p); });
+      renderToday(); renderPlants();
+    }
+  }
+  showToast('식물 DB 초기화 완료 ('+plants.length+'개)');
 }
 
 // ══════════════════════════════════════════════════
@@ -4109,58 +4119,100 @@ function resetHarvestLookup() {
 // ══════════════════════════════════════════════════
 // loadAllData를 plants 우선 → 나머지 비동기로 처리
 async function loadAllData() {
-  // ── 1단계: plants + doneTasks 먼저 (핵심 데이터) ──
-  var plantsPromise = db.collection('plants').orderBy('no').get()
-    .catch(function(){ return {docs:[]}; });
-  var donePromise = db.collection('doneTasks')
-    .where('date','==',TODAY_STR).get().catch(function(){ return {docs:[]}; });
-
-  var plantsSnap = await plantsPromise;
-  var doneSnap   = await donePromise;
-
-  if (plantsSnap.docs.length === 0) {
-    await seedPlants();
-    plantsSnap = await db.collection('plants').orderBy('no').get()
-      .catch(function(){ return {docs:[]}; });
+  // ── 0단계: MASTER_DB로 즉시 로컬 렌더 (Firebase 대기 없음) ──
+  if (APP.plants.length === 0) {
+    APP.plants = MASTER_DB.plants.map(function(p){
+      return Object.assign({}, p, {_local: true});
+    });
+    renderToday(); renderPlants();
+    setLoadingMsg('Firebase 데이터 동기화 중...');
   }
-  APP.plants = plantsSnap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+
+  // ── 1단계: plants + doneTasks 병렬 요청 ──────────
+  // orderBy 제거 → 인덱스 없어도 빠르게 조회
+  var plantsSnap, doneSnap;
+  try {
+    var r1 = await Promise.all([
+      db.collection('plants').limit(300).get(),
+      db.collection('doneTasks').where('date','==',TODAY_STR).get(),
+    ]);
+    plantsSnap = r1[0]; doneSnap = r1[1];
+  } catch(e) {
+    plantsSnap = {docs:[]}; doneSnap = {docs:[]};
+  }
+
+  // Firebase에 plants가 없으면 seed (청크 단위로 빠르게)
+  if (plantsSnap.docs.length === 0) {
+    setLoadingMsg('식물 DB 초기화 중...');
+    await seedPlants();
+    try {
+      plantsSnap = await db.collection('plants').limit(300).get();
+    } catch(e) { plantsSnap = {docs:[]}; }
+  }
+
+  // Firebase 데이터로 교체 (있을 때만)
+  if (plantsSnap.docs.length > 0) {
+    APP.plants = plantsSnap.docs.map(function(d){
+      return Object.assign({id:d.id}, d.data());
+    });
+    // no 순서로 정렬 (orderBy 대신 클라이언트 정렬)
+    APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+  }
+
   APP.doneTasks = {};
   doneSnap.docs.forEach(function(d){ APP.doneTasks[d.id]=d.data(); });
 
-  // ── 1단계 완료: 오늘 할 일 + 식물 즉시 렌더링 ──────
-  // APP.plants가 채워진 후 렌더링 (비어있으면 스킵)
-  if (APP.plants.length > 0) {
-    renderToday(); renderPlants();
-  }
+  // 1단계 완료 → 즉시 렌더
+  renderToday(); renderPlants();
   setSyncStatus(true);
+  hideLoadingMsg();
 
-  // ── 2단계: 기록 + userDB 병렬 로드 ────────────────
-  var results2 = await Promise.all([
-    db.collection('workLogs').orderBy('date','desc').limit(100)
+  // ── 2단계: 기록 + userDB 백그라운드 병렬 로드 ────
+  Promise.all([
+    db.collection('workLogs').orderBy('date','desc').limit(80)
       .get().catch(function(){ return {docs:[]}; }),
-    db.collection('growRecords').orderBy('date','desc').limit(100)
+    db.collection('growRecords').orderBy('date','desc').limit(80)
       .get().catch(function(){ return {docs:[]}; }),
     loadUserDb(),
-  ]);
-  var wlSnap = results2[0], grSnap = results2[1];
+  ]).then(function(results2) {
+    var wlSnap = results2[0], grSnap = results2[1];
+    var wlRows = wlSnap.docs.map(function(d){
+      return Object.assign({id:d.id,_col:'workLogs'},d.data());
+    });
+    var grRows = grSnap.docs.map(function(d){
+      var x=d.data();
+      return Object.assign({id:d.id, _col:'growRecords',
+        date: typeof x.date==='string'?x.date.slice(0,10):x.date||'',
+        plantName:x.plantName||x.name||'', type:x.eventType||x.type||'기타',
+        material:x.material||'', detail:x.note||x.detail||'', time:x.time||'',
+      }, x);
+    });
+    APP.logs = wlRows.concat(grRows).sort(function(a,b){
+      var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+      if(da!==db_) return da>db_?-1:1;
+      return (a.time||'')>(b.time||'')?-1:1;
+    });
+    // 2단계 완료 → 전체 재렌더
+    renderToday(); renderPlants(); renderLogs(); renderDb();
+  }).catch(function(){ /* 네트워크 오류 시 무시 */ });
+}
 
-  var wlRows = wlSnap.docs.map(function(d){ return Object.assign({id:d.id,_col:'workLogs'},d.data()); });
-  var grRows = grSnap.docs.map(function(d){
-    var x=d.data();
-    return Object.assign({id:d.id, _col:'growRecords',
-      date: typeof x.date==='string'?x.date.slice(0,10):x.date||'',
-      plantName:x.plantName||x.name||'', type:x.eventType||x.type||'기타',
-      material:x.material||'', detail:x.note||x.detail||'', time:x.time||'',
-    }, x);
-  });
-  APP.logs = wlRows.concat(grRows).sort(function(a,b){
-    var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
-    if(da!==db_) return da>db_?-1:1;
-    return (a.time||'')>(b.time||'')?-1:1;
-  });
-
-  // ── 2단계 완료: 전체 재렌더 (기록 반영해서 오늘 할 일 재계산) ──
-  renderToday(); renderPlants(); renderLogs(); renderDb();
+// 로딩 메시지 표시/숨김
+function setLoadingMsg(msg) {
+  var el = document.getElementById('loading-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'loading-msg';
+    el.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);'
+      +'background:rgba(30,77,43,.92);color:#fff;font-size:12px;padding:7px 16px;'
+      +'border-radius:20px;z-index:150;white-space:nowrap;';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg; el.style.display = '';
+}
+function hideLoadingMsg() {
+  var el = document.getElementById('loading-msg');
+  if (el) el.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════════
@@ -4177,13 +4229,48 @@ function parseAgriText(rawText, confStr) {
   };
 
   // ── 제품명 추출 ───────────────────────────────
-  // 첫 번째 줄 또는 큰 글씨 패턴
-  var nameM = t.match(/^([^\n\r]{2,20})/);
-  if (nameM) result.name = nameM[1].trim().replace(/[^\w가-힣a-zA-Z0-9\-\+\s]/g,'').trim();
+  // OCR 기호 오류 보정 테이블 (한/영 혼용 농약명 특성 반영)
+  var ocrFix = t
+    // 자주 오인되는 기호→문자 변환
+    .replace(/[|ㅣ!ｌ]/g, function(c,i,s){
+      // 문자 사이에 있으면 'l' 또는 'I'로 추정
+      var prev = s[i-1]||'', next = s[i+1]||'';
+      if (/[a-zA-Z가-힣]/.test(prev) || /[a-zA-Z가-힣]/.test(next)) return 'l';
+      return c;
+    })
+    .replace(/([a-zA-Z가-힣])0/g, '$1o').replace(/0([a-zA-Z가-힣])/g, 'o$1')  // O↔0 혼동
+    .replace(/\$/g, 'S')   // $→S
+    .replace(/€/g, 'E')    // €→E
+    .replace(/¥/g, 'Y')    // ¥→Y
+    .replace(/＊/g, '*')
+    .replace(/[®™©℃㎖㎎㎏㎝㎞]/g, ' ')  // 등록상표·단위 기호 공백 처리
+    .replace(/\s{2,}/g, ' ');
 
-  // ── 탭 분류 ──────────────────────────────────
-  if (/살충|살균|제초|살비|농약|수화제|유제|액상|입제|분제/i.test(t))  result.tab = 'pest';
-  else if (/미생물|고초균|유산균|광합성균|효모균|바실루스|트리코데르마/i.test(t)) result.tab = 'micro';
+  // 첫 번째 줄을 제품명 후보로 (최대 25자)
+  var lines_t = ocrFix.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  var nameCand = lines_t[0] || '';
+
+  // 제품명 정제: 한글/영문/숫자/하이픈/플러스만 허용, 나머지 기호 제거
+  var cleanName = nameCand
+    .replace(/[^가-힣a-zA-Z0-9\-\+\s\.]/g, ' ')  // 허용 문자 외 공백
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .substring(0, 25);
+
+  // 의미 없는 짧은 결과(1자 이하) 또는 숫자만인 경우 2번째 줄 시도
+  if (cleanName.replace(/\s/g,'').length < 2 || /^\d+$/.test(cleanName)) {
+    cleanName = (lines_t[1]||'').replace(/[^가-힣a-zA-Z0-9\-\+\s\.]/g,' ').trim().substring(0,25);
+  }
+  result.name = cleanName;
+
+  // MASTER_DB 이름으로 즉시 매칭 시도 (OCR 오류 교정 효과)
+  var quickMatch = matchMasterDb(cleanName);
+  if (quickMatch) { result.name = quickMatch.name; result.confidence = 'high'; }
+
+  // ── 탭 분류 (원본 + 기호 제거 텍스트 모두 검사) ──
+  var tClean = t.replace(/[^가-힣a-zA-Z0-9\s\n]/g,' ');
+  if (/살충|살균|제초|살비|농약|수화제|유제|액상|입제|분제/i.test(tClean))  result.tab = 'pest';
+  else if (/미생물|고초균|유산균|광합성균|효모균|바실루스|트리코데르마/i.test(tClean)) result.tab = 'micro';
   else result.tab = 'fert';
 
   // ── 농약 종류 ─────────────────────────────────
@@ -4228,7 +4315,7 @@ function parseAgriText(rawText, confStr) {
   if (tgtM) result.target = tgtM[1].trim().substring(0,100);
   // 병해충 목록 패턴
   if (!result.target) {
-    var bugs = t.match(/(진딧물|나방|총채벌레|응애|온실가루이|굼벵이|노균병|역병|탄저병|흰가루병|잿빛곰팡이|흑성병)[,·\s]*/g);
+    var bugs = tClean.match(/(진딧물|나방|총채벌레|응애|온실가루이|굼벵이|노균병|역병|탄저병|흰가루병|잿빛곰팡이|흑성병)[,·\s]*/g);
     if (bugs) result.target = bugs.join('').replace(/[,·\s]+$/,'').substring(0,80);
   }
 
