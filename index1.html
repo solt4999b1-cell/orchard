@@ -2959,7 +2959,10 @@ async function runOcrOnImage(dataUrl) {
 
     // ── STEP 2: Tesseract 워커 생성 (1회만) ─────────
     setProgress(18, 'OCR 엔진 초기화...');
-    var worker = await Tesseract.createWorker(['kor','eng'], 1, {
+    
+    // ⭐️ 개선 1: 'kor+eng' 형식으로 선언하고, 최고 정확도(best) 학습 데이터를 강제 지정
+    var worker = await Tesseract.createWorker('kor+eng', 1, {
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0_best', // 일반 모델 대비 한글 인식률 대폭 상승
       logger: function(m) {
         if (m.status==='recognizing text') {
           var pct = Math.round((m.progress||0)*100);
@@ -2967,10 +2970,12 @@ async function runOcrOnImage(dataUrl) {
         }
       }
     });
-    // PSM 설정: 6=단일 블록, 농약병 세로 텍스트에 효과적
+    
+    // ⭐️ 개선 2 & 3: 레이아웃 분석 모드(PSM) 변경 및 특수기호 블랙리스트 적용
     await worker.setParameters({
-      tessedit_pageseg_mode: '6',
+      tessedit_pageseg_mode: '3', // 6(단일 블록) -> 3(자동 페이지 레이아웃 분석)으로 변경 (농약병 라벨에 적합)
       preserve_interword_spaces: '1',
+      tessedit_char_blacklist: '|}~\\_`', // 한글 오인식을 유발하는 불필요한 특수문자 차단
     });
 
     // ── STEP 3: 기본 OCR (전처리 이미지들 각각) ────
