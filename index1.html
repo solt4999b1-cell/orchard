@@ -11907,6 +11907,8 @@ const FIREBASE_CONFIG = {
   authDomain:  "orchardapp-b81ca.firebaseapp.com",
   appId:      "1:848680345496:web:11d468c44b412c037795ed",
 };
+
+
 // ── OCR 엔진 설정 ──────────────────────────────────
 // 1순위: Google Apps Script 마이크로서비스 (Drive OCR, 한글 인식률 우수)
 //   - 배포 방법은 /gas_ocr_service/Code.gs 파일 상단 주석 참고
@@ -17770,63 +17772,97 @@ async function callGasOcr(dataUrl, setP) {
 
 // ── Tesseract.js 폴백 OCR (기존 로직 유지) ────────────
 async function runTesseractOcr(dataUrl, setP) {
-  setP(5, '이미지 전처리 중... (Tesseract)');
+  // 제안 패턴 적용: 단계별 try-catch, 결과 검증 후 저장
+  setP(5, '이미지 전처리 중...');
   var MAX_PX = 1100;
-  var processedVariants = preprocessForOcr(dataUrl, MAX_PX);
+  var processedVariants;
+  try {
+    processedVariants = preprocessForOcr(dataUrl, MAX_PX);
+  } catch(prepErr) {
+    console.error('[OCR] 전처리 오류:', prepErr);
+    return { ok: false, error: '이미지 전처리 실패: ' + prepErr.message };
+  }
 
   setP(15, 'OCR 엔진 초기화...');
   var worker;
   try {
+    // 1차: best 모델 (정확도 우선)
     worker = await Tesseract.createWorker('kor', 1, {
       logger: function(m) {
-        if (m.status==='recognizing text')
-          setP(20 + Math.round((m.progress||0)*55), '인식 중 '+Math.round((m.progress||0)*100)+'%');
+        if (m.status === 'recognizing text')
+          setP(20 + Math.round((m.progress||0)*55), '인식 중 ' + Math.round((m.progress||0)*100) + '%');
       },
       langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
     });
-  } catch(e) {
-    worker = await Tesseract.createWorker('kor', 1, {
-      logger: function(m) {
-        if (m.status==='recognizing text')
-          setP(20 + Math.round((m.progress||0)*55), '인식 중 '+Math.round((m.progress||0)*100)+'%');
-      },
-    });
+  } catch(e1) {
+    try {
+      // 2차: 기본 모델 폴백
+      worker = await Tesseract.createWorker('kor', 1, {
+        logger: function(m) {
+          if (m.status === 'recognizing text')
+            setP(20 + Math.round((m.progress||0)*55), '인식 중 ' + Math.round((m.progress||0)*100) + '%');
+        },
+      });
+    } catch(e2) {
+      return { ok: false, error: 'Tesseract 엔진 로드 실패: ' + e2.message };
+    }
   }
 
   setP(20, '텍스트 인식 중...');
-  var allTexts = [];
+  var bestResult = null;
+  var bestConf   = -1;
+  var lastError  = null;
 
-  for (var vi=0; vi<processedVariants.length; vi++) {
-    var variant = processedVariants[vi];
-    for (var pi=0; pi<2; pi++) {
-      var psm = pi===0 ? '6' : '3';
-      await worker.setParameters({ tessedit_pageseg_mode: psm, preserve_interword_spaces: '1' });
-      var res = await worker.recognize(variant.dataUrl);
-      var txt = (res.data.text||'').trim();
-      var kor = (txt.match(/[가-힣]/g)||[]).length;
-      if (kor >= 3) allTexts.push({ text: txt, conf: res.data.confidence||0, kor: kor, label: variant.label+'_PSM'+psm });
+  // ── 각 전처리 변형본으로 인식 시도 (제안 패턴: 다중 시도) ────
+  for (var vi = 0; vi < processedVariants.length; vi++) {
+    try {
+      await worker.setParameters({
+        tessedit_char_whitelist: '',
+        preserve_interword_spaces: '1',
+        tessedit_pageseg_mode: vi === 0 ? '6' : '3',
+      });
+      var r = await worker.recognize(processedVariants[vi]);
+      var rawText = (r.data && r.data.text) || '';
+      var conf    = (r.data && r.data.confidence) || 0;
+
+      // ── 제안 패턴: 인식 결과 즉시 정제 ──────────────────
+      var corrected = applyOcrCorrections(rawText);
+      if (!corrected || corrected.trim().length < 5) continue;
+
+      // 신뢰도 기준으로 최적 결과 선택
+      if (conf > bestConf) {
+        bestConf   = conf;
+        bestResult = { text: corrected, rawText: rawText, confidence: conf };
+      }
+    } catch(recErr) {
+      lastError = recErr.message;
+      console.warn('[OCR] 변형본 ' + vi + ' 인식 실패:', recErr.message);
     }
-    setP(20 + Math.round((vi+1)/processedVariants.length*50), variant.label+' 완료');
   }
-  await worker.terminate();
 
-  if (allTexts.length === 0) return { text:'', confStr:'low', engine:'Tesseract.js' };
+  // 워커 종료
+  try { await worker.terminate(); } catch(e) {}
 
-  allTexts.sort(function(a,b){ return (b.kor*(b.conf+10)) - (a.kor*(a.conf+10)); });
+  if (!bestResult) {
+    return {
+      ok: false,
+      error: lastError || 'OCR 인식 결과 없음 — 이미지가 너무 어둡거나 흐릿합니다'
+    };
+  }
 
-  var lineVotes = {};
-  allTexts.slice(0,3).forEach(function(item){
-    item.text.split('\n').forEach(function(line){
-      var l = line.trim();
-      if (l.length >= 2) lineVotes[l] = (lineVotes[l]||0)+1;
-    });
-  });
-  var confirmedLines = Object.keys(lineVotes).filter(function(l){ return lineVotes[l]>=2; }).join('\n');
-  var rawText = (confirmedLines ? confirmedLines+'\n' : '') + allTexts[0].text;
-  var conf = allTexts[0].conf || 0;
-  var confStr = conf >= 70 ? 'high' : conf >= 40 ? 'medium' : 'low';
+  // ── 신뢰도 경고 표시 ─────────────────────────────────────
+  if (bestConf < 40) {
+    console.warn('[OCR] 낮은 신뢰도:', bestConf, '% — 수동 확인 권장');
+  }
 
-  return { text: rawText, confStr: confStr, engine: 'Tesseract.js (' + allTexts[0].label + ')' };
+  setP(80, '텍스트 분석 중...');
+  return {
+    ok:         true,
+    text:       bestResult.text,
+    rawText:    bestResult.rawText,
+    confidence: bestConf,
+    confLabel:  bestConf >= 70 ? 'high' : bestConf >= 40 ? 'medium' : 'low',
+  };
 }
 
 // ── 이미지 전처리: Canvas Otsu 이진화 ─────────────────
@@ -18389,55 +18425,101 @@ function ocrFieldFull(label, id, val, ph) {
 
 // ── OCR 결과 저장 ─────────────────────────────────
 async function saveOcrResult() {
-  var name = (document.getElementById('ocr-f-name')||{}).value||'';
-  if (!name.trim()) { showToast('제품명을 입력하세요'); return; }
+  var btn = document.querySelector('.ocr-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
 
-  // 핵심 정보(성분·방제대상)가 비어있으면 조회를 먼저 권장
-  var ingVal = getV('ocr-f-ingredient');
-  var tgtVal = getV('ocr-f-target');
-  if (!ingVal && !tgtVal) {
-    var proceed = confirm('성분·방제대상 정보가 비어있습니다.\n\n🔍 조회 버튼으로 정보를 먼저 가져오시겠습니까?\n(취소를 누르면 빈 정보로 그대로 등록합니다)');
-    if (proceed) { lookupProductByName(); return; }
-  }
+  try {
+    // ── 1. 폼 값 수집 ──────────────────────────────────────
+    var name = (document.getElementById('ocr-f-name')||{}).value||'';
+    name = name.trim();
+    if (!name) {
+      showToast('❌ 제품명을 입력하세요');
+      return;
+    }
 
-  var tab = (document.getElementById('ocr-f-tab')||{}).value||'pest';
-  var data = {
-    name:        name.trim(),
-    tab:         tab,
-    type:        getV('ocr-f-type'),
-    regNo:       getV('ocr-f-regno'),
-    ingredient:  getV('ocr-f-ingredient'),
-    target:      getV('ocr-f-target'),
-    method:      getV('ocr-f-method'),
-    amount:      getV('ocr-f-amount'),
-    timing:      getV('ocr-f-timing'),
-    warning:     getV('ocr-f-warning'),
-    manufacturer:getV('ocr-f-mfr'),
-    barcode:     document.getElementById('scan-code-input').value.trim(),
-    ocrScanned:  true,
-    createdAt:   new Date().toISOString(),
-  };
+    // ── 2. 데이터 파싱·정제 ───────────────────────────────
+    function getClean(id) {
+      var v = (document.getElementById(id)||{}).value||'';
+      return v.replace(/[\u0000-\u001F\u007F]/g,'').trim();  // 제어문자 제거
+    }
 
-  var ref = await db.collection('userDb_'+tab).add(data).catch(function(e){ showToast('저장 오류: '+e.message); return null; });
-  if (ref) {
-    data.id = ref.id;
-    if (!USER_DB[tab]) USER_DB[tab]=[];
-    USER_DB[tab].push(data);
-    showToast('✅ '+name+' DB에 등록 완료');
+    var tab        = getClean('ocr-f-tab') || 'pest';
+    var ingredient = getClean('ocr-f-ingredient');
+    var target     = getClean('ocr-f-target');
+    var regNo      = getClean('ocr-f-regno');
+    var type       = getClean('ocr-f-type') || '살균제';
+    var method     = getClean('ocr-f-method');
+    var amount     = getClean('ocr-f-amount');
+    var timing     = getClean('ocr-f-timing');
+    var warning    = getClean('ocr-f-warning');
+    var mfr        = getClean('ocr-f-mfr');
+    var barcode    = ((document.getElementById('scan-code-input')||{}).value||'').trim();
+
+    // ── 3. 핵심 정보 누락 검사 ───────────────────────────
+    if (!ingredient && !target) {
+      var proceed = confirm('성분 또는 방제대상 정보가 비어있습니다.\n\n🔍 조회 버튼으로 정보를 먼저 가져오시겠습니까?\n(취소 → 빈 정보로 그대로 등록)');
+      if (proceed) { lookupProductByName(); return; }
+    }
+
+    // ── 4. 저장 데이터 구성 ───────────────────────────────
+    var saveData = {
+      name:         name,
+      tab:          tab,
+      type:         type,
+      regNo:        regNo        || 'N/A',
+      ingredient:   ingredient   || '',
+      target:       target       || '',
+      method:       method       || '',
+      amount:       amount       || '',
+      timing:       timing       || '',
+      warning:      warning      || '',
+      manufacturer: mfr          || '',
+      barcode:      barcode      || '',
+      ocrScanned:   true,
+      savedAt:      new Date().toISOString(),   // 제안 패턴: serverTimestamp 대신 ISO 사용
+      _version:     1,
+    };
+
+    // Firebase serverTimestamp 추가 (가능한 경우)
+    if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldValue) {
+      saveData.serverTs = firebase.firestore.FieldValue.serverTimestamp();
+    }
+
+    // ── 5. smartSave (온라인→Firebase / 오프라인→IndexedDB) ──
+    var result = await smartSave('userDb_' + tab, saveData);
+
+    // ── 6. 로컬 메모리 업데이트 ───────────────────────────
+    saveData.id = result.id || result.localId || Date.now().toString();
+    if (!USER_DB[tab]) USER_DB[tab] = [];
+    USER_DB[tab].push(saveData);
+
+    // ── 7. 성공 피드백 ────────────────────────────────────
+    var savedMsg = result.source === 'local'
+      ? '💾 ' + name + ' 기기에 저장 (온라인 시 자동 동기화)'
+      : '✅ ' + name + ' Firebase 저장 완료';
+    showToast(savedMsg);
     closeModal('scan-modal');
-    // 저장된 탭으로 이동하여 올바른 렌더 함수 호출
+
+    // 해당 탭으로 이동
     APP.dbTab = tab;
-    var tabBtn = document.getElementById('dbt-'+tab);
+    var tabBtn = document.getElementById('dbt-' + tab);
     if (tabBtn) {
       document.querySelectorAll('.db-tab').forEach(function(b){ b.classList.remove('on'); });
       tabBtn.classList.add('on');
     }
-    // pest/fert/micro 각각에 맞는 렌더 함수 호출
     if (tab === 'fert' || tab === 'nutr') renderFertPanel(tab);
-    else if (tab === 'micro') renderMicroPanel();
-    else renderDb();
-    // 상위 탭(DB 관리)으로 자동 이동
+    else if (tab === 'micro')             renderMicroPanel();
+    else                                   renderDb();
     switchTab('db');
+    updatePendingBadge();
+
+  } catch(err) {
+    // ── 8. 에러 핸들링 ────────────────────────────────────
+    console.error('[saveOcrResult] 저장 오류:', err);
+    showToast('⚠️ 저장 실패: ' + (err.message || '알 수 없는 오류') + ' — 다시 시도하거나 관리자에 문의하세요.');
+
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ DB에 등록'; }
   }
 }
 
@@ -19667,6 +19749,54 @@ function parseAgriText(rawText, confStr) {
     if (!result.tab        || result.tab==='fert')    result.tab        = masterMatch.tab||result.tab;
     result.confidence = 'high';
   }
+
+
+  // ── 제안 패턴 적용: 저장 전 데이터 정제·검증 ─────────────────
+  // 1. 제어문자·이상 유니코드 제거
+  function cleanField(v) {
+    return (v||'').replace(/[\u0000-\u001F\u007F\uFFFD]/g,'')
+                  .replace(/\s+/g,' ').trim();
+  }
+  Object.keys(result).forEach(function(k) {
+    if (typeof result[k] === 'string') result[k] = cleanField(result[k]);
+  });
+
+  // 2. 정규식으로 핵심 필드 2차 추출 (OCR 잔여 오류 보완)
+  if (!result.name) {
+    var nm = t.match(/(?:상.표.명|제.품.명)[:\s:：]+([가-힣a-zA-Z0-9\s]{2,20})/);
+    if (nm) result.name = cleanField(nm[1]);
+  }
+  if (!result.regNo) {
+    // 등록번호 패턴: 숫자-살균-숫자 또는 숫자만
+    var rn = t.match(/등\s*록\s*번\s*호[:\s：]*(\d{2}-[가-힣]+-\d+|\d{6,})/);
+    if (rn) result.regNo = cleanField(rn[1]);
+  }
+  if (!result.ingredient) {
+    // 품목명 행에서 성분 추출
+    var ig = t.match(/품\s*목\s*명[:\s：]+([가-힣a-zA-Z0-9\s%·]+?)(?:\n|$)/);
+    if (ig) result.ingredient = cleanField(ig[1]);
+  }
+  if (!result.manufacturer) {
+    var mf = t.match(/(?:제\s*조|수\s*입)[:\s：]+([가-힣()\s주식회사]{2,20})/);
+    if (mf) result.manufacturer = cleanField(mf[1]);
+  }
+
+  // 3. 기본값 보장 (Firebase 저장 시 undefined 필드 오류 방지)
+  var DEFAULTS = {
+    name:'알 수 없음', tab:'pest', type:'살균제', regNo:'N/A',
+    ingredient:'', target:'', method:'', amount:'',
+    timing:'', warning:'', manufacturer:'', barcode:''
+  };
+  Object.keys(DEFAULTS).forEach(function(k) {
+    if (!result[k]) result[k] = DEFAULTS[k];
+  });
+
+  // 4. 신뢰도 재평가
+  var filledCount = ['name','ingredient','target','method','amount'].filter(function(k){ return result[k] && result[k] !== DEFAULTS[k]; }).length;
+  if (filledCount >= 4)      result.confidence = 'high';
+  else if (filledCount >= 2) result.confidence = 'medium';
+  else                       result.confidence = 'low';
+
 
   return result;
 }
