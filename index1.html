@@ -11480,61 +11480,68 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div style="font-size:10px;color:var(--gray-400);margin-top:3px;" id="scan-capture-label"></div>
     </div>
 
-    <!-- QR 모드 — 사진 촬영 + URL 붙여넣기 -->
+    <!-- QR 모드 -->
     <div id="scan-barcode-btns" style="margin-bottom:8px;">
 
-      <!-- 방법 1: 카메라로 QR 사진 찍기 → 자동 디코딩 -->
-      <div style="background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:12px;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">📷 방법 ①  카메라로 QR 사진 찍기</div>
+      <!-- ① 카메라로 QR 사진 찍기 -->
+      <div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:10px;text-align:center;">
+          📷 방법 ①  카메라로 QR코드 사진 찍기
+        </div>
         <input type="file" id="qr-photo-input" accept="image/*" capture="environment"
                style="display:none;" onchange="decodeQrFromPhoto(this)">
         <button onclick="document.getElementById('qr-photo-input').click()"
-                style="width:100%;padding:12px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;">
-          📷 QR 사진 찍기 (자동 인식)
+                style="width:100%;padding:14px;background:var(--green-dark);color:#fff;border-radius:10px;border:none;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:0.3px;">
+          📷 QR 사진 찍기
         </button>
-        <div style="font-size:11px;color:var(--gray-500);margin-top:6px;text-align:center;">
-          농약병 QR코드에 카메라를 맞추고 찍으면 자동으로 URL을 읽습니다
+        <div style="font-size:11px;color:var(--gray-500);margin-top:8px;text-align:center;line-height:1.6;">
+          카메라가 열리면 농약병 QR코드를 찍으세요<br>자동으로 URL을 읽어 AI가 분석합니다
         </div>
       </div>
 
-      <!-- 방법 2: 아이폰 카메라앱 → URL 복사 → 붙여넣기 -->
-      <div style="background:var(--blue-light);border:1px solid var(--blue-mid);border-radius:10px;padding:12px;margin-bottom:8px;">
-        <div style="font-size:12px;font-weight:600;color:var(--blue-dark);margin-bottom:6px;">📱 방법 ②  iPhone 카메라앱으로 QR 읽기</div>
-        <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:8px;">
-          ① iPhone 기본 카메라앱으로 QR 스캔<br>
-          ② 화면에 나타난 URL 배너를 <b>길게 누르기 → URL 복사</b><br>
-          ③ 아래 입력란에 붙여넣기 후 분석
+      <!-- ② iPhone 카메라앱 → URL 복사 → 붙여넣기 -->
+      <div style="background:var(--blue-light);border:1.5px solid var(--blue-mid);border-radius:12px;padding:14px;margin-bottom:10px;">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-dark);margin-bottom:8px;text-align:center;">
+          📱 방법 ②  URL 직접 붙여넣기
         </div>
+        <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:10px;background:#fff;border-radius:8px;padding:8px 10px;">
+          <b>iPhone:</b> 기본 카메라앱으로 QR 스캔 → 배너 URL을 <b>길게 누르기 → URL 복사</b> → 아래 붙여넣기<br>
+          <b>컴퓨터:</b> QR 리더 앱으로 읽은 URL을 복사 → 아래 붙여넣기
+        </div>
+        <textarea id="qr-url-input" rows="2"
+          placeholder="https://www.knco.co.kr/... 또는 QR에서 읽은 내용을 붙여넣으세요"
+          style="width:100%;padding:10px;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:13px;resize:none;box-sizing:border-box;margin-bottom:8px;"></textarea>
         <div style="display:flex;gap:6px;">
-          <input type="url" id="qr-url-paste" placeholder="https://www.knco.co.kr/..."
-                 style="flex:1;padding:9px 12px;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:13px;"
-                 onkeydown="if(event.key==='Enter') analyzeQrUrl()">
+          <button onclick="pasteQrUrl()"
+                  style="flex:1;padding:10px;background:#fff;border:1.5px solid var(--blue-mid);color:var(--blue-dark);border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+            📋 붙여넣기
+          </button>
           <button onclick="analyzeQrUrl()"
-                  style="padding:9px 16px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">분석</button>
-        </div>
-        <!-- 붙여넣기 버튼 (iOS에서 클립보드 자동 붙여넣기) -->
-        <button onclick="pasteQrUrl()"
-                style="width:100%;margin-top:6px;padding:8px;background:#fff;border:1px solid var(--blue-mid);color:var(--blue-dark);border-radius:7px;font-size:12px;cursor:pointer;">
-          📋 클립보드에서 붙여넣기
-        </button>
-      </div>
-
-      <!-- 방법 3: QR 이미지 파일 업로드 (갤러리) -->
-      <details style="border:1px solid var(--gray-200);border-radius:8px;padding:8px 10px;">
-        <summary style="font-size:12px;color:var(--gray-500);cursor:pointer;list-style:none;">
-          🖼 방법 ③  갤러리에서 QR 이미지 선택
-        </summary>
-        <div style="margin-top:8px;">
-          <input type="file" id="qr-gallery-input" accept="image/*"
-                 style="display:none;" onchange="decodeQrFromPhoto(this)">
-          <button onclick="document.getElementById('qr-gallery-input').click()"
-                  style="width:100%;padding:9px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:7px;font-size:12px;cursor:pointer;">
-            🖼 사진첩에서 QR 이미지 선택
+                  style="flex:2;padding:10px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">
+            🤖 AI 분석 시작
           </button>
         </div>
-      </details>
+      </div>
 
-      <div id="qr-decode-result" style="margin-top:10px;"></div>
+      <!-- ③ 갤러리에서 QR 이미지 선택 -->
+      <div style="border:1px solid var(--gray-200);border-radius:10px;padding:10px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:8px;">🖼 방법 ③  갤러리에서 QR 이미지 선택</div>
+        <input type="file" id="qr-gallery-input" accept="image/*"
+               style="display:none;" onchange="decodeQrFromPhoto(this)">
+        <button onclick="document.getElementById('qr-gallery-input').click()"
+                style="width:100%;padding:10px;background:var(--gray-100);border:1px solid var(--gray-200);border-radius:8px;font-size:13px;cursor:pointer;">
+          🖼 사진첩에서 QR 이미지 선택
+        </button>
+      </div>
+
+      <!-- 결과 + 초기화 버튼 -->
+      <div id="qr-decode-result" style="margin-top:4px;"></div>
+      <div id="qr-reset-row" style="display:none;margin-top:8px;">
+        <button onclick="resetQrPanel()"
+                style="width:100%;padding:9px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;color:var(--gray-500);cursor:pointer;">
+          🔄 다시 시작 (초기화)
+        </button>
+      </div>
     </div>
 
     <!-- OCR 모드 버튼 -->
@@ -11900,7 +11907,6 @@ const FIREBASE_CONFIG = {
   authDomain:  "orchardapp-b81ca.firebaseapp.com",
   appId:      "1:848680345496:web:11d468c44b412c037795ed",
 };
-
 // ── OCR 엔진 설정 ──────────────────────────────────
 // 1순위: Google Apps Script 마이크로서비스 (Drive OCR, 한글 인식률 우수)
 //   - 배포 방법은 /gas_ocr_service/Code.gs 파일 상단 주석 참고
@@ -21294,52 +21300,17 @@ async function runAiParse() {
   if (!rawText.trim()) { showToast('분석할 텍스트를 붙여넣으세요'); return; }
 
   if (btn) { btn.disabled=true; btn.textContent='🤖 AI 분석 중...'; }
-  if (out) out.innerHTML = '<div style="padding:12px;color:var(--gray-400);text-align:center;">AI가 적용 정보를 분석하고 있습니다...</div>';
+  if (out) out.innerHTML = '<div style="padding:12px;text-align:center;color:var(--gray-400);">AI가 분석 중입니다...</div>';
 
   try {
-    var prompt = '다음은 농약 "'+name+'"('+type+')의 적용 대상 정보입니다.\n'
-      + '이 텍스트에서 작물별 방제 정보를 추출해서 아래 JSON 구조로만 응답하세요. 다른 말은 하지 마세요.\n\n'
-      + '요구 구조:\n'
-      + '{\n'
-      + '  "name": "'+name+'",\n'
-      + '  "type": "'+type+'",\n'
-      + '  "ingredient": "성분명 (텍스트에서 추출, 없으면 빈 문자열)",\n'
-      + '  "manufacturer": "제조사 (텍스트에서 추출, 없으면 빈 문자열)",\n'
-      + '  "regNo": "등록번호 (텍스트에서 추출, 없으면 빈 문자열)",\n'
-      + '  "cropUsage": {\n'
-      + '    "작물명": [\n'
-      + '      {"target":"방제대상 병해충", "method":"사용방법", "amount":"물20L당사용량 또는 희석배수", "safety":"안전사용시기", "times":"횟수"}\n'
-      + '    ]\n'
-      + '  }\n'
-      + '}\n\n'
-      + '텍스트:\n' + rawText.slice(0, 8000);
-
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-    var data = await res.json();
-    var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
-
-    // JSON 추출
-    var jsonStr = text.replace(/```json|```/g,'').trim();
-    // 중괄호 시작~끝 추출
-    var jsonStart = jsonStr.indexOf('{');
-    var jsonEnd   = jsonStr.lastIndexOf('}');
-    if (jsonStart !== -1 && jsonEnd !== -1) {
-      jsonStr = jsonStr.slice(jsonStart, jsonEnd+1);
+    var parsed = await runAiParseFromText(name, type, rawText);
+    if (parsed) {
+      _renderAiConfirm(parsed.name||name, parsed, parsed.cropUsage||{});
+    } else {
+      if (out) out.innerHTML = '<div style="padding:10px;color:var(--red-dark);">⚠️ 분석 실패. Claude API 키가 설정되어 있는지 확인하세요.<br><small>설정 → Claude API Key</small></div>';
     }
-
-    var parsed = JSON.parse(jsonStr);
-    _renderAiConfirm(parsed.name||name, parsed, parsed.cropUsage||{});
-
   } catch(e) {
-    if (out) out.innerHTML = '<div style="padding:10px;color:var(--red-dark);">⚠️ 분석 오류: '+esc(e.message)+'<br><br>텍스트 형식을 확인하거나 다시 시도해 주세요.</div>';
+    if (out) out.innerHTML = '<div style="padding:10px;color:var(--red-dark);">⚠️ 오류: '+esc(e.message)+'</div>';
   } finally {
     if (btn) { btn.disabled=false; btn.textContent='🤖 AI 분석 시작'; }
   }
@@ -21762,49 +21733,54 @@ async function tryFetchSiteText(url) {
   return '[QR URL] ' + url;
 }
 
-// Claude AI로 파싱
+// Claude AI로 파싱 (callClaude 공통 함수 사용 — x-api-key 자동 포함)
 async function runAiParseFromUrl(url, siteText) {
-  try {
-    var prompt =
-      '다음은 농약 제품 사이트('+url+')에서 가져온 텍스트입니다.\n'
-      + '이 텍스트에서 농약 정보를 추출해 아래 JSON 구조로만 응답하세요. 다른 말은 없이 JSON만 출력하세요.\n\n'
-      + '{\n'
-      + '  "name": "제품명",\n'
-      + '  "type": "살균제|살충제|살균살충제|제초제 중 하나",\n'
-      + '  "ingredient": "유효성분 및 함량",\n'
-      + '  "manufacturer": "제조사",\n'
-      + '  "regNo": "등록번호",\n'
-      + '  "form": "제형(예:액상수화제)",\n'
-      + '  "toxicity": "독성등급",\n'
-      + '  "feature": "제품 특징 요약",\n'
-      + '  "warning": "주의사항 요약",\n'
-      + '  "cropUsage": {\n'
-      + '    "작물명": [\n'
-      + '      {"target":"방제대상 병해충", "method":"사용방법", "amount":"희석배수 또는 사용량", "safety":"안전사용시기", "times":"횟수"}\n'
-      + '    ]\n'
-      + '  }\n'
-      + '}\n\n'
-      + '텍스트가 부족하면 URL('+url+')을 기반으로 제품명이라도 추출하세요.\n\n'
-      + '텍스트:\n' + siteText.slice(0, 6000);
+  var prompt =
+    '다음 정보를 보고 농약/비료 제품 정보를 JSON으로만 응답하세요. 다른 설명 없이 JSON만 출력하세요.\n\n'
+    + 'URL: ' + url + '\n'
+    + '텍스트: ' + (siteText||'').slice(0, 5000) + '\n\n'
+    + '아래 구조로 출력하세요:\n'
+    + '{"name":"제품명","type":"살균제|살충제|살균살충제|제초제|비료 중 하나",'
+    + '"ingredient":"유효성분","manufacturer":"제조사","regNo":"등록번호",'
+    + '"form":"제형","feature":"특징 요약","warning":"주의사항",'
+    + '"cropUsage":{"작물명":[{"target":"방제대상","method":"방법","amount":"사용량","safety":"안전사용시기","times":"횟수"}]}}\n\n'
+    + 'URL에서 제품명을 유추하고, 텍스트가 부족해도 최대한 채워주세요.';
 
-    var res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 4096,
-        messages: [{role:'user', content: prompt}]
-      })
-    });
-    var data = await res.json();
-    var text = (data.content||[]).map(function(c){return c.text||'';}).join('');
-    var s = text.indexOf('{'); var e = text.lastIndexOf('}');
-    if (s!==-1 && e!==-1) return JSON.parse(text.slice(s, e+1));
+  var result = await callClaude(prompt, 3000);
+  if (!result.ok) {
+    console.warn('AI 파싱 실패:', result.error);
+    return null;
+  }
+  try {
+    var t = result.text;
+    var s = t.indexOf('{'); var e = t.lastIndexOf('}');
+    if (s !== -1 && e !== -1) return JSON.parse(t.slice(s, e+1));
   } catch(err) {
-    console.warn('AI 파싱 실패:', err.message);
+    console.warn('JSON 파싱 실패:', err.message);
   }
   return null;
 }
+
+// runAiParse (텍스트 붙여넣기 AI 분석) 도 callClaude 사용으로 수정
+async function runAiParseFromText(productName, productType, rawText) {
+  var prompt =
+    '농약 "'+productName+'"('+productType+')의 적용 정보입니다.\n'
+    + '아래 JSON 구조로만 응답하세요. 다른 말 없이 JSON만 출력하세요.\n\n'
+    + '{"name":"'+productName+'","type":"'+productType+'",'
+    + '"ingredient":"성분","manufacturer":"제조사","regNo":"등록번호","form":"제형",'
+    + '"cropUsage":{"작물명":[{"target":"방제대상","method":"방법","amount":"사용량","safety":"안전사용시기","times":"횟수"}]}}\n\n'
+    + '텍스트:\n' + rawText.slice(0, 6000);
+
+  var result = await callClaude(prompt, 4000);
+  if (!result.ok) return null;
+  try {
+    var t = result.text;
+    var s = t.indexOf('{'); var e = t.lastIndexOf('}');
+    if (s !== -1 && e !== -1) return JSON.parse(t.slice(s, e+1));
+  } catch(err) {}
+  return null;
+}
+
 
 // QR 진행 상태 UI
 function buildQrProgressUI(step, url) {
@@ -21992,187 +21968,201 @@ async function showPendingPanel() {
   document.body.insertAdjacentHTML('beforeend', h);
 }
 
+
 // ══════════════════════════════════════════════════════════
-// QR 처리 — 사진 촬영 / URL 붙여넣기 방식
+// QR 처리 시스템 — 사진/URL/갤러리
 // ══════════════════════════════════════════════════════════
 
-// ── 방법 ①②③: 사진에서 QR 디코딩 (jsQR 사용) ────────────────
-function decodeQrFromPhoto(input) {
-  var file = input.files && input.files[0];
-  if (!file) return;
-
+// 결과 표시 헬퍼
+function _setQrResult(html2, showReset) {
   var out = document.getElementById('qr-decode-result');
-  if (out) out.innerHTML = '<div style="padding:10px;text-align:center;color:var(--gray-400);">🔍 QR 인식 중...</div>';
-
-  var img = new Image();
-  var reader = new FileReader();
-
-  reader.onload = function(e) {
-    img.onload = function() {
-      try {
-        // 캔버스에 그려서 imageData 추출
-        var cvs = document.createElement('canvas');
-        // 큰 이미지는 다운샘플 (QR 인식에는 800px 충분)
-        var MAX = 1024;
-        var scale = Math.min(1, MAX / Math.max(img.width, img.height));
-        cvs.width  = Math.floor(img.width  * scale);
-        cvs.height = Math.floor(img.height * scale);
-        var ctx = cvs.getContext('2d');
-        ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
-        var imageData = ctx.getImageData(0, 0, cvs.width, cvs.height);
-
-        if (typeof jsQR !== 'function') {
-          _showQrDecodeError('QR 라이브러리 초기화 오류. 페이지를 새로고침하세요.');
-          return;
-        }
-
-        var code = jsQR(imageData.data, cvs.width, cvs.height, {
-          inversionAttempts: 'attemptBoth'
-        });
-
-        if (code && code.data) {
-          _onQrDecoded(code.data);
-        } else {
-          // 실패 시 이미지를 회전해서 재시도 (기울어진 QR 대응)
-          _tryRotatedQr(cvs, ctx, img);
-        }
-      } catch(err) {
-        _showQrDecodeError('이미지 처리 오류: ' + err.message);
-      }
-    };
-    img.src = e.target.result;
-  };
-  reader.readAsDataURL(file);
-  // 파일 input 초기화 (같은 파일 재선택 가능하게)
-  input.value = '';
+  if (out) out.innerHTML = html2;
+  // processQrUrlAuto에서도 같이 업데이트
+  var sr = document.getElementById('scan-result');
+  if (sr) sr.innerHTML = html2;
+  var resetRow = document.getElementById('qr-reset-row');
+  if (resetRow) resetRow.style.display = showReset ? '' : 'none';
 }
 
-// 회전 재시도 (90°, 180°, 270°)
-function _tryRotatedQr(cvs, ctx, img) {
+// 초기화 버튼
+function resetQrPanel() {
+  _setQrResult('', false);
+  var inp = document.getElementById('qr-url-input');
+  if (inp) inp.value = '';
+  var ci = document.getElementById('scan-code-input');
+  if (ci) ci.value = '';
+  // file input 초기화
+  ['qr-photo-input','qr-gallery-input'].forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+// ── ① 사진/갤러리에서 QR 디코딩 ─────────────────────────────
+function decodeQrFromPhoto(input) {
+  var file = input && input.files && input.files[0];
+  if (!file) return;
+
+  _setQrResult('<div style="padding:16px;text-align:center;color:var(--gray-400);">🔍 QR 인식 중...</div>', false);
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = new Image();
+    img.onload = function() {
+      _decodeQrImage(img);
+    };
+    img.onerror = function() {
+      _setQrResult('<div style="padding:10px;color:var(--red-dark);">⚠️ 이미지를 불러올 수 없습니다.</div>', true);
+    };
+    img.src = ev.target.result;
+  };
+  reader.readAsDataURL(file);
+  input.value = ''; // 같은 파일 재선택 가능
+}
+
+function _decodeQrImage(img) {
+  if (typeof jsQR !== 'function') {
+    _setQrResult('<div style="padding:10px;color:var(--red-dark);">⚠️ QR 라이브러리가 초기화되지 않았습니다. 페이지를 새로고침하세요.</div>', true);
+    return;
+  }
+
+  // 캔버스에 그려서 픽셀 데이터 추출
+  var MAX = 1200;
+  var scale = Math.min(1, MAX / Math.max(img.naturalWidth || img.width, img.naturalHeight || img.height));
+  var w = Math.floor((img.naturalWidth  || img.width)  * scale);
+  var h = Math.floor((img.naturalHeight || img.height) * scale);
+
+  var cvs = document.createElement('canvas');
+  cvs.width = w; cvs.height = h;
+  var ctx = cvs.getContext('2d');
+  ctx.drawImage(img, 0, 0, w, h);
+
+  // 정방향 시도
+  var code = jsQR(ctx.getImageData(0, 0, w, h).data, w, h, {inversionAttempts:'attemptBoth'});
+  if (code && code.data) { _onQrSuccess(code.data); return; }
+
+  // 90°씩 회전해서 재시도
   var angles = [90, 180, 270];
-  for (var ai = 0; ai < angles.length; ai++) {
-    var angle = angles[ai] * Math.PI / 180;
+  for (var i = 0; i < angles.length; i++) {
     var cvs2 = document.createElement('canvas');
-    if (angles[ai] === 90 || angles[ai] === 270) {
-      cvs2.width = cvs.height; cvs2.height = cvs.width;
-    } else {
-      cvs2.width = cvs.width; cvs2.height = cvs.height;
-    }
+    var isLR = angles[i] === 90 || angles[i] === 270;
+    cvs2.width = isLR ? h : w;
+    cvs2.height = isLR ? w : h;
     var ctx2 = cvs2.getContext('2d');
     ctx2.translate(cvs2.width/2, cvs2.height/2);
-    ctx2.rotate(angle);
-    ctx2.drawImage(cvs, -cvs.width/2, -cvs.height/2);
-    var imgData2 = ctx2.getImageData(0, 0, cvs2.width, cvs2.height);
-    var code2 = jsQR(imgData2.data, cvs2.width, cvs2.height, {inversionAttempts:'attemptBoth'});
-    if (code2 && code2.data) {
-      _onQrDecoded(code2.data);
-      return;
-    }
+    ctx2.rotate(angles[i] * Math.PI / 180);
+    ctx2.drawImage(cvs, -w/2, -h/2);
+    var code2 = jsQR(ctx2.getImageData(0, 0, cvs2.width, cvs2.height).data, cvs2.width, cvs2.height, {inversionAttempts:'attemptBoth'});
+    if (code2 && code2.data) { _onQrSuccess(code2.data); return; }
   }
-  // 모든 각도 실패
-  _showQrDecodeError(
-    'QR코드를 인식하지 못했습니다.<br>' +
-    '① QR코드가 선명한지 확인하세요<br>' +
-    '② 방법 ②(URL 붙여넣기)를 사용하세요'
+
+  // 모두 실패
+  _setQrResult(
+    '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:14px;">'
+    + '<div style="font-size:13px;font-weight:600;color:#E65100;margin-bottom:8px;">⚠️ QR코드 인식 실패</div>'
+    + '<div style="font-size:12px;color:#666;line-height:1.8;">'
+    + '• QR코드가 선명한지 확인하고 다시 찍어주세요<br>'
+    + '• 또는 방법 ②에서 URL을 직접 붙여넣으세요'
+    + '</div></div>', true
   );
 }
 
-// QR 디코딩 성공
-function _onQrDecoded(value) {
-  value = value.trim();
-  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
-
-  var out = document.getElementById('qr-decode-result');
-  if (out) {
-    out.innerHTML =
-      '<div style="background:var(--green-light);border:1.5px solid var(--green-dark);border-radius:10px;padding:12px;margin-top:4px;">'
-      + '<div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">✅ QR 인식 성공!</div>'
-      + '<div style="font-size:11px;color:var(--gray-600);word-break:break-all;margin-bottom:10px;padding:6px;background:#fff;border-radius:6px;">'
-      + esc(value.slice(0,120)) + (value.length>120?'…':'')
-      + '</div>'
-      + '<button onclick="_processDecodedQr(\'' + value.replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\r?\n/g,'') + '\')"'
-      + ' style="width:100%;padding:10px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
-      + '🤖 AI로 농약 정보 분석 → 저장'
-      + '</button>'
-      + '</div>';
-  }
-  // scan-code-input에도 채워둠
-  var inp = document.getElementById('scan-code-input');
-  if (inp) inp.value = value;
-}
-
-function _showQrDecodeError(msg) {
-  var out = document.getElementById('qr-decode-result');
-  if (out) out.innerHTML =
-    '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:10px;margin-top:4px;font-size:12px;color:#E65100;">'
-    + '⚠️ ' + msg + '</div>';
-}
-
-// ── 방법 ②: URL 붙여넣기 분석 ─────────────────────────────────
+// ── ② URL 입력 분석 ───────────────────────────────────────────
 function analyzeQrUrl() {
-  var inp = document.getElementById('qr-url-paste');
-  var url = inp ? inp.value.trim() : '';
-  if (!url) { showToast('URL을 먼저 붙여넣으세요'); return; }
-  if (!url.startsWith('http')) { url = 'https://' + url; }
-  _processDecodedQr(url);
+  var inp = document.getElementById('qr-url-input');
+  var val = inp ? inp.value.trim() : '';
+  if (!val) { showToast('URL이나 텍스트를 먼저 입력하세요'); return; }
+  if (val.startsWith('http://') || val.startsWith('https://')) {
+    _onQrSuccess(val);
+  } else {
+    // URL이 아닌 텍스트도 처리
+    _onQrSuccess(val);
+  }
 }
 
-// 클립보드 붙여넣기 버튼
+// 클립보드 붙여넣기
 async function pasteQrUrl() {
+  var inp = document.getElementById('qr-url-input');
+  if (!inp) return;
   try {
     var text = await navigator.clipboard.readText();
     if (text && text.trim()) {
-      var inp = document.getElementById('qr-url-paste');
-      if (inp) {
-        inp.value = text.trim();
-        inp.focus();
-        showToast('📋 붙여넣기 완료');
-        // URL이면 바로 분석
-        if (text.trim().startsWith('http')) {
-          setTimeout(analyzeQrUrl, 300);
-        }
-      }
+      inp.value = text.trim();
+      showToast('📋 붙여넣기 완료');
     } else {
       showToast('클립보드가 비어있습니다');
     }
   } catch(e) {
-    // 권한 없을 때 수동 안내
-    var inp = document.getElementById('qr-url-paste');
-    if (inp) {
-      inp.focus();
-      inp.select();
-      showToast('입력란을 길게 눌러 붙여넣기 하세요');
-    }
+    inp.focus();
+    showToast('입력란을 길게 눌러 직접 붙여넣기 하세요');
   }
 }
 
-// ── 공통: QR 디코딩 결과 처리 ──────────────────────────────────
-function _processDecodedQr(value) {
-  var out = document.getElementById('qr-decode-result');
-  if (out) out.innerHTML =
-    '<div style="padding:10px;text-align:center;color:var(--gray-400);">'
-    + '🤖 AI 분석 중...</div>';
+// ── QR 값 처리 공통 ───────────────────────────────────────────
+function _onQrSuccess(value) {
+  value = (value||'').trim();
+  if (!value) return;
+  if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
 
-  if (value.startsWith('http://') || value.startsWith('https://')) {
-    // URL → processQrUrlAuto
-    processQrUrlAuto(value);
-  } else if (/^\d{8,15}$/.test(value.replace(/-/g,''))) {
-    // 숫자 코드 → 등록번호 조회
-    var inp = document.getElementById('scan-code-input');
-    if (inp) inp.value = value;
-    lookupScanCode && lookupScanCode();
+  var ci = document.getElementById('scan-code-input');
+  if (ci) ci.value = value;
+
+  var isUrl  = value.startsWith('http://') || value.startsWith('https://');
+  var isCode = /^[\d\-]{8,16}$/.test(value.replace(/\s/g,''));
+
+  // 버튼은 data-qrval 속성 사용 — 문자열 탈출 문제 없음
+  var btnHtml;
+  if (isUrl) {
+    btnHtml = '<button id="qr-action-btn" style="width:100%;padding:12px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;">🤖 AI로 농약 정보 분석 → 저장</button>';
+  } else if (isCode) {
+    btnHtml = '<button id="qr-action-btn" style="width:100%;padding:12px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;">🔍 등록번호로 조회</button>';
   } else {
-    // 텍스트 → AI 분석 모달
-    closeModal('scan-modal');
-    openAiImportModal && openAiImportModal();
-    setTimeout(function(){
-      var ta = document.getElementById('ai-rawtext');
-      if (ta) { ta.value = value; ta.focus(); }
-    }, 200);
+    btnHtml = '<button id="qr-action-btn" style="width:100%;padding:12px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:14px;font-weight:700;cursor:pointer;">🤖 AI로 정보 분석</button>';
+  }
+
+  _setQrResult(
+    '<div style="background:var(--green-light);border:1.5px solid var(--green-dark);border-radius:10px;padding:12px;">'
+    + '<div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">✅ 인식 성공!</div>'
+    + '<div id="qr-val-display" style="font-size:11px;color:var(--gray-600);word-break:break-all;margin-bottom:10px;background:#fff;border-radius:6px;padding:7px;line-height:1.5;"></div>'
+    + btnHtml
+    + '</div>', true
+  );
+
+  // 값을 DOM에 안전하게 삽입
+  var disp = document.getElementById('qr-val-display');
+  if (disp) disp.textContent = value.slice(0,150) + (value.length>150?'…':'');
+
+  // 버튼 이벤트 — 클로저로 value 캡처
+  var btn = document.getElementById('qr-action-btn');
+  if (btn) {
+    var _capturedVal = value;
+    btn.addEventListener('click', function() {
+      if (isCode) {
+        lookupScanCode();
+      } else {
+        _processQrValue(_capturedVal);
+      }
+    });
   }
 }
+// QR 값 → 처리
+function _processQrValue(value) {
+  _setQrResult(
+    '<div style="padding:16px;text-align:center;">'
+    + '<div style="font-size:28px;margin-bottom:8px;">🤖</div>'
+    + '<div style="font-size:13px;color:var(--gray-600);">AI 분석 중...</div>'
+    + '<div style="height:4px;background:var(--gray-200);border-radius:2px;margin-top:12px;overflow:hidden;">'
+    + '<div style="height:100%;background:var(--green-dark);border-radius:2px;animation:qrProgress 2s ease-in-out infinite;"></div></div>'
+    + '</div>', false
+  );
+  processQrUrlAuto(value);
+}
 
-// ── setScanMode barcode: 카메라 실시간 스캔 OFF ────────────────
+// processQrUrlAuto가 scan-result 대신 qr-decode-result 업데이트하도록
+// (함수 내부 _setQrUI를 통해 처리됨)
+
+// setScanMode barcode: 카메라 실시간 스캔 OFF, 비디오 숨김
+
 // (기존 실시간 스캔 startScan('barcode') 은 더 이상 필요 없음)
 // scan-video-wrap 숨기기
 function _hideVideoForQrMode() {
