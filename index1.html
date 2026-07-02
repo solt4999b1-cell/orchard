@@ -17222,6 +17222,39 @@ async function startScan(mode) {
       var vidEl = document.getElementById('scan-video');
       setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;text-align:center;">📱 QR코드를 사각형 안에 비춰주세요 — 자동 인식</div>');
 
+      // ── 자동초점 설정 ──────────────────────────────────
+      (function setupAutoFocus() {
+        if (!scanStream) return;
+        var track = scanStream.getVideoTracks ? scanStream.getVideoTracks()[0] : null;
+        if (!track) return;
+        var caps = track.getCapabilities ? track.getCapabilities() : {};
+        var adv = {};
+        // 연속 자동초점 (Chrome/Android)
+        if (caps.focusMode && caps.focusMode.includes('continuous')) {
+          adv.focusMode = 'continuous';
+        }
+        // iOS pointOfInterest: 화면 중앙으로 초점 고정
+        if (caps.pointOfInterest) {
+          adv.pointOfInterest = { x: 0.5, y: 0.5 };
+          adv.focusMode = 'auto';
+        }
+        if (Object.keys(adv).length) {
+          track.applyConstraints({ advanced: [adv] }).catch(function(){});
+        }
+        // 3초마다 초점 재요청 (먼 거리 → 가까운 QR 전환 대비)
+        window._afTimer = setInterval(function() {
+          if (!scanStream) { clearInterval(window._afTimer); return; }
+          var t = scanStream.getVideoTracks()[0];
+          if (!t) return;
+          var c = t.getCapabilities ? t.getCapabilities() : {};
+          if (c.pointOfInterest) {
+            t.applyConstraints({ advanced: [{ pointOfInterest:{x:0.5,y:0.5}, focusMode:'auto' }] }).catch(function(){});
+          } else if (c.focusMode && c.focusMode.includes('continuous')) {
+            t.applyConstraints({ advanced: [{ focusMode:'continuous' }] }).catch(function(){});
+          }
+        }, 3000);
+      })();
+
       var _busy = false;
       scanInterval = setInterval(function() {
         if (_busy) return;
@@ -17297,6 +17330,12 @@ function tapToFocus(event) {
           setTimeout(function() {
             if (track.readyState === 'live') {
               track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function(){});
+    // QR 감지 일시 중단 → 초점 확보 후 재개
+    if (scanMode === 'barcode' && scanInterval) {
+      clearInterval(scanInterval);
+      scanInterval = null;
+      setTimeout(function(){ startScan('barcode'); }, 800);
+    }
               lockFocusMarker(false);
             }
           }, 1500);
@@ -17469,6 +17508,7 @@ function checkBlur() {
 function stopScan() {
   stopBlurMonitor();
   if (scanInterval) { clearInterval(scanInterval); scanInterval=null; }
+  if (window._afTimer) { clearInterval(window._afTimer); window._afTimer=null; }
   if (scanStream)   {
     // 토치 끄기
     var track = scanStream.getVideoTracks()[0];
@@ -21647,18 +21687,27 @@ async function processQrUrlAuto(qrUrl) {
 
 // 사이트 텍스트 fetch 시도 (CORS 프록시 포함)
 async function tryFetchSiteText(url) {
-  // 직접 fetch 시도
+  // fetch는 절대 페이지 이동을 일으키지 않음 (CORS 헤더 없으면 네트워크 오류로만 끝남)
+  // 단, redirect:'error'로 리다이렉트 자체도 차단
   try {
-    var res = await fetch(url, {signal: AbortSignal.timeout(5000)});
+    var ctrl = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, 4000);
+    var res = await fetch(url, {
+      method: 'GET',
+      mode: 'cors',          // CORS 없으면 네트워크 오류 → catch로
+      redirect: 'error',     // 리다이렉트 차단
+      signal: ctrl.signal
+    });
+    clearTimeout(timer);
     if (res.ok) {
       var text = await res.text();
-      // HTML 태그 제거
-      return text.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0, 10000);
+      return text.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0, 8000);
     }
-  } catch(e) {}
-
-  // 직접 fetch 실패 (CORS, 동적 사이트 등)
-  return '[URL: '+url+']\n사이트 직접 접근 불가 (동적 로딩 페이지)\nQR코드에서 제품 URL을 확인했습니다.';
+  } catch(e) {
+    // CORS 오류, 타임아웃, 리다이렉트 모두 여기서 처리 — 화면 이동 없음
+  }
+  // fetch 불가 → URL만 전달하여 AI가 제품명 추출
+  return '[QR URL] ' + url;
 }
 
 // Claude AI로 파싱
