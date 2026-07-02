@@ -17207,55 +17207,57 @@ async function startScan(mode) {
     }
 
     if (scanMode === 'barcode') {
-      // jsQR 기반 QR코드 스캔 (iOS Safari 포함 전 브라우저 지원)
-      var qrCanvas = document.getElementById('scan-canvas');
-      var qrCtx    = qrCanvas ? qrCanvas.getContext('2d') : null;
-
-      if (typeof jsQR === 'undefined') {
-        // 재시도 (최대 3회)
-        window._qrRetry = (window._qrRetry||0) + 1;
-        if (window._qrRetry <= 3) {
-          setTimeout(function(){ startScan('barcode'); }, 800);
-        } else {
-          window._qrRetry = 0;
-          setResult('<div style="background:var(--amber-light);border-radius:6px;padding:10px;color:var(--orange);">⚠️ QR 초기화 실패. 페이지를 새로고침 후 다시 시도하세요.</div>');
-        }
+      // ── jsQR QR코드 감지 ──────────────────────────────────
+      if (typeof jsQR !== 'function') {
+        setResult('<div style="color:var(--red-dark);padding:8px;">⚠️ QR 라이브러리 오류. 페이지를 새로고침하세요.</div>');
         return;
       }
-      window._qrRetry = 0;
 
-      setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;">📱 QR코드를 사각형 안에 맞추면 자동으로 인식됩니다.</div>');
+      // 캔버스 — 모바일 고해상도 대응: 720p로 다운샘플
+      var QR_W = 640, QR_H = 480;
+      var qrCvs = document.createElement('canvas');
+      qrCvs.width = QR_W; qrCvs.height = QR_H;
+      var qrCtx = qrCvs.getContext('2d', {willReadFrequently: true});
 
-      var _qrDetecting = false;
+      var vidEl = document.getElementById('scan-video');
+      setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;text-align:center;">📱 QR코드를 사각형 안에 비춰주세요 — 자동 인식</div>');
+
+      var _busy = false;
       scanInterval = setInterval(function() {
-        if (_qrDetecting) return;
-        if (!video || video.readyState < 2) return;   // HAVE_CURRENT_DATA 이상
-        if (!qrCanvas || !qrCtx) return;
-        var vw = video.videoWidth, vh = video.videoHeight;
-        if (!vw || !vh) return;   // iOS에서 종종 0으로 오는 경우 방어
-        qrCanvas.width  = vw;
-        qrCanvas.height = vh;
-        _qrDetecting = true;
+        if (_busy) return;
+        if (!vidEl) return;
+        // readyState 3(HAVE_FUTURE_DATA) 또는 4(HAVE_ENOUGH_DATA) 필요
+        if (vidEl.readyState < 3) return;
+        var vw = vidEl.videoWidth, vh = vidEl.videoHeight;
+        if (!vw || !vh) return;
+
+        _busy = true;
         try {
-          qrCtx.drawImage(video, 0, 0, vw, vh);
-          var imageData = qrCtx.getImageData(0, 0, vw, vh);
-          var code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'dontInvert'
-          });
-          if (code && code.data) {
-            stopScan();
-            var qrValue = code.data;
+          // 다운샘플 후 getImageData
+          qrCtx.drawImage(vidEl, 0, 0, QR_W, QR_H);
+          var imgData = qrCtx.getImageData(0, 0, QR_W, QR_H);
+
+          // 두 번 시도: 정방향 + 반전(흰배경 QR 대응)
+          var code = jsQR(imgData.data, QR_W, QR_H, {inversionAttempts: 'attemptBoth'});
+
+          if (code && code.data && code.data.trim()) {
+            clearInterval(scanInterval);
+            scanInterval = null;
+            var qrValue = code.data.trim();
+            // 입력란 채우기
             var inp = document.getElementById('scan-code-input');
             if (inp) inp.value = qrValue;
-            showToast('✅ QR코드 인식: ' + qrValue.slice(0,40) + (qrValue.length>40?'...':''));
+            // 진동 피드백 (iOS는 무시)
+            if (navigator.vibrate) navigator.vibrate(100);
+            showToast('✅ QR 인식: ' + qrValue.slice(0,50));
             handleQrResult(qrValue);
           }
         } catch(e) {
-          console.warn('QR 감지 오류:', e.message);
+          // 조용히 넘김
         } finally {
-          _qrDetecting = false;
+          _busy = false;
         }
-      }, 250);
+      }, 200);
     }
   } catch(e) {
     setResult('<div style="color:var(--red-dark);font-size:12px;">\ud83d\udcf7 카메라 접근 오류: '+esc(e.message)+'<br>설정에서 카메라 권한을 허용해주세요.</div>');
