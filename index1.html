@@ -11480,12 +11480,17 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div style="font-size:10px;color:var(--gray-400);margin-top:3px;" id="scan-capture-label"></div>
     </div>
 
-    <!-- QR 모드: 중지 버튼만 표시 (카메라 켜면 자동 감지) -->
-    <div id="scan-barcode-btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-      <div style="flex:1;padding:7px 10px;background:var(--green-light);border-radius:8px;border:1px solid var(--green-mid);font-size:12px;color:var(--green-dark);text-align:center;">
-        📱 카메라에 QR코드를 비추면 자동 인식됩니다
+    <!-- QR 모드 버튼 -->
+    <div id="scan-barcode-btns" style="margin-bottom:8px;">
+      <button class="btn-primary" style="width:100%;padding:14px;font-size:15px;font-weight:700;border-radius:10px;letter-spacing:0.5px;" onclick="startScan('barcode')">
+        📱 QR코드 스캔 시작
+      </button>
+      <div style="display:flex;gap:6px;margin-top:6px;">
+        <div style="flex:1;padding:8px;background:var(--green-light);border-radius:8px;border:1px solid var(--green-mid);font-size:11px;color:var(--green-dark);text-align:center;line-height:1.5;">
+          카메라가 열리면 QR코드를<br>사각형 안에 비춰주세요 → 자동 인식
+        </div>
+        <button class="btn-secondary" style="flex:0 0 auto;padding:8px 12px;" onclick="stopScan()">⏹ 중지</button>
       </div>
-      <button class="btn-secondary" style="flex:0 0 auto;" onclick="stopScan()">⏹ 중지</button>
     </div>
 
     <!-- OCR 모드 버튼 -->
@@ -17111,11 +17116,9 @@ function setScanMode(mode, btn) {
 
   if (mode === 'barcode') {
     showEl('scan-barcode-btns'); hideEl('scan-ocr-btns'); hideEl('scan-photo-btns');
-    // 모드 전환 시 카메라 자동 시작
-    setTimeout(function(){ startScan('barcode'); }, 100);
     hideEl('scan-ocr-tips');    showEl('scan-code-section');
     document.getElementById('scan-frame-el').style.cssText = 'border-radius:4px;';
-    document.getElementById('scan-hint').textContent = 'QR코드를 사각형 안에 맞춰주세요';
+    document.getElementById('scan-hint').textContent = 'QR코드를 사각형 안에 맞춰주세요 (iPhone 상단 주황불 = 정상)';
   } else if (mode === 'ocr') {
     hideEl('scan-barcode-btns'); showEl('scan-ocr-btns'); hideEl('scan-photo-btns');
     hideEl('scan-code-section');  showEl('scan-ocr-tips');
