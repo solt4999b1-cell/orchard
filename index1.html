@@ -941,10 +941,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 </style>
 <script>
 
-// jsQR 1.4.0 (인라인 번들 — 외부 CDN 의존 제거)
-(function() {
-  var _module = {exports:{}};
-  (function(module, exports) {
+
+// jsQR 1.4.0 inline bundle
+(function(global){
+  var _exports = {};
+  var _module  = {exports: _exports};
+  // UMD factory 직접 실행
+  var _factory = (function(){
+    var module  = {exports:{}};
+    var exports = module.exports;
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -11047,11 +11052,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /***/ })
 /******/ ])["default"];
 });
-  })(_module, _module.exports);
-  // UMD 번들에서 jsQR 함수 추출
-  window.jsQR = _module.exports || _module.exports.default || _module.exports['default'];
-  if (!window.jsQR && typeof _module.exports === 'function') window.jsQR = _module.exports;
-})();
+    return module.exports;
+  })();
+  // _factory 가 함수이거나 객체['default'] 형태
+  global.jsQR = (typeof _factory === 'function') ? _factory
+              : (_factory && _factory['default']) ? _factory['default']
+              : (_factory && _factory.default)    ? _factory.default
+              : _factory;
+})(typeof window !== 'undefined' ? window : this);
 
 </script>
 </head>
@@ -11472,10 +11480,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <div style="font-size:10px;color:var(--gray-400);margin-top:3px;" id="scan-capture-label"></div>
     </div>
 
-    <!-- 바코드 버튼 -->
+    <!-- QR 모드: 중지 버튼만 표시 (카메라 켜면 자동 감지) -->
     <div id="scan-barcode-btns" style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">
-      <button class="btn-primary" style="flex:1;" onclick="startScan('barcode')">📱 QR코드 스캔 시작</button>
-      <button class="btn-secondary" style="flex:1;" onclick="stopScan()">⏹ 중지</button>
+      <div style="flex:1;padding:7px 10px;background:var(--green-light);border-radius:8px;border:1px solid var(--green-mid);font-size:12px;color:var(--green-dark);text-align:center;">
+        📱 카메라에 QR코드를 비추면 자동 인식됩니다
+      </div>
+      <button class="btn-secondary" style="flex:0 0 auto;" onclick="stopScan()">⏹ 중지</button>
     </div>
 
     <!-- OCR 모드 버튼 -->
@@ -11841,6 +11851,7 @@ const FIREBASE_CONFIG = {
   authDomain:  "orchardapp-b81ca.firebaseapp.com",
   appId:      "1:848680345496:web:11d468c44b412c037795ed",
 };
+
 // ── OCR 엔진 설정 ──────────────────────────────────
 // 1순위: Google Apps Script 마이크로서비스 (Drive OCR, 한글 인식률 우수)
 //   - 배포 방법은 /gas_ocr_service/Code.gs 파일 상단 주석 참고
@@ -17100,6 +17111,8 @@ function setScanMode(mode, btn) {
 
   if (mode === 'barcode') {
     showEl('scan-barcode-btns'); hideEl('scan-ocr-btns'); hideEl('scan-photo-btns');
+    // 모드 전환 시 카메라 자동 시작
+    setTimeout(function(){ startScan('barcode'); }, 100);
     hideEl('scan-ocr-tips');    showEl('scan-code-section');
     document.getElementById('scan-frame-el').style.cssText = 'border-radius:4px;';
     document.getElementById('scan-hint').textContent = 'QR코드를 사각형 안에 맞춰주세요';
@@ -17196,11 +17209,17 @@ async function startScan(mode) {
       var qrCtx    = qrCanvas ? qrCanvas.getContext('2d') : null;
 
       if (typeof jsQR === 'undefined') {
-        // 500ms 후 재시도 (인라인 번들은 이미 로드됐어야 하지만 혹시 모를 경우)
-        setResult('<div style="background:var(--amber-light);border-radius:6px;padding:10px;color:var(--orange);">⚠️ QR 초기화 중... 잠시 후 자동 재시도합니다.</div>');
-        setTimeout(function(){ startScan('barcode'); }, 600);
+        // 재시도 (최대 3회)
+        window._qrRetry = (window._qrRetry||0) + 1;
+        if (window._qrRetry <= 3) {
+          setTimeout(function(){ startScan('barcode'); }, 800);
+        } else {
+          window._qrRetry = 0;
+          setResult('<div style="background:var(--amber-light);border-radius:6px;padding:10px;color:var(--orange);">⚠️ QR 초기화 실패. 페이지를 새로고침 후 다시 시도하세요.</div>');
+        }
         return;
       }
+      window._qrRetry = 0;
 
       setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;">📱 QR코드를 사각형 안에 맞추면 자동으로 인식됩니다.</div>');
 
