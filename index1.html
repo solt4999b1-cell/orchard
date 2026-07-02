@@ -11908,7 +11908,6 @@ const FIREBASE_CONFIG = {
   appId:      "1:848680345496:web:11d468c44b412c037795ed",
 };
 
-
 // ── OCR 엔진 설정 ──────────────────────────────────
 // 1순위: Google Apps Script 마이크로서비스 (Drive OCR, 한글 인식률 우수)
 //   - 배포 방법은 /gas_ocr_service/Code.gs 파일 상단 주석 참고
@@ -22300,6 +22299,382 @@ function _hideVideoForQrMode() {
   if (wrap) wrap.style.display = 'none';
   stopScan();
 }
+
+
+// ══════════════════════════════════════════════════════════
+// QR/URL 처리 시스템 v3 — API 키 불필요, 항상 동작
+// ══════════════════════════════════════════════════════════
+
+// ── URL에서 농약 정보 추출 (로컬 파싱) ───────────────────────
+function parseUrlForPesticide(url) {
+  var result = {name:'', manufacturer:'', regNo:'', type:'살균제'};
+  if (!url) return result;
+
+  // knco.co.kr (경농) — URL 파라미터에 제품 ID 있음
+  if (url.includes('knco.co.kr')) {
+    result.manufacturer = '경농';
+    var idx = url.match(/skskIdx=(\d+)/);
+    if (idx) result.regNo = idx[1];
+    var s = url.match(/skskSearch4=([^&]+)/);
+    if (s) result.name = decodeURIComponent(s[1]);
+  }
+  // farmmorning.com
+  else if (url.includes('farmmorning.com')) {
+    var seg = url.split('/').pop().split('?')[0];
+    result.name = decodeURIComponent(seg).replace(/-/g,' ');
+  }
+  // psis.rda.go.kr
+  else if (url.includes('psis.rda.go.kr')) {
+    var bn = url.match(/brandName=([^&]+)/);
+    if (bn) result.name = decodeURIComponent(bn[1]);
+  }
+  // 일반: URL 끝 경로에서 제품명 추측
+  else {
+    var path = url.split('/').filter(Boolean).pop() || '';
+    path = decodeURIComponent(path).split('?')[0].replace(/[-_]/g,' ');
+    if (path.length > 1 && path.length < 30) result.name = path;
+  }
+  return result;
+}
+
+// ── PSIS 공공 API 조회 (API키 있을 때) ────────────────────────
+async function queryPsisForPesticide(productName) {
+  var key = localStorage.getItem('psis_api_key') || '';
+  if (!key) return null;
+
+  try {
+    var url = 'https://psis.rda.go.kr/psis/api/pestiInfo/selectPesticideUseInfo.do'
+            + '?apiKey=' + encodeURIComponent(key)
+            + '&pestiBrandName=' + encodeURIComponent(productName)
+            + '&returnType=json';
+    var ctrl = new AbortController();
+    setTimeout(function(){ ctrl.abort(); }, 5000);
+    var res = await fetch(url, {signal: ctrl.signal, mode:'cors'});
+    if (!res.ok) return null;
+    var data = await res.json();
+    if (!Array.isArray(data) || !data.length) return null;
+
+    // cropUsage 구조로 변환
+    var cropUsage = {};
+    data.forEach(function(row) {
+      var crop = row.cropName || row.crpName || '';
+      if (!crop) return;
+      if (!cropUsage[crop]) cropUsage[crop] = [];
+      cropUsage[crop].push({
+        target: row.pestName || row.useDis || '',
+        method: row.useMethod || '',
+        amount: row.dilutionRate || '',
+        safety: row.safetyPrd   || '',
+        times:  row.safetyTimes || ''
+      });
+    });
+
+    var first = data[0];
+    return {
+      name:       first.pestiBrandName || productName,
+      type:       first.pestiType || '살균제',
+      ingredient: first.pestiMtrName || '',
+      manufacturer: first.companName || '',
+      regNo:      first.pestiRegNo || '',
+      cropUsage:  cropUsage,
+      source:     'PSIS'
+    };
+  } catch(e) { return null; }
+}
+
+// ── GAS 프록시로 Claude 분석 (GAS URL 설정 시) ─────────────────
+async function queryGasForPesticide(urlOrText) {
+  var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl() : '';
+  if (!gasUrl) return null;
+
+  try {
+    var ctrl = new AbortController();
+    setTimeout(function(){ ctrl.abort(); }, 15000);
+    var res = await fetch(gasUrl, {
+      method: 'POST',
+      headers: {'Content-Type':'text/plain'},
+      body: JSON.stringify({
+        action: 'analyzePesticide',
+        input: urlOrText.slice(0, 3000)
+      }),
+      signal: ctrl.signal
+    });
+    if (!res.ok) return null;
+    var data = await res.json();
+    if (!data.success || !data.result) return null;
+    return data.result; // GAS에서 cropUsage 포함 JSON 반환
+  } catch(e) { return null; }
+}
+
+// ── 로컬 정규식 파싱 (텍스트 붙여넣기용) ─────────────────────────
+function parseLocalPesticideText(text) {
+  if (!text) return null;
+  var t = text.replace(/\r/g,'').replace(/\t/g,' ');
+
+  function ext(patterns) {
+    for (var i=0;i<patterns.length;i++){
+      var m=t.match(patterns[i]);
+      if(m && m[1]) return m[1].trim().slice(0,60);
+    }
+    return '';
+  }
+
+  var name = ext([
+    /상\s*표\s*명\s*[:\uff1a]\s*([^\n]+)/,
+    /제\s*품\s*명\s*[:\uff1a]\s*([^\n]+)/,
+    /^([가-힣a-zA-Z]{2,15}(?:에스|플러스|골드|왕)?)\s/m
+  ]);
+  var ingredient = ext([
+    /품\s*목\s*명\s*[:\uff1a]\s*([^\n]+)/,
+    /주\s*성\s*분\s*[:\uff1a]\s*([^\n]+)/,
+    /유\s*효\s*성\s*분\s*[:\uff1a]\s*([^\n]+)/
+  ]);
+  var regNo = ext([
+    /등\s*록\s*번\s*호\s*[:\uff1a]\s*([\d\-가-힣]+)/
+  ]);
+  var mfr = ext([
+    /제\s*조\s*사\s*[:\uff1a]\s*([^\n]+)/,
+    /수\s*입\s*사\s*[:\uff1a]\s*([^\n]+)/
+  ]);
+  var typeRaw = ext([/분\s*류\s*[:\uff1a]\s*([^\n]+)/]);
+  var type = typeRaw ||
+    (t.includes('살균') ? '살균제' :
+     t.includes('살충') ? '살충제' :
+     t.includes('제초') ? '제초제' : '살균제');
+
+  // 작물별 사용량 테이블 파싱
+  // 패턴: 작물명 | 적용병해 | 방법 | 약량 | 시기 | 횟수
+  var cropUsage = {};
+  var tableRows = t.match(/([가-힣()·,\s]{2,12})\s+([가-힣/·\s]{2,20})\s+(발[가-힣\s]+처리[가-힣\s]*)\s+([\d,\.]+(?:ml|ℓ|배)?)\s+(수확\s*\d+일\s*전|발생초기|파종[가-힣]*)\s*(\d회)?/g);
+  if (tableRows) {
+    tableRows.forEach(function(row) {
+      var parts = row.trim().split(/\s{2,}/);
+      if (parts.length >= 3) {
+        var crop = parts[0].trim();
+        if (crop.length >= 2 && crop.length <= 12) {
+          if (!cropUsage[crop]) cropUsage[crop] = [];
+          cropUsage[crop].push({
+            target: parts[1]||'',
+            method: parts[2]||'',
+            amount: parts[3]||'',
+            safety: parts[4]||'',
+            times:  parts[5]||''
+          });
+        }
+      }
+    });
+  }
+
+  if (!name && !ingredient) return null;
+
+  return {
+    name:         name || '알 수 없음',
+    type:         type,
+    ingredient:   ingredient || '',
+    manufacturer: mfr || '',
+    regNo:        regNo || '',
+    cropUsage:    cropUsage,
+    source:       'LOCAL'
+  };
+}
+
+// ── 메인: QR/URL 처리 통합 함수 ────────────────────────────────
+async function processQrUrlAuto(input) {
+  var isUrl = input && (input.startsWith('http://') || input.startsWith('https://'));
+  var qrOut = document.getElementById('qr-decode-result');
+  var srOut = document.getElementById('scan-result');
+
+  function setUI(html2) {
+    if (qrOut) qrOut.innerHTML = html2;
+    if (srOut) srOut.innerHTML = html2;
+  }
+
+  setUI(_buildProgressUI('🔍', '정보 조회 중...', '잠시만 기다려주세요'));
+
+  var parsed = null;
+
+  // ── Step 1: URL에서 기본 정보 추출 ──────────────────────
+  var urlInfo = isUrl ? parseUrlForPesticide(input) : {};
+
+  // ── Step 2: GAS 프록시 (설정돼 있으면) ─────────────────
+  var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl() : '';
+  if (gasUrl) {
+    setUI(_buildProgressUI('🤖', 'GAS를 통해 AI 분석 중...', '최대 15초 소요'));
+    parsed = await queryGasForPesticide(input);
+    if (parsed) parsed.source = 'GAS/Claude';
+  }
+
+  // ── Step 3: PSIS API (이름이 있을 때) ──────────────────
+  if (!parsed && urlInfo.name) {
+    setUI(_buildProgressUI('🏛', 'PSIS 농약 DB 조회 중...', '농촌진흥청 공식 데이터'));
+    parsed = await queryPsisForPesticide(urlInfo.name);
+  }
+
+  // ── Step 4: 텍스트가 있으면 로컬 파싱 ─────────────────
+  if (!parsed && !isUrl) {
+    parsed = parseLocalPesticideText(input);
+  }
+
+  // ── Step 5: URL 기본 정보라도 사용 ─────────────────────
+  if (!parsed && (urlInfo.name || urlInfo.manufacturer)) {
+    parsed = {
+      name:         urlInfo.name || '',
+      manufacturer: urlInfo.manufacturer || '',
+      regNo:        urlInfo.regNo || '',
+      type:         '살균제',
+      ingredient:   '',
+      cropUsage:    {},
+      source:       'URL'
+    };
+  }
+
+  // ── 결과 표시 ────────────────────────────────────────────
+  if (parsed && parsed.name) {
+    setUI(_buildQrConfirmUI(parsed, input));
+    window._qrParsedData = {parsed: parsed, qrUrl: input};
+  } else {
+    // 완전 실패 → 수동 입력 안내
+    setUI(_buildManualInputUI(input, urlInfo));
+  }
+}
+
+// ── 진행 상태 UI ──────────────────────────────────────────────
+function _buildProgressUI(icon, title, sub) {
+  return '<div style="text-align:center;padding:20px;background:var(--green-light);border-radius:10px;">'
+    + '<div style="font-size:30px;margin-bottom:8px;">'+icon+'</div>'
+    + '<div style="font-size:14px;font-weight:600;color:var(--green-dark);">'+esc(title)+'</div>'
+    + '<div style="font-size:11px;color:var(--gray-500);margin-top:4px;">'+esc(sub)+'</div>'
+    + '<div style="height:3px;background:var(--gray-200);border-radius:2px;margin-top:12px;overflow:hidden;">'
+    + '<div style="height:100%;background:var(--green-dark);border-radius:2px;width:60%;animation:qrProgress 1.5s ease-in-out infinite;"></div>'
+    + '</div></div>';
+}
+
+// ── 결과 확인 UI ──────────────────────────────────────────────
+function _buildQrConfirmUI(parsed, srcUrl) {
+  var crops   = Object.keys(parsed.cropUsage||{});
+  var entries = crops.reduce(function(a,c){return a+(parsed.cropUsage[c]||[]).length;},0);
+  var srcBadge = {
+    'PSIS':      '🏛 농진청 PSIS',
+    'GAS/Claude':'🤖 AI 분석',
+    'LOCAL':     '📋 텍스트 파싱',
+    'URL':       '🔗 URL 추출',
+  }[parsed.source] || parsed.source || '';
+
+  var h = '<div style="background:var(--green-light);border:1.5px solid var(--green-dark);border-radius:10px;padding:14px;">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
+    + '<div style="font-size:14px;font-weight:700;color:var(--green-dark);">✅ '+esc(parsed.name||'')+'</div>'
+    + '<span style="font-size:10px;background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:8px;">'+srcBadge+'</span>'
+    + '</div>';
+
+  if (parsed.ingredient || parsed.manufacturer) {
+    h += '<div style="font-size:11px;color:var(--gray-600);margin-bottom:8px;">'
+      + (parsed.ingredient?'성분: '+esc(parsed.ingredient):'')
+      + (parsed.manufacturer?' · '+esc(parsed.manufacturer):'')
+      + '</div>';
+  }
+
+  if (crops.length) {
+    h += '<div style="font-size:12px;color:var(--blue-dark);margin-bottom:8px;">🌱 '+crops.length+'종 작물 · '+entries+'개 방제항목</div>';
+    // 작물 미리보기 테이블
+    h += '<div style="max-height:160px;overflow-y:auto;margin-bottom:10px;">'
+      + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+      + '<thead><tr style="background:var(--green-dark);">'
+      + '<th style="padding:3px 5px;color:#fff;text-align:left;">작물</th>'
+      + '<th style="padding:3px 5px;color:#fff;text-align:left;">방제 대상</th>'
+      + '<th style="padding:3px 5px;color:#fff;text-align:center;">사용량</th>'
+      + '<th style="padding:3px 5px;color:#fff;text-align:center;">안전사용</th>'
+      + '</tr></thead><tbody>';
+    crops.slice(0,6).forEach(function(crop){
+      (parsed.cropUsage[crop]||[]).slice(0,2).forEach(function(e,i){
+        h += '<tr style="'+(i%2?'background:#f9f9f9;':'')+'border-bottom:0.5px solid #eee;">'
+          + '<td style="padding:3px 5px;font-weight:500;">'+esc(crop)+'</td>'
+          + '<td style="padding:3px 5px;">'+esc(e.target||'')+'</td>'
+          + '<td style="padding:3px 5px;text-align:center;">'+esc(e.amount||'')+'</td>'
+          + '<td style="padding:3px 5px;text-align:center;color:#E65100;">'+esc(e.safety||'')+'</td>'
+          + '</tr>';
+      });
+    });
+    if (crops.length>6) h+='<tr><td colspan="4" style="padding:3px 5px;color:#888;">외 '+(crops.length-6)+'작물...</td></tr>';
+    h += '</tbody></table></div>';
+  }
+
+  h += '<div style="display:flex;gap:6px;">'
+    + '<button id="qr-save-btn" onclick="saveQrParsedData()" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
+    + (_isOnline ? '✅ Firebase에 저장' : '💾 기기에 저장')
+    + '</button>'
+    + '<button onclick="resetQrPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
+    + '</div>';
+
+  if (!_isOnline) {
+    h += '<div style="font-size:11px;color:#E65100;margin-top:6px;text-align:center;">📵 오프라인 — 연결 시 자동 Firebase 동기화</div>';
+  }
+  return h + '</div>';
+}
+
+// ── 수동 입력 안내 UI ──────────────────────────────────────────
+function _buildManualInputUI(input, urlInfo) {
+  var isUrl = input && input.startsWith('http');
+  return '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:14px;">'
+    + '<div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:10px;">⚠️ 자동 분석 불가</div>'
+    + '<div style="font-size:12px;color:#555;line-height:1.8;margin-bottom:12px;">'
+    + (isUrl
+        ? '해당 사이트는 자동 접근이 차단되어 있습니다.<br>아래 방법으로 직접 정보를 가져와 주세요.'
+        : 'PSIS API 키가 없거나 파싱할 수 있는 형식이 아닙니다.')
+    + '</div>'
+    + '<div style="display:flex;flex-direction:column;gap:8px;">'
+    // 사이트 열기 → 복사 → 붙여넣기
+    + (isUrl
+        ? '<button onclick="openSiteForCopy(\''+input.replace(/'/g,"\\'")+'\')" style="padding:10px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:12px;cursor:pointer;">🔗 사이트 열기 → 표 복사 → 붙여넣기</button>'
+        : '')
+    // PSIS API 키 설정 안내
+    + '<button onclick="showPsisKeySetup()" style="padding:10px;background:#fff;border:1px solid var(--blue-dark);color:var(--blue-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔑 PSIS API 키 설정 (무료, 1회)</button>'
+    // 직접입력
+    + '<button onclick="openRegisterPestModal()" style="padding:10px;background:#fff;border:1px solid var(--gray-300);border-radius:8px;font-size:12px;cursor:pointer;">✏️ 직접 입력으로 등록</button>'
+    + '</div>'
+    + (urlInfo && urlInfo.name
+        ? '<div style="margin-top:8px;font-size:11px;color:#888;">감지된 제품명: '+esc(urlInfo.name)+'</div>'
+        : '')
+    + '</div>';
+}
+
+// 사이트 열기 안내
+function openSiteForCopy(url) {
+  window.open(url, '_blank');
+  var qrOut = document.getElementById('qr-decode-result');
+  if (qrOut) {
+    qrOut.innerHTML += '<div style="margin-top:10px;background:var(--blue-light);border-radius:8px;padding:10px;font-size:12px;color:var(--blue-dark);line-height:1.8;">'
+      + '<b>다음 단계:</b><br>'
+      + '① 열린 사이트에서 적용 대상 표를 전체 선택<br>'
+      + '② 복사 (Ctrl+C 또는 길게 눌러 복사)<br>'
+      + '③ 아래 텍스트 붙여넣기 영역에 붙여넣기<br>'
+      + '④ AI 분석 시작 버튼 클릭'
+      + '</div>';
+  }
+}
+
+// PSIS API 키 설정
+function showPsisKeySetup() {
+  var cur = localStorage.getItem('psis_api_key') || '';
+  var key = prompt(
+    'PSIS(농약안전정보시스템) API 키를 입력하세요.\n\n' +
+    '무료 신청: https://psis.rda.go.kr → 회원가입 → API 신청\n\n' +
+    '현재 설정: ' + (cur ? cur.slice(0,8)+'***' : '없음'),
+    cur
+  );
+  if (key === null) return;
+  if (key.trim()) {
+    localStorage.setItem('psis_api_key', key.trim());
+    showToast('✅ PSIS API 키 저장됨. QR 분석을 다시 시도하세요.');
+  } else {
+    localStorage.removeItem('psis_api_key');
+    showToast('PSIS API 키 삭제됨');
+  }
+}
+
+// buildQrProgressUI, buildQrConfirmUI, buildQrManualFallback (구버전 호환)
+function buildQrProgressUI(step, url) { return _buildProgressUI('🔍','분석 중...', url.slice(0,40)); }
+function buildQrConfirmUI(p,u)        { return _buildQrConfirmUI(p,u); }
+function buildQrManualFallback(u)     { return _buildManualInputUI(u, parseUrlForPesticide(u)); }
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
 
