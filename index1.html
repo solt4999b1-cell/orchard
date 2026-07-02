@@ -938,6 +938,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .reg-tab-btn.on { color:var(--green-dark); border-bottom-color:var(--green-dark); font-weight:700; }
 .reg-tab-btn:hover:not(.on) { color:var(--gray-700); background:var(--gray-50,#F9F8F6); }
 .reg-tab-panel { animation: fadeIn .15s ease; }
+
+/* ── QR 스캔 오버레이 ─────────────────────────────────── */
+#qr-overlay-canvas {
+  position: absolute; top:0; left:0;
+  width:100%; height:100%;
+  pointer-events: none;
+  border-radius: inherit;
+}
 </style>
 <script>
 
@@ -11441,8 +11449,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     </div>
 
     <!-- 카메라 뷰 -->
-    <div id="scan-video-wrap" style="display:none;">
-      <video id="scan-video" autoplay playsinline muted></video>
+    <div id="scan-video-wrap" style="display:none;position:relative;overflow:hidden;">
+      <video id="scan-video" autoplay playsinline muted style="width:100%;display:block;"></video>
+      <!-- QR 위치 표시 오버레이 캔버스 -->
+      <canvas id="qr-overlay-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;"></canvas>
       <div class="scan-overlay" id="scan-overlay-el" onclick="tapToFocus(event)">
         <div class="scan-frame" id="scan-frame-el"></div>
         <!-- 초점 마커 -->
@@ -11574,6 +11584,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
           </button>
         </div>
         <div id="psis-test-result" style="margin-top:6px;font-size:11px;"></div>
+
+        <!-- 임시 저장된 URL 목록 -->
+        <div style="margin-top:10px;padding-top:10px;border-top:1px dashed var(--gray-200);">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-size:11px;color:var(--gray-500);">
+              📋 분석 대기 URL
+              <span id="pending-url-count" style="background:#FF8F00;color:#fff;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:4px;display:none;">0</span>
+            </div>
+            <button onclick="showPendingUrlPanel()"
+                    style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--gray-200);background:#fff;color:var(--gray-600);cursor:pointer;">
+              목록 보기 / 재시도
+            </button>
+          </div>
+          <div style="font-size:10px;color:var(--gray-400);margin-top:4px;line-height:1.6;">
+            분석 불가 URL이 iPhone/컴퓨터에 자동 저장됩니다<br>
+            PSIS API 키 설정 후 목록에서 재시도하세요
+          </div>
+        </div>
       </div>
     </div>
 
@@ -17295,90 +17323,153 @@ async function startScan(mode) {
     }
 
     if (scanMode === 'barcode') {
-      // ── jsQR QR코드 감지 ──────────────────────────────────
       if (typeof jsQR !== 'function') {
-        setResult('<div style="color:var(--red-dark);padding:8px;">⚠️ QR 라이브러리 오류. 페이지를 새로고침하세요.</div>');
+        setResult('<div style="color:var(--red-dark);padding:8px;">⚠️ QR 라이브러리 오류.</div>');
         return;
       }
 
-      // 캔버스 — 모바일 고해상도 대응: 720p로 다운샘플
+      // ── 오버레이 캔버스 준비 ──────────────────────────────
+      var overlayCvs = document.getElementById('qr-overlay-canvas');
+      var overlayCtx = overlayCvs ? overlayCvs.getContext('2d') : null;
+      var focusRing  = document.getElementById('qr-focus-ring');
+
+      // ── 처리용 캔버스 (다운샘플) ─────────────────────────
       var QR_W = 640, QR_H = 480;
       var qrCvs = document.createElement('canvas');
       qrCvs.width = QR_W; qrCvs.height = QR_H;
-      var qrCtx = qrCvs.getContext('2d', {willReadFrequently: true});
+      var qrCtx  = qrCvs.getContext('2d', {willReadFrequently: true});
 
       var vidEl = document.getElementById('scan-video');
-      setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;text-align:center;">📱 QR코드를 사각형 안에 비춰주세요 — 자동 인식</div>');
+      setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;text-align:center;">'
+        + '📱 QR코드를 카메라에 비추면 자동으로 인식됩니다</div>');
 
-      // ── 자동초점 설정 ──────────────────────────────────
-      (function setupAutoFocus() {
-        if (!scanStream) return;
-        var track = scanStream.getVideoTracks ? scanStream.getVideoTracks()[0] : null;
-        if (!track) return;
-        var caps = track.getCapabilities ? track.getCapabilities() : {};
-        var adv = {};
-        // 연속 자동초점 (Chrome/Android)
-        if (caps.focusMode && caps.focusMode.includes('continuous')) {
-          adv.focusMode = 'continuous';
-        }
-        // iOS pointOfInterest: 화면 중앙으로 초점 고정
-        if (caps.pointOfInterest) {
-          adv.pointOfInterest = { x: 0.5, y: 0.5 };
-          adv.focusMode = 'auto';
-        }
-        if (Object.keys(adv).length) {
-          track.applyConstraints({ advanced: [adv] }).catch(function(){});
-        }
-        // 3초마다 초점 재요청 (먼 거리 → 가까운 QR 전환 대비)
-        window._afTimer = setInterval(function() {
-          if (!scanStream) { clearInterval(window._afTimer); return; }
-          var t = scanStream.getVideoTracks()[0];
-          if (!t) return;
-          var c = t.getCapabilities ? t.getCapabilities() : {};
-          if (c.pointOfInterest) {
-            t.applyConstraints({ advanced: [{ pointOfInterest:{x:0.5,y:0.5}, focusMode:'auto' }] }).catch(function(){});
-          } else if (c.focusMode && c.focusMode.includes('continuous')) {
-            t.applyConstraints({ advanced: [{ focusMode:'continuous' }] }).catch(function(){});
-          }
-        }, 3000);
-      })();
+      // ── 자동초점 초기 설정 ───────────────────────────────
+      _setupQrAutoFocus(0.5, 0.5);
 
-      var _busy = false;
+      // ── 3초마다 중앙 재초점 ──────────────────────────────
+      window._afTimer = setInterval(function() {
+        _setupQrAutoFocus(0.5, 0.5);
+      }, 3000);
+
+      var _busy    = false;
+      var _lastQr  = null;   // 마지막 인식 QR값 (중복 방지)
+      var _drawCnt = 0;      // 박스 유지 카운터
+
       scanInterval = setInterval(function() {
         if (_busy) return;
-        if (!vidEl) return;
-        // readyState 3(HAVE_FUTURE_DATA) 또는 4(HAVE_ENOUGH_DATA) 필요
-        if (vidEl.readyState < 3) return;
+        if (!vidEl || vidEl.readyState < 3) return;
         var vw = vidEl.videoWidth, vh = vidEl.videoHeight;
         if (!vw || !vh) return;
 
+        // 오버레이 캔버스 크기를 video 실제 크기와 동기
+        if (overlayCvs) {
+          overlayCvs.width  = vw;
+          overlayCvs.height = vh;
+        }
+
         _busy = true;
         try {
-          // 다운샘플 후 getImageData
+          qrCvs.width = QR_W; qrCvs.height = QR_H;
           qrCtx.drawImage(vidEl, 0, 0, QR_W, QR_H);
           var imgData = qrCtx.getImageData(0, 0, QR_W, QR_H);
+          var code    = jsQR(imgData.data, QR_W, QR_H, {inversionAttempts: 'attemptBoth'});
 
-          // 두 번 시도: 정방향 + 반전(흰배경 QR 대응)
-          var code = jsQR(imgData.data, QR_W, QR_H, {inversionAttempts: 'attemptBoth'});
+          if (code && code.data) {
+            var loc = code.location;
+            // ── QR 위치 오버레이 그리기 ──────────────────
+            if (overlayCtx && loc) {
+              // 좌표 스케일: QR_W→vw, QR_H→vh
+              var sx = vw / QR_W, sy = vh / QR_H;
+              overlayCtx.clearRect(0, 0, vw, vh);
 
-          if (code && code.data && code.data.trim()) {
-            clearInterval(scanInterval);
-            scanInterval = null;
-            var qrValue = code.data.trim();
-            // 입력란 채우기
-            var inp = document.getElementById('scan-code-input');
-            if (inp) inp.value = qrValue;
-            // 진동 피드백 (iOS는 무시)
-            if (navigator.vibrate) navigator.vibrate(100);
-            showToast('✅ QR 인식: ' + qrValue.slice(0,50));
-            handleQrResult(qrValue);
+              // 모서리 좌표 변환
+              var pts = [
+                {x: loc.topLeftCorner.x * sx,     y: loc.topLeftCorner.y * sy},
+                {x: loc.topRightCorner.x * sx,    y: loc.topRightCorner.y * sy},
+                {x: loc.bottomRightCorner.x * sx, y: loc.bottomRightCorner.y * sy},
+                {x: loc.bottomLeftCorner.x * sx,  y: loc.bottomLeftCorner.y * sy},
+              ];
+
+              // 반투명 초록 채우기
+              overlayCtx.fillStyle = 'rgba(0, 230, 118, 0.15)';
+              overlayCtx.beginPath();
+              overlayCtx.moveTo(pts[0].x, pts[0].y);
+              pts.slice(1).forEach(function(p){ overlayCtx.lineTo(p.x, p.y); });
+              overlayCtx.closePath();
+              overlayCtx.fill();
+
+              // 초록 테두리
+              overlayCtx.strokeStyle = '#00E676';
+              overlayCtx.lineWidth   = Math.max(3, vw * 0.004);
+              overlayCtx.lineJoin    = 'round';
+              overlayCtx.beginPath();
+              overlayCtx.moveTo(pts[0].x, pts[0].y);
+              pts.slice(1).forEach(function(p){ overlayCtx.lineTo(p.x, p.y); });
+              overlayCtx.closePath();
+              overlayCtx.stroke();
+
+              // 모서리 강조 점
+              overlayCtx.fillStyle = '#00E676';
+              pts.forEach(function(p) {
+                overlayCtx.beginPath();
+                overlayCtx.arc(p.x, p.y, 6, 0, Math.PI*2);
+                overlayCtx.fill();
+              });
+
+              // QR 중심에 초점링 이동
+              var cx = pts.reduce(function(a,p){return a+p.x;},0)/4;
+              var cy = pts.reduce(function(a,p){return a+p.y;},0)/4;
+              if (focusRing) {
+                var rect = overlayCvs.getBoundingClientRect();
+                var rx = (cx / vw) * rect.width;
+                var ry = (cy / vh) * rect.height;
+                focusRing.style.display = '';
+                focusRing.style.left    = rx + 'px';
+                focusRing.style.top     = ry + 'px';
+              }
+
+              // QR 중심으로 자동초점 이동
+              var fx = loc.topLeftCorner.x / QR_W + (loc.topRightCorner.x - loc.topLeftCorner.x) / QR_W / 2;
+              var fy = loc.topLeftCorner.y / QR_H + (loc.bottomLeftCorner.y - loc.topLeftCorner.y) / QR_H / 2;
+              _setupQrAutoFocus(
+                Math.max(0, Math.min(1, fx)),
+                Math.max(0, Math.min(1, fy))
+              );
+
+              _drawCnt = 8; // 8프레임 동안 박스 유지
+            }
+
+            // ── 새로운 QR 값이면 처리 ────────────────────
+            if (code.data.trim() !== _lastQr) {
+              _lastQr = code.data.trim();
+              if (navigator.vibrate) navigator.vibrate([50,30,50]);
+              showToast('✅ QR 인식 완료');
+
+              // 0.3초 후 처리 (오버레이가 보인 뒤)
+              var _val = code.data.trim();
+              setTimeout(function() {
+                clearInterval(scanInterval);
+                if (window._afTimer) { clearInterval(window._afTimer); window._afTimer=null; }
+                scanInterval = null;
+                _onQrScanned(_val);
+              }, 300);
+            }
+
+          } else {
+            // QR 없으면 박스 서서히 제거
+            if (_drawCnt > 0) {
+              _drawCnt--;
+            } else if (overlayCtx) {
+              overlayCtx.clearRect(0, 0, vw, vh);
+              if (focusRing) focusRing.style.display = 'none';
+            }
           }
         } catch(e) {
-          // 조용히 넘김
+          // 조용히
         } finally {
           _busy = false;
         }
-      }, 200);
+      }, 150);
     }
   } catch(e) {
     setResult('<div style="color:var(--red-dark);font-size:12px;">\ud83d\udcf7 카메라 접근 오류: '+esc(e.message)+'<br>설정에서 카메라 권한을 허용해주세요.</div>');
@@ -22794,6 +22885,488 @@ if (_origSetScanMode) {
       setTimeout(initPsisKeyUI, 100);
     }
   };
+}
+
+
+// ══════════════════════════════════════════════════════════
+// PSIS API 이중 조회 시스템
+// ① 농약등록정보 API  : selectPesticideUseInfo
+// ② 등록취소농약 API  : selectCancelPestInfo
+// + 미허가 URL 임시 저장소 (iPhone 내부 IndexedDB)
+// ══════════════════════════════════════════════════════════
+
+// ── PSIS 공통 요청 헬퍼 ────────────────────────────────────
+async function _psisRequest(endpoint, params) {
+  var key = localStorage.getItem('psis_api_key') || '';
+  if (!key) return null;
+
+  var base = 'https://psis.rda.go.kr/psis/api/pestiInfo/' + endpoint + '.do';
+  var qs   = 'apiKey=' + encodeURIComponent(key) + '&returnType=json';
+  Object.keys(params).forEach(function(k) {
+    if (params[k]) qs += '&' + k + '=' + encodeURIComponent(params[k]);
+  });
+
+  try {
+    var ctrl  = new AbortController();
+    var timer = setTimeout(function(){ ctrl.abort(); }, 7000);
+    var res   = await fetch(base + '?' + qs, {
+      method: 'GET',
+      mode:   'cors',
+      signal:  ctrl.signal
+    });
+    clearTimeout(timer);
+    if (!res.ok) return null;
+
+    var ct = res.headers.get('content-type') || '';
+    if (ct.includes('xml')) {
+      // XML 응답 파싱
+      var xml  = await res.text();
+      return _parseXmlResponse(xml);
+    }
+    return await res.json();
+  } catch(e) {
+    console.warn('[PSIS] 요청 실패:', endpoint, e.message);
+    return null;
+  }
+}
+
+// PSIS XML → JS 배열 변환
+function _parseXmlResponse(xml) {
+  try {
+    var parser = new DOMParser();
+    var doc    = parser.parseFromString(xml, 'text/xml');
+    var items  = doc.querySelectorAll('item');
+    var result = [];
+    items.forEach(function(item) {
+      var obj = {};
+      item.childNodes.forEach(function(n) {
+        if (n.nodeType === 1) obj[n.nodeName] = n.textContent.trim();
+      });
+      result.push(obj);
+    });
+    return result;
+  } catch(e) { return null; }
+}
+
+// ── ① 농약등록정보 API ─────────────────────────────────────
+// endpoint: selectPesticideUseInfo
+// 반환: 상표명·작물명·적용병해충·사용방법·안전사용기준 등
+async function queryPsisRegistered(productName) {
+  var data = await _psisRequest('selectPesticideUseInfo', {
+    pestiBrandName: productName
+  });
+  if (!data || !data.length) return null;
+
+  var cropUsage = {};
+  data.forEach(function(row) {
+    var crop = row.cropName || row.crpName || row['작물명'] || '';
+    if (!crop) return;
+    if (!cropUsage[crop]) cropUsage[crop] = [];
+    cropUsage[crop].push({
+      target: row.pestName   || row.useDis    || row['적용병해충']  || '',
+      method: row.useMethod  || row['사용방법']                     || '',
+      amount: row.dilutionRate || row['희석배수']                   || '',
+      safety: row.safetyPrd  || row['안전사용시기']                 || '',
+      times:  row.safetyTimes || row['사용횟수']                    || ''
+    });
+  });
+
+  var first = data[0];
+  return {
+    name:         first.pestiBrandName || first['상표명']    || productName,
+    type:         first.pestiType      || first['농약구분']  || '살균제',
+    ingredient:   first.pestiMtrName   || first['품목명']   || '',
+    manufacturer: first.companName     || first['등록회사'] || '',
+    regNo:        first.pestiRegNo     || first['등록번호'] || '',
+    status:       '등록',
+    cropUsage:    cropUsage,
+    source:       'PSIS_등록',
+    rawCount:     data.length
+  };
+}
+
+// ── ② 등록취소농약 API ─────────────────────────────────────
+// endpoint: selectCancelPestInfo
+// 반환: 상표명·품목명·등록취소일자·등록번호 등
+// 주의: 취소 농약은 cropUsage 없음 → 경고 표시
+async function queryPsisCancelled(productName) {
+  var data = await _psisRequest('selectCancelPestInfo', {
+    pestiBrandName: productName
+  });
+  if (!data || !data.length) return null;
+
+  var first = data[0];
+  return {
+    name:         first.pestiBrandName  || first['상표명']    || productName,
+    type:         first.pestiType       || first['품목명']    || '알 수 없음',
+    ingredient:   first.pestiMtrName    || first['일반명']    || '',
+    manufacturer: first.companName      || first['등록회사']  || '',
+    regNo:        first.pestiRegNo      || first['등록번호']  || '',
+    cancelDate:   first.cancelDate      || first['등록취소일자'] || '',
+    status:       '등록취소',
+    cropUsage:    {},  // 취소 농약은 사용 불가
+    source:       'PSIS_취소',
+    rawCount:     data.length
+  };
+}
+
+// ── 통합 PSIS 조회 (등록 → 취소 순으로 시도) ──────────────
+async function queryPsisForPesticide(productName) {
+  if (!productName) return null;
+  var key = localStorage.getItem('psis_api_key') || '';
+  if (!key) return null;
+
+  // 1차: 등록 농약
+  var reg = await queryPsisRegistered(productName);
+  if (reg) return reg;
+
+  // 2차: 등록취소 농약
+  var can = await queryPsisCancelled(productName);
+  if (can) return can;
+
+  return null;
+}
+
+// ── 등록취소 경고 배지 ─────────────────────────────────────
+function _getCancelledBadge(parsed) {
+  if (!parsed || parsed.status !== '등록취소') return '';
+  return '<div style="background:#FFEBEE;border:1.5px solid #EF9A9A;border-radius:8px;padding:10px 12px;margin-bottom:10px;">'
+    + '<div style="font-size:12px;font-weight:700;color:#C62828;margin-bottom:4px;">⛔ 등록취소 농약</div>'
+    + '<div style="font-size:11px;color:#555;line-height:1.7;">'
+    + '이 농약은 등록이 취소된 제품입니다.<br>'
+    + '취소일: <b>' + esc(parsed.cancelDate || '미상') + '</b><br>'
+    + '등록취소 농약은 사용·유통이 금지되어 있습니다.'
+    + '</div></div>';
+}
+
+// ══════════════════════════════════════════════════════════
+// 미허가(분석 불가) URL 임시 저장소
+// iPhone 내부 IndexedDB — 인터넷 없어도 저장, 나중에 재시도 가능
+// ══════════════════════════════════════════════════════════
+
+var IDB_PENDING_URLS = 'pendingUrls';  // IndexedDB 스토어명
+
+// 미허가 URL 저장
+async function savePendingUrl(url, memo) {
+  try {
+    var db2 = await openIDB();
+    // pendingUrls 스토어가 없으면 버전 업그레이드 필요
+    // → 기존 pendingSync 스토어에 type:'url' 로 저장
+    var record = {
+      collection: 'pendingUrls',
+      data: {
+        url:       url,
+        memo:      memo || '',
+        savedAt:   new Date().toISOString(),
+        status:    'pending',   // pending | resolved | failed
+        _type:     'pendingUrl'
+      },
+      createdAt: new Date().toISOString(),
+      retryCount: 0
+    };
+    await idbPut('pendingSync', record);
+    await updatePendingBadge();
+    return true;
+  } catch(e) {
+    console.error('[PendingUrl] 저장 오류:', e);
+    return false;
+  }
+}
+
+// 미허가 URL 전체 조회
+async function getPendingUrls() {
+  try {
+    var all = await idbGetAll('pendingSync');
+    return all.filter(function(r){ return r.data && r.data._type === 'pendingUrl'; });
+  } catch(e) { return []; }
+}
+
+// 미허가 URL 삭제
+async function deletePendingUrl(localId) {
+  await idbDelete('pendingSync', localId);
+  await updatePendingBadge();
+}
+
+// 미허가 URL 상태 업데이트
+async function updatePendingUrlStatus(localId, status) {
+  try {
+    var db2  = await openIDB();
+    var all  = await idbGetAll('pendingSync');
+    var item = all.find(function(r){ return r.localId === localId; });
+    if (item) {
+      item.data.status    = status;
+      item.data.updatedAt = new Date().toISOString();
+      await idbPut('pendingSync', item);
+    }
+  } catch(e) {}
+}
+
+// ── 미허가 URL 관리 패널 ───────────────────────────────────
+async function showPendingUrlPanel() {
+  var list = await getPendingUrls();
+  var existing = document.getElementById('pending-url-modal');
+  if (existing) existing.remove();
+
+  var modal = document.createElement('div');
+  modal.className = 'modal-bg';
+  modal.id = 'pending-url-modal';
+
+  var h = '<div class="modal" style="max-height:85vh;overflow-y:auto;">'
+    + '<div class="modal-title">📋 임시 저장된 URL 목록</div>'
+    + '<div style="font-size:12px;color:var(--gray-500);margin-bottom:12px;">'
+    + 'PSIS API 키가 없거나 분석이 불가했던 농약 URL을 저장해 둔 목록입니다.<br>'
+    + 'API 키 설정 후 "다시 분석" 버튼으로 재시도할 수 있습니다.'
+    + '</div>';
+
+  if (!list.length) {
+    h += '<div style="padding:24px;text-align:center;color:var(--gray-400);">'
+      + '임시 저장된 URL이 없습니다.</div>';
+  } else {
+    list.forEach(function(item) {
+      var d = item.data;
+      var statusColor = {pending:'#FF8F00', resolved:'#2E7D32', failed:'#C62828'}[d.status] || '#888';
+      var statusLabel = {pending:'⏳ 대기 중', resolved:'✅ 완료', failed:'❌ 실패'}[d.status] || d.status;
+
+      h += '<div style="border:1px solid var(--gray-200);border-radius:10px;padding:12px;margin-bottom:8px;">'
+        + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
+        + '<span style="font-size:10px;padding:2px 8px;border-radius:8px;color:#fff;background:'+statusColor+';">'+statusLabel+'</span>'
+        + '<span style="font-size:10px;color:var(--gray-400);">'+esc(d.savedAt.slice(0,16).replace('T',' '))+'</span>'
+        + '</div>'
+        + '<div style="font-size:11px;word-break:break-all;color:var(--gray-700);margin-bottom:6px;'
+        + 'background:var(--gray-50,#F9F8F6);border-radius:6px;padding:6px 8px;">'
+        + esc(d.url || '')
+        + '</div>'
+        + (d.memo ? '<div style="font-size:11px;color:var(--gray-500);margin-bottom:6px;">📝 '+esc(d.memo)+'</div>' : '')
+        + '<div style="display:flex;gap:5px;flex-wrap:wrap;">'
+        + '<button onclick="retryPendingUrl('+item.localId+')" '
+        + 'style="font-size:11px;padding:5px 12px;border-radius:6px;border:none;background:var(--green-dark);color:#fff;cursor:pointer;">🔄 다시 분석</button>'
+        + '<button onclick="window.open(\''+esc(d.url)+'\')" '
+        + 'style="font-size:11px;padding:5px 12px;border-radius:6px;border:1px solid var(--blue-mid);color:var(--blue-dark);background:#fff;cursor:pointer;">🔗 사이트 열기</button>'
+        + '<button onclick="deletePendingUrl('+item.localId+').then(showPendingUrlPanel)" '
+        + 'style="font-size:11px;padding:5px 10px;border-radius:6px;border:1px solid var(--gray-200);color:var(--red-dark);background:#fff;cursor:pointer;">🗑</button>'
+        + '</div></div>';
+    });
+  }
+
+  h += '<div class="modal-btns" style="margin-top:12px;">'
+    + '<button class="btn-secondary" onclick="closeModal(\'pending-url-modal\')" style="flex:1;">닫기</button>'
+    + '</div></div>';
+
+  modal.innerHTML = h;
+  document.body.appendChild(modal);
+}
+
+// 임시 URL 재분석 시도
+async function retryPendingUrl(localId) {
+  var list = await getPendingUrls();
+  var item = list.find(function(r){ return r.localId === localId; });
+  if (!item) return;
+
+  var url = item.data.url;
+  await updatePendingUrlStatus(localId, 'pending');
+  closeModal('pending-url-modal');
+
+  // QR 탭으로 이동 후 URL 붙여넣기
+  openScanModal();
+  setTimeout(function() {
+    var inp = document.getElementById('qr-url-input');
+    if (inp) {
+      inp.value = url;
+      analyzeQrUrl();
+      // 분석 성공 시 자동 삭제
+      var _origSave = window.saveQrParsedData;
+      window.saveQrParsedData = async function() {
+        await _origSave.call(this);
+        await updatePendingUrlStatus(localId, 'resolved');
+        window.saveQrParsedData = _origSave;
+      };
+    }
+  }, 300);
+}
+
+// ── _buildManualInputUI에 "임시 저장" 버튼 추가 ─────────────
+// (기존 _buildManualInputUI 함수 내 버튼 목록에 추가)
+var _origManualUI = window._buildManualInputUI || null;
+
+
+// processQrUrlAuto 에서 완전 실패 시 URL을 자동으로 임시 저장
+var _origProcessQrUrl = processQrUrlAuto;
+processQrUrlAuto = async function(input) {
+  await _origProcessQrUrl(input);
+  // 결과 확인: 수동 입력 안내가 표시됐으면 임시 저장
+  setTimeout(async function() {
+    var qrOut = document.getElementById('qr-decode-result');
+    if (qrOut && qrOut.innerHTML.includes('자동 분석 불가') && input.startsWith('http')) {
+      var alreadySaved = await getPendingUrls();
+      var dup = alreadySaved.find(function(r){ return r.data.url === input; });
+      if (!dup) {
+        await savePendingUrl(input, '자동 저장');
+        var badge = document.getElementById('pending-url-count');
+        if (badge) badge.textContent = (parseInt(badge.textContent)||0)+1;
+        showToast('📋 분석 불가 URL이 임시 저장됐습니다. PSIS API 키 설정 후 재시도하세요.');
+      }
+    }
+  }, 2000);
+};
+
+
+// ══ QR 스캔 전용 헬퍼 함수들 ═════════════════════════════════
+
+// 자동초점: QR 중심 좌표(0~1)로 pointOfInterest 이동
+function _setupQrAutoFocus(fx, fy) {
+  if (!scanStream) return;
+  var track = scanStream.getVideoTracks ? scanStream.getVideoTracks()[0] : null;
+  if (!track) return;
+  try {
+    var caps = track.getCapabilities ? track.getCapabilities() : {};
+    var adv  = {};
+    if (caps.pointOfInterest) {
+      // iOS: x=가로(0=왼쪽), y=세로(0=위쪽)
+      adv.pointOfInterest = { x: fx, y: fy };
+      adv.focusMode = 'auto';
+    } else if (caps.focusMode && caps.focusMode.includes('continuous')) {
+      adv.focusMode = 'continuous';
+    }
+    if (Object.keys(adv).length) {
+      track.applyConstraints({ advanced: [adv] }).catch(function(){});
+    }
+  } catch(e) {}
+}
+
+// QR 스캔 완료 → Chrome으로 열기 옵션 포함 결과 처리
+function _onQrScanned(value) {
+  value = (value||'').trim();
+  if (!value) return;
+
+  var isUrl  = value.startsWith('http://') || value.startsWith('https://');
+  var qrOut  = document.getElementById('qr-decode-result');
+  var srOut  = document.getElementById('scan-result');
+  var ci     = document.getElementById('scan-code-input');
+  if (ci) ci.value = value;
+
+  // 오버레이 정리
+  var overlayCvs = document.getElementById('qr-overlay-canvas');
+  if (overlayCvs) {
+    var ctx = overlayCvs.getContext('2d');
+    if (ctx) ctx.clearRect(0, 0, overlayCvs.width, overlayCvs.height);
+  }
+
+  // 결과 UI 구성
+  var html2 = '<div style="background:var(--green-light);border:2px solid var(--green-dark);border-radius:12px;padding:14px;margin-top:8px;">'
+    + '<div style="font-size:14px;font-weight:700;color:var(--green-dark);margin-bottom:8px;">✅ QR 인식 완료!</div>'
+    + '<div style="font-size:11px;word-break:break-all;background:#fff;border-radius:8px;padding:8px;margin-bottom:12px;color:var(--gray-700);line-height:1.6;">'
+    + esc(value.slice(0, 200)) + (value.length > 200 ? '…' : '')
+    + '</div>';
+
+  if (isUrl) {
+    html2 +=
+      // ① AI 분석 → Firebase 저장 (메인 액션)
+      '<button id="qr-btn-analyze" style="width:100%;padding:12px;background:var(--green-dark);color:#fff;'
+      + 'border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:8px;">'
+      + '🤖 농약 정보 AI 분석 → 저장</button>'
+      // ② Chrome으로 열기
+      + '<div style="display:flex;gap:6px;margin-bottom:8px;">'
+      + '<button id="qr-btn-chrome" style="flex:1;padding:10px;background:#1A73E8;color:#fff;'
+      + 'border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">'
+      + '🌐 Chrome에서 열기</button>'
+      + '<button id="qr-btn-safari" style="flex:1;padding:10px;background:#006CFF;color:#fff;'
+      + 'border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">'
+      + '🧭 Safari에서 열기</button>'
+      + '</div>'
+      // ③ 초기화
+      + '<button onclick="resetQrPanel()" style="width:100%;padding:8px;background:#fff;'
+      + 'border:1px solid var(--gray-200);border-radius:8px;font-size:12px;color:var(--gray-500);cursor:pointer;">'
+      + '🔄 다시 스캔</button>';
+  } else {
+    html2 +=
+      '<div style="display:flex;gap:6px;">'
+      + '<button id="qr-btn-analyze" style="flex:2;padding:11px;background:var(--blue-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">🤖 AI 분석</button>'
+      + '<button onclick="resetQrPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
+      + '</div>';
+  }
+  html2 += '</div>';
+
+  if (qrOut) qrOut.innerHTML = html2;
+  if (srOut) srOut.innerHTML = html2;
+
+  var resetRow = document.getElementById('qr-reset-row');
+  if (resetRow) resetRow.style.display = '';
+
+  // ── 버튼 이벤트 연결 (onclick attribute 대신 addEventListener 사용)
+  var btnAnalyze = document.getElementById('qr-btn-analyze');
+  if (btnAnalyze) {
+    btnAnalyze.addEventListener('click', function() {
+      processQrUrlAuto(value);
+    });
+  }
+
+  var btnChrome = document.getElementById('qr-btn-chrome');
+  if (btnChrome) {
+    btnChrome.addEventListener('click', function() {
+      _openInChrome(value);
+    });
+  }
+
+  var btnSafari = document.getElementById('qr-btn-safari');
+  if (btnSafari) {
+    btnSafari.addEventListener('click', function() {
+      window.open(value, '_blank');
+    });
+  }
+}
+
+// Chrome으로 URL 열기 (iOS + Android + 데스크탑)
+function _openInChrome(url) {
+  var isIOS     = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  var isAndroid = /Android/.test(navigator.userAgent);
+
+  if (isIOS) {
+    // iOS Chrome URL 스킴 변환
+    // http:// → googlechrome://
+    // https:// → googlechromes://
+    var chromeUrl = url
+      .replace(/^http:\/\//, 'googlechrome://')
+      .replace(/^https:\/\//, 'googlechromes://');
+
+    // Chrome 스킴 시도 → 실패 시 Safari로 폴백
+    var iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    iframe.src = chromeUrl;
+
+    // 1초 후 Chrome이 안 열렸으면 Safari로 열기
+    setTimeout(function() {
+      document.body.removeChild(iframe);
+      // Chrome이 열렸는지 확인 불가 → 사용자에게 안내
+    }, 500);
+
+    // 동시에 Safari도 열기 (백업)
+    setTimeout(function() {
+      window.open(url, '_blank');
+    }, 100);
+
+    showToast('🌐 Chrome 앱이 있으면 Chrome으로, 없으면 Safari로 열립니다');
+
+  } else if (isAndroid) {
+    // Android: intent 스킴
+    var intentUrl = 'intent://' + url.replace(/^https?:\/\//, '')
+      + '#Intent;scheme=' + (url.startsWith('https') ? 'https' : 'http')
+      + ';package=com.android.chrome;end';
+    window.location.href = intentUrl;
+
+  } else {
+    // 데스크탑: 그냥 새 탭 열기
+    window.open(url, '_blank');
+  }
+}
+
+// handleQrResult 교체: 카메라 실시간 감지 결과를 _onQrScanned로 연결
+function handleQrResult(value) {
+  value = (value||'').trim();
+  if (!value) return;
+  var ci = document.getElementById('scan-code-input');
+  if (ci) ci.value = value;
+  _onQrScanned(value);
 }
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
