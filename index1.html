@@ -12013,7 +12013,7 @@ const FIREBASE_CONFIG = {
   apiKey:      "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
   projectId:   "orchardapp-b81ca",
   authDomain:  "orchardapp-b81ca.firebaseapp.com",
-  appId:      "1:848680345496:web:11d468c44b412c037795ed",
+  appId:       "1:848680345496:web:11d468c44b412c037795ed",
 };
 
 // ── OCR 엔진 설정 ──────────────────────────────────
@@ -17169,7 +17169,7 @@ function initFirebase(cfg) {
     }
   } else {
     // Firebase 미설정 → 로컬 MASTER_DB로 즉시 실행
-    console.info('[앱] Firebase 미설정 — 로컬 모드로 실행');
+    console.log('[앱] Firebase 미설정 — 로컬 모드로 실행');
     db = null;
     launchAppLocal();
   }
