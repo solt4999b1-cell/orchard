@@ -17151,18 +17151,68 @@ function initFirebase(cfg) {
   var overlay = document.getElementById('loading');
   if (overlay) overlay.classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
-  startSlowTimers();   // 느린 연결 안내 타이머 시작
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(cfg);
-    db = firebase.firestore();
-    setLoadingStep(0, 15, 'Firebase 연결 완료');
-    launchApp();
-  } catch(e){ showSetupError('초기화 오류: '+e.message); }
+  startSlowTimers();
+
+  // Firebase 설정이 플레이스홀더이면 로컬 모드로 실행
+  var isConfigured = cfg && cfg.apiKey && !cfg.apiKey.includes('여기에');
+
+  if (isConfigured) {
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(cfg);
+      db = firebase.firestore();
+      setLoadingStep(0, 15, 'Firebase 연결 완료');
+      launchApp();
+    } catch(e) {
+      console.warn('[Firebase] 연결 실패, 로컬 모드로 전환:', e.message);
+      db = null;
+      launchAppLocal();
+    }
+  } else {
+    // Firebase 미설정 → 로컬 MASTER_DB로 즉시 실행
+    console.info('[앱] Firebase 미설정 — 로컬 모드로 실행');
+    db = null;
+    launchAppLocal();
+  }
+}
+
+// 로컬 모드 실행 (Firebase 없이 MASTER_DB 사용)
+async function launchAppLocal() {
+  setLoadingStep(0, 30, '로컬 데이터 로드 중...');
+  document.getElementById('app').style.display = 'block';
+
+  var days = ['일','월','화','수','목','금','토'];
+  document.getElementById('topbar-date').textContent =
+    TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일 ('+days[TODAY.getDay()]+')';
+
+  // MASTER_DB로 식물 로드
+  APP.plants = MASTER_DB.plants.map(function(p){
+    return Object.assign({}, p, {_local:true});
+  });
+  APP.logs     = [];
+  APP.doneTasks= {};
+
+  setLoadingStep(1, 70, '로컬 DB 준비 완료');
+  renderToday();
+  renderPlants();
+  setSyncStatus(false);
+
+  setLoadingStep(2, 100, '완료 (로컬 모드)');
+  setTimeout(function() {
+    var ov = document.getElementById('loading');
+    if (ov) { ov.classList.add('fade-out'); setTimeout(function(){ ov.classList.add('hidden'); }, 400); }
+  }, 600);
+
+  await loadGasUrlSetting();
+  await initOfflineSystem();
+  showToast('📵 로컬 모드 — Firebase 미연결');
 }
 
 function showSetupError(msg) {
   document.getElementById('loading').classList.add('hidden');
-  alert('Firebase 연결 오류: '+msg+'\n\nHTML 파일 상단의 FIREBASE_CONFIG 값을 확인하세요.');
+  console.warn('Firebase 설정 오류:', msg);
+  // alert 대신 조용히 로컬 모드로 전환
+  db = null;
+  launchAppLocal();
 }
 
 // ══════════════════════════════════════════════════
