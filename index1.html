@@ -55,7 +55,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 
 
 /* ── 앱 레이아웃 ─────────────────────────── */
-#app{display:none;min-height:100vh;padding-bottom:72px;}
+#app{display:none;min-height:100vh;padding-bottom:80px;}
 
 /* 상단바 */
 .topbar{background:var(--green-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
@@ -68,7 +68,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .sync-dot.offline{background:#FF9800;}
 
 /* 하단 탭 */
-.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--gray-200);display:flex;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08);}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--gray-200);display:flex;z-index:100;box-shadow:0 -2px 8px rgba(0,0,0,.08);;padding-bottom:env(safe-area-inset-bottom,0px);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;cursor:pointer;color:var(--gray-400);transition:color .15s;font-size:10px;gap:3px;border:none;background:none;}
 .nav-item.active{color:var(--green-dark);}
 .nav-icon{font-size:20px;}
@@ -76,7 +76,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .nav-item-wrap{position:relative;display:flex;flex-direction:column;align-items:center;}
 
 /* 공통 패널 */
-.panel{display:none;padding:16px;}
+.panel{display:none;padding:16px;;padding-bottom:90px;}
 .panel.active{display:block;}
 .section-title{font-size:15px;font-weight:600;color:var(--green-dark);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
 
@@ -163,8 +163,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .db-item-detail{font-size:12px;color:var(--gray-400);line-height:1.5;}
 .db-item-detail b{color:var(--gray-700);font-weight:500;}
 .db-collapsed .db-item-detail{display:none;}
-.db-tabs{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:12px;}
-.db-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;}
+.db-tabs{display:flex;border-bottom:1px solid var(--gray-200);margin-bottom:12px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;flex-wrap:nowrap;}
+.db-tabs::-webkit-scrollbar{display:none;}
+.db-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:var(--gray-400);border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;;white-space:nowrap;flex-shrink:0;}
 .db-tab.on{color:var(--green-dark);border-bottom-color:var(--green-dark);font-weight:600;}
 
 /* ── 모달 ───────────────────────────── */
@@ -11126,7 +11127,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   <div id="panel-log" class="panel">
     <div class="today-header">
       <div class="section-title">📖 작업 기록</div>
-      <div style="display:flex;gap:5px;align-items:center;">
+      <div style="display:flex;gap:5px;align-items:center;flex-wrap:wrap;">
+        <div style="display:flex;background:#fff;border:1px solid var(--gray-200);border-radius:7px;overflow:hidden;">
+          <input type="text" id="log-search-input" placeholder="🔍 식물·내용 검색"
+            style="padding:5px 8px;border:none;outline:none;font-size:11px;width:100px;"
+            oninput="filterLogs(this.value)">
+          <button onclick="filterLogs('');document.getElementById('log-search-input').value='';"
+            style="padding:5px 6px;background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:11px;">✕</button>
+        </div>
         <button onclick="setLogView('date')" id="log-view-date"
           style="padding:5px 10px;background:var(--green-dark);color:#fff;border-radius:7px;border:none;font-size:11px;cursor:pointer;font-weight:600;">
           📅 날짜순
@@ -11716,28 +11724,56 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 <!-- GAS OCR 엔진 설정 모달 -->
 <div class="modal-bg hidden" id="gas-settings-modal">
   <div class="modal">
-    <div class="modal-title">⚙️ OCR 엔진 설정</div>
-    <p style="font-size:12px;color:var(--gray-400);line-height:1.7;margin-bottom:10px;">
-      Google Drive OCR을 연결하면 한글 인식률이 크게 향상됩니다.<br>
-      Google Apps Script 웹앱으로 무료 배포할 수 있습니다.
-    </p>
-    <div class="modal-field">
-      <label>Google Apps Script 웹앱 URL</label>
-      <input id="gas-url-input" type="text" placeholder="https://script.google.com/macros/s/.../exec">
+    <div class="modal-title">⚙️ API 키 · OCR 설정</div>
+
+    <!-- Claude API 키 섹션 -->
+    <div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">🤖 Claude API 키</div>
+      <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:8px;">
+        AI 농약 분석·수확일 검색 등 AI 기능에 사용됩니다.<br>
+        키는 이 기기에만 저장되며 외부로 전송되지 않습니다.
+      </div>
+      <div style="display:flex;gap:6px;margin-bottom:6px;">
+        <input type="password" id="claude-key-input"
+          placeholder="sk-ant-api03-..."
+          style="flex:1;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;">
+        <button onclick="toggleClaudeKeyVisible()"
+          style="padding:9px 12px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;cursor:pointer;">👁</button>
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="saveClaudeKey()"
+          style="flex:2;padding:9px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">✅ 저장</button>
+        <button onclick="testClaudeKey()"
+          style="flex:1;padding:9px;background:#fff;border:1px solid var(--green-mid);color:var(--green-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔍 테스트</button>
+        <button onclick="clearClaudeKey()"
+          style="flex:1;padding:9px;background:#fff;border:1px solid var(--gray-200);color:var(--gray-500);border-radius:8px;font-size:12px;cursor:pointer;">🗑 삭제</button>
+      </div>
+      <div id="claude-key-status" style="margin-top:7px;font-size:11px;min-height:18px;"></div>
     </div>
-    <div id="gas-test-result" style="font-size:12px;margin:8px 0;min-height:20px;"></div>
-    <div style="font-size:11px;color:var(--gray-400);background:var(--gray-100);border-radius:6px;padding:10px 12px;line-height:1.8;margin-bottom:10px;">
-      <b>배포 방법 요약</b><br>
-      ① script.google.com → 새 프로젝트<br>
-      ② 코드 붙여넣기 (Code.gs) — 첨부된 파일 참고<br>
-      ③ 좌측 서비스(+) → Drive API 추가<br>
-      ④ 배포 → 웹앱 → 액세스: 모든 사용자<br>
-      ⑤ 발급된 URL을 위 입력란에 붙여넣기
+
+    <!-- GAS URL 섹션 -->
+    <div style="background:var(--blue-light);border:1.5px solid var(--blue-mid);border-radius:10px;padding:12px;margin-bottom:14px;">
+      <div style="font-size:13px;font-weight:700;color:var(--blue-dark);margin-bottom:6px;">🔗 Google Apps Script URL</div>
+      <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:8px;">
+        GAS를 연결하면 PSIS API CORS 문제를 해결하고<br>
+        OCR 한글 인식률이 크게 향상됩니다.
+      </div>
+      <input id="gas-url-input" type="text"
+        placeholder="https://script.google.com/macros/s/.../exec"
+        style="width:100%;padding:9px 12px;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:12px;box-sizing:border-box;margin-bottom:6px;">
+      <div id="gas-test-result" style="font-size:12px;margin-bottom:6px;min-height:18px;"></div>
+      <div style="font-size:11px;color:var(--gray-500);background:var(--gray-50,#F9F8F6);border-radius:7px;padding:8px 10px;line-height:1.8;margin-bottom:8px;">
+        <b>배포 방법</b><br>
+        ① script.google.com → 새 프로젝트<br>
+        ② GAS_Code.gs 붙여넣기 후 스크립트 속성에 PSIS_API_KEY 저장<br>
+        ③ 배포 → 웹앱 → 액세스: <b>모든 사용자</b>
+      </div>
     </div>
+
     <div class="modal-btns">
-      <button class="btn-secondary" onclick="testGasConnection()">🔌 연결 테스트</button>
-      <button class="btn-secondary" onclick="closeModal('gas-settings-modal')">취소</button>
-      <button class="btn-primary" onclick="saveGasUrl()">저장</button>
+      <button class="btn-secondary" onclick="testGasConnection()">🔌 GAS 연결 테스트</button>
+      <button class="btn-secondary" onclick="closeModal('gas-settings-modal')">닫기</button>
+      <button class="btn-primary" onclick="saveGasUrl()">GAS URL 저장</button>
     </div>
   </div>
 </div>
@@ -16985,8 +17021,12 @@ const MASTER_DB = {
 // API Key가 없으면 graceful fallback
 // ══════════════════════════════════════════════════
 async function callClaude(messages, maxTokens, imageBase64, imageMediaType) {
-  var key = (typeof CLAUDE_API_KEY !== 'undefined') ? CLAUDE_API_KEY : '';
-  if (!key || key.includes('여기에')) {
+  // 우선순위: localStorage 저장 키 → 코드 상수
+  var key = localStorage.getItem('claude_api_key') || '';
+  if (!key && typeof CLAUDE_API_KEY !== 'undefined' && CLAUDE_API_KEY && !CLAUDE_API_KEY.includes('여기에')) {
+    key = CLAUDE_API_KEY;
+  }
+  if (!key) {
     return { ok: false, error: 'API_KEY_MISSING' };
   }
 
@@ -20728,6 +20768,8 @@ function openGasSettingsModal() {
   input.value = getEffectiveGasUrl();
   document.getElementById('gas-test-result').innerHTML = '';
   document.getElementById('gas-settings-modal').classList.remove('hidden');
+  // Claude API 키 UI 초기화
+  setTimeout(initClaudeKeyUI, 100);
 }
 
 async function testGasConnection() {
@@ -25374,13 +25416,6 @@ function fmtShort(d) {
   var dows= ['일','월','화','수','목','금','토'];
   return m+'/'+day+'('+dows[dt.getDay()]+')';
 }
-
-function addDays(date, n) {
-  var d = new Date(date);
-  d.setDate(d.getDate()+n);
-  return d;
-}
-
 function isWeekend(d) {
   var dt = new Date(d);
   return dt.getDay()===0 || dt.getDay()===6;
@@ -25781,7 +25816,6 @@ function toggleWeekPref(pref) {
 // ── 방제 스케줄 생성 ─────────────────────────────────────────
 function generateSchedule() {
   var crops    = Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){ return c.value; });
-  // 값이 전체 이름이므로 cropUsage 조회용 기본 이름도 추가 보관
 
   var modeEl   = document.querySelector('input[name="spray-mode"]:checked');
   var mode     = modeEl ? modeEl.value : 'preventive';
@@ -26181,6 +26215,181 @@ renderLogs = function() {
     _origRenderLogs();
   }
 };
+
+
+// ── 기록 검색 필터 ──────────────────────────────────────────
+var _logSearchQuery = '';
+function filterLogs(q) {
+  _logSearchQuery = (q||'').toLowerCase().trim();
+  renderLogs();
+}
+
+// renderLogsByPlant에 검색 필터 반영
+var _origRenderLogsByPlant = renderLogsByPlant;
+renderLogsByPlant = function() {
+  if (!_logSearchQuery) { _origRenderLogsByPlant(); return; }
+  // 검색어 있을 때: 로그를 필터링한 후 렌더
+  var origLogs = APP.logs;
+  var q = _logSearchQuery;
+  APP.logs = origLogs.filter(function(l) {
+    return [(l.plantName||''),(l.plant||''),(l.detail||''),(l.note||''),
+            (l.material||''),(l.eventType||''),(l.type||'')].some(function(v){
+      return v.toLowerCase().includes(q);
+    });
+  });
+  _origRenderLogsByPlant();
+  APP.logs = origLogs;
+};
+
+// _origRenderLogs에도 검색 필터 반영
+var _origRenderLogs2 = _origRenderLogs;
+_origRenderLogs = function() {
+  if (!_logSearchQuery) { _origRenderLogs2(); return; }
+  var origLogs = APP.logs;
+  var q = _logSearchQuery;
+  APP.logs = origLogs.filter(function(l) {
+    return [(l.plantName||''),(l.plant||''),(l.detail||''),(l.note||''),
+            (l.material||''),(l.eventType||''),(l.type||'')].some(function(v){
+      return v.toLowerCase().includes(q);
+    });
+  });
+  _origRenderLogs2();
+  APP.logs = origLogs;
+};
+
+
+// ══ Claude API 키 관리 ══════════════════════════════════════
+
+function initClaudeKeyUI() {
+  var key    = localStorage.getItem('claude_api_key') || '';
+  var inp    = document.getElementById('claude-key-input');
+  var status = document.getElementById('claude-key-status');
+  if (!inp) return;
+
+  if (key) {
+    inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)';
+    inp.value = '';
+    if (status) {
+      status.innerHTML = '<span style="color:var(--green-dark);">✅ API 키 설정됨 — AI 기능 활성화</span>';
+    }
+  } else {
+    inp.placeholder = 'sk-ant-api03-...';
+    if (status) {
+      status.innerHTML = '<span style="color:var(--gray-400);">미설정 — AI 기능 비활성화</span>';
+    }
+  }
+}
+
+function saveClaudeKey() {
+  var inp    = document.getElementById('claude-key-input');
+  var status = document.getElementById('claude-key-status');
+  var key    = inp ? inp.value.trim() : '';
+
+  if (!key) {
+    if (status) status.innerHTML = '<span style="color:#E65100;">키를 입력하세요 (sk-ant-api03-...)</span>';
+    return;
+  }
+  if (!key.startsWith('sk-ant-')) {
+    if (status) status.innerHTML = '<span style="color:#C62828;">❌ 올바른 키 형식이 아닙니다 (sk-ant-로 시작해야 합니다)</span>';
+    return;
+  }
+
+  localStorage.setItem('claude_api_key', key);
+  if (inp) { inp.value = ''; inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)'; }
+  if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ 저장 완료! AI 기능이 활성화됩니다.</span>';
+  showToast('✅ Claude API 키가 저장됐습니다');
+}
+
+function clearClaudeKey() {
+  if (!confirm('Claude API 키를 삭제하시겠습니까? AI 기능이 비활성화됩니다.')) return;
+  localStorage.removeItem('claude_api_key');
+  var inp    = document.getElementById('claude-key-input');
+  var status = document.getElementById('claude-key-status');
+  if (inp) { inp.value = ''; inp.placeholder = 'sk-ant-api03-...'; }
+  if (status) status.innerHTML = '<span style="color:var(--gray-400);">삭제됨 — AI 기능 비활성화</span>';
+  showToast('🗑 Claude API 키가 삭제됐습니다');
+}
+
+function toggleClaudeKeyVisible() {
+  var inp = document.getElementById('claude-key-input');
+  if (!inp) return;
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+async function testClaudeKey() {
+  var inp    = document.getElementById('claude-key-input');
+  var status = document.getElementById('claude-key-status');
+  // 입력란 값 우선, 없으면 저장된 키
+  var key = (inp && inp.value.trim()) || localStorage.getItem('claude_api_key') || '';
+
+  if (!key) {
+    if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ 키를 입력하거나 저장 후 테스트하세요</span>';
+    return;
+  }
+  if (status) status.innerHTML = '<span style="color:var(--gray-400);">🔍 테스트 중...</span>';
+
+  // GAS 경유 가능 여부 확인
+  var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl().trim() : '';
+
+  if (gasUrl) {
+    // GAS 경유로 테스트 (CORS 없음)
+    try {
+      var ctrl = new AbortController();
+      setTimeout(function(){ ctrl.abort(); }, 10000);
+      var res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: {'Content-Type':'text/plain'},
+        body: JSON.stringify({action:'analyzePesticide', input:'테스트: 다코닐 살균제 성분은?', claudeKey: key}),
+        signal: ctrl.signal
+      });
+      var data = await res.json();
+      if (data.success) {
+        if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ GAS 경유 AI 분석 정상 작동!</span>';
+        return;
+      }
+    } catch(e) {}
+  }
+
+  // 직접 호출 테스트 (CORS 차단 환경에서는 실패)
+  try {
+    var ctrl2 = new AbortController();
+    setTimeout(function(){ ctrl2.abort(); }, 8000);
+    var res2 = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': key,
+        'anthropic-version': '2023-06-01'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 30,
+        messages: [{role:'user', content:'테스트. "OK"만 응답하세요.'}]
+      }),
+      signal: ctrl2.signal
+    });
+    var data2 = await res2.json();
+    if (data2.content && data2.content[0]) {
+      if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ API 키 정상 확인! AI 기능 사용 가능</span>';
+      // 테스트 성공 시 자동 저장
+      if (inp && inp.value.trim()) {
+        localStorage.setItem('claude_api_key', key);
+        inp.value = '';
+        inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)';
+        showToast('✅ API 키 확인 및 저장 완료');
+      }
+    } else if (data2.error) {
+      var errMsg = data2.error.message || data2.error.type || '오류';
+      if (status) status.innerHTML = '<span style="color:#C62828;">❌ API 오류: ' + esc(errMsg) + '</span>';
+    }
+  } catch(e) {
+    if (e.name === 'AbortError') {
+      if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ 타임아웃 — CORS 차단 가능성. GAS URL을 설정하면 해결됩니다.</span>';
+    } else {
+      if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ ' + esc(e.message) + ' — GAS URL 설정 권장</span>';
+    }
+  }
+}
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
 
