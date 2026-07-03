@@ -19470,7 +19470,7 @@ function setDbTab(tab,el){
   if (tab === 'mypest')                    { renderMyPestPanel(); }
   else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
   else if (tab === 'micro')                  { renderMicroPanel(); }
-  else if (tab === 'spray')                  { renderSprayPlanPanel(); }
+  else if (tab === 'spray')                  { renderSpraySchedulerPanel(); }
   else { renderDb(); }
 }
 
@@ -19706,7 +19706,7 @@ function setDbTab(tab,el){
   if (tab === 'mypest')                    { renderMyPestPanel(); }
   else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
   else if (tab === 'micro')                  { renderMicroPanel(); }
-  else if (tab === 'spray')                  { renderSprayPlanPanel(); }
+  else if (tab === 'spray')                  { renderSpraySchedulerPanel(); }
   else { renderDb(); }
 }
 
@@ -22386,50 +22386,136 @@ function _renderAiConfirm(name, parsed, cropUsage) {
   var out = document.getElementById('ai-parse-result');
   if (!out) return;
 
-  var crops = Object.keys(cropUsage||{});
-  var totalEntries = crops.reduce(function(acc, c){ return acc+(cropUsage[c]||[]).length; }, 0);
+  var crops       = Object.keys(cropUsage||{});
+  var totalEntries= crops.reduce(function(a,c){return a+(cropUsage[c]||[]).length;},0);
+  var moaCode     = parsed && parsed.moa ? parsed.moa : getPesticideMoa(name);
+  var moaBadge    = moaCode ? buildMoaBadge(moaCode) : '';
+  var statusColor = (parsed && parsed.status==='등록취소') ? '#C62828' : 'var(--green-dark)';
+  var statusBg    = (parsed && parsed.status==='등록취소') ? '#FFEBEE' : 'var(--green-light)';
+  var statusBorder= (parsed && parsed.status==='등록취소') ? '#EF9A9A' : 'var(--green-mid)';
 
-  var h = '<div style="background:var(--green-light);border:1px solid var(--green-mid);border-radius:10px;padding:12px;margin-top:8px;">'
-    + '<div style="font-size:13px;font-weight:600;color:var(--green-dark);margin-bottom:8px;">✅ 분석 완료 — '+esc(name)+'</div>';
+  var h = '<div style="background:'+statusBg+';border:1.5px solid '+statusBorder+';border-radius:12px;padding:14px;margin-top:10px;">';
 
-  if (parsed) {
-    if (parsed.ingredient) h += '<div style="font-size:11px;color:var(--gray-600);margin-bottom:4px;"><b>성분:</b> '+esc(parsed.ingredient)+'</div>';
-    if (parsed.manufacturer) h += '<div style="font-size:11px;color:var(--gray-600);margin-bottom:4px;"><b>제조사:</b> '+esc(parsed.manufacturer)+'</div>';
-    if (parsed.regNo) h += '<div style="font-size:11px;color:var(--gray-600);margin-bottom:4px;"><b>등록번호:</b> '+esc(parsed.regNo)+'</div>';
+  // ── 헤더 ─────────────────────────────────────────────────
+  h += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'
+     + '<div>'
+     + '<div style="font-size:15px;font-weight:800;color:'+statusColor+';margin-bottom:3px;">'
+     + (parsed&&parsed.status==='등록취소'?'⛔ ':'✅ ') + esc(name) + '</div>'
+     + '<div style="font-size:11px;color:var(--gray-500);">'
+     + esc((parsed&&parsed.type)||'') + (parsed&&parsed.form?' · '+esc(parsed.form):'')
+     + '</div></div>'
+     + '<div style="text-align:right;">' + moaBadge
+     + (parsed&&parsed.source?'<div style="font-size:10px;color:var(--gray-400);margin-top:3px;">'+esc(parsed.source)+'</div>':'')
+     + '</div></div>';
+
+  // ── 등록취소 경고 ─────────────────────────────────────────
+  if (parsed && parsed.status==='등록취소') {
+    h += '<div style="background:#FFEBEE;border:1px solid #EF9A9A;border-radius:8px;padding:8px 10px;margin-bottom:10px;">'
+       + '<div style="font-size:12px;font-weight:700;color:#C62828;">⛔ 등록취소 농약</div>'
+       + '<div style="font-size:11px;color:#555;margin-top:2px;">취소일: '
+       + esc((parsed&&parsed.cancelDate)||'미상')
+       + ' — 판매·사용이 금지된 제품입니다</div></div>';
   }
 
-  h += '<div style="font-size:12px;color:var(--blue-dark);margin-bottom:8px;">🌱 작물 '+crops.length+'종 · 방제 항목 '+totalEntries+'개 추출됨</div>';
+  // ── 기본 정보 그리드 ──────────────────────────────────────
+  var infoFields = [
+    {label:'성분·품목명', val: parsed&&parsed.ingredient},
+    {label:'제조사',      val: parsed&&parsed.manufacturer},
+    {label:'등록번호',    val: parsed&&parsed.regNo},
+    {label:'사용 방법',   val: parsed&&parsed.method},
+    {label:'주의사항',    val: parsed&&parsed.warning},
+  ].filter(function(f){ return f.val; });
 
-  // 미리보기 테이블 (처음 5작물)
+  if (infoFields.length) {
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">';
+    infoFields.forEach(function(f) {
+      h += '<div style="background:rgba(255,255,255,0.7);border-radius:7px;padding:6px 8px;">'
+         + '<div style="font-size:10px;color:var(--gray-500);margin-bottom:1px;">'+esc(f.label)+'</div>'
+         + '<div style="font-size:11px;font-weight:600;color:var(--gray-800);">'+esc(f.val)+'</div>'
+         + '</div>';
+    });
+    h += '</div>';
+  }
+
+  // ── 작물별 방제 정보 전체 테이블 ─────────────────────────
   if (crops.length) {
-    h += '<div style="max-height:200px;overflow-y:auto;margin-bottom:10px;">'
+    h += '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:7px;">'
+       + '🌱 적용 작물 ' + crops.length + '종 · 방제 항목 ' + totalEntries + '개'
+       + '</div>';
+
+    h += '<div style="max-height:320px;overflow-y:auto;border-radius:8px;border:1px solid var(--gray-200);">'
        + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
-       + '<thead><tr style="background:var(--green-dark);">'
-       + ['작물','방제 대상','사용방법','사용량','안전사용'].map(function(hd){ return '<th style="padding:3px 5px;color:#fff;text-align:left;">'+hd+'</th>'; }).join('')
+       + '<thead style="position:sticky;top:0;z-index:1;">'
+       + '<tr style="background:var(--green-dark);color:#fff;">'
+       + '<th style="padding:5px 7px;text-align:left;min-width:60px;">작물</th>'
+       + '<th style="padding:5px 7px;text-align:left;">방제 대상</th>'
+       + '<th style="padding:5px 7px;text-align:center;min-width:55px;">물 20L당</th>'
+       + '<th style="padding:5px 7px;text-align:left;">방법</th>'
+       + '<th style="padding:5px 7px;text-align:center;min-width:60px;color:#FFD54F;">안전사용</th>'
+       + '<th style="padding:5px 7px;text-align:center;">횟수</th>'
        + '</tr></thead><tbody>';
-    crops.slice(0,8).forEach(function(crop){
-      (cropUsage[crop]||[]).forEach(function(e,i){
-        h += '<tr style="'+(i%2?'':'background:var(--gray-50);')+'border-bottom:0.5px solid var(--gray-100);">'
-           + '<td style="padding:3px 5px;font-weight:500;">'+esc(crop)+'</td>'
-           + '<td style="padding:3px 5px;">'+esc(e.target||'')+'</td>'
-           + '<td style="padding:3px 5px;">'+esc(e.method||'')+'</td>'
-           + '<td style="padding:3px 5px;font-weight:500;">'+esc(e.amount||'')+'</td>'
-           + '<td style="padding:3px 5px;color:var(--orange);">'+esc(e.safety||'')+'</td>'
+
+    var rowIdx = 0;
+    crops.forEach(function(crop) {
+      var entries = cropUsage[crop] || [];
+      entries.forEach(function(e, ei) {
+        var isFirst  = ei === 0;
+        var rowStyle = rowIdx%2===0 ? '' : 'background:var(--gray-50);';
+        // 내 작물인지 강조
+        var myPlants = (window._allPlants||[]).map(function(p){return p.name||'';});
+        var isMyCrop = myPlants.some(function(n){ return n.includes(crop)||crop.includes(n); });
+
+        h += '<tr style="'+rowStyle+'border-bottom:0.5px solid var(--gray-100);">'
+           + '<td style="padding:5px 7px;font-weight:'+(isFirst?'700':'400')+';'
+           + (isMyCrop&&isFirst?'color:var(--green-dark);':'color:var(--gray-700);')+';">'
+           + (isMyCrop&&isFirst?'⭐ ':isFirst?'':'　')
+           + esc(isFirst?crop:'')
+           + '</td>'
+           + '<td style="padding:5px 7px;color:var(--gray-700);">'+esc(e.target||'')+'</td>'
+           + '<td style="padding:5px 7px;text-align:center;font-weight:700;color:var(--blue-dark);">'+esc(e.amount||'')+'</td>'
+           + '<td style="padding:5px 7px;color:var(--gray-600);font-size:10px;">'+esc(e.method||'')+'</td>'
+           + '<td style="padding:5px 7px;text-align:center;color:#E65100;font-size:10px;">'+esc(e.safety||'')+'</td>'
+           + '<td style="padding:5px 7px;text-align:center;color:var(--gray-600);">'+esc(e.times||'')+'</td>'
            + '</tr>';
+        rowIdx++;
       });
     });
-    if (crops.length > 8) h += '<tr><td colspan="5" style="padding:4px 5px;color:var(--gray-400);">... 외 '+(crops.length-8)+'개 작물</td></tr>';
+
     h += '</tbody></table></div>';
+
+    // 내 작물 별도 강조
+    var myPlantNames = (window._allPlants||[]).map(function(p){return p.name||'';});
+    var myMatched    = crops.filter(function(c){
+      return myPlantNames.some(function(n){ return n.includes(c)||c.includes(n); });
+    });
+    if (myMatched.length) {
+      h += '<div style="margin-top:6px;padding:6px 8px;background:var(--green-light);border-radius:6px;font-size:11px;color:var(--green-dark);">'
+         + '⭐ 내 작물 해당: <b>'+esc(myMatched.join(' · '))+'</b></div>';
+    }
+  } else {
+    h += '<div style="padding:10px;text-align:center;color:var(--gray-400);font-size:12px;">'
+       + '작물별 방제 정보가 없습니다.<br>텍스트를 더 추가하거나 PSIS에서 조회하세요.</div>';
   }
 
-  // 저장 버튼
-  h += '<button onclick="confirmAiRegister()" style="width:100%;padding:10px;background:var(--green-dark);color:#fff;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;">✅ 이 내용으로 등록</button>';
-  h += '</div>';
+  // ── 저장 버튼 ─────────────────────────────────────────────
+  h += '<div style="display:flex;gap:6px;margin-top:12px;">'
+     + '<button onclick="confirmAiRegister()" id="ai-confirm-btn"'
+     + ' style="flex:2;padding:11px;background:var(--green-dark);color:#fff;'
+     + 'border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
+     + (parsed&&parsed.status==='등록취소'
+         ? '⚠️ 취소농약으로 기록 저장'
+         : '✅ Firebase에 저장')
+     + '</button>'
+     + '<button onclick="document.getElementById(\'ai-parse-result\').innerHTML=\'\'"'
+     + ' style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);'
+     + 'border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
+     + '</div>';
 
+  h += '</div>';
   out.innerHTML = h;
 
-  // 파싱 결과를 임시 저장
-  window._aiParsedResult = {name: name, parsed: parsed, cropUsage: cropUsage};
+  // 파싱 결과 임시 저장
+  window._aiParsedResult = {name:name, parsed:parsed, cropUsage:cropUsage};
 }
 
 // AI 분석 결과 최종 등록
@@ -23445,72 +23531,115 @@ function _buildProgressUI(icon, title, sub) {
 
 // ── 결과 확인 UI ──────────────────────────────────────────────
 function _buildQrConfirmUI(parsed, srcUrl) {
-  var crops   = Object.keys(parsed.cropUsage||{});
-  var entries = crops.reduce(function(a,c){return a+(parsed.cropUsage[c]||[]).length;},0);
-  var srcBadge = {
-    'PSIS_등록':   '🏛 PSIS 등록농약',
-    'PSIS_취소':   '⛔ PSIS 등록취소',
-    'PSIS':        '🏛 농진청 PSIS',
-    'GAS/Claude':  '🤖 AI 분석',
-    'LOCAL':       '📋 텍스트 파싱',
-    'URL':         '🔗 URL 추출',
+  if (!parsed) return '';
+
+  var crops       = Object.keys(parsed.cropUsage||{});
+  var entries     = crops.reduce(function(a,c){return a+(parsed.cropUsage[c]||[]).length;},0);
+  var moaCode     = parsed.moa || getPesticideMoa(parsed.name||'');
+  var moaBadge    = moaCode ? buildMoaBadge(moaCode) : '';
+  var isCancelled = parsed.status === '등록취소';
+  var srcBadge    = {
+    'PSIS_등록':'🏛 PSIS 등록농약', 'PSIS_취소':'⛔ PSIS 등록취소',
+    'PSIS':'🏛 PSIS', 'GAS/Claude':'🤖 AI 분석',
+    'LOCAL':'📋 텍스트 파싱', 'URL':'🔗 URL 추출',
   }[parsed.source] || parsed.source || '';
 
-  // 등록취소 경고 배지 (취소 농약이면 빨간 경고 먼저 표시)
-  var cancelBadge = _getCancelledBadge ? _getCancelledBadge(parsed) : '';
-  var borderColor = (parsed.status === '등록취소') ? '#EF9A9A' : 'var(--green-dark)';
-  var bgColor     = (parsed.status === '등록취소') ? '#FFF5F5' : 'var(--green-light)';
+  var cancelBadge = (typeof _getCancelledBadge==='function') ? _getCancelledBadge(parsed) : '';
+  var borderColor = isCancelled ? '#EF9A9A' : 'var(--green-dark)';
+  var bgColor     = isCancelled ? '#FFF5F5' : 'var(--green-light)';
 
   var h = cancelBadge;
-  h += '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:10px;padding:14px;">'
-    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
-    + '<div style="font-size:14px;font-weight:700;color:var(--green-dark);">✅ '+esc(parsed.name||'')+'</div>'
-    + '<span style="font-size:10px;background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:8px;">'+srcBadge+'</span>'
-    + '</div>';
+  h += '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:12px;padding:14px;">';
 
-  if (parsed.ingredient || parsed.manufacturer) {
-    h += '<div style="font-size:11px;color:var(--gray-600);margin-bottom:8px;">'
-      + (parsed.ingredient?'성분: '+esc(parsed.ingredient):'')
-      + (parsed.manufacturer?' · '+esc(parsed.manufacturer):'')
-      + '</div>';
+  // 헤더
+  h += '<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;">'
+     + '<div>'
+     + '<div style="font-size:15px;font-weight:800;color:'+(isCancelled?'#C62828':'var(--green-dark)')+';">'
+     + (isCancelled?'⛔ ':'✅ ')+esc(parsed.name||'')+'</div>'
+     + '<div style="font-size:11px;color:var(--gray-500);margin-top:2px;">'
+     + esc(parsed.type||'')+(parsed.form?' · '+esc(parsed.form):'')+'</div>'
+     + '</div>'
+     + '<div style="text-align:right;">'
+     + (srcBadge?'<span style="font-size:10px;padding:2px 8px;border-radius:8px;background:var(--green-dark);color:#fff;">'+esc(srcBadge)+'</span><br>':'')
+     + moaBadge
+     + '</div></div>';
+
+  // 기본 정보
+  var infoFields = [
+    {label:'성분', val:parsed.ingredient},
+    {label:'제조사', val:parsed.manufacturer},
+    {label:'등록번호', val:parsed.regNo},
+    {label:'취소일', val:parsed.cancelDate},
+  ].filter(function(f){return f.val;});
+  if (infoFields.length) {
+    h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px;">';
+    infoFields.forEach(function(f){
+      h += '<div style="background:rgba(255,255,255,0.7);border-radius:6px;padding:5px 8px;">'
+         + '<div style="font-size:10px;color:var(--gray-500);">'+esc(f.label)+'</div>'
+         + '<div style="font-size:11px;font-weight:600;">'+esc(f.val)+'</div></div>';
+    });
+    h += '</div>';
   }
 
+  // 작물별 방제 전체 테이블
   if (crops.length) {
-    h += '<div style="font-size:12px;color:var(--blue-dark);margin-bottom:8px;">🌱 '+crops.length+'종 작물 · '+entries+'개 방제항목</div>';
-    // 작물 미리보기 테이블
-    h += '<div style="max-height:160px;overflow-y:auto;margin-bottom:10px;">'
-      + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
-      + '<thead><tr style="background:var(--green-dark);">'
-      + '<th style="padding:3px 5px;color:#fff;text-align:left;">작물</th>'
-      + '<th style="padding:3px 5px;color:#fff;text-align:left;">방제 대상</th>'
-      + '<th style="padding:3px 5px;color:#fff;text-align:center;">사용량</th>'
-      + '<th style="padding:3px 5px;color:#fff;text-align:center;">안전사용</th>'
-      + '</tr></thead><tbody>';
-    crops.slice(0,6).forEach(function(crop){
-      (parsed.cropUsage[crop]||[]).slice(0,2).forEach(function(e,i){
-        h += '<tr style="'+(i%2?'background:#f9f9f9;':'')+'border-bottom:0.5px solid #eee;">'
-          + '<td style="padding:3px 5px;font-weight:500;">'+esc(crop)+'</td>'
-          + '<td style="padding:3px 5px;">'+esc(e.target||'')+'</td>'
-          + '<td style="padding:3px 5px;text-align:center;">'+esc(e.amount||'')+'</td>'
-          + '<td style="padding:3px 5px;text-align:center;color:#E65100;">'+esc(e.safety||'')+'</td>'
-          + '</tr>';
+    h += '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">'
+       + '🌱 '+crops.length+'종 작물 · '+entries+'개 방제항목</div>';
+
+    h += '<div style="max-height:280px;overflow-y:auto;border-radius:8px;border:1px solid var(--gray-200);margin-bottom:10px;">'
+       + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+       + '<thead style="position:sticky;top:0;"><tr style="background:var(--green-dark);color:#fff;">'
+       + '<th style="padding:4px 6px;text-align:left;">작물</th>'
+       + '<th style="padding:4px 6px;text-align:left;">방제대상</th>'
+       + '<th style="padding:4px 6px;text-align:center;">20L당</th>'
+       + '<th style="padding:4px 6px;text-align:center;color:#FFD54F;">안전사용</th>'
+       + '<th style="padding:4px 6px;text-align:center;">횟수</th>'
+       + '</tr></thead><tbody>';
+
+    var ri = 0;
+    var myNames = (window._allPlants||[]).map(function(p){return p.name||'';});
+    crops.forEach(function(crop){
+      var isMy = myNames.some(function(n){return n.includes(crop)||crop.includes(n);});
+      (parsed.cropUsage[crop]||[]).forEach(function(entry, ei){
+        h += '<tr style="'+(ri%2?'background:var(--gray-50);':'')+'">'
+           + '<td style="padding:4px 6px;font-weight:'+(ei===0?'700':'400')+';">'
+           + (isMy&&ei===0?'⭐ ':'')+(ei===0?esc(crop):'')+'</td>'
+           + '<td style="padding:4px 6px;">'+esc(entry.target||'')+'</td>'
+           + '<td style="padding:4px 6px;text-align:center;font-weight:700;color:var(--blue-dark);">'+esc(entry.amount||'')+'</td>'
+           + '<td style="padding:4px 6px;text-align:center;color:#E65100;font-size:10px;">'+esc(entry.safety||'')+'</td>'
+           + '<td style="padding:4px 6px;text-align:center;">'+esc(entry.times||'')+'</td>'
+           + '</tr>';
+        ri++;
       });
     });
-    if (crops.length>6) h+='<tr><td colspan="4" style="padding:3px 5px;color:#888;">외 '+(crops.length-6)+'작물...</td></tr>';
     h += '</tbody></table></div>';
+
+    // 내 작물 매칭 강조
+    var matched = crops.filter(function(c){return myNames.some(function(n){return n.includes(c)||c.includes(n);});});
+    if (matched.length) {
+      h += '<div style="padding:6px 8px;background:var(--green-light);border-radius:6px;font-size:11px;color:var(--green-dark);margin-bottom:8px;">'
+         + '⭐ 내 작물 해당: <b>'+esc(matched.join(' · '))+'</b></div>';
+    }
+  } else if (!isCancelled) {
+    h += '<div style="padding:8px;text-align:center;color:var(--gray-400);font-size:12px;">작물별 방제 정보 없음</div>';
   }
 
-  h += '<div style="display:flex;gap:6px;">'
-    + '<button id="qr-save-btn" onclick="saveQrParsedData()" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
-    + (_isOnline ? '✅ Firebase에 저장' : '💾 기기에 저장')
-    + '</button>'
-    + '<button onclick="resetQrPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
-    + '</div>';
+  // 저장/외부 버튼
+  h += '<div style="display:flex;gap:6px;flex-wrap:wrap;">'
+     + '<button onclick="saveQrParsedData()" style="flex:2;min-width:100px;padding:10px;background:'
+     + (isCancelled?'#C62828':'var(--green-dark)')
+     + ';color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
+     + (isCancelled?'⚠️ 취소농약 기록 저장':(_isOnline?'✅ Firebase에 저장':'💾 기기에 저장'))+'</button>'
+     + '<button onclick="window.open(\''+esc(srcUrl)+'\')" '
+     + 'style="flex:1;padding:10px;background:#fff;border:1px solid var(--blue-mid);color:var(--blue-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔗 사이트</button>'
+     + '<button onclick="resetQrPanel()" style="padding:10px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄</button>'
+     + '</div>';
 
   if (!_isOnline) {
-    h += '<div style="font-size:11px;color:#E65100;margin-top:6px;text-align:center;">📵 오프라인 — 연결 시 자동 Firebase 동기화</div>';
+    h += '<div style="font-size:11px;color:#E65100;margin-top:5px;text-align:center;">📵 오프라인 — 연결 시 자동 Firebase 동기화</div>';
   }
-  return h + '</div>';
+  h += '</div>';
+  return h;
 }
 
 // ── 수동 입력 안내 UI ──────────────────────────────────────────
@@ -23614,53 +23743,162 @@ async function testPsisKey() {
   var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl().trim() : '';
   var testOut = document.getElementById('psis-test-result');
 
+  // ── 상태 확인 ────────────────────────────────────────────
   if (!key && !gasUrl) {
     if (testOut) testOut.innerHTML =
-      '<div style="color:#E65100;font-size:12px;">⚠️ PSIS API 키 또는 GAS URL이 필요합니다.<br>'
-      + '<b>방법 1:</b> 아래 입력란에 PSIS API 키 입력 후 저장<br>'
-      + '<b>방법 2:</b> ⚙️ GAS 설정에서 Google Apps Script URL 등록</div>';
+      '<div style="font-size:12px;color:#E65100;line-height:1.8;">'
+      + '⚠️ 설정이 필요합니다.<br>'
+      + '<b>① PSIS API 키</b>: 위 입력란에 입력 후 저장<br>'
+      + '<b>② GAS URL</b>: ⚙️ 설정 → GAS URL 등록 (CORS 우회용)<br>'
+      + '<br><b>※ GAS URL이 있으면 PSIS 키 없이도 작동합니다</b>'
+      + '</div>';
     return;
   }
-  if (testOut) testOut.innerHTML = '<span style="color:var(--gray-400);">🔍 두 API 모두 테스트 중...</span>';
 
-  // GAS 사용 여부 표시
-  var via = gasUrl ? ' (GAS 프록시 경유 — CORS 없음)' : ' (직접 호출 — CORS 필요)';
+  if (testOut) testOut.innerHTML =
+    '<div style="color:var(--gray-400);padding:8px;text-align:center;">'
+    + '🔍 API 연결 테스트 중...<br>'
+    + '<small>'+(gasUrl?'GAS 프록시 경유 (CORS 없음)':'직접 호출 (CORS 필요)')+'</small>'
+    + '</div>';
 
   var results = [];
+  var via = gasUrl ? 'GAS 프록시 경유' : '직접 호출 (CORS 필요)';
 
-  // ① 농약등록정보 API 테스트
-  try {
-    var reg = await queryPsisRegistered('벨리스에스');
-    if (reg && reg.cropUsage && Object.keys(reg.cropUsage).length) {
-      results.push('<span style="color:#2E7D32;">✅ 등록농약 API — ' + Object.keys(reg.cropUsage).length + '개 작물 조회 성공</span>');
-    } else {
-      results.push('<span style="color:#FF8F00;">⚠️ 등록농약 API — 응답 0건 (키는 유효, 제품명 확인 필요)</span>');
+  // ── ① 등록농약 API 테스트 ────────────────────────────────
+  // 확실히 존재하는 제품명 여러 개로 순차 시도
+  var regTestNames = ['다코닐', '코니도', '만코지', '스트레이트', '디펜', '농약'];
+  var regOk = false;
+  var regMsg = '';
+  for (var ri=0; ri<regTestNames.length && !regOk; ri++) {
+    try {
+      var reg = await queryPsisRegistered(regTestNames[ri]);
+      if (reg && reg.cropUsage && Object.keys(reg.cropUsage).length > 0) {
+        regOk  = true;
+        regMsg = '✅ 등록농약 API 정상 — "'+regTestNames[ri]+'" '
+               + Object.keys(reg.cropUsage).length+'개 작물 조회';
+      } else if (reg && reg.source === 'PSIS_등록') {
+        // 응답은 왔지만 결과 0건 (제품명 불일치)
+        regMsg = '⚠️ 연결은 됐지만 조회 결과 없음 ("'+regTestNames[ri]+'") — 다음 제품 시도 중...';
+      }
+    } catch(e2) {
+      regMsg = '❌ 오류: ' + e2.message;
+      break;
     }
-  } catch(e) {
-    results.push('<span style="color:#C62828;">❌ 등록농약 API — ' + esc(e.message) + '</span>');
   }
 
-  // ② 등록취소농약 API 테스트
-  try {
-    var can = await queryPsisCancelled('스미치온');  // 취소 농약 예시
-    if (can && can.name) {
-      results.push('<span style="color:#2E7D32;">✅ 등록취소농약 API — "' + esc(can.name) + '" 조회 성공</span>');
-    } else {
-      results.push('<span style="color:#FF8F00;">⚠️ 등록취소농약 API — 응답 0건 (키는 유효)</span>');
-    }
-  } catch(e) {
-    results.push('<span style="color:#C62828;">❌ 등록취소농약 API — ' + esc(e.message) + '</span>');
+  if (!regOk && !regMsg.includes('❌')) {
+    // 모든 제품명 0건 → CORS 차단이거나 API 키 오류
+    regMsg = gasUrl
+      ? '⚠️ 등록농약 API — GAS 연결됐지만 PSIS 키 확인 필요'
+      : '❌ 등록농약 API — CORS 차단. GAS URL을 설정하면 해결됩니다';
   }
 
+  results.push('<div style="margin-bottom:6px;">'
+    + '<b>① 농약등록정보 API</b> (selectPesticideUseInfo)<br>'
+    + '<span style="font-size:11px;">'
+    + (regOk
+        ? '<span style="color:#2E7D32;">'+esc(regMsg)+'</span>'
+        : '<span style="color:'+(regMsg.includes('❌')?'#C62828':'#FF8F00')+';">'+esc(regMsg)+'</span>')
+    + '</span></div>');
+
+  // ── ② 등록취소농약 API 테스트 ───────────────────────────
+  // 오래된 취소 농약 여러 개로 시도
+  var canTestNames = ['스미치온', '파라티온', '디디티', 'BHC', '유기인제'];
+  var canOk = false;
+  var canMsg = '';
+  for (var ci=0; ci<canTestNames.length && !canOk; ci++) {
+    try {
+      var can = await queryPsisCancelled(canTestNames[ci]);
+      if (can && can.name && can.status === '등록취소') {
+        canOk  = true;
+        canMsg = '✅ 등록취소농약 API 정상 — "'+can.name+'" 취소일: '+(can.cancelDate||'미상');
+      }
+    } catch(e3) {
+      canMsg = '❌ 오류: ' + e3.message;
+      break;
+    }
+  }
+
+  if (!canOk && !canMsg.includes('❌')) {
+    canMsg = gasUrl
+      ? '⚠️ 등록취소농약 API — GAS 연결됐지만 조회 결과 없음'
+      : '❌ 등록취소농약 API — CORS 차단. GAS URL을 설정하면 해결됩니다';
+  }
+
+  results.push('<div style="margin-bottom:6px;">'
+    + '<b>② 등록취소농약 API</b> (selectCancelPestInfo)<br>'
+    + '<span style="font-size:11px;">'
+    + (canOk
+        ? '<span style="color:#2E7D32;">'+esc(canMsg)+'</span>'
+        : '<span style="color:'+(canMsg.includes('❌')?'#C62828':'#FF8F00')+';">'+esc(canMsg)+'</span>')
+    + '</span></div>');
+
+  // ── ③ 직접 입력 테스트 ──────────────────────────────────
+  // 사용자가 직접 제품명 입력해서 테스트할 수 있는 입력란
+  results.push(
+    '<div style="margin-top:8px;padding-top:8px;border-top:1px solid var(--gray-200);">'
+    + '<div style="font-size:11px;color:var(--gray-500);margin-bottom:4px;">③ 제품명 직접 조회 테스트</div>'
+    + '<div style="display:flex;gap:5px;">'
+    + '<input type="text" id="psis-test-name" placeholder="농약 상표명 입력 (예: 다코닐)" '
+    + 'style="flex:1;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;">'
+    + '<button onclick="testPsisManual()" '
+    + 'style="padding:6px 12px;background:var(--green-dark);color:#fff;border-radius:6px;border:none;font-size:11px;cursor:pointer;">조회</button>'
+    + '</div>'
+    + '<div id="psis-manual-result" style="margin-top:5px;font-size:11px;"></div>'
+    + '</div>'
+  );
+
+  // ── 결과 표시 ───────────────────────────────────────────
   if (testOut) {
-    testOut.innerHTML = '<div style="font-size:10px;color:#888;margin-bottom:5px;">연결 방식: '+esc(via)+'</div>'
-      + results.map(function(r){
-          return '<div style="margin-bottom:3px;">'+r+'</div>';
-        }).join('');
-    if (results.every(function(r){ return r.includes('❌'); })) {
-      testOut.innerHTML += '<div style="font-size:10px;color:#888;margin-top:4px;">'
-        + 'CORS 오류인 경우 GAS 프록시를 통해 API를 호출해야 합니다.</div>';
+    testOut.innerHTML =
+      '<div style="background:var(--gray-50);border-radius:8px;padding:10px;margin-bottom:6px;">'
+      + '<div style="font-size:11px;color:#888;margin-bottom:8px;">📡 연결 방식: <b>'+esc(via)+'</b></div>'
+      + results.join('')
+      + '</div>';
+
+    // CORS 차단인 경우 GAS 설정 안내
+    if (!gasUrl && (!regOk || !canOk)) {
+      testOut.innerHTML +=
+        '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:10px;font-size:11px;line-height:1.8;">'
+        + '💡 <b>CORS 문제 해결 방법</b><br>'
+        + '1. GAS_Code.gs를 Google Apps Script에 배포<br>'
+        + '2. 배포 URL을 ⚙️ GAS 설정에 등록<br>'
+        + '3. GAS 스크립트 속성에 PSIS_API_KEY 저장<br>'
+        + '→ GAS 경유 시 CORS 없이 두 API 모두 정상 작동'
+        + '</div>';
     }
+  }
+}
+
+// 직접 제품명 조회 테스트
+async function testPsisManual() {
+  var name = (document.getElementById('psis-test-name')||{}).value||'';
+  var out  = document.getElementById('psis-manual-result');
+  if (!name.trim()) { if(out) out.innerHTML='<span style="color:#888;">제품명을 입력하세요</span>'; return; }
+  if (out) out.innerHTML = '<span style="color:var(--gray-400);">조회 중...</span>';
+
+  try {
+    // 등록 농약 먼저
+    var reg = await queryPsisRegistered(name.trim());
+    if (reg && reg.cropUsage && Object.keys(reg.cropUsage).length) {
+      if (out) out.innerHTML =
+        '<span style="color:#2E7D32;">✅ 등록농약 — '
+        + Object.keys(reg.cropUsage).length+'개 작물 / '
+        + Object.values(reg.cropUsage).reduce(function(a,v){return a+v.length;},0)+'개 방제항목<br>'
+        + '상표명: '+esc(reg.name||name)+' / 성분: '+esc(reg.ingredient||'')+'</span>';
+      return;
+    }
+    // 취소 농약 시도
+    var can = await queryPsisCancelled(name.trim());
+    if (can && can.name) {
+      if (out) out.innerHTML =
+        '<span style="color:#C62828;">⛔ 등록취소농약 — '+esc(can.name)+' (취소일: '+esc(can.cancelDate||'미상')+')</span>';
+      return;
+    }
+    if (out) out.innerHTML =
+      '<span style="color:#FF8F00;">조회 결과 없음 — 상표명이 정확한지 확인하세요 (예: 벨리스에스 → 벨리스)</span>';
+  } catch(e) {
+    if (out) out.innerHTML = '<span style="color:#C62828;">오류: '+esc(e.message)+'</span>';
   }
 }
 
@@ -25021,6 +25259,719 @@ function _classifyByMaxTimes(plan) {
     else groups.multi.push(p);
   });
   return groups;
+}
+
+// ══════════════════════════════════════════════════════════
+// 🗓 스마트 방제 스케줄러
+// 1단계: 작물 선택 (예방 / 병충해 발생)
+// 2단계: 회차별 농약 추천 + 주말 기준 방제일 자동 계산
+// + 심은 날짜 기준 수확전·후 농약/비료 추천
+// ══════════════════════════════════════════════════════════
+
+// ── 작물별 표준 방제 간격 (일) ──────────────────────────────
+var SPRAY_INTERVAL = {
+  '블루베리': {preventive:14, outbreak:7,  maxRounds:4},
+  '무화과':   {preventive:14, outbreak:7,  maxRounds:3},
+  '감나무':   {preventive:14, outbreak:10, maxRounds:4},
+  '사과':     {preventive:10, outbreak:7,  maxRounds:5},
+  '배':       {preventive:10, outbreak:7,  maxRounds:4},
+  '복숭아':   {preventive:10, outbreak:7,  maxRounds:4},
+  '포도':     {preventive:10, outbreak:7,  maxRounds:4},
+  '매실':     {preventive:14, outbreak:10, maxRounds:4},
+  '살구':     {preventive:14, outbreak:10, maxRounds:3},
+  '다래':     {preventive:14, outbreak:10, maxRounds:3},
+  '고추':     {preventive:7,  outbreak:5,  maxRounds:5},
+  '토마토':   {preventive:7,  outbreak:5,  maxRounds:5},
+  '오이':     {preventive:7,  outbreak:5,  maxRounds:4},
+  '수박':     {preventive:10, outbreak:7,  maxRounds:3},
+  '참외':     {preventive:10, outbreak:7,  maxRounds:3},
+  '딸기':     {preventive:7,  outbreak:5,  maxRounds:4},
+  'default':  {preventive:10, outbreak:7,  maxRounds:3},
+};
+
+// ── 수확 전 농약 금지일수 (작물별 안전사용기준 최대) ────────────
+var PRE_HARVEST_DAYS = {
+  '블루베리':3, '무화과':7, '감나무':30, '사과':30,
+  '배':14, '복숭아':7, '포도':30, '매실':7, '살구':14,
+  '고추':5, '토마토':3, '오이':2, '수박':7, '참외':5,
+  '딸기':3, 'default':14,
+};
+
+// ── 날짜 유틸 ─────────────────────────────────────────────
+function getNextWeekend(date, prefer) {
+  // prefer: 'sat'=토요일, 'sun'=일요일, 'nearest'=가장 가까운 주말
+  var d   = new Date(date);
+  var dow = d.getDay(); // 0=일,6=토
+  var targets = prefer==='sat' ? [6] : prefer==='sun' ? [0] : [6,0];
+  var minDiff = 99;
+  var result  = new Date(d);
+  targets.forEach(function(t) {
+    var diff = (t - dow + 7) % 7;
+    if (diff === 0) diff = 7; // 당일 제외, 다음 주말
+    if (diff < minDiff) { minDiff=diff; result=new Date(d); result.setDate(d.getDate()+diff); }
+  });
+  return result;
+}
+
+function getPrevWeekend(date, prefer) {
+  var d   = new Date(date);
+  var dow = d.getDay();
+  var targets = prefer==='sat' ? [6] : prefer==='sun' ? [0] : [6,0];
+  var minDiff = 99;
+  var result  = new Date(d);
+  targets.forEach(function(t) {
+    var diff = (dow - t + 7) % 7;
+    if (diff === 0) diff = 7;
+    if (diff < minDiff) { minDiff=diff; result=new Date(d); result.setDate(d.getDate()-diff); }
+  });
+  return result;
+}
+
+function getNearestWeekend(targetDate, marginDays) {
+  // targetDate 기준 ±marginDays 범위 내 가장 가까운 주말 반환
+  var d   = new Date(targetDate);
+  var dow = d.getDay();
+  // 토요일까지 거리
+  var toSat = (6 - dow + 7) % 7;
+  var toSun = (0 - dow + 7) % 7 || 7;
+  var frSat = dow===0 ? 7 : (dow-6+7)%7;
+  var frSun = dow===0 ? 0 : (dow-0+7)%7;
+  var candidates = [
+    {diff: toSat,  date: new Date(d.getTime() + toSat*86400000),  dir:'후'},
+    {diff: toSun,  date: new Date(d.getTime() + toSun*86400000),  dir:'후'},
+    {diff: -frSat, date: new Date(d.getTime() - frSat*86400000),  dir:'전'},
+    {diff: -frSun, date: new Date(d.getTime() - frSun*86400000),  dir:'전'},
+  ].filter(function(c){ return Math.abs(c.diff) <= (marginDays||7); });
+  if (!candidates.length) candidates = [{diff:toSat, date: new Date(d.getTime()+toSat*86400000), dir:'후'}];
+  candidates.sort(function(a,b){ return Math.abs(a.diff)-Math.abs(b.diff); });
+  return candidates[0];
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  var dt = new Date(d);
+  var y  = dt.getFullYear();
+  var m  = String(dt.getMonth()+1).padStart(2,'0');
+  var day= String(dt.getDate()).padStart(2,'0');
+  var dows = ['일','월','화','수','목','금','토'];
+  return y+'년 '+m+'월 '+day+'일 ('+dows[dt.getDay()]+')';
+}
+
+function fmtShort(d) {
+  if (!d) return '';
+  var dt  = new Date(d);
+  var m   = dt.getMonth()+1;
+  var day = dt.getDate();
+  var dows= ['일','월','화','수','목','금','토'];
+  return m+'/'+day+'('+dows[dt.getDay()]+')';
+}
+
+function addDays(date, n) {
+  var d = new Date(date);
+  d.setDate(d.getDate()+n);
+  return d;
+}
+
+function isWeekend(d) {
+  var dt = new Date(d);
+  return dt.getDay()===0 || dt.getDay()===6;
+}
+
+// ── 방제 스케줄 생성 ─────────────────────────────────────────
+function buildSpraySchedule(opts) {
+  // opts: {
+  //   crops:       ['블루베리','무화과'],    // 선택한 작물
+  //   mode:        'preventive'|'outbreak',  // 예방 / 병충해 발생
+  //   startDate:   Date,                     // 1차 방제 기준일
+  //   rounds:      3,                        // 방제 횟수
+  //   weekendPref: 'nearest'|'sat'|'sun',    // 주말 기준
+  //   disease:     '탄저병',                 // 방제 대상 (선택)
+  // }
+
+  var crops      = opts.crops || [];
+  var mode       = opts.mode  || 'preventive';
+  var startDate  = new Date(opts.startDate || new Date());
+  var rounds     = parseInt(opts.rounds) || 3;
+  var wpref      = opts.weekendPref || 'nearest';
+  var disease    = opts.disease || '';
+
+  // 작물별 간격 결정 (가장 짧은 간격 기준으로 안전하게)
+  var interval = 99;
+  crops.forEach(function(crop) {
+    var baseKey = Object.keys(SPRAY_INTERVAL).find(function(k){ return crop.includes(k); }) || 'default';
+    var cfg     = SPRAY_INTERVAL[baseKey];
+    var days    = mode==='outbreak' ? cfg.outbreak : cfg.preventive;
+    if (days < interval) interval = days;
+  });
+
+  // 각 작물 수확 전 금지일 (가장 긴 기준 → 안전)
+  var preHarvest = 0;
+  crops.forEach(function(crop) {
+    var baseKey = Object.keys(PRE_HARVEST_DAYS).find(function(k){ return crop.includes(k); }) || 'default';
+    var days    = PRE_HARVEST_DAYS[baseKey];
+    if (days > preHarvest) preHarvest = days;
+  });
+
+  // 1차 기준일 → 주말 보정
+  var firstDate;
+  if (isWeekend(startDate)) {
+    firstDate = startDate;
+  } else {
+    var nearest = getNearestWeekend(startDate, 7);
+    firstDate   = nearest.date;
+  }
+
+  // 회차별 날짜 + 농약 배정
+  var plan = buildSprayPlan(crops, disease, rounds);
+  var schedule = [];
+
+  for (var r=0; r<rounds; r++) {
+    var rawDate    = addDays(firstDate, r * interval);
+    var weekend    = getNearestWeekend(rawDate, 5);
+    var sprayDate  = weekend.date;
+    var roundPlan  = (plan && plan.rounds && plan.rounds[r]) || null;
+
+    schedule.push({
+      round:      r+1,
+      rawDate:    rawDate,
+      sprayDate:  sprayDate,
+      diffDays:   weekend.diff,
+      diffDir:    weekend.dir,
+      interval:   interval,
+      pesticides: roundPlan ? roundPlan.pests : [],
+      moas:       roundPlan ? roundPlan.moas  : [],
+    });
+  }
+
+  return {
+    crops:      crops,
+    mode:       mode,
+    disease:    disease,
+    interval:   interval,
+    preHarvest: preHarvest,
+    rounds:     rounds,
+    firstDate:  firstDate,
+    schedule:   schedule,
+    plan:       plan,
+  };
+}
+
+// ── 수확 스케줄 생성 (심은 날짜 기준) ───────────────────────────
+function buildHarvestSchedule(plantInfo, weekendPref) {
+  // plantInfo: {name, plantDate, fruitDays, totalDays}
+  var name       = plantInfo.name || '';
+  var plantDate  = plantInfo.plantDate ? new Date(plantInfo.plantDate) : null;
+  var fruitDays  = parseInt(plantInfo.fruitDays) || 0;
+  var totalDays  = parseInt(plantInfo.totalDays) || 0;
+  var wpref      = weekendPref || 'nearest';
+
+  if (!plantDate || !fruitDays) return null;
+
+  var harvestDate = addDays(plantDate, fruitDays);
+  var endDate     = totalDays ? addDays(plantDate, totalDays) : addDays(harvestDate, 30);
+
+  var baseKey   = Object.keys(PRE_HARVEST_DAYS).find(function(k){ return name.includes(k); }) || 'default';
+  var safeStop  = PRE_HARVEST_DAYS[baseKey];
+  var lastSpray = addDays(harvestDate, -safeStop);
+
+  // 주요 이정표
+  var milestones = [];
+
+  // 수확 14일 전 — 마지막 살균제 기회
+  if (safeStop <= 14) {
+    milestones.push({
+      label:   '마지막 살균제 가능일',
+      date:    addDays(harvestDate, -14),
+      type:    'spray',
+      note:    '수확 14일 전 — SDHI·스트로빌루린 계열 마지막 사용 기회',
+      color:   '#FF8F00',
+    });
+  }
+
+  // 마지막 농약 가능일
+  milestones.push({
+    label:  '마지막 농약 가능일 (수확 '+safeStop+'일 전)',
+    date:   lastSpray,
+    type:   'spray',
+    note:   '이후 수확까지 농약 살포 금지',
+    color:  '#C62828',
+  });
+
+  // 수확 예정일
+  milestones.push({
+    label:  '🍇 수확 예정일',
+    date:   harvestDate,
+    type:   'harvest',
+    note:   name+' 수확 시기',
+    color:  '#2E7D32',
+  });
+
+  // 수확 후 2주 — 토양 개선 미생물 투여
+  milestones.push({
+    label:  '수확 후 미생물균 투여',
+    date:   addDays(harvestDate, 14),
+    type:   'microbe',
+    note:   '고초균·광합성균 관주 — 토양 회복',
+    color:  '#00695C',
+  });
+
+  // 수확 후 비료
+  milestones.push({
+    label:  '수확 후 칼슘·인산 엽면시비',
+    date:   addDays(harvestDate, 21),
+    type:   'fertilizer',
+    note:   '튼튼한 칼슘제 + 트라포스 모빌 500배',
+    color:  '#1565C0',
+  });
+
+  // 주요 생육 주차별 비료 추천 (심은 날 기준)
+  var fertSchedule = [];
+  var weeks = [2, 4, 6, 8, 12, 16, 20];
+  weeks.forEach(function(w) {
+    var d = addDays(plantDate, w*7);
+    if (d < harvestDate) {
+      fertSchedule.push({
+        week: w,
+        date: d,
+        label: '심은 후 '+w+'주째',
+        note: w<=4 ? '질소 위주 관주 비료 (초기 생장)' :
+              w<=8 ? '인산·칼륨 추가 (꽃·과실 분화)' :
+                     '칼슘·미량요소 엽면 (과실 비대)',
+        type: 'fertilizer',
+      });
+    }
+  });
+
+  // 각 이정표에 주말 날짜 매핑
+  milestones = milestones.map(function(m) {
+    var nearest = getNearestWeekend(m.date, 7);
+    return Object.assign({}, m, {
+      weekendDate: nearest.date,
+      weekendDiff: nearest.diff,
+      weekendDir:  nearest.dir,
+    });
+  });
+  fertSchedule = fertSchedule.map(function(f) {
+    var nearest = getNearestWeekend(f.date, 7);
+    return Object.assign({}, f, {
+      weekendDate: nearest.date,
+      weekendDiff: nearest.diff,
+      weekendDir:  nearest.dir,
+    });
+  });
+
+  return {
+    name:         name,
+    plantDate:    plantDate,
+    harvestDate:  harvestDate,
+    lastSpray:    lastSpray,
+    safeStop:     safeStop,
+    milestones:   milestones,
+    fertSchedule: fertSchedule,
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+// 🎨 방제 스케줄러 UI
+// ══════════════════════════════════════════════════════════
+
+function renderSpraySchedulerPanel() {
+  var container = document.getElementById('db-list');
+  if (!container) return;
+
+  var allPlants = window._allPlants || [];
+
+  // 작물 그룹화
+  var fruitTrees = allPlants.filter(function(p){
+    return ['유실수','과수'].some(function(c){ return (p.category||'').includes(c); }) ||
+           ['블루베리','무화과','감','사과','배','복숭아','자두','매실','포도','살구','다래','키위','앵두','마르멜로'].some(function(k){ return (p.name||'').includes(k); });
+  });
+  var veggies = allPlants.filter(function(p){
+    return ['채소','작물','재배중'].some(function(c){ return (p.category||'').includes(c); }) && !fruitTrees.includes(p);
+  });
+
+  var h = '<div style="padding-bottom:60px;">';
+
+  // ── STEP 1: 작물 선택 ───────────────────────────────────
+  h += '<div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:14px;padding:16px;margin-bottom:12px;">'
+     + '<div style="font-size:16px;font-weight:800;color:var(--green-dark);margin-bottom:4px;">🌱 STEP 1 — 작물 선택</div>'
+     + '<div style="font-size:11px;color:var(--gray-500);margin-bottom:14px;">방제할 작물을 1개 이상 선택하세요</div>';
+
+  // 유실수 그룹
+  if (fruitTrees.length) {
+    h += '<div style="font-size:12px;font-weight:700;color:var(--green-dark);margin-bottom:7px;">🌳 유실수</div>'
+       + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+    fruitTrees.forEach(function(p) {
+      var short = (p.name||'').replace(/(블루베리|무화과|감나무|감|사과|배나무|복숭아|자두|매실|포도|살구|다래|앵두).*/,'$1').slice(0,8);
+      h += '<label style="display:flex;align-items:center;gap:4px;padding:7px 11px;background:#fff;border:1.5px solid var(--green-mid);border-radius:9px;font-size:12px;cursor:pointer;user-select:none;" onclick="toggleCropCard(this)">'
+         + '<input type="checkbox" class="crop-select" value="'+esc(p.name||'')+'" data-short="'+esc(short)+'" style="display:none;">'
+         + (p.emoji||'🌿')+' <span>'+esc(short)+'</span>'
+         + '</label>';
+    });
+    h += '</div>';
+  }
+
+  // 채소·작물 그룹 (접기)
+  if (veggies.length) {
+    h += '<details style="margin-bottom:12px;"><summary style="font-size:12px;font-weight:700;color:var(--blue-dark);cursor:pointer;margin-bottom:7px;">🥬 채소·작물 ('+veggies.length+'종)</summary>'
+       + '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;">';
+    veggies.forEach(function(p) {
+      var short = (p.name||'').slice(0,8);
+      h += '<label style="display:flex;align-items:center;gap:4px;padding:6px 10px;background:#fff;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:11px;cursor:pointer;" onclick="toggleCropCard(this)">'
+         + '<input type="checkbox" class="crop-select" value="'+esc(p.name||'')+'" data-short="'+esc(short)+'" style="display:none;">'
+         + (p.emoji||'🌿')+' <span>'+esc(short)+'</span>'
+         + '</label>';
+    });
+    h += '</div></details>';
+  }
+
+  // 선택된 작물 표시
+  h += '<div id="selected-crops-display" style="min-height:32px;padding:6px 8px;background:rgba(255,255,255,0.6);border-radius:8px;font-size:12px;color:var(--gray-500);">작물을 선택하면 여기에 표시됩니다</div>'
+     + '</div>';
+
+  // ── STEP 2: 방제 조건 설정 ────────────────────────────────
+  h += '<div style="background:#fff;border:1.5px solid var(--gray-200);border-radius:14px;padding:16px;margin-bottom:12px;">'
+     + '<div style="font-size:16px;font-weight:800;color:var(--gray-700);margin-bottom:14px;">⚙️ STEP 2 — 방제 조건 설정</div>';
+
+  // 방제 유형
+  h += '<div style="margin-bottom:12px;">'
+     + '<div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:7px;">방제 목적</div>'
+     + '<div style="display:flex;gap:8px;">'
+     + '<label onclick="toggleModeBtn(this,\'preventive\')" id="mode-preventive" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px;background:var(--green-dark);color:#fff;border-radius:10px;border:2px solid var(--green-dark);cursor:pointer;">'
+     + '<input type="radio" name="spray-mode" value="preventive" checked style="display:none;">'
+     + '<span style="font-size:18px;margin-bottom:3px;">🛡</span>'
+     + '<span style="font-size:12px;font-weight:700;">예방 살포</span>'
+     + '<span style="font-size:10px;opacity:0.85;">병충해 발생 전</span>'
+     + '</label>'
+     + '<label onclick="toggleModeBtn(this,\'outbreak\')" id="mode-outbreak" style="flex:1;display:flex;flex-direction:column;align-items:center;padding:10px;background:#fff;color:var(--red-dark);border-radius:10px;border:2px solid #EF9A9A;cursor:pointer;">'
+     + '<input type="radio" name="spray-mode" value="outbreak" style="display:none;">'
+     + '<span style="font-size:18px;margin-bottom:3px;">🚨</span>'
+     + '<span style="font-size:12px;font-weight:700;">발생 후 방제</span>'
+     + '<span style="font-size:10px;opacity:0.7;">병충해 이미 발생</span>'
+     + '</label></div></div>';
+
+  // 1차 방제일
+  var today = new Date();
+  var todayStr = today.toISOString().slice(0,10);
+  h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">'
+     + '<div><label style="font-size:11px;color:var(--gray-500);display:block;margin-bottom:3px;">1차 방제 예정일</label>'
+     + '<input type="date" id="spray-start-date" value="'+todayStr+'" style="width:100%;padding:8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>'
+     + '<div><label style="font-size:11px;color:var(--gray-500);display:block;margin-bottom:3px;">방제 횟수</label>'
+     + '<select id="spray-rounds-new" style="width:100%;padding:8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;">'
+     + '<option value="2">2회</option><option value="3" selected>3회</option><option value="4">4회</option>'
+     + '</select></div></div>';
+
+  // 방제 대상 병해충
+  h += '<div style="margin-bottom:12px;">'
+     + '<label style="font-size:11px;color:var(--gray-500);display:block;margin-bottom:3px;">방제 대상 병해충 (선택)</label>'
+     + '<input type="text" id="spray-disease-new" placeholder="예: 탄저병, 진딧물 (빈칸이면 전체)" style="width:100%;padding:8px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;box-sizing:border-box;"></div>';
+
+  // 주말 기준
+  h += '<div style="margin-bottom:14px;">'
+     + '<div style="font-size:11px;color:var(--gray-500);margin-bottom:6px;">선호 방제 요일</div>'
+     + '<div style="display:flex;gap:6px;">'
+     + ['nearest:가장 가까운 주말','sat:토요일 기준','sun:일요일 기준'].map(function(s){
+         var v = s.split(':')[0]; var l = s.split(':')[1];
+         return '<label style="flex:1;text-align:center;padding:7px;background:'+(v==='nearest'?'var(--blue-dark)':'#fff')+';color:'+(v==='nearest'?'#fff':'var(--gray-600)')+';border:1.5px solid '+(v==='nearest'?'var(--blue-dark)':'var(--gray-200)')+';border-radius:8px;font-size:11px;cursor:pointer;" id="wpref-'+v+'" onclick="toggleWeekPref(\''+v+'\')">'
+               + '<input type="radio" name="weekend-pref" value="'+v+'" '+(v==='nearest'?'checked':'')+' style="display:none;">'+l+'</label>';
+       }).join('')
+     + '</div></div>';
+
+  h += '<button onclick="generateSchedule()" style="width:100%;padding:13px;background:var(--green-dark);color:#fff;border-radius:10px;border:none;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:0.3px;">'
+     + '📅 방제 스케줄 생성</button>'
+     + '</div>';
+
+  // ── 결과 영역 ────────────────────────────────────────────
+  h += '<div id="schedule-result"></div>';
+
+  // ── 수확 스케줄 섹션 ──────────────────────────────────────
+  h += '<div style="background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:14px;padding:16px;margin-top:12px;">'
+     + '<div style="font-size:14px;font-weight:700;color:#1B5E20;margin-bottom:4px;">🍇 수확 달력 (심은 날짜 기준)</div>'
+     + '<div style="font-size:11px;color:var(--gray-500);margin-bottom:12px;">심은 날짜가 등록된 작물의 수확전·후 농약·비료 추천일을 주 단위로 보여줍니다</div>'
+     + '<div id="harvest-schedule-list">';
+
+  // 심은 날짜 있는 작물만
+  var plantedPlants = allPlants.filter(function(p){ return p.plantDate && p.fruitDays && parseInt(p.fruitDays)>0; });
+  if (plantedPlants.length) {
+    plantedPlants.forEach(function(p) {
+      h += '<div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;">'
+         + '<div style="font-size:12px;font-weight:600;">'+(p.emoji||'🌿')+' '+esc(p.name||'')+'</div>'
+         + '<button onclick="showHarvestSchedule(\''+esc(p.id)+'\')" style="padding:5px 12px;background:#1B5E20;color:#fff;border-radius:6px;border:none;font-size:11px;cursor:pointer;">📅 달력 보기</button>'
+         + '</div>';
+    });
+  } else {
+    h += '<div style="padding:12px;text-align:center;color:var(--gray-400);font-size:12px;">'
+       + '심은 날짜와 수확 예정일이 등록된 작물이 없습니다.<br>'
+       + '<small>식물 탭에서 심은 날짜·수확 예정일(일)을 입력하면 여기에 표시됩니다</small>'
+       + '</div>';
+  }
+  h += '</div><div id="harvest-detail-result"></div></div>';
+  h += '</div>';
+
+  container.innerHTML = h;
+}
+
+// ── 작물 카드 토글 ──────────────────────────────────────────
+function toggleCropCard(label) {
+  var cb = label.querySelector('input[type=checkbox]');
+  if (!cb) return;
+  cb.checked = !cb.checked;
+  if (cb.checked) {
+    label.style.background = 'var(--green-dark)';
+    label.style.color      = '#fff';
+    label.style.borderColor= 'var(--green-dark)';
+  } else {
+    label.style.background  = '#fff';
+    label.style.color       = '';
+    label.style.borderColor = 'var(--green-mid)';
+  }
+  // 선택 표시 업데이트
+  var checked = Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){ return c.dataset.short||c.value; });
+  var disp    = document.getElementById('selected-crops-display');
+  if (disp) {
+    if (checked.length) {
+      disp.innerHTML = '<span style="color:var(--green-dark);font-weight:600;">선택: </span>'
+        + checked.map(function(n){ return '<span style="background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;margin-right:4px;">'+esc(n)+'</span>'; }).join('');
+    } else {
+      disp.textContent = '작물을 선택하면 여기에 표시됩니다';
+      disp.style.color = 'var(--gray-500)';
+    }
+  }
+}
+
+function toggleModeBtn(label, mode) {
+  document.querySelectorAll('[id^="mode-"]').forEach(function(el){
+    el.style.background  = '#fff';
+    el.style.color       = '';
+    el.style.borderColor = '#EF9A9A';
+  });
+  label.style.background  = mode==='preventive' ? 'var(--green-dark)' : '#C62828';
+  label.style.color       = '#fff';
+  label.style.borderColor = mode==='preventive' ? 'var(--green-dark)' : '#C62828';
+  var rb = label.querySelector('input[type=radio]');
+  if (rb) rb.checked = true;
+}
+
+function toggleWeekPref(pref) {
+  ['nearest','sat','sun'].forEach(function(v){
+    var el = document.getElementById('wpref-'+v);
+    if (!el) return;
+    el.style.background  = v===pref ? 'var(--blue-dark)' : '#fff';
+    el.style.color       = v===pref ? '#fff' : 'var(--gray-600)';
+    el.style.borderColor = v===pref ? 'var(--blue-dark)' : 'var(--gray-200)';
+  });
+  var rb = document.querySelector('input[name="weekend-pref"][value="'+pref+'"]');
+  if (rb) rb.checked = true;
+}
+
+// ── 방제 스케줄 생성 ─────────────────────────────────────────
+function generateSchedule() {
+  var crops    = Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){ return c.value; });
+  var modeEl   = document.querySelector('input[name="spray-mode"]:checked');
+  var mode     = modeEl ? modeEl.value : 'preventive';
+  var startStr = (document.getElementById('spray-start-date')||{}).value || new Date().toISOString().slice(0,10);
+  var rounds   = parseInt((document.getElementById('spray-rounds-new')||{}).value||3);
+  var disease  = (document.getElementById('spray-disease-new')||{}).value||'';
+  var wprefEl  = document.querySelector('input[name="weekend-pref"]:checked');
+  var wpref    = wprefEl ? wprefEl.value : 'nearest';
+  var out      = document.getElementById('schedule-result');
+
+  if (!crops.length) { showToast('작물을 1개 이상 선택하세요'); return; }
+
+  var sched = buildSpraySchedule({
+    crops:       crops,
+    mode:        mode,
+    startDate:   new Date(startStr),
+    rounds:      rounds,
+    disease:     disease,
+    weekendPref: wpref,
+  });
+
+  out.innerHTML = renderScheduleResult(sched);
+  out.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ── 스케줄 결과 렌더링 ────────────────────────────────────────
+function renderScheduleResult(sched) {
+  var roundColors = ['#1B5E20','#1565C0','#E65100','#6A1B9A'];
+
+  var h = '<div style="margin-top:4px;">';
+
+  // 요약 헤더
+  h += '<div style="background:var(--green-dark);color:#fff;border-radius:12px 12px 0 0;padding:14px 16px;">'
+     + '<div style="font-size:15px;font-weight:800;margin-bottom:4px;">'
+     + (sched.mode==='preventive'?'🛡 예방 방제 스케줄':'🚨 병충해 발생 후 방제 스케줄')+'</div>'
+     + '<div style="font-size:12px;opacity:0.9;">작물: '+esc(sched.crops.join(' · '))+' | 방제간격: '+sched.interval+'일 | 총 '+sched.rounds+'회</div>'
+     + (sched.disease?'<div style="font-size:11px;opacity:0.8;margin-top:2px;">대상: '+esc(sched.disease)+'</div>':'')
+     + '</div>';
+
+  // 타임라인
+  h += '<div style="background:#fff;border:1.5px solid var(--green-mid);border-radius:0 0 12px 12px;padding:14px;margin-bottom:14px;">';
+
+  sched.schedule.forEach(function(r) {
+    var bc = roundColors[(r.round-1)%4];
+    var isExact = r.diffDays===0;
+    var diffNote = isExact ? '(기준일이 주말)' :
+                   '(기준일 '+Math.abs(r.weekendDiff||r.diffDays)+'일 '+( (r.weekendDir||r.diffDir)==='후'?'뒤 주말':'앞 주말')+')';
+
+    h += '<div style="display:flex;gap:12px;margin-bottom:16px;">'
+       // 회차 번호
+       + '<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;">'
+       + '<div style="width:36px;height:36px;border-radius:50%;background:'+bc+';color:#fff;font-size:16px;font-weight:900;display:flex;align-items:center;justify-content:center;">'+r.round+'</div>'
+       + (r.round<sched.rounds?'<div style="width:2px;flex:1;background:#E0E0E0;margin:4px 0;min-height:20px;"></div>':'')
+       + '</div>'
+       // 내용
+       + '<div style="flex:1;padding-top:4px;">'
+       + '<div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-bottom:6px;">'
+       + '<span style="font-size:15px;font-weight:800;color:'+bc+';">'+fmtDate(r.sprayDate)+'</span>'
+       + (!isExact?'<span style="font-size:10px;color:var(--gray-400);">'+esc(diffNote)+'</span>':'')
+       + '</div>';
+
+    // 농약 배합표
+    if (r.pesticides && r.pesticides.length) {
+      h += '<div style="background:'+bc+'11;border:1px solid '+bc+'33;border-radius:8px;padding:10px;margin-bottom:6px;">'
+         + '<div style="font-size:11px;font-weight:700;color:'+bc+';margin-bottom:7px;">💊 이 날 사용할 농약 (물 20L 기준)</div>'
+         + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+         + '<thead><tr style="background:'+bc+';color:#fff;">'
+         + '<th style="padding:4px 7px;text-align:left;">농약</th>'
+         + '<th style="padding:4px 7px;text-align:center;">계통(MOA)</th>'
+         + '<th style="padding:4px 7px;text-align:center;">20L당</th>'
+         + '<th style="padding:4px 7px;text-align:center;">안전사용</th>'
+         + '</tr></thead><tbody>';
+      r.pesticides.forEach(function(p,i) {
+        var moaInfo = getMoaInfo(p.moa);
+        var myHave  = (window._myPesticideList||[]).some(function(m){
+          return m.status!=='empty' && (m.name||'').replace(/\s/g,'')===(p.name||'').replace(/\s/g,'');
+        });
+        h += '<tr style="'+(i%2?'background:rgba(255,255,255,0.5);':'')+'">'
+           + '<td style="padding:4px 7px;font-weight:600;">'+(myHave?'✅ ':'')+esc(p.name)+'</td>'
+           + '<td style="padding:4px 7px;text-align:center;">'
+           + (moaInfo?'<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:'+moaInfo.color+'22;color:'+moaInfo.color+';">'+esc(moaInfo.name)+'</span>':'')
+           + '</td>'
+           + '<td style="padding:4px 7px;text-align:center;font-weight:700;color:'+bc+';">'+esc(p.per20L||p.amount||'-')+'</td>'
+           + '<td style="padding:4px 7px;text-align:center;color:#E65100;font-size:10px;">'+esc(p.safety||'')+'</td>'
+           + '</tr>';
+      });
+      h += '</tbody></table></div>';
+    } else {
+      h += '<div style="padding:8px;background:var(--gray-50);border-radius:7px;font-size:11px;color:var(--gray-500);">해당 작물 공통 적용 농약을 내 농약장에서 확인하세요</div>';
+    }
+
+    // 수확 전 경고
+    h += '</div></div>';
+  });
+
+  // 수확 전 금지 안내
+  h += '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:10px;margin-top:4px;">'
+     + '<div style="font-size:12px;font-weight:700;color:#E65100;margin-bottom:5px;">⚠️ 수확 전 안전사용 기준</div>'
+     + '<div style="font-size:11px;color:#555;line-height:1.8;">';
+  sched.crops.forEach(function(crop) {
+    var baseKey = Object.keys(PRE_HARVEST_DAYS).find(function(k){ return crop.includes(k); }) || 'default';
+    var days    = PRE_HARVEST_DAYS[baseKey];
+    h += '• '+esc(crop)+': 수확 <b>'+days+'일 전</b> 이후 농약 살포 금지<br>';
+  });
+  h += '</div></div>';
+
+  // 저장 버튼
+  h += '<div style="display:flex;gap:6px;margin-top:12px;">'
+     + '<button onclick="saveScheduleToFirebase(window._lastSchedule)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Firebase에 저장</button>'
+     + '<button onclick="generateSchedule()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:9px;font-size:12px;cursor:pointer;">🔄 재생성</button>'
+     + '</div>';
+
+  h += '</div></div>';
+  window._lastSchedule = sched;
+  return h;
+}
+
+// ── 수확 달력 표시 ──────────────────────────────────────────
+function showHarvestSchedule(plantId) {
+  var plant = (window._allPlants||[]).find(function(p){ return p.id===plantId; });
+  if (!plant) return;
+  var hs  = buildHarvestSchedule(plant, 'nearest');
+  if (!hs) { showToast('심은 날짜 또는 수확 예정일 정보가 없습니다'); return; }
+  var out = document.getElementById('harvest-detail-result');
+  if (out) { out.innerHTML = renderHarvestSchedule(hs); out.scrollIntoView({behavior:'smooth',block:'start'}); }
+}
+
+function renderHarvestSchedule(hs) {
+  var h = '<div style="background:#fff;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px;margin-top:10px;">';
+  h += '<div style="font-size:14px;font-weight:800;color:#1B5E20;margin-bottom:12px;">📅 '+esc(hs.name)+' 재배 달력</div>';
+
+  // 요약 타임바
+  var now = new Date();
+  var total = hs.harvestDate - hs.plantDate;
+  var elapsed = Math.max(0, now - hs.plantDate);
+  var pct = Math.min(100, Math.round(elapsed/total*100));
+
+  h += '<div style="margin-bottom:14px;">'
+     + '<div style="display:flex;justify-content:space-between;font-size:10px;color:var(--gray-500);margin-bottom:4px;">'
+     + '<span>심은 날: '+fmtShort(hs.plantDate)+'</span>'
+     + '<span>수확 예정: '+fmtShort(hs.harvestDate)+'</span>'
+     + '</div>'
+     + '<div style="height:8px;background:var(--gray-200);border-radius:4px;overflow:hidden;">'
+     + '<div style="height:100%;width:'+pct+'%;background:linear-gradient(90deg,var(--green-dark),#8BC34A);border-radius:4px;"></div>'
+     + '</div>'
+     + '<div style="font-size:10px;color:var(--gray-500);margin-top:3px;text-align:right;">진행률 '+pct+'%</div>'
+     + '</div>';
+
+  // 이정표 타임라인
+  h += '<div style="font-size:12px;font-weight:700;color:var(--gray-700);margin-bottom:8px;">🗓 주요 일정</div>';
+  hs.milestones.forEach(function(m) {
+    var isPast = new Date(m.date) < now;
+    h += '<div style="display:flex;gap:10px;margin-bottom:10px;opacity:'+(isPast?'0.5':'1')+'">'
+       + '<div style="flex:0 0 auto;width:28px;height:28px;border-radius:50%;background:'+m.color+';display:flex;align-items:center;justify-content:center;font-size:13px;">'
+       + (m.type==='harvest'?'🍇':m.type==='spray'?'💊':m.type==='microbe'?'🦠':'🌱')
+       + '</div>'
+       + '<div style="flex:1;">'
+       + '<div style="font-size:12px;font-weight:700;color:'+m.color+';">'+esc(m.label)+'</div>'
+       + '<div style="font-size:13px;font-weight:600;color:var(--gray-800);">'+fmtDate(m.weekendDate)+'</div>'
+       + (Math.abs(m.weekendDiff)>0?'<div style="font-size:10px;color:var(--gray-400);">기준일 '+Math.abs(m.weekendDiff)+'일 '+m.weekendDir+' 주말</div>':'')
+       + '<div style="font-size:11px;color:var(--gray-500);margin-top:2px;">'+esc(m.note)+'</div>'
+       + '</div></div>';
+  });
+
+  // 비료 주차별 스케줄
+  if (hs.fertSchedule.length) {
+    h += '<div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-200);">'
+       + '<div style="font-size:12px;font-weight:700;color:var(--blue-dark);margin-bottom:8px;">🌱 비료·영양제 추천 스케줄</div>'
+       + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+       + '<thead><tr style="background:var(--blue-dark);color:#fff;">'
+       + '<th style="padding:4px 7px;text-align:left;">주차</th>'
+       + '<th style="padding:4px 7px;text-align:left;">추천 주말</th>'
+       + '<th style="padding:4px 7px;text-align:left;">추천 내용</th>'
+       + '</tr></thead><tbody>';
+    hs.fertSchedule.forEach(function(f,i) {
+      var isPast = new Date(f.date) < now;
+      h += '<tr style="'+(isPast?'opacity:0.4;':'')+(i%2?'background:var(--gray-50);':'')+'">'
+         + '<td style="padding:5px 7px;font-weight:600;">'+f.week+'주차</td>'
+         + '<td style="padding:5px 7px;color:var(--blue-dark);font-weight:600;">'+fmtShort(f.weekendDate)+'</td>'
+         + '<td style="padding:5px 7px;color:var(--gray-600);">'+esc(f.note)+'</td>'
+         + '</tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  h += '</div>';
+  return h;
+}
+
+// ── Firebase 저장 ──────────────────────────────────────────
+async function saveScheduleToFirebase(sched) {
+  if (!sched||!db) { showToast('저장할 스케줄이 없습니다'); return; }
+  try {
+    await db.collection('spraySchedules').add({
+      crops:     sched.crops,
+      mode:      sched.mode,
+      disease:   sched.disease,
+      rounds:    sched.rounds,
+      firstDate: sched.firstDate.toISOString(),
+      schedule:  sched.schedule.map(function(r){
+        return {round:r.round, date:r.sprayDate.toISOString(), pests:r.pesticides.map(function(p){return p.name;})};
+      }),
+      createdAt: new Date().toISOString(),
+    });
+    showToast('✅ 방제 스케줄이 저장됐습니다');
+  } catch(e) { showToast('저장 실패: '+e.message); }
 }
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
