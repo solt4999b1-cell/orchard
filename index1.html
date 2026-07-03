@@ -68,7 +68,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .sync-dot.offline{background:#FF9800;}
 
 /* 하단 탭 */
-.bottomnav{position:fixed;bottom:0;left:0;right:0;background:var(--card);border-top:1px solid var(--gray-200);display:flex;z-index:150;box-shadow:0 -2px 8px rgba(0,0,0,.08);padding-bottom:env(safe-area-inset-bottom,0px);}
+.bottomnav{position:fixed;bottom:0;left:0;right:0;height:60px;background:#fff;border-top:2px solid #e0e0e0;display:flex;z-index:9999;box-shadow:0 -3px 12px rgba(0,0,0,.12);padding-bottom:env(safe-area-inset-bottom,0px);}
 .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 0;cursor:pointer;color:var(--gray-400);transition:color .15s;font-size:11px;gap:3px;border:none;background:none;min-height:56px;}
 .nav-item.active{color:var(--green-dark);}
 .nav-icon{font-size:22px;line-height:1;}
@@ -11176,26 +11176,27 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div id="db-list"></div>
   </div>
 
-  <!-- 하단 탭 -->
-  <nav class="bottomnav">
-    <button class="nav-item active" onclick="setPanel('today',this)" id="nav-today">
-      <div class="nav-item-wrap">
-        <span class="nav-icon">📋</span>
-        <span id="today-badge-nav"></span>
-      </div>
-      오늘
-    </button>
-    <button class="nav-item" onclick="setPanel('plants',this)">
-      <span class="nav-icon">🌱</span>식물
-    </button>
-    <button class="nav-item" onclick="setPanel('log',this)">
-      <span class="nav-icon">📖</span>기록
-    </button>
-    <button class="nav-item" onclick="setPanel('db',this)">
-      <span class="nav-icon">📚</span>DB
-    </button>
-  </nav>
-</div>
+</div><!-- /#app -->
+
+<!-- 하단 탭 네비게이션 (body 기준 fixed — #app 밖) -->
+<nav class="bottomnav" id="main-bottomnav">
+  <button class="nav-item active" onclick="setPanel('today',this)" id="nav-today">
+    <span class="nav-icon">📋</span>
+    <span style="font-size:11px;">오늘</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('plants',this)">
+    <span class="nav-icon">🌱</span>
+    <span style="font-size:11px;">식물</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('log',this)">
+    <span class="nav-icon">📖</span>
+    <span style="font-size:11px;">기록</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('db',this)">
+    <span class="nav-icon">📚</span>
+    <span style="font-size:11px;">DB</span>
+  </button>
+</nav>
 
 <!-- 식물 추가/편집 모달 -->
 <div class="modal-bg hidden" id="plant-modal">
