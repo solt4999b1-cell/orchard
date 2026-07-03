@@ -11146,6 +11146,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       <button class="db-tab"    id="dbt-fert"   onclick="setDbTab('fert',this)">🌱 비료·영양제</button>
       <button class="db-tab"    id="dbt-micro"  onclick="setDbTab('micro',this)">🧫 미생물균</button>
       <button class="db-tab"    id="dbt-mypest" onclick="setDbTab('mypest',this)">📦 내 농약장</button>
+      <button class="db-tab"    id="dbt-spray"  onclick="setDbTab('spray',this)">🗓 방제계획</button>
     </div>
     <!-- DB 헤더 2행: 재검색 + 바코드 스캔 -->
     <div class="db-action-row">
@@ -11995,7 +11996,17 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소 광범위",
-      "warning": "동일 계통 연용 자제"
+      "warning": "동일 계통 연용 자제",
+      "moa": "I-D",
+      "moaName": "아버멕틴/아버멕틴계",
+      "moaColor": "#4CAF50",
+      "soilUse": false,
+      "maxTimes": 2,
+      "microbeSafe": true,
+      "incompatible": [
+        "알칼리성 농약"
+      ],
+      "note": "스트레이트. 아버멕틴계. 미생물균과 혼용 주의"
     },
     {
       "id": "p02",
@@ -12009,7 +12020,17 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "57개 작물 등록",
-      "warning": "6월 이후 나방류 효과. 알·유충·번데기 방제"
+      "warning": "6월 이후 나방류 효과. 알·유충·번데기 방제",
+      "moa": "I-F",
+      "moaName": "성장억제",
+      "moaColor": "#9E9E9E",
+      "soilUse": false,
+      "maxTimes": 2,
+      "microbeSafe": true,
+      "incompatible": [
+        "강알칼리 농약"
+      ],
+      "note": "성장억제제. 미생물균과 혼용 가능"
     },
     {
       "id": "p03",
@@ -12023,7 +12044,15 @@ const MASTER_DB = {
       "bee_toxicity": "매우강함",
       "bloom_use": "절대금지",
       "crop_range": "흡즙해충 전용",
-      "warning": "침투이행성. 연용 자제"
+      "warning": "침투이행성. 연용 자제",
+      "moa": "I-A",
+      "moaName": "네오니코티노이드",
+      "moaColor": "#F44336",
+      "soilUse": true,
+      "maxTimes": 2,
+      "microbeSafe": true,
+      "incompatible": [],
+      "note": "경엽·토양 겸용. 네오니코티노이드"
     },
     {
       "id": "p04",
@@ -12037,7 +12066,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "연용 시 저항성 주의"
+      "warning": "연용 시 저항성 주의",
+      "moa": "I-A",
+      "moaName": "네오니코티노이드",
+      "moaColor": "#F44336"
     },
     {
       "id": "p05",
@@ -12051,7 +12083,17 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "주의",
       "crop_range": "유기농 적합 작물",
-      "warning": "천연유래 성분. 저독성"
+      "warning": "천연유래 성분. 저독성",
+      "moa": "I-E",
+      "moaName": "스피노신",
+      "moaColor": "#00BCD4",
+      "soilUse": false,
+      "maxTimes": 2,
+      "microbeSafe": true,
+      "incompatible": [
+        "강알칼리성 농약"
+      ],
+      "note": "스피노신계. 미생물 유래 성분"
     },
     {
       "id": "p06",
@@ -12065,7 +12107,15 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "주의",
       "crop_range": "과수·채소",
-      "warning": "나방류 전용 고효과. 연용 자제"
+      "warning": "나방류 전용 고효과. 연용 자제",
+      "moa": "I-B",
+      "moaName": "다이아미드",
+      "moaColor": "#2196F3",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": true,
+      "incompatible": [],
+      "note": "다이아미드계. 미생물균 혼용 가능"
     },
     {
       "id": "p07",
@@ -12079,7 +12129,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "어독성 강함. 수계 오염 주의"
+      "warning": "어독성 강함. 수계 오염 주의",
+      "moa": "I-C",
+      "moaName": "피레스로이드",
+      "moaColor": "#FF9800"
     },
     {
       "id": "p08",
@@ -12093,7 +12146,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "채소·과수",
-      "warning": "어독성 주의"
+      "warning": "어독성 주의",
+      "moa": "I-H",
+      "moaName": "기타살충",
+      "moaColor": "#78909C"
     },
     {
       "id": "p09",
@@ -12121,7 +12177,10 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "주의",
       "crop_range": "시설 채소·과수",
-      "warning": "가루이·응애 동시 방제"
+      "warning": "가루이·응애 동시 방제",
+      "moa": "I-H",
+      "moaName": "기타살충",
+      "moaColor": "#78909C"
     },
     {
       "id": "p11",
@@ -12135,7 +12194,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "채소 정식시",
-      "warning": "침투이행성 입제. 정식시 토양처리"
+      "warning": "침투이행성 입제. 정식시 토양처리",
+      "moa": "I-A",
+      "moaName": "네오니코티노이드",
+      "moaColor": "#F44336"
     },
     {
       "id": "p12",
@@ -12149,7 +12211,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "고온기 약해 주의"
+      "warning": "고온기 약해 주의",
+      "moa": "I-G",
+      "moaName": "유기인계",
+      "moaColor": "#8D6E63"
     },
     {
       "id": "p13",
@@ -12163,7 +12228,10 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "금지",
       "crop_range": "벼·채소·과수",
-      "warning": "누에에 독성 강함"
+      "warning": "누에에 독성 강함",
+      "moa": "I-H",
+      "moaName": "기타살충",
+      "moaColor": "#78909C"
     },
     {
       "id": "p14",
@@ -12177,7 +12245,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "6월~나방류 방제. 라이몬 교차 사용 권장"
+      "warning": "6월~나방류 방제. 라이몬 교차 사용 권장",
+      "moa": "I-F",
+      "moaName": "성장억제",
+      "moaColor": "#9E9E9E"
     },
     {
       "id": "p15",
@@ -12205,7 +12276,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "잔효성 좋음"
+      "warning": "잔효성 좋음",
+      "moa": "I-C",
+      "moaName": "피레스로이드",
+      "moaColor": "#FF9800"
     },
     {
       "id": "p17",
@@ -12219,7 +12293,15 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "주의",
       "crop_range": "채소·과수",
-      "warning": "나방·굴파리 전문. 잔효기간 김"
+      "warning": "나방·굴파리 전문. 잔효기간 김",
+      "moa": "I-B",
+      "moaName": "다이아미드",
+      "moaColor": "#2196F3",
+      "soilUse": false,
+      "maxTimes": 2,
+      "microbeSafe": true,
+      "incompatible": [],
+      "note": "다이아미드계"
     },
     {
       "id": "p18",
@@ -12233,7 +12315,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수 전용",
-      "warning": "어독성·조류독성 주의"
+      "warning": "어독성·조류독성 주의",
+      "moa": "I-G",
+      "moaName": "유기인계",
+      "moaColor": "#8D6E63"
     },
     {
       "id": "p19",
@@ -12247,7 +12332,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "네오니코 내성 해충 방제"
+      "warning": "네오니코 내성 해충 방제",
+      "moa": "I-A",
+      "moaName": "네오니코티노이드",
+      "moaColor": "#F44336"
     },
     {
       "id": "p20",
@@ -12261,7 +12349,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "침투이행성. 연용 자제"
+      "warning": "침투이행성. 연용 자제",
+      "moa": "I-A",
+      "moaName": "네오니코티노이드",
+      "moaColor": "#F44336"
     },
     {
       "id": "p21",
@@ -12275,7 +12366,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "잔효성 좋음. 고온기 약해 주의"
+      "warning": "잔효성 좋음. 고온기 약해 주의",
+      "moa": "I-C",
+      "moaName": "피레스로이드",
+      "moaColor": "#FF9800"
     },
     {
       "id": "p22",
@@ -12289,7 +12383,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "이중 작용. 잔효 길음"
+      "warning": "이중 작용. 잔효 길음",
+      "moa": "I-A+I-C",
+      "moaName": "네오니코티노이드 + 피레스로이드",
+      "moaColor": "#F44336"
     },
     {
       "id": "p23",
@@ -12303,7 +12400,19 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "주의",
       "crop_range": "과수·채소 광범위",
-      "warning": "예방 위주. 석회유황합제 혼용 금지"
+      "warning": "예방 위주. 석회유황합제 혼용 금지",
+      "moa": "F-D",
+      "moaName": "보호살균",
+      "moaColor": "#607D8B",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "석회유황합제",
+        "동제",
+        "강알칼리"
+      ],
+      "note": "보호살균. 다부위 작용"
     },
     {
       "id": "p24",
@@ -12317,7 +12426,19 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수 광범위",
-      "warning": "예방 보호살균제. 연용 자제"
+      "warning": "예방 보호살균제. 연용 자제",
+      "moa": "F-D",
+      "moaName": "보호살균",
+      "moaColor": "#607D8B",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "석회유황합제",
+        "오일제",
+        "캡탄"
+      ],
+      "note": "다코닐. 보호살균"
     },
     {
       "id": "p25",
@@ -12331,7 +12452,15 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수",
-      "warning": "생물유래 살균제. 저독성"
+      "warning": "생물유래 살균제. 저독성",
+      "moa": "F-F",
+      "moaName": "기타살균",
+      "moaColor": "#795548",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": true,
+      "incompatible": [],
+      "note": "항생물질계. 미생물균 혼용 주의"
     },
     {
       "id": "p26",
@@ -12345,7 +12474,17 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "과수·채소",
-      "warning": "침투치료형. 발병 초기 사용"
+      "warning": "침투치료형. 발병 초기 사용",
+      "moa": "F-C",
+      "moaName": "DMI(트리아졸)",
+      "moaColor": "#3F51B5",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": true,
+      "incompatible": [
+        "동제"
+      ],
+      "note": "DMI(트리아졸)계"
     },
     {
       "id": "p27",
@@ -12359,7 +12498,18 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수 광범위",
-      "warning": "광범위 침투살균. 내성 주의"
+      "warning": "광범위 침투살균. 내성 주의",
+      "moa": "F-B",
+      "moaName": "스트로빌루린",
+      "moaColor": "#9C27B0",
+      "soilUse": false,
+      "maxTimes": 4,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "석회유황합제"
+      ],
+      "note": "오티바(아족시스트로빈). 스트로빌루린"
     },
     {
       "id": "p28",
@@ -12373,7 +12523,18 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수",
-      "warning": "예방 보호살균. 연속 강우 시 효과 저하"
+      "warning": "예방 보호살균. 연속 강우 시 효과 저하",
+      "moa": "F-D",
+      "moaName": "보호살균",
+      "moaColor": "#607D8B",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "강알칼리"
+      ],
+      "note": "앤트라콜. 보호살균"
     },
     {
       "id": "p29",
@@ -12387,7 +12548,10 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수·딸기",
-      "warning": "잿빛곰팡이 전문. 저온기 효과 우수"
+      "warning": "잿빛곰팡이 전문. 저온기 효과 우수",
+      "moa": "F-F",
+      "moaName": "기타살균",
+      "moaColor": "#795548"
     },
     {
       "id": "p30",
@@ -12401,7 +12565,18 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "토마토·감자·오이",
-      "warning": "역병 전문 치료+예방. 연용 자제"
+      "warning": "역병 전문 치료+예방. 연용 자제",
+      "moa": "F-E",
+      "moaName": "페닐아미드",
+      "moaColor": "#FF5722",
+      "soilUse": true,
+      "maxTimes": 2,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "알칼리성 농약"
+      ],
+      "note": "토양 관주 또는 경엽. 역병·노균병 전문"
     },
     {
       "id": "p31",
@@ -12415,7 +12590,10 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "과수·채소",
-      "warning": "광범위 살균. 내성균 발생 주의"
+      "warning": "광범위 살균. 내성균 발생 주의",
+      "moa": "F-F",
+      "moaName": "기타살균",
+      "moaColor": "#795548"
     },
     {
       "id": "p32",
@@ -12429,7 +12607,17 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "과수·채소",
-      "warning": "침투치료형. 흰가루병 특효"
+      "warning": "침투치료형. 흰가루병 특효",
+      "moa": "F-C",
+      "moaName": "DMI(트리아졸)",
+      "moaColor": "#3F51B5",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": true,
+      "incompatible": [
+        "동제"
+      ],
+      "note": "테부코나졸(DMI)"
     },
     {
       "id": "p33",
@@ -12443,7 +12631,15 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소 육묘",
-      "warning": "토양살균. 육묘기 사용"
+      "warning": "토양살균. 육묘기 사용",
+      "moa": "F-F",
+      "moaName": "기타살균",
+      "moaColor": "#795548",
+      "soilUse": true,
+      "maxTimes": 3,
+      "microbeSafe": true,
+      "incompatible": [],
+      "note": "항생물질계. 미생물균과 혼용 가능"
     },
     {
       "id": "p64",
@@ -12458,7 +12654,10 @@ const MASTER_DB = {
       "bloom_use": "주의",
       "crop_range": "과수·채소 광범위",
       "warning": "등록번호 4-살균-216, 저독성(어독성 Ⅰ급)",
-      "manufacturer": "바이엘"
+      "manufacturer": "바이엘",
+      "moa": "F-B",
+      "moaName": "스트로빌루린",
+      "moaColor": "#9C27B0"
     },
     {
       "id": "p35",
@@ -12472,7 +12671,19 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "채소·과수 광범위",
-      "warning": "예방 보호살균. 잔류 주의"
+      "warning": "예방 보호살균. 잔류 주의",
+      "moa": "F-D",
+      "moaName": "보호살균",
+      "moaColor": "#607D8B",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "오일제",
+        "강알칼리"
+      ],
+      "note": "만코제브. 보호살균"
     },
     {
       "id": "p36",
@@ -12486,7 +12697,18 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "가능",
       "crop_range": "과수·채소",
-      "warning": "이중 작용 복합살균. 연용 자제"
+      "warning": "이중 작용 복합살균. 연용 자제",
+      "moa": "F-A+F-B",
+      "moaName": "SDHI계 + 스트로빌루린",
+      "moaColor": "#E91E63",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "석회유황합제"
+      ],
+      "note": "팜플루. SDHI+스트로빌루린 혼합"
     },
     {
       "id": "p37",
@@ -12500,7 +12722,20 @@ const MASTER_DB = {
       "bee_toxicity": "낮음",
       "bloom_use": "주의",
       "crop_range": "과수 세균병",
-      "warning": "세균병 전문. 개화기 약해 주의"
+      "warning": "세균병 전문. 개화기 약해 주의",
+      "moa": "F-D",
+      "moaName": "보호살균",
+      "moaColor": "#607D8B",
+      "soilUse": false,
+      "maxTimes": 2,
+      "microbeSafe": false,
+      "incompatible": [
+        "강산성 농약",
+        "황제",
+        "기계유",
+        "오일제"
+      ],
+      "note": "동제. 알칼리성. 대부분 농약과 혼용 주의"
     },
     {
       "id": "p38",
@@ -12514,7 +12749,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "채소·과수",
-      "warning": "살균·살충 동시 방제"
+      "warning": "살균·살충 동시 방제",
+      "moa": "I-A+F-F",
+      "moaName": "네오니코티노이드 + 기타살균",
+      "moaColor": "#F44336"
     },
     {
       "id": "p39",
@@ -12528,7 +12766,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "사과·배·복숭아",
-      "warning": "과수 병해충 동시 방제"
+      "warning": "과수 병해충 동시 방제",
+      "moa": "I-G+F-D",
+      "moaName": "유기인계 + 보호살균",
+      "moaColor": "#8D6E63"
     },
     {
       "id": "p40",
@@ -12542,7 +12783,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "복합 방제. 연용 자제"
+      "warning": "복합 방제. 연용 자제",
+      "moa": "I-A+F-A",
+      "moaName": "네오니코티노이드 + SDHI계",
+      "moaColor": "#F44336"
     },
     {
       "id": "p41",
@@ -12556,7 +12800,10 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "과수·채소",
-      "warning": "이중 작용. 연용 자제"
+      "warning": "이중 작용. 연용 자제",
+      "moa": "I-C+F-C",
+      "moaName": "피레스로이드 + DMI(트리아졸)",
+      "moaColor": "#FF9800"
     },
     {
       "id": "p42",
@@ -12570,7 +12817,10 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "주의",
       "crop_range": "과수·채소",
-      "warning": "고효과 복합. 비용 효율 높음"
+      "warning": "고효과 복합. 비용 효율 높음",
+      "moa": "I-B+F-C",
+      "moaName": "다이아미드 + DMI(트리아졸)",
+      "moaColor": "#2196F3"
     },
     {
       "id": "p43",
@@ -12724,7 +12974,16 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "밭작물(과수 제외)",
-      "warning": "1회만 사용. 장갑·마스크 필수"
+      "warning": "1회만 사용. 장갑·마스크 필수",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-G",
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "석회유황합제"
+      ],
+      "note": "토양 혼화 처리. 고독성. 정식 전 1회"
     },
     {
       "id": "p54",
@@ -12738,7 +12997,15 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "채소·밭작물",
-      "warning": "어독성 강함. 수계 유출 주의"
+      "warning": "어독성 강함. 수계 유출 주의",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-H",
+      "microbeSafe": false,
+      "incompatible": [
+        "동제"
+      ],
+      "note": "토양 혼화/관주. 정식 전 또는 파종 전 1회"
     },
     {
       "id": "p55",
@@ -12752,7 +13019,16 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "감자·채소",
-      "warning": "조류 독성 주의"
+      "warning": "조류 독성 주의",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-G",
+      "microbeSafe": false,
+      "incompatible": [
+        "알칼리성 농약",
+        "석회유황합제"
+      ],
+      "note": "토양 혼화. 독성 주의"
     },
     {
       "id": "p56",
@@ -12766,7 +13042,13 @@ const MASTER_DB = {
       "bee_toxicity": "중간",
       "bloom_use": "금지",
       "crop_range": "채소·밭작물",
-      "warning": "비교적 안전한 토양살충제"
+      "warning": "비교적 안전한 토양살충제",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-H",
+      "microbeSafe": false,
+      "incompatible": [],
+      "note": "토양 처리 전용"
     },
     {
       "id": "p57",
@@ -12780,7 +13062,15 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "밭작물",
-      "warning": "독성 강함. 철저한 보호장비"
+      "warning": "독성 강함. 철저한 보호장비",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-G",
+      "microbeSafe": false,
+      "incompatible": [
+        "알칼리성 농약"
+      ],
+      "note": "토양 혼화. 고독성. 취급 주의"
     },
     {
       "id": "p58",
@@ -12794,7 +13084,16 @@ const MASTER_DB = {
       "bee_toxicity": "강함",
       "bloom_use": "금지",
       "crop_range": "채소·밭작물",
-      "warning": "복합효과. 처리 후 복토 필수"
+      "warning": "복합효과. 처리 후 복토 필수",
+      "soilUse": true,
+      "maxTimes": 1,
+      "moa": "I-G+I-H",
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "알칼리성 농약"
+      ],
+      "note": "토양 혼화 혼합제"
     },
     {
       "id": "p59",
@@ -12851,7 +13150,10 @@ const MASTER_DB = {
       "bloom_use": "금지",
       "warning": "등록번호 1-살균-261, 보통독성(어독성 Ⅱ급)",
       "crop_range": "채소·과수 광범위",
-      "manufacturer": "경농"
+      "manufacturer": "경농",
+      "moa": "F-C",
+      "moaName": "DMI(트리아졸)",
+      "moaColor": "#3F51B5"
     },
     {
       "id": "p63",
@@ -12866,7 +13168,17 @@ const MASTER_DB = {
       "bloom_use": "금지",
       "warning": "등록번호 8-살충-39, 저독성(어독성 Ⅱ급)",
       "crop_range": "채소·과수",
-      "manufacturer": "농협케미칼"
+      "manufacturer": "농협케미칼",
+      "moa": "F-A",
+      "moaName": "SDHI계",
+      "moaColor": "#E91E63",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제"
+      ],
+      "note": "다트롤. SDHI계"
     },
     {
       "id": "p65",
@@ -12881,7 +13193,18 @@ const MASTER_DB = {
       "bloom_use": "가능",
       "warning": "등록번호 46-살균-312, 저독성(어독성 Ⅲ급)",
       "crop_range": "고추·배추·오이·참외·감자·참깨·양배추·브로콜리·갓·무·순무·딸기·사과",
-      "manufacturer": "팜한농"
+      "manufacturer": "팜한농",
+      "moa": "F-A",
+      "moaName": "SDHI계",
+      "moaColor": "#E91E63",
+      "soilUse": false,
+      "maxTimes": 3,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "알칼리성"
+      ],
+      "note": "후론사이드. SDHI계"
     },
     {
       "id": "p66",
@@ -12896,7 +13219,18 @@ const MASTER_DB = {
       "bloom_use": "가능",
       "warning": "등록번호 제2-제초-274, 저독성(어독성 Ⅲ급)",
       "crop_range": "감자·고구마·고추·동부·무·시금치·옥수수·콩·파",
-      "manufacturer": "신젠타코리아㈜"
+      "manufacturer": "신젠타코리아㈜",
+      "moa": "F-A+F-B",
+      "moaName": "SDHI계 + 스트로빌루린",
+      "moaColor": "#E91E63",
+      "soilUse": false,
+      "maxTimes": 4,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "석회유황합제"
+      ],
+      "note": "벨리스에스. SDHI+스트로빌루린"
     },
     {
       "id": "p66",
@@ -13253,7 +13587,18 @@ const MASTER_DB = {
             "times": "3회"
           }
         ]
-      }
+      },
+      "moa": "F-A+F-B",
+      "moaName": "SDHI계 + 스트로빌루린",
+      "moaColor": "#E91E63",
+      "soilUse": false,
+      "maxTimes": 4,
+      "microbeSafe": false,
+      "incompatible": [
+        "동제",
+        "석회유황합제"
+      ],
+      "note": "벨리스에스. SDHI+스트로빌루린"
     }
   ],
   "fertilizers": [
@@ -16294,6 +16639,333 @@ const MASTER_DB = {
       "amount": "15kg/회",
       "desc": "잦은 수확에 맞춰 웃거름"
     }
+  ],
+  "microbes": [
+    {
+      "id": "m01",
+      "name": "고초균 (Bacillus subtilis)",
+      "emoji": "🌾",
+      "type": "세균 (호기성)",
+      "source": "농업기술센터 무료배부",
+      "aka": "바실러스, 고초균(枯草菌)",
+      "effect": [
+        "탄저병·시들음병·흰가루병 병원균 항생물질로 억제",
+        "유해균 생육 억제 — 이투린(Iturin) 등 항균물질 생성",
+        "난분해성 유기물 분해 · 퇴비 부숙 촉진",
+        "토양 입단화 촉진 — 땅심 향상",
+        "키티나제(효소) 분비 — 파리·응애 유충 억제",
+        "잎 색이 선명해지고 엽육 두꺼워짐"
+      ],
+      "method": "엽면살포 또는 토양 관주",
+      "dilution": "200~500배 희석 (물 1,000L당 미생물 2~5L)",
+      "interval": "7~14일 간격",
+      "timing": "병 발생 전 예방 위주. 봄~가을 생육기 전반",
+      "storage": "5℃ 냉장 보관. 직사광선 차단. 수령 후 가급적 빠른 사용",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "과수류 전반",
+        "채소류"
+      ],
+      "incompatibleWith": [
+        "동제(수산화동·황산구리)",
+        "클로로탈로닐(다코닐)",
+        "만코제브(만코지·앤트라콜)",
+        "이프로디온(로브랄)",
+        "벤레이트(베노밀)",
+        "석회유황합제",
+        "캡탄",
+        "강산성·강알칼리성 농약"
+      ],
+      "safeMixWith": [
+        "유산균",
+        "광합성균",
+        "효모균",
+        "트리코더마",
+        "스피노사드",
+        "에마멕틴"
+      ],
+      "waitAfterChem": 3,
+      "waitNote": "살균제 살포 후 3일 이상 경과 후 사용. 동제·석회유황 후 7일 이상",
+      "tip": "딸기·블루베리 흰가루병에 20배 희석 엽면 살포 시 효과 확인(논산시농기센터)",
+      "commercial": [
+        "세레나(바이엘)",
+        "싹쓰리(경농)",
+        "바실러스WP"
+      ]
+    },
+    {
+      "id": "m02",
+      "name": "광합성균 (Rhodopseudomonas)",
+      "emoji": "☀️",
+      "type": "세균 (혐기성·호기암 조건)",
+      "source": "농업기술센터 무료배부",
+      "aka": "광합성세균, PSB",
+      "effect": [
+        "공기 중 질소 고정 — 작물 생육에 이용 가능한 양분으로 전환",
+        "비타민·아미노산·생장촉진물질(옥신·사이토키닌) 생성",
+        "시설재배지 염류 장해·연작 장해 해소",
+        "가스 장해(유해가스) 제거",
+        "착색·당도 향상, 저장성 향상",
+        "악취 유발물질 제거 (축산 환경 개선)"
+      ],
+      "method": "엽면살포 또는 토양 관주 (과수: 광합성균+혼합균 10L/600평/2주)",
+      "dilution": "200~500배 희석",
+      "interval": "2주 간격",
+      "timing": "생육 전반. 연작지나 시설재배지 특히 효과적",
+      "storage": "5℃ 냉장 보관. 암소 보관 중요(빛에 약함)",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "과수류 전반",
+        "시설재배 전체"
+      ],
+      "incompatibleWith": [
+        "동제",
+        "강산성 농약 (pH 4 이하)",
+        "강알칼리성 농약"
+      ],
+      "safeMixWith": [
+        "고초균",
+        "유산균",
+        "효모균"
+      ],
+      "waitAfterChem": 3,
+      "waitNote": "화학살균제 살포 후 3일 이상 경과 후 사용",
+      "tip": "과수 배부기준: 광합성균 + 혼합균 10L/600평/2주 (영천 농업기술센터 기준)",
+      "commercial": [
+        "EM 제제",
+        "광합성균 원액"
+      ]
+    },
+    {
+      "id": "m03",
+      "name": "유산균 (Lactobacillus)",
+      "emoji": "🥛",
+      "type": "세균 (젖산균)",
+      "source": "농업기술센터 무료배부",
+      "aka": "젖산균, LAB",
+      "effect": [
+        "인산 가용화 — 토양 내 불용성 인산을 식물 흡수 가능 형태로 전환",
+        "유기물 발효·분해 촉진 — 퇴비 발효 시 특히 유용",
+        "유해 병원균 억제 (젖산 생성으로 산성 환경 조성)",
+        "효모균과 혼용 시 효과 증진 (상호 보완)",
+        "토양 유기물 분해 촉진 — 땅심 향상"
+      ],
+      "method": "토양 관주 또는 엽면살포",
+      "dilution": "200~500배 희석",
+      "interval": "7~14일 간격",
+      "timing": "생육 전반. 퇴비 발효 시 원액 첨가",
+      "storage": "5℃ 냉장 보관",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "과수류 전반",
+        "채소류 전반"
+      ],
+      "incompatibleWith": [
+        "동제",
+        "석회유황합제",
+        "강알칼리성 농약"
+      ],
+      "safeMixWith": [
+        "고초균",
+        "효모균",
+        "광합성균"
+      ],
+      "waitAfterChem": 3,
+      "waitNote": "살균제 살포 후 3일 이상 경과 후 사용",
+      "tip": "효모균과 혼합 사용 시 시너지 효과. 퇴비 발효 시 원액 첨가 가능",
+      "commercial": [
+        "락토바실러스 제제",
+        "EM배양액"
+      ]
+    },
+    {
+      "id": "m04",
+      "name": "효모균 (Saccharomyces)",
+      "emoji": "🍞",
+      "type": "진균 (곰팡이류)",
+      "source": "농업기술센터 무료배부",
+      "aka": "사카로미세스, 이스트균",
+      "effect": [
+        "난분해성 유기물 가용화 — 땅심 증진",
+        "생리 활성물질 분비 — 뿌리 생장 촉진",
+        "유산균과 혼용 시 효과 증진 (상호 보완 관계)",
+        "산소 유무와 관계없이 성장 가능 (혐기·호기 모두 적응)",
+        "pH 범위가 넓어 다양한 토양 조건에서 활동 가능"
+      ],
+      "method": "토양 관주 또는 엽면살포",
+      "dilution": "200~500배 희석",
+      "interval": "7~14일 간격",
+      "timing": "생육 전반. 유산균과 함께 사용 시 효과 상승",
+      "storage": "5℃ 냉장 보관. 열에 약함(55℃ 이상 사멸)",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "과수류 전반",
+        "채소류 전반"
+      ],
+      "incompatibleWith": [
+        "동제",
+        "강살균성 농약",
+        "고온(55℃ 이상) 처리 병행 불가"
+      ],
+      "safeMixWith": [
+        "유산균",
+        "광합성균",
+        "고초균"
+      ],
+      "waitAfterChem": 3,
+      "waitNote": "화학살균제 살포 후 3일 이상 경과 후 사용",
+      "tip": "유산균+효모균 혼합은 가장 기본적인 복합 미생물 조합",
+      "commercial": [
+        "효모균 제제",
+        "EM 복합균"
+      ]
+    },
+    {
+      "id": "m05",
+      "name": "트리코더마 (Trichoderma spp.)",
+      "emoji": "🍄",
+      "type": "진균 (사상균·길항균)",
+      "source": "상업 구매",
+      "aka": "트리코더마균, 길항균",
+      "effect": [
+        "토양병원균 직접 기생·용해 — 역병·잘록병·흰비단병균 사멸",
+        "항생물질 분비로 병원균 억제",
+        "뿌리 활성화 — 식물 면역력(SAR) 유도",
+        "키틴 분해효소 생성 — 선충·해충 억제",
+        "유기물 분해 촉진 — 인산 가용화"
+      ],
+      "method": "토양 혼화 또는 관주처리",
+      "dilution": "1,000배 희석 또는 제품 표시량",
+      "interval": "정식 전 1회 또는 생육기 2~3회",
+      "timing": "정식 전 토양 처리 또는 병 발생 초기",
+      "storage": "상온 보관 가능 (균사체 분제). 습기 차단",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "딸기",
+        "고추",
+        "토마토"
+      ],
+      "incompatibleWith": [
+        "동제",
+        "클로로탈로닐(다코닐)",
+        "이프로디온(로브랄)",
+        "만코제브",
+        "벤레이트",
+        "석회유황합제",
+        "캡탄",
+        "티람"
+      ],
+      "safeMixWith": [
+        "고초균",
+        "유산균",
+        "곤충병원성선충"
+      ],
+      "waitAfterChem": 7,
+      "waitNote": "살균제 살포 후 최소 7일 이상 경과 후 처리",
+      "tip": "블루베리 화분 정식 시 뿌리 주변 토양 혼화로 뿌리썩음병 예방 효과",
+      "commercial": [
+        "트리코더마WG(그린바이오)",
+        "트리코맥스",
+        "에코호프"
+      ]
+    },
+    {
+      "id": "m06",
+      "name": "곤충병원성선충 (Steinernema/Heterorhabditis)",
+      "emoji": "🪱",
+      "type": "선충 (생물살충)",
+      "source": "상업 구매",
+      "aka": "엔토모병원성선충, 생물적 방제제",
+      "effect": [
+        "뿌리파리 유충·굼벵이·나방류 유충 방제",
+        "선충이 해충 체내에 침입 → 공생세균이 해충 사멸",
+        "잔류 없음 — 친환경 인증 가능"
+      ],
+      "method": "토양 관주 (뿌리 주변). 저녁 시간 관주 권장",
+      "dilution": "1억 마리/㎡ (제품 표시량)",
+      "interval": "해충 발생 초기 1~2회",
+      "timing": "해충 발생 초기. 저녁 또는 흐린 날 처리",
+      "storage": "냉장 보관(5~10℃). 직사광선 금지. 즉시 사용",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "화분 재배 전체"
+      ],
+      "incompatibleWith": [
+        "카보퓨란(데푸콘)",
+        "에토프로포스(모캡)",
+        "클로르피리포스(코르도반)",
+        "포레이트(토갑)",
+        "카보설판(세베로)",
+        "강산성 농약"
+      ],
+      "safeMixWith": [
+        "고초균",
+        "트리코더마"
+      ],
+      "waitAfterChem": 14,
+      "waitNote": "토양살충제 처리 후 14일 이상 경과 후 사용",
+      "tip": "관주 후 즉시 물을 추가 공급하여 선충이 토양 깊이 침투하도록 유도",
+      "commercial": [
+        "네마킬(세스코)",
+        "스타이너마",
+        "바이오컨트롤"
+      ]
+    },
+    {
+      "id": "m07",
+      "name": "EM(유용미생물군) 복합균",
+      "emoji": "🌿",
+      "type": "복합미생물 (광합성균+유산균 등)",
+      "source": "상업 구매 또는 농업기술센터",
+      "aka": "Effective Microorganisms, EM균",
+      "effect": [
+        "광합성균·유산균 등 유익균 복합 조합",
+        "토양 유기물 분해·양분 공급 종합 효과",
+        "악취 제거, 토양 환경 개선",
+        "작물 면역력·생육 촉진 전반"
+      ],
+      "method": "토양 관주 또는 엽면살포",
+      "dilution": "500~1,000배 희석 (제품별 상이)",
+      "interval": "7~14일 간격",
+      "timing": "생육 전반. 정식 전~수확 전",
+      "storage": "5℃ 냉장 보관",
+      "applicableCrops": [
+        "블루베리",
+        "무화과",
+        "감나무",
+        "과수류 전반",
+        "채소류 전반"
+      ],
+      "incompatibleWith": [
+        "동제",
+        "석회유황합제",
+        "강산성·강알칼리성 농약",
+        "클로로탈로닐"
+      ],
+      "safeMixWith": [
+        "단독 또는 고초균과 혼합 가능"
+      ],
+      "waitAfterChem": 3,
+      "waitNote": "화학살균제 살포 후 3일 이상 경과 후 사용",
+      "tip": "농업기술센터 공급 혼합균과 동일 개념. 자가 배양 시 쌀뜨물+당밀로 증식 가능",
+      "commercial": [
+        "EM원액(EM코리아)",
+        "유용미생물복합제",
+        "파워EM"
+      ]
+    }
   ]
 };
 
@@ -18777,7 +19449,10 @@ function getBadgeClass(tab,item){
 }
 
 function buildDbDetail(tab,item){
-  if(tab==='pest') return '<b>성분:</b> '+esc(item.ingredient||'')+'<br><b>방제:</b> '+esc(item.target||'')+'<br><b>방법:</b> '+esc(item.method||'')+'<br><b>꿀벌독성:</b> '+esc(item.bee_toxicity||'')+' · <b>개화기:</b> '+esc(item.bloom_use||'')+(item.warning?'<br><b>주의:</b> '+esc(item.warning):'')+(item.crop_range?'<br><b>적용:</b> '+esc(item.crop_range):'')+(item.note?'<br><b>메모:</b> '+esc(item.note):'');
+  if(tab==='pest') {
+    var moaBadge = item.moa ? buildMoaBadge(item.moa) : '';
+    return moaBadge+(moaBadge?'<br>':'')+'<b>성분:</b> '+esc(item.ingredient||'')+'<br><b>방제:</b> '+esc(item.target||'')+'<br><b>방법:</b> '+esc(item.method||'')+'<br><b>꿀벌독성:</b> '+esc(item.bee_toxicity||'')+' · <b>개화기:</b> '+esc(item.bloom_use||'')+(item.warning?'<br><b>주의:</b> '+esc(item.warning):'')+(item.crop_range?'<br><b>적용:</b> '+esc(item.crop_range):'')+(item.note?'<br><b>메모:</b> '+esc(item.note):'');
+  }
   var base = '<b>성분:</b> '+esc(item.ingredient||'')+'<br><b>효과:</b> '+esc(item.effect||'')+'<br><b>방법:</b> '+esc(item.method||'')+(item.amount?'<br><b>사용량:</b> '+esc(item.amount):'')+(item.timing?'<br><b>시기:</b> '+esc(item.timing):'')+(item.note?'<br><b>비고:</b> '+esc(item.note):'');
   if (item.cropUsage) {
     var crops = Object.keys(item.cropUsage).slice(0,5).join(', ');
@@ -18795,6 +19470,7 @@ function setDbTab(tab,el){
   if (tab === 'mypest')                    { renderMyPestPanel(); }
   else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
   else if (tab === 'micro')                  { renderMicroPanel(); }
+  else if (tab === 'spray')                  { renderSprayPlanPanel(); }
   else { renderDb(); }
 }
 
@@ -19030,6 +19706,7 @@ function setDbTab(tab,el){
   if (tab === 'mypest')                    { renderMyPestPanel(); }
   else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
   else if (tab === 'micro')                  { renderMicroPanel(); }
+  else if (tab === 'spray')                  { renderSprayPlanPanel(); }
   else { renderDb(); }
 }
 
@@ -21326,48 +22003,182 @@ function renderMicroPanel() {
   var container = document.getElementById('db-list');
   if (!container) return;
 
-  var allItems = getMergedDb('micro');
-  var q = (document.getElementById('db-search')||{}).value||'';
+  var microbes = (MASTER_DB.microbes || []);
+  var q = ((document.getElementById('db-search')||{}).value||'').toLowerCase();
+
+  var items = q ? microbes.filter(function(m){
+    return (m.name+m.type+(m.effect||[]).join('')+(m.aka||'')).toLowerCase().includes(q);
+  }) : microbes;
+
   var cnt = document.getElementById('db-count');
-
-  var items = allItems.filter(function(it){
-    if (!q) return true;
-    return ['name','ingredient','effect','target','type','note'].some(function(k){
-      return it[k] && String(it[k]).toLowerCase().indexOf(q.toLowerCase()) !== -1;
-    });
-  });
-
-  if (cnt) cnt.textContent = items.length + '개 항목';
+  if (cnt) cnt.textContent = items.length + '개 항목 (센터무료 4종 + 상업구매 3종)';
 
   if (!items.length) {
     container.innerHTML = '<div class="empty-state"><span class="emoji">🔍</span><p>검색 결과 없음</p></div>';
     return;
   }
 
-  // 내 작물에 관련 미생물 강조
-  var myPlants = window._allPlants || [];
-  var myNames  = myPlants.map(function(p){ return (p.name||''); });
+  var h = '<div style="padding-bottom:60px;">';
 
-  var h = '<div style="padding-bottom:8px;">';
-
-  // 내 작물 관련 항목
-  var myItems = items.filter(function(it){
-    var target = (it.target||it.effect||'');
-    return myNames.some(function(mn){ return mn && target.indexOf(mn) !== -1; });
-  });
-  if (myItems.length) {
-    h += '<div style="font-size:12px;font-weight:600;color:var(--green-dark);padding:6px 4px 3px;">🌿 내 작물 관련 미생물균 ('+myItems.length+')</div>';
-    myItems.forEach(function(it){ h += buildMicroCard(it, true); });
-    h += '<div style="border-top:1px solid var(--gray-200);margin:8px 0;"></div>';
-  }
-
-  h += '<div style="font-size:11px;font-weight:600;color:var(--gray-400);padding:4px 4px 4px;">전체 ('+items.length+')</div>';
-  items.forEach(function(it){ h += buildMicroCard(it, false); });
-
-  h += '<div style="margin-top:12px;">'
-     + '<button onclick="openDbAdd()" style="width:100%;padding:10px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">+ 미생물균 등록</button>'
+  // ── 화성시 농업기술센터 안내 배너 ──────────────────────────
+  h += '<div style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border:1.5px solid #A5D6A7;'
+     + 'border-radius:12px;padding:12px 14px;margin-bottom:14px;">'
+     + '<div style="font-size:13px;font-weight:700;color:#2E7D32;margin-bottom:6px;">🏛 안산 농업기술센터 유용미생물 안내</div>'
+     + '<div style="font-size:11px;color:#555;line-height:1.9;">'
+     + '📍 화성시 농업기술센터 — 고초균·광합성균·유산균·효모균 <b>무료 배부</b><br>'
+     + '📋 신청: 농업인 자격 확인 후 수령 (주 1회 방문 수령)<br>'
+     + '🧊 수령 후 <b>5℃ 냉장 보관</b>, 직사광선 차단, 가급적 빠른 사용<br>'
+     + '💧 사용 기준: 200~500배 희석 / 2주 간격 살포 (과수 기준)'
      + '</div></div>';
 
+  // ── 그룹 분리: 센터무료 / 상업구매 ────────────────────────
+  var freeMicrobes = items.filter(function(m){ return m.source && m.source.includes('무료'); });
+  var buyMicrobes  = items.filter(function(m){ return m.source && m.source.includes('상업'); });
+
+  function renderGroup(title, color, bgColor, borderColor, list) {
+    if (!list.length) return '';
+    var gh = '<div style="margin-bottom:16px;">'
+           + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+           + '<div style="width:4px;height:18px;background:'+color+';border-radius:2px;"></div>'
+           + '<span style="font-size:13px;font-weight:700;color:'+color+';">'+title+'</span>'
+           + '<span style="font-size:11px;color:#888;">('+list.length+'종)</span>'
+           + '</div>';
+
+    list.forEach(function(m) {
+      // 혼용 가능 목록 뱃지
+      var safeBadges = (m.safeMixWith||[]).map(function(s){
+        return '<span style="font-size:10px;background:#E8F5E9;color:#2E7D32;border:1px solid #A5D6A7;'
+             + 'border-radius:5px;padding:1px 6px;margin-right:3px;">'+esc(s)+'</span>';
+      }).join('');
+
+      // 혼용금지 목록
+      var incBadges = (m.incompatibleWith||[]).map(function(s){
+        return '<span style="font-size:10px;background:#FFEBEE;color:#C62828;border:1px solid #EF9A9A;'
+             + 'border-radius:5px;padding:1px 6px;margin-right:3px;">'+esc(s)+'</span>';
+      }).join('');
+
+      // 효과 목록
+      var effectList = Array.isArray(m.effect) ? m.effect : [m.effect||''];
+
+      // 상업용 제품명
+      var commList = (m.commercial||[]).map(function(c){ return '<span style="font-size:10px;color:#1565C0;">'+esc(c)+'</span>'; }).join(' · ');
+
+      gh += '<div style="background:#fff;border:1.5px solid '+borderColor+';border-radius:12px;padding:14px;margin-bottom:10px;">'
+
+         // 헤더
+         + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">'
+         + '<span style="font-size:24px;">'+m.emoji+'</span>'
+         + '<div style="flex:1;">'
+         + '<div style="font-size:13px;font-weight:700;color:var(--gray-800);">'+esc(m.name)+'</div>'
+         + '<div style="font-size:10px;color:#888;">'+esc(m.aka||'')+'</div>'
+         + '</div>'
+         + '<div style="text-align:right;">'
+         + '<span style="font-size:10px;padding:2px 8px;border-radius:8px;background:'+bgColor+';color:'+color+';font-weight:600;">'+esc(m.type)+'</span>'
+         + '</div></div>'
+
+         // 효과
+         + '<div style="background:#F9F9F9;border-radius:8px;padding:8px 10px;margin-bottom:8px;">'
+         + '<div style="font-size:11px;font-weight:600;color:var(--gray-600);margin-bottom:5px;">✅ 주요 효과</div>'
+         + '<ul style="margin:0;padding-left:16px;">'
+         + effectList.map(function(e){ return '<li style="font-size:11px;color:#444;line-height:1.8;">'+esc(e)+'</li>'; }).join('')
+         + '</ul></div>'
+
+         // 사용 방법
+         + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">'
+         + '<div style="background:var(--blue-light);border-radius:7px;padding:7px 9px;">'
+         + '<div style="font-size:10px;font-weight:600;color:var(--blue-dark);margin-bottom:2px;">💧 희석배수</div>'
+         + '<div style="font-size:11px;color:#333;">'+esc(m.dilution||'')+'</div>'
+         + '</div>'
+         + '<div style="background:var(--blue-light);border-radius:7px;padding:7px 9px;">'
+         + '<div style="font-size:10px;font-weight:600;color:var(--blue-dark);margin-bottom:2px;">🗓 간격·시기</div>'
+         + '<div style="font-size:11px;color:#333;">'+esc(m.interval||'')+' / '+esc(m.timing||'')+'</div>'
+         + '</div></div>'
+
+         // 화학농약 후 대기
+         + '<div style="background:#FFF8E1;border:1px solid #FFE082;border-radius:7px;padding:7px 10px;margin-bottom:8px;">'
+         + '<div style="font-size:10px;font-weight:700;color:#F57F17;margin-bottom:2px;">⏱ 화학농약 살포 후 대기</div>'
+         + '<div style="font-size:12px;font-weight:700;color:#E65100;">'+m.waitAfterChem+'일 이상</div>'
+         + '<div style="font-size:10px;color:#888;margin-top:1px;">'+esc(m.waitNote||'')+'</div>'
+         + '</div>'
+
+         // 혼용 가능
+         + (safeBadges ? '<div style="margin-bottom:6px;"><div style="font-size:10px;font-weight:600;color:#2E7D32;margin-bottom:3px;">🤝 함께 써도 되는 미생물·농약</div>'+safeBadges+'</div>' : '')
+
+         // 혼용 금지
+         + '<div style="margin-bottom:6px;">'
+         + '<div style="font-size:10px;font-weight:600;color:#C62828;margin-bottom:3px;">⛔ 혼용 금지 농약</div>'
+         + incBadges
+         + '</div>'
+
+         // 보관
+         + '<div style="font-size:10px;color:#888;margin-bottom:6px;">🧊 '+esc(m.storage||'')+'</div>'
+
+         // 팁
+         + (m.tip ? '<div style="background:#E8F5E9;border-radius:6px;padding:6px 8px;margin-bottom:6px;font-size:11px;color:#1B5E20;">💡 '+esc(m.tip)+'</div>' : '')
+
+         // 상업 제품
+         + (m.commercial && m.commercial.length ? '<div style="font-size:10px;color:#888;">🏪 시중 제품: '+commList+'</div>' : '')
+
+         + '</div>';
+    });
+
+    return gh + '</div>';
+  }
+
+  // 센터 무료 배부 그룹
+  h += renderGroup('🏛 농업기술센터 무료 배부 (4종)', '#1B5E20', '#E8F5E9', '#A5D6A7', freeMicrobes);
+
+  // 상업 구매 그룹
+  h += renderGroup('🏪 상업 구매 미생물 (3종)', '#1565C0', '#E3F2FD', '#90CAF9', buyMicrobes);
+
+  // ── 통합 혼용 금지 표 ────────────────────────────────────
+  h += '<div style="background:#FFEBEE;border:1.5px solid #EF9A9A;border-radius:12px;padding:14px;margin-bottom:14px;">'
+     + '<div style="font-size:13px;font-weight:700;color:#C62828;margin-bottom:10px;">⛔ 미생물과 절대 혼용 금지 농약 통합표</div>'
+     + '<table style="width:100%;border-collapse:collapse;font-size:11px;">'
+     + '<thead><tr style="background:#C62828;color:#fff;">'
+     + '<th style="padding:5px 7px;text-align:left;">미생물</th>'
+     + '<th style="padding:5px 7px;text-align:left;">혼용 금지 농약</th>'
+     + '<th style="padding:5px 7px;text-align:center;">대기</th>'
+     + '</tr></thead><tbody>';
+
+  items.forEach(function(m, i) {
+    h += '<tr style="'+(i%2?'background:#FFF5F5;':'')+'">'
+       + '<td style="padding:5px 7px;font-weight:600;white-space:nowrap;">'+m.emoji+' '+esc(m.name.split(' ')[0])+'</td>'
+       + '<td style="padding:5px 7px;font-size:10px;color:#C62828;">'+esc((m.incompatibleWith||[]).join(', '))+'</td>'
+       + '<td style="padding:5px 7px;text-align:center;font-weight:700;color:#E65100;">'+m.waitAfterChem+'일</td>'
+       + '</tr>';
+  });
+  h += '</tbody></table></div>';
+
+  // ── 최적 사용 순서 안내 ──────────────────────────────────
+  h += '<div style="background:#E8F5E9;border:1.5px solid #A5D6A7;border-radius:12px;padding:14px;">'
+     + '<div style="font-size:13px;font-weight:700;color:#2E7D32;margin-bottom:10px;">✅ 권장 사용 순서 (과수원 기준)</div>'
+     + '<div style="position:relative;padding-left:20px;">';
+
+  var steps = [
+    {icon:'🌱', title:'정식 전', desc:'트리코더마 → 토양 혼화 처리 (화학살균제와 완전 분리)'},
+    {icon:'🌿', title:'생육 초기 (2~3월)', desc:'광합성균 + 고초균 혼합 → 200배 희석 관주 (2주 간격)'},
+    {icon:'💊', title:'화학농약 살포 (필요 시)', desc:'행운·스트레이트 등 경엽 처리'},
+    {icon:'⏱', title:'3~7일 대기', desc:'화학농약 분해 후 미생물 살포'},
+    {icon:'🥛', title:'미생물 재살포', desc:'유산균+효모균 혼합 → 토양 관주 (땅심 회복)'},
+    {icon:'☀️', title:'개화·착과기', desc:'광합성균 단독 → 엽면 살포 (당도·착색 향상)'},
+    {icon:'🪱', title:'해충 발생 초기', desc:'곤충병원성선충 → 저녁에 토양 관주 (토양살충제 14일 후)'},
+  ];
+
+  steps.forEach(function(s, i) {
+    h += '<div style="display:flex;gap:10px;margin-bottom:8px;">'
+       + '<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;">'
+       + '<div style="width:28px;height:28px;border-radius:50%;background:var(--green-dark);color:#fff;font-size:14px;display:flex;align-items:center;justify-content:center;">'+s.icon+'</div>'
+       + (i<steps.length-1?'<div style="width:2px;flex:1;background:#A5D6A7;margin:2px 0;min-height:12px;"></div>':'')
+       + '</div>'
+       + '<div style="padding-top:4px;">'
+       + '<div style="font-size:11px;font-weight:700;color:var(--green-dark);">'+esc(s.title)+'</div>'
+       + '<div style="font-size:11px;color:#555;line-height:1.6;">'+esc(s.desc)+'</div>'
+       + '</div></div>';
+  });
+
+  h += '</div></div>';
+  h += '</div>';
   container.innerHTML = h;
 }
 
@@ -21971,8 +22782,8 @@ async function tryFetchSiteText(url) {
     var timer = setTimeout(function(){ ctrl.abort(); }, 4000);
     var res = await fetch(url, {
       method: 'GET',
-      mode: 'cors',          // CORS 없으면 네트워크 오류 → catch로
-      redirect: 'error',     // 리다이렉트 차단
+      mode: 'cors',
+      redirect: 'follow',    // 리다이렉트 허용 (단축URL 최종 도착지까지)
       signal: ctrl.signal
     });
     clearTimeout(timer);
@@ -22463,49 +23274,7 @@ function parseUrlForPesticide(url) {
 }
 
 // ── PSIS 공공 API 조회 (API키 있을 때) ────────────────────────
-async function queryPsisForPesticide(productName) {
-  var key = localStorage.getItem('psis_api_key') || '';
-  if (!key) return null;
-
-  try {
-    var url = 'https://psis.rda.go.kr/psis/api/pestiInfo/selectPesticideUseInfo.do'
-            + '?apiKey=' + encodeURIComponent(key)
-            + '&pestiBrandName=' + encodeURIComponent(productName)
-            + '&returnType=json';
-    var ctrl = new AbortController();
-    setTimeout(function(){ ctrl.abort(); }, 5000);
-    var res = await fetch(url, {signal: ctrl.signal, mode:'cors'});
-    if (!res.ok) return null;
-    var data = await res.json();
-    if (!Array.isArray(data) || !data.length) return null;
-
-    // cropUsage 구조로 변환
-    var cropUsage = {};
-    data.forEach(function(row) {
-      var crop = row.cropName || row.crpName || '';
-      if (!crop) return;
-      if (!cropUsage[crop]) cropUsage[crop] = [];
-      cropUsage[crop].push({
-        target: row.pestName || row.useDis || '',
-        method: row.useMethod || '',
-        amount: row.dilutionRate || '',
-        safety: row.safetyPrd   || '',
-        times:  row.safetyTimes || ''
-      });
-    });
-
-    var first = data[0];
-    return {
-      name:       first.pestiBrandName || productName,
-      type:       first.pestiType || '살균제',
-      ingredient: first.pestiMtrName || '',
-      manufacturer: first.companName || '',
-      regNo:      first.pestiRegNo || '',
-      cropUsage:  cropUsage,
-      source:     'PSIS'
-    };
-  } catch(e) { return null; }
-}
+// queryPsisForPesticide → 아래 신버전(이중 API) 사용
 
 // ── GAS 프록시로 Claude 분석 (GAS URL 설정 시) ─────────────────
 async function queryGasForPesticide(urlOrText) {
@@ -22679,13 +23448,21 @@ function _buildQrConfirmUI(parsed, srcUrl) {
   var crops   = Object.keys(parsed.cropUsage||{});
   var entries = crops.reduce(function(a,c){return a+(parsed.cropUsage[c]||[]).length;},0);
   var srcBadge = {
-    'PSIS':      '🏛 농진청 PSIS',
-    'GAS/Claude':'🤖 AI 분석',
-    'LOCAL':     '📋 텍스트 파싱',
-    'URL':       '🔗 URL 추출',
+    'PSIS_등록':   '🏛 PSIS 등록농약',
+    'PSIS_취소':   '⛔ PSIS 등록취소',
+    'PSIS':        '🏛 농진청 PSIS',
+    'GAS/Claude':  '🤖 AI 분석',
+    'LOCAL':       '📋 텍스트 파싱',
+    'URL':         '🔗 URL 추출',
   }[parsed.source] || parsed.source || '';
 
-  var h = '<div style="background:var(--green-light);border:1.5px solid var(--green-dark);border-radius:10px;padding:14px;">'
+  // 등록취소 경고 배지 (취소 농약이면 빨간 경고 먼저 표시)
+  var cancelBadge = _getCancelledBadge ? _getCancelledBadge(parsed) : '';
+  var borderColor = (parsed.status === '등록취소') ? '#EF9A9A' : 'var(--green-dark)';
+  var bgColor     = (parsed.status === '등록취소') ? '#FFF5F5' : 'var(--green-light)';
+
+  var h = cancelBadge;
+  h += '<div style="background:'+bgColor+';border:1.5px solid '+borderColor+';border-radius:10px;padding:14px;">'
     + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">'
     + '<div style="font-size:14px;font-weight:700;color:var(--green-dark);">✅ '+esc(parsed.name||'')+'</div>'
     + '<span style="font-size:10px;background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:8px;">'+srcBadge+'</span>'
@@ -22840,39 +23617,42 @@ async function testPsisKey() {
       '<span style="color:#E65100;">⚠️ API 키가 없습니다. 먼저 키를 입력하고 저장하세요.</span>';
     return;
   }
-  if (testOut) testOut.innerHTML = '<span style="color:var(--gray-400);">테스트 중...</span>';
+  if (testOut) testOut.innerHTML = '<span style="color:var(--gray-400);">🔍 두 API 모두 테스트 중...</span>';
 
+  var results = [];
+
+  // ① 농약등록정보 API 테스트
   try {
-    var url = 'https://psis.rda.go.kr/psis/api/pestiInfo/selectPesticideUseInfo.do'
-            + '?apiKey=' + encodeURIComponent(key)
-            + '&pestiBrandName=' + encodeURIComponent('벨리스에스')
-            + '&returnType=json';
-    var ctrl = new AbortController();
-    var timer = setTimeout(function(){ ctrl.abort(); }, 6000);
-    var res  = await fetch(url, {signal: ctrl.signal, mode: 'cors'});
-    clearTimeout(timer);
-
-    if (res.ok) {
-      var data = await res.json();
-      if (Array.isArray(data) && data.length > 0) {
-        if (testOut) testOut.innerHTML =
-          '<span style="color:#2E7D32;">✅ API 키 정상 · 응답 ' + data.length + '건 확인됨</span>';
-      } else if (data && data.error) {
-        if (testOut) testOut.innerHTML =
-          '<span style="color:#C62828;">❌ ' + esc(data.error) + '</span>';
-      } else {
-        if (testOut) testOut.innerHTML =
-          '<span style="color:#2E7D32;">✅ API 키 정상 (조회 결과 0건 — 키는 유효)</span>';
-      }
+    var reg = await queryPsisRegistered('벨리스에스');
+    if (reg && reg.cropUsage && Object.keys(reg.cropUsage).length) {
+      results.push('<span style="color:#2E7D32;">✅ 등록농약 API — ' + Object.keys(reg.cropUsage).length + '개 작물 조회 성공</span>');
     } else {
-      if (testOut) testOut.innerHTML =
-        '<span style="color:#C62828;">❌ 응답 오류: HTTP ' + res.status + '</span>';
+      results.push('<span style="color:#FF8F00;">⚠️ 등록농약 API — 응답 0건 (키는 유효, 제품명 확인 필요)</span>');
     }
   } catch(e) {
-    var msg = e.name === 'AbortError' ? '타임아웃 (6초 초과)' : e.message;
-    if (testOut) testOut.innerHTML =
-      '<span style="color:#E65100;">⚠️ 연결 실패: ' + esc(msg) + '<br>'
-      + '<small>PSIS API가 CORS를 허용하지 않으면 GAS 프록시가 필요합니다</small></span>';
+    results.push('<span style="color:#C62828;">❌ 등록농약 API — ' + esc(e.message) + '</span>');
+  }
+
+  // ② 등록취소농약 API 테스트
+  try {
+    var can = await queryPsisCancelled('스미치온');  // 취소 농약 예시
+    if (can && can.name) {
+      results.push('<span style="color:#2E7D32;">✅ 등록취소농약 API — "' + esc(can.name) + '" 조회 성공</span>');
+    } else {
+      results.push('<span style="color:#FF8F00;">⚠️ 등록취소농약 API — 응답 0건 (키는 유효)</span>');
+    }
+  } catch(e) {
+    results.push('<span style="color:#C62828;">❌ 등록취소농약 API — ' + esc(e.message) + '</span>');
+  }
+
+  if (testOut) {
+    testOut.innerHTML = results.map(function(r){
+      return '<div style="margin-bottom:3px;">'+r+'</div>';
+    }).join('');
+    if (results.every(function(r){ return r.includes('❌'); })) {
+      testOut.innerHTML += '<div style="font-size:10px;color:#888;margin-top:4px;">'
+        + 'CORS 오류인 경우 GAS 프록시를 통해 API를 호출해야 합니다.</div>';
+    }
   }
 }
 
@@ -23366,7 +24146,812 @@ function handleQrResult(value) {
   if (!value) return;
   var ci = document.getElementById('scan-code-input');
   if (ci) ci.value = value;
-  _onQrScanned(value);
+
+  // 단축 URL 감지 → 자동 해제 후 처리
+  if (_isShortUrl(value)) {
+    _resolveShortUrl(value);
+  } else {
+    _onQrScanned(value);
+  }
+}
+
+// 단축 URL 패턴 감지
+function _isShortUrl(url) {
+  if (!url.startsWith('http')) return false;
+  var shortDomains = [
+    'm.naver.com', 'naver.me', 'bit.ly', 'goo.gl', 'tinyurl.com',
+    't.co', 'ow.ly', 'han.gl', 'url.kr', 'me2.kr', 'vo.la',
+    'short.naver.com', 'smartstore.naver.com/l/'
+  ];
+  try {
+    var host = new URL(url).hostname;
+    // 경로가 짧으면 단축 URL (예: /oEDDj = 5글자)
+    var path = new URL(url).pathname;
+    var isShortPath = path.length > 0 && path.length <= 8;
+    return shortDomains.some(function(d){ return host.includes(d); }) || isShortPath;
+  } catch(e) { return false; }
+}
+
+// 단축 URL 해제 — HEAD 요청으로 Location 헤더 추적
+async function _resolveShortUrl(shortUrl) {
+  var qrOut = document.getElementById('qr-decode-result');
+  var srOut = document.getElementById('scan-result');
+  function setUI(h) {
+    if (qrOut) qrOut.innerHTML = h;
+    if (srOut) srOut.innerHTML = h;
+  }
+
+  setUI('<div style="padding:14px;text-align:center;background:var(--blue-light);border-radius:10px;">'
+    + '<div style="font-size:24px;margin-bottom:6px;">🔗</div>'
+    + '<div style="font-size:13px;font-weight:600;color:var(--blue-dark);">단축 URL 해제 중...</div>'
+    + '<div style="font-size:11px;color:var(--gray-500);margin-top:4px;">'+esc(shortUrl)+'</div>'
+    + '</div>');
+
+  var resolvedUrl = null;
+
+  // 방법 1: no-cors + redirect:follow 로 최종 URL 추적 시도
+  try {
+    var ctrl1 = new AbortController();
+    setTimeout(function(){ ctrl1.abort(); }, 5000);
+    var res1 = await fetch(shortUrl, {
+      method: 'HEAD',
+      mode: 'no-cors',
+      redirect: 'follow',
+      signal: ctrl1.signal
+    });
+    // no-cors는 URL을 숨기지만 opaque response로 끝남
+    // → url 속성에서 최종 URL 읽기 시도
+    if (res1.url && res1.url !== shortUrl && res1.url !== '') {
+      resolvedUrl = res1.url;
+    }
+  } catch(e) {}
+
+  // 방법 2: cors 모드로 재시도 (일부 사이트는 CORS 허용)
+  if (!resolvedUrl) {
+    try {
+      var ctrl2 = new AbortController();
+      setTimeout(function(){ ctrl2.abort(); }, 5000);
+      var res2 = await fetch(shortUrl, {
+        method: 'GET',
+        mode: 'cors',
+        redirect: 'follow',
+        signal: ctrl2.signal
+      });
+      if (res2.url && res2.url !== shortUrl) {
+        resolvedUrl = res2.url;
+      }
+    } catch(e) {}
+  }
+
+  // 방법 3: 해제 실패 → 원본 단축 URL로 진행 + 사용자에게 안내
+  if (!resolvedUrl || resolvedUrl === shortUrl) {
+    // 단축 URL 그대로 표시하되 Chrome/Safari로 열기 제공
+    _onQrScannedWithNote(shortUrl,
+      '⚠️ 단축 URL 자동 해제 불가 — Chrome에서 열어 주소를 확인하세요');
+    return;
+  }
+
+  // 해제 성공
+  var ci = document.getElementById('scan-code-input');
+  if (ci) ci.value = resolvedUrl;
+  showToast('🔗 실제 URL: ' + resolvedUrl.slice(0, 60));
+  _onQrScanned(resolvedUrl);
+}
+
+// 단축 URL 해제 실패 시 — 원본 URL + 안내 메시지로 표시
+function _onQrScannedWithNote(url, note) {
+  _onQrScanned(url);
+  // 결과 UI 상단에 안내 추가
+  setTimeout(function() {
+    var qrOut = document.getElementById('qr-decode-result');
+    if (qrOut) {
+      qrOut.innerHTML =
+        '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:8px;padding:8px 10px;margin-bottom:6px;font-size:11px;color:#E65100;">'
+        + note + '</div>'
+        + qrOut.innerHTML;
+    }
+  }, 100);
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 농약 작용기작(MOA) 분류 & 저항성 관리 시스템
+// FRAC(살균제) / IRAC(살충제) 기준
+// ══════════════════════════════════════════════════════════
+const PESTICIDE_MOA = {"p23": "F-D", "p24": "F-D", "p28": "F-D", "p35": "F-D", "p37": "F-D", "p25": "F-F", "p29": "F-F", "p33": "F-F", "p31": "F-F", "p26": "F-C", "p32": "F-C", "p62": "F-C", "p27": "F-B", "p64": "F-B", "p36": "F-A+F-B", "p66": "F-A+F-B", "p63": "F-A", "p65": "F-A", "p30": "F-E", "p01": "I-D", "p02": "I-F", "p03": "I-A", "p04": "I-A", "p05": "I-E", "p06": "I-B", "p07": "I-C", "p08": "I-H", "p10": "I-H", "p11": "I-A", "p12": "I-G", "p13": "I-H", "p14": "I-F", "p16": "I-C", "p17": "I-B", "p18": "I-G", "p19": "I-A", "p20": "I-A", "p21": "I-C", "p22": "I-A+I-C", "p38": "I-A+F-F", "p39": "I-G+F-D", "p40": "I-A+F-A", "p41": "I-C+F-C", "p42": "I-B+F-C"};
+const MOA_NAMES     = {"F-A": "SDHI계", "F-B": "스트로빌루린", "F-C": "DMI(트리아졸)", "F-D": "보호살균", "F-E": "페닐아미드", "F-F": "기타살균", "I-A": "네오니코티노이드", "I-B": "다이아미드", "I-C": "피레스로이드", "I-D": "아버멕틴/아버멕틴계", "I-E": "스피노신", "I-F": "성장억제", "I-G": "유기인계", "I-H": "기타살충"};
+const MOA_COLORS    = {"F-A": "#E91E63", "F-B": "#9C27B0", "F-C": "#3F51B5", "F-D": "#607D8B", "F-E": "#FF5722", "F-F": "#795548", "I-A": "#F44336", "I-B": "#2196F3", "I-C": "#FF9800", "I-D": "#4CAF50", "I-E": "#00BCD4", "I-F": "#9E9E9E", "I-G": "#8D6E63", "I-H": "#78909C"};
+
+// 행운(아족시스트로빈) MOA
+const HAENGUN_MOA = {moa:'F-B', moaName:'스트로빌루린(QoI)', moaColor:'#9C27B0'};
+
+// 농약 이름/ID → MOA 조회
+function getPesticideMoa(nameOrId) {
+  // ID 직접 조회
+  if (PESTICIDE_MOA[nameOrId]) return PESTICIDE_MOA[nameOrId];
+  // 이름으로 MASTER_DB 검색
+  var items = getAllDbItems('pest');
+  var found = items.find(function(p){
+    return p.id === nameOrId || (p.name||'').replace(/\s/g,'') === (nameOrId||'').replace(/\s/g,'');
+  });
+  if (found && found.moa) return found.moa;
+  // 행운 특별처리
+  if ((nameOrId||'').includes('행운') || (nameOrId||'').includes('오티바')) return 'F-B';
+  if ((nameOrId||'').includes('스트레이트')) return 'I-D';
+  return null;
+}
+
+function getMoaInfo(moaCode) {
+  if (!moaCode) return null;
+  var codes = moaCode.split('+');
+  return {
+    code:  moaCode,
+    name:  codes.map(function(c){ return MOA_NAMES[c]||c; }).join(' + '),
+    color: MOA_COLORS[codes[0]] || '#888',
+    isMixed: codes.length > 1
+  };
+}
+
+// MOA 배지 HTML
+function buildMoaBadge(moaCode) {
+  var info = getMoaInfo(moaCode);
+  if (!info) return '';
+  return '<span style="font-size:9px;padding:1px 6px;border-radius:6px;background:'+info.color+'22;color:'+info.color+';border:1px solid '+info.color+'44;font-weight:600;white-space:nowrap;">'
+    + info.name + '</span>';
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 20L 최적 방제 계획 생성기
+// 기능:
+//   1. 작물 선택 → 공통 적용 농약 교집합 추출
+//   2. 20L 기준 최소 살포 횟수 계산
+//   3. 회차별 MOA 자동 로테이션 (저항성 방지)
+//   4. 방제 계획 캘린더 저장
+// ══════════════════════════════════════════════════════════
+
+// ── 방제 계획 생성 메인 함수 ─────────────────────────────────
+function buildSprayPlan(selectedCrops, targetDisease, totalRounds) {
+  // selectedCrops: ['블루베리','무화과','감나무']
+  // targetDisease: '탄저병' (빈 문자열이면 전체)
+  // totalRounds: 방제 횟수 (2~4회)
+
+  if (!selectedCrops || !selectedCrops.length) return null;
+
+  // 1. 각 작물에 적용 가능한 농약 수집
+  var cropPestMap = {};
+  selectedCrops.forEach(function(crop) {
+    var pests = _getPesticidesForCrop(crop, targetDisease);
+    cropPestMap[crop] = pests;
+  });
+
+  // 2. 전체 작물에 공통 적용 가능한 농약 (교집합)
+  var commonPests = _intersectPesticides(cropPestMap);
+  // 일부 작물에만 적용 가능한 농약 (합집합 - 교집합)
+  var partialPests = _unionPesticides(cropPestMap).filter(function(p) {
+    return !commonPests.find(function(c){ return c.name===p.name; });
+  });
+
+  // 3. 보유 농약 필터링 (내 농약장에 있는 것 우선)
+  var myActive = (window._myPesticideList||[])
+    .filter(function(p){ return p.status!=='empty'&&!p.excluded; })
+    .map(function(p){ return (p.name||'').replace(/\s/g,''); });
+
+  function sortByStock(list) {
+    return list.slice().sort(function(a,b){
+      var aHave = myActive.indexOf((a.name||'').replace(/\s/g,''))!==-1;
+      var bHave = myActive.indexOf((b.name||'').replace(/\s/g,''))!==-1;
+      return (bHave?1:0)-(aHave?1:0);
+    });
+  }
+  commonPests  = sortByStock(commonPests);
+  partialPests = sortByStock(partialPests);
+
+  // 4. MOA 로테이션 계획 수립
+  var rounds = _buildRotationPlan(commonPests, partialPests, totalRounds||3);
+
+  // 5. 20L 살포 기준 정보
+  var spray20L = _calc20LPlan(selectedCrops, rounds);
+
+  return {
+    crops:        selectedCrops,
+    disease:      targetDisease,
+    totalRounds:  totalRounds||3,
+    commonPests:  commonPests,
+    partialPests: partialPests,
+    rounds:       rounds,
+    spray20L:     spray20L,
+  };
+}
+
+// 작물에 적용 가능한 농약 목록 수집
+function _getPesticidesForCrop(cropName, disease) {
+  var results = [];
+  var allPests = getAllDbItems('pest');
+
+  allPests.forEach(function(p) {
+    var usage = getPestCropUsage(p.name, cropName);
+    if (!usage || !usage.length) return;
+    if (disease) {
+      usage = usage.filter(function(u){ return (u.target||u.dis||'').includes(disease); });
+      if (!usage.length) return;
+    }
+    results.push({
+      name:    p.name,
+      id:      p.id,
+      type:    p.type,
+      moa:     p.moa || getPesticideMoa(p.id||p.name),
+      usage:   usage,
+      amount:  usage[0].amount || '10ml',
+      safety:  usage[0].safety || '',
+      times:   usage[0].times  || '',
+    });
+  });
+
+  // 행운 / 스트레이트 추가
+  ['행운','스트레이트'].forEach(function(pname) {
+    var usage = getPestCropUsage(pname, cropName);
+    if (!usage || !usage.length) return;
+    if (disease) {
+      usage = usage.filter(function(u){ return (u.target||u.dis||'').includes(disease); });
+      if (!usage.length) return;
+    }
+    if (!results.find(function(r){ return r.name===pname; })) {
+      results.push({
+        name:   pname,
+        id:     pname==='행운'?'haengun':'straight',
+        type:   pname==='행운'?'살균제':'살충제',
+        moa:    getPesticideMoa(pname),
+        usage:  usage,
+        amount: usage[0].amount||'10ml',
+        safety: usage[0].safety||'',
+        times:  usage[0].times||'',
+      });
+    }
+  });
+  return results;
+}
+
+// 교집합: 모든 작물에 공통 적용 가능
+function _intersectPesticides(cropPestMap) {
+  var crops = Object.keys(cropPestMap);
+  if (!crops.length) return [];
+  var base  = cropPestMap[crops[0]].slice();
+  for (var i=1;i<crops.length;i++) {
+    var other = cropPestMap[crops[i]].map(function(p){return p.name;});
+    base = base.filter(function(p){ return other.indexOf(p.name)!==-1; });
+  }
+  return base;
+}
+
+// 합집합: 최소 1개 작물에 적용 가능
+function _unionPesticides(cropPestMap) {
+  var seen = {}; var all = [];
+  Object.values(cropPestMap).forEach(function(pests) {
+    pests.forEach(function(p) {
+      if (!seen[p.name]) { seen[p.name]=true; all.push(p); }
+    });
+  });
+  return all;
+}
+
+// MOA 로테이션 계획 수립
+function _buildRotationPlan(commonPests, partialPests, totalRounds) {
+  var rounds = [];
+  var usedMoas = [];  // 이미 사용한 MOA 추적
+
+  var allCandidates = commonPests.concat(partialPests);
+
+  for (var r=0; r<totalRounds; r++) {
+    // 이 회차에 사용할 농약: 아직 안 쓴 MOA 우선
+    var roundPests = [];
+    var roundMoas  = [];
+
+    // 살균제 선택 (F- 계열)
+    var fung = allCandidates.filter(function(p){ return p.type==='살균제'&&p.moa&&p.moa.startsWith('F-'); });
+    var fSelected = _selectNonRepeating(fung, usedMoas, roundMoas);
+    if (fSelected) { roundPests.push(fSelected); roundMoas.push(fSelected.moa); }
+
+    // 살충제 선택 (I- 계열)
+    var insec = allCandidates.filter(function(p){ return p.type==='살충제'&&p.moa&&p.moa.startsWith('I-'); });
+    var iSelected = _selectNonRepeating(insec, usedMoas, roundMoas);
+    if (iSelected) { roundPests.push(iSelected); roundMoas.push(iSelected.moa); }
+
+    // 해당 회차 살균살충 혼합제
+    var mixed = allCandidates.filter(function(p){ return p.type==='살균살충제'&&p.moa; });
+    if (!fSelected && !iSelected && mixed.length) {
+      var mSelected = _selectNonRepeating(mixed, usedMoas, roundMoas);
+      if (mSelected) roundPests.push(mSelected);
+    }
+
+    usedMoas = usedMoas.concat(roundMoas);
+
+    rounds.push({
+      round:     r+1,
+      pests:     roundPests,
+      moas:      roundMoas,
+      interval:  r===0 ? '1회차' : (r*7)+'~'+(r*10)+'일 후',
+    });
+  }
+  return rounds;
+}
+
+// 반복되지 않는 MOA 선택
+function _selectNonRepeating(candidates, usedMoas, roundMoas) {
+  if (!candidates.length) return null;
+  // 사용 안 한 MOA 우선
+  var fresh = candidates.filter(function(p){
+    return usedMoas.indexOf(p.moa)===-1 && roundMoas.indexOf(p.moa)===-1;
+  });
+  if (fresh.length) return fresh[0];
+  // 없으면 이 회차에 안 쓴 것
+  var notThisRound = candidates.filter(function(p){ return roundMoas.indexOf(p.moa)===-1; });
+  if (notThisRound.length) return notThisRound[0];
+  return null;
+}
+
+// 20L 기준 살포 계획 계산
+function _calc20LPlan(crops, rounds) {
+  return rounds.map(function(r) {
+    return {
+      round: r.round,
+      pests: r.pests.map(function(p) {
+        // 20L 기준 약량
+        var amtStr = p.amount || '10ml';
+        var amt    = parseFloat(amtStr) || 10;
+        var unit   = amtStr.replace(/[\d.]/g,'').trim() || 'ml';
+        return {
+          name:   p.name,
+          per20L: amt + unit,
+          safety: p.safety,
+          times:  p.times,
+          moa:    p.moa,
+        };
+      }),
+    };
+  });
+}
+
+// ══ 방제 계획 UI 렌더링 ══════════════════════════════════════
+function renderSprayPlanPanel() {
+  var container = document.getElementById('db-list');
+  if (!container) return;
+  var crops = (window._allPlants||[]).map(function(p){ return p.name||p.species||''; }).filter(Boolean);
+
+  var h = '<div style="padding:8px 0;">';
+
+  // ── 입력 폼 ──────────────────────────────────────────────
+  h += '<div style="background:var(--green-light);border-radius:12px;padding:14px;margin-bottom:12px;">'
+     + '<div style="font-size:14px;font-weight:700;color:var(--green-dark);margin-bottom:12px;">🗓 20L 통합 방제 계획</div>'
+
+     + '<div style="font-size:12px;font-weight:600;color:var(--gray-700);margin-bottom:6px;">방제할 작물 선택</div>'
+     + '<div id="spray-crop-checks" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">';
+  crops.forEach(function(crop) {
+    h += '<label style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:#fff;border:1px solid var(--green-mid);font-size:12px;cursor:pointer;">'
+       + '<input type="checkbox" value="'+esc(crop)+'" checked style="accent-color:var(--green-dark);">'+esc(crop)+'</label>';
+  });
+  h += '</div>'
+
+     + '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'
+     + '<div><label style="font-size:11px;color:var(--gray-500);display:block;margin-bottom:3px;">방제 대상 병해충</label>'
+     + '<input id="spray-disease" type="text" placeholder="예: 탄저병 (빈칸=전체)" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:7px;font-size:13px;box-sizing:border-box;"></div>'
+     + '<div><label style="font-size:11px;color:var(--gray-500);display:block;margin-bottom:3px;">방제 횟수</label>'
+     + '<select id="spray-rounds" style="width:100%;padding:8px;border:1px solid var(--gray-200);border-radius:7px;font-size:13px;">'
+     + '<option value="2">2회</option><option value="3" selected>3회</option><option value="4">4회</option>'
+     + '</select></div>'
+     + '</div>'
+
+     // 포함 옵션
+     + '<div style="font-size:11px;font-weight:600;color:var(--gray-600);margin-bottom:6px;">포함할 항목</div>'
+     + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">'
+     + '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">'
+     + '<input type="checkbox" id="spray-opt-soil" checked style="accent-color:var(--green-dark);">🌱 토양처리제</label>'
+     + '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">'
+     + '<input type="checkbox" id="spray-opt-micro" style="accent-color:var(--green-dark);">🦠 미생물균</label>'
+     + '<label style="display:flex;align-items:center;gap:4px;font-size:12px;cursor:pointer;">'
+     + '<input type="checkbox" id="spray-opt-compat" checked style="accent-color:var(--green-dark);">🔬 혼용 분석</label>'
+     + '</div>'
+
+     + '<button onclick="generateSprayPlanFull()" style="width:100%;padding:12px;background:var(--green-dark);color:#fff;border-radius:9px;border:none;font-size:14px;font-weight:700;cursor:pointer;">'
+     + '🗓 최적 방제 계획 생성</button>'
+     + '</div>';
+
+  h += '<div id="spray-plan-result"></div></div>';
+  container.innerHTML = h;
+}
+
+function generateSprayPlanFull() {
+  var checks  = document.querySelectorAll('#spray-crop-checks input:checked');
+  var crops   = Array.from(checks).map(function(c){ return c.value; });
+  var disease = (document.getElementById('spray-disease')||{}).value||'';
+  var rounds  = parseInt((document.getElementById('spray-rounds')||{}).value||3);
+  var soil    = !!(document.getElementById('spray-opt-soil')||{}).checked;
+  var micro   = !!(document.getElementById('spray-opt-micro')||{}).checked;
+  var compat  = !!(document.getElementById('spray-opt-compat')||{}).checked;
+  var out     = document.getElementById('spray-plan-result');
+  if (!crops.length||!out) { showToast('작물을 선택하세요'); return; }
+  out.innerHTML='<div style="padding:16px;text-align:center;color:var(--gray-400);">분석 중...</div>';
+  var plan = buildSprayPlanFull(crops, disease, rounds, {soil:soil,microbe:micro,compat:compat});
+  if (!plan) { out.innerHTML='<div style="color:var(--red-dark);padding:10px;">계획 생성 실패</div>'; return; }
+  out.innerHTML = renderSprayPlanFull(plan);
+}
+
+function renderSprayPlanFull(plan) {
+  var h = '';
+
+  // ── 1. 회차별 방제 계획 (경엽) ────────────────────────────
+  h += renderSprayPlanResult(plan);
+
+  // ── 2. 토양처리제 섹션 ────────────────────────────────────
+  if (plan.soilPests && plan.soilPests.length) {
+    h += '<div style="border:2px solid #795548;border-radius:12px;padding:12px;margin-bottom:10px;">'
+       + '<div style="font-size:13px;font-weight:700;color:#795548;margin-bottom:8px;">🌱 토양 처리 (정식 전 1회 — 경엽 방제와 별도)</div>'
+       + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+       + '<thead><tr style="background:#795548;color:#fff;">'
+       + '<th style="padding:5px 7px;text-align:left;">농약</th>'
+       + '<th style="padding:5px 7px;text-align:center;">최대사용</th>'
+       + '<th style="padding:5px 7px;text-align:left;">작용기작</th>'
+       + '<th style="padding:5px 7px;text-align:left;">주의사항</th>'
+       + '</tr></thead><tbody>';
+    plan.soilPests.forEach(function(p,i) {
+      var moaInfo = getMoaInfo(p.moa);
+      h += '<tr style="'+(i%2?'background:#FFF8F6;':'')+'">'
+         + '<td style="padding:5px 7px;font-weight:600;">'+esc(p.name)+'</td>'
+         + '<td style="padding:5px 7px;text-align:center;">'+(p.maxTimes||1)+'회</td>'
+         + '<td style="padding:5px 7px;">'+(moaInfo?'<span style="font-size:10px;padding:1px 5px;border-radius:4px;background:'+moaInfo.color+'22;color:'+moaInfo.color+';">'+esc(moaInfo.name)+'</span>':'')+'</td>'
+         + '<td style="padding:5px 7px;font-size:11px;color:var(--gray-600);">'+esc(p.note||'')+'</td>'
+         + '</tr>';
+    });
+    h += '</tbody></table></div>';
+  }
+
+  // ── 3. 미생물균 섹션 ─────────────────────────────────────
+  if (plan.microbes && plan.microbes.length) {
+    h += '<div style="border:2px solid #00897B;border-radius:12px;padding:12px;margin-bottom:10px;">'
+       + '<div style="font-size:13px;font-weight:700;color:#00695C;margin-bottom:4px;">🦠 미생물균 추천 (화학 방제와 분리 사용)</div>'
+       + '<div style="font-size:11px;color:#888;margin-bottom:10px;">화학농약 살포 → 대기 → 미생물 살포 순서 준수</div>';
+
+    // 센터무료 / 상업구매 분리 표시
+    var freeMic = plan.microbes.filter(function(m){ return m.source&&m.source.includes('무료'); });
+    var buyMic  = plan.microbes.filter(function(m){ return m.source&&m.source.includes('상업'); });
+
+    function renderMicGroup(label, color, list) {
+      if (!list.length) return '';
+      var gh = '<div style="font-size:11px;font-weight:600;color:'+color+';margin-bottom:5px;">'+label+'</div>';
+      list.forEach(function(m) {
+        var effectStr = Array.isArray(m.effect) ? m.effect.slice(0,2).join(' / ') : (m.effect||'');
+        gh += '<div style="background:#E0F2F1;border-radius:8px;padding:9px 10px;margin-bottom:6px;">'
+           + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">'
+           + '<div style="display:flex;align-items:center;gap:6px;">'
+           + '<span style="font-size:18px;">'+m.emoji+'</span>'
+           + '<span style="font-size:12px;font-weight:700;color:#00695C;">'+esc(m.name.split('(')[0].trim())+'</span>'
+           + '</div>'
+           + '<span style="font-size:10px;background:#FF5722;color:#fff;padding:2px 7px;border-radius:7px;font-weight:700;">'+m.waitAfterChem+'일 대기</span>'
+           + '</div>'
+           + '<div style="font-size:11px;color:#555;margin-bottom:5px;">'+esc(effectStr)+'</div>'
+           + '<div style="font-size:10px;color:#888;margin-bottom:4px;">💧 '+esc(m.dilution||'')+' / '+esc(m.interval||'')+'</div>'
+           + '<div style="font-size:10px;color:#C62828;">⛔ '+esc((m.incompatibleWith||[]).slice(0,4).join(' · '))+(m.incompatibleWith&&m.incompatibleWith.length>4?' 외':'')+'</div>'
+           + '</div>';
+      });
+      return gh;
+    }
+
+    h += renderMicGroup('🏛 센터 무료 배부', '#1B5E20', freeMic);
+    h += renderMicGroup('🏪 상업 구매', '#1565C0', buyMic);
+    h += '</div>';
+  }
+
+  // ── 4. 사용 횟수별 분류 ──────────────────────────────────
+  if (plan.byMaxTimes) {
+    var bt = plan.byMaxTimes;
+    h += '<div style="border:1px solid var(--gray-200);border-radius:12px;padding:12px;margin-bottom:10px;">'
+       + '<div style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:10px;">📊 농약 사용 횟수별 분류</div>';
+
+    var groups = [
+      {times:1, label:'1회 전용', color:'#C62828', bg:'#FFEBEE', items:bt[1]},
+      {times:2, label:'최대 2회', color:'#E65100', bg:'#FFF3E0', items:bt[2]},
+      {times:3, label:'최대 3회', color:'#1565C0', bg:'#E3F2FD', items:bt[3]},
+      {times:4, label:'최대 4회+', color:'#1B5E20', bg:'#E8F5E9', items:bt[4]},
+    ];
+
+    groups.forEach(function(g) {
+      if (!g.items || !g.items.length) return;
+      h += '<div style="margin-bottom:8px;padding:8px 10px;background:'+g.bg+';border-left:4px solid '+g.color+';border-radius:0 8px 8px 0;">'
+         + '<div style="font-size:11px;font-weight:700;color:'+g.color+';margin-bottom:5px;">'+g.label+'</div>'
+         + '<div style="display:flex;flex-wrap:wrap;gap:4px;">';
+      g.items.forEach(function(p) {
+        var moaInfo = getMoaInfo(p.moa);
+        h += '<div style="background:#fff;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:500;">'
+           + esc(p.name)
+           + (moaInfo?' <span style="font-size:9px;color:'+moaInfo.color+';">'+esc(moaInfo.name)+'</span>':'')
+           + '</div>';
+      });
+      h += '</div></div>';
+    });
+    h += '</div>';
+  }
+
+  // ── 5. 혼용 주의 목록 ────────────────────────────────────
+  if (plan.compatMatrix && plan.compatMatrix.length) {
+    h += '<div style="border:1.5px solid #FF8F00;border-radius:12px;padding:12px;margin-bottom:10px;">'
+       + '<div style="font-size:13px;font-weight:700;color:#E65100;margin-bottom:8px;">⚠️ 혼용 주의 / 금지 목록</div>';
+    plan.compatMatrix.forEach(function(item) {
+      var levelStyle = {
+        danger: 'background:#FFEBEE;border-left:4px solid #C62828;',
+        warn:   'background:#FFF3E0;border-left:4px solid #FF8F00;',
+        info:   'background:#E3F2FD;border-left:4px solid #1565C0;',
+      }[item.result.level] || '';
+      h += '<div style="'+levelStyle+'padding:6px 10px;border-radius:0 6px 6px 0;margin-bottom:5px;font-size:12px;">'
+         + '<b>'+esc(item.a)+'</b> + <b>'+esc(item.b)+'</b><br>'
+         + '<span style="font-size:11px;color:var(--gray-600);">'+esc(item.result.reason)+'</span>'
+         + '</div>';
+    });
+    h += '</div>';
+  }
+
+  // ── 6. Firebase 저장 버튼 ─────────────────────────────────
+  h += '<div style="display:flex;gap:6px;margin-top:4px;">'
+     + '<button onclick="saveSprayPlan(window._lastSprayPlan)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 계획 저장</button>'
+     + '<button onclick="renderSprayPlanPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
+     + '</div>';
+
+  window._lastSprayPlan = plan;
+  return h;
+}
+
+function generateSprayPlan(){ generateSprayPlanFull(); }
+
+function renderSprayPlanResult(plan) {
+  var h = '';
+
+  // ── 공통 적용 농약 요약 ──────────────────────────────────
+  h += '<div style="background:#fff;border:1px solid var(--gray-200);border-radius:10px;padding:12px;margin-bottom:12px;">'
+     + '<div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:8px;">'
+     + '✅ '+esc(plan.crops.join(' · '))+' 공통 적용 가능 ('+plan.commonPests.length+'개)'
+     + (plan.disease?' — '+esc(plan.disease):'') + '</div>';
+
+  if (plan.commonPests.length) {
+    h += '<div style="display:flex;flex-wrap:wrap;gap:5px;">';
+    plan.commonPests.slice(0,8).forEach(function(p) {
+      var myActive = (window._myPesticideList||[]).filter(function(m){return m.status!=='empty'&&!m.excluded;}).map(function(m){return(m.name||'').replace(/\s/g,'');});
+      var have     = myActive.indexOf((p.name||'').replace(/\s/g,''))!==-1;
+      var moaBadge = buildMoaBadge(p.moa);
+      h += '<div style="background:'+(have?'var(--green-light)':'var(--gray-50)')+';border:1px solid '+(have?'var(--green-mid)':'var(--gray-200)')+';border-radius:7px;padding:5px 9px;">'
+         + '<div style="font-size:12px;font-weight:600;">'+(have?'✅ ':'')+esc(p.name)+'</div>'
+         + moaBadge
+         + '</div>';
+    });
+    h += '</div>';
+  } else {
+    h += '<div style="font-size:12px;color:var(--orange);">선택한 작물에 공통으로 적용 가능한 농약이 없습니다.</div>';
+  }
+  h += '</div>';
+
+  // ── 회차별 방제 계획 ──────────────────────────────────────
+  h += '<div style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:8px;">📋 회차별 방제 계획 (MOA 로테이션)</div>';
+
+  plan.rounds.forEach(function(r) {
+    var roundColors = ['#E8F5E9','#E3F2FD','#FFF3E0','#F3E5F5'];
+    var borderColors= ['#4CAF50','#2196F3','#FF9800','#9C27B0'];
+    var bc = borderColors[(r.round-1)%4];
+
+    h += '<div style="border:2px solid '+bc+';border-radius:12px;padding:12px;margin-bottom:10px;">'
+       + '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">'
+       + '<span style="font-size:16px;font-weight:800;color:'+bc+';">'+r.round+'회차</span>'
+       + '<span style="font-size:11px;color:var(--gray-400);">'+esc(r.interval)+'</span>'
+       + '</div>';
+
+    if (!r.pests.length) {
+      h += '<div style="font-size:12px;color:var(--gray-400);">해당 회차 적용 농약 없음</div>';
+    } else {
+      // 20L 배합표
+      h += '<div style="background:#fff;border-radius:8px;padding:10px;margin-bottom:8px;">'
+         + '<div style="font-size:12px;font-weight:600;color:var(--gray-600);margin-bottom:6px;">💧 20L 배합 (이번 회차)</div>'
+         + '<table style="width:100%;border-collapse:collapse;font-size:12px;">'
+         + '<thead><tr style="background:'+bc+';color:#fff;">'
+         + '<th style="padding:5px 8px;text-align:left;border-radius:4px 0 0 4px;">농약</th>'
+         + '<th style="padding:5px 8px;text-align:center;">분류</th>'
+         + '<th style="padding:5px 8px;text-align:center;">물 20L당</th>'
+         + '<th style="padding:5px 8px;text-align:left;">작용기작</th>'
+         + '<th style="padding:5px 8px;text-align:center;border-radius:0 4px 4px 0;">안전사용</th>'
+         + '</tr></thead><tbody>';
+
+      r.pests.forEach(function(p, i) {
+        var moaInfo = getMoaInfo(p.moa);
+        var have    = (window._myPesticideList||[]).filter(function(m){return m.status!=='empty'&&!m.excluded;}).some(function(m){return(m.name||'').replace(/\s/g,'')===(p.name||'').replace(/\s/g,'');});
+        h += '<tr style="'+(i%2?'background:#F9F9F9;':'')+'">'
+           + '<td style="padding:6px 8px;font-weight:700;">'+(have?'✅ ':'')+esc(p.name)+'</td>'
+           + '<td style="padding:6px 8px;text-align:center;font-size:11px;">'+esc(p.type||'')+'</td>'
+           + '<td style="padding:6px 8px;text-align:center;font-size:13px;font-weight:700;color:'+bc+';">'+esc(p.per20L)+'</td>'
+           + '<td style="padding:6px 8px;">'+(moaInfo?'<span style="font-size:10px;padding:1px 5px;border-radius:5px;background:'+moaInfo.color+'22;color:'+moaInfo.color+';border:1px solid '+moaInfo.color+'44;">'+esc(moaInfo.name)+'</span>':'')+'</td>'
+           + '<td style="padding:6px 8px;text-align:center;font-size:11px;color:#E65100;">'+esc(p.safety)+'</td>'
+           + '</tr>';
+      });
+      h += '</tbody></table></div>';
+
+      // 이 회차 MOA 설명
+      var moaList = r.pests.map(function(p){ var i=getMoaInfo(p.moa); return i?i.name:''; }).filter(Boolean);
+      if (moaList.length) {
+        h += '<div style="font-size:11px;color:var(--gray-500);background:var(--gray-50,#F9F8F6);border-radius:6px;padding:5px 8px;">'
+           + '🔬 이 회차 작용기작: '+esc(moaList.join(' + '))+'</div>';
+      }
+    }
+    h += '</div>';
+  });
+
+  // ── 저항성 관리 경고 ─────────────────────────────────────
+  h += '<div style="background:#FFF3E0;border:1px solid #FFB74D;border-radius:10px;padding:12px;margin-top:10px;">'
+     + '<div style="font-size:12px;font-weight:700;color:#E65100;margin-bottom:6px;">⚠️ 저항성 관리 핵심 원칙</div>'
+     + '<div style="font-size:11px;color:#555;line-height:1.9;">'
+     + '• 같은 계통(MOA) 농약을 연속 2회 이상 사용하지 마세요<br>'
+     + '• 스트로빌루린(F-B)·SDHI(F-A)는 내성 발현이 빠릅니다<br>'
+     + '• 보호살균제(F-D: 만코지·다코닐)는 로테이션 빈칸에 유용합니다<br>'
+     + '• 위 계획은 보유 농약 기준으로 자동 생성되었습니다'
+     + '</div></div>';
+
+  // ── 저장 버튼 ────────────────────────────────────────────
+  h += '<div style="margin-top:12px;display:flex;gap:6px;">'
+     + '<button onclick="saveSprayPlan(window._lastSprayPlan)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Firebase에 계획 저장</button>'
+     + '<button onclick="renderSprayPlanPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
+     + '</div>';
+
+  window._lastSprayPlan = plan;
+  return h;
+}
+
+// 방제 계획 Firebase 저장
+async function saveSprayPlan(plan) {
+  if (!plan || !db) { showToast('저장할 계획이 없습니다'); return; }
+  try {
+    var saveData = {
+      crops:      plan.crops,
+      disease:    plan.disease,
+      rounds:     plan.totalRounds,
+      plan:       plan.rounds.map(function(r){
+        return {round:r.round, pests: r.pests.map(function(p){return {name:p.name,per20L:p.per20L,moa:p.moa};})};
+      }),
+      createdAt:  new Date().toISOString(),
+    };
+    await db.collection('sprayPlans').add(saveData);
+    showToast('✅ 방제 계획이 저장됐습니다');
+  } catch(e) {
+    showToast('저장 실패: '+e.message);
+  }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 혼용·사용횟수·미생물 호환성 분석 시스템
+// ══════════════════════════════════════════════════════════
+
+// ── 혼용 가능 여부 판단 ───────────────────────────────────────
+function checkMixCompatibility(pestA, pestB) {
+  // 둘 다 동제 or 석회유황합제면 기본 충돌
+  var GLOBAL_INCOMPAT = {
+    '동제':       ['강산성 농약','황제','오일제','기계유','유기인계'],
+    '석회유황합제': ['동제','유기인계','유황합제','오일제'],
+    '오일제':     ['동제','황제','유황합제','캡탄','만코제브'],
+  };
+
+  var aName  = pestA.name||'';
+  var bName  = pestB.name||'';
+  var aInc   = pestA.incompatible||[];
+  var bInc   = pestB.incompatible||[];
+  var aMoa   = (pestA.moa||'').split('+')[0];
+  var bMoa   = (pestB.moa||'').split('+')[0];
+
+  // 1. 직접 혼용 금지 체크
+  var aBlocksB = aInc.some(function(i){ return bName.includes(i) || i.includes(bName); });
+  var bBlocksA = bInc.some(function(i){ return aName.includes(i) || i.includes(aName); });
+
+  if (aBlocksB || bBlocksA) {
+    return {ok:false, reason:'⛔ 혼용 금지 조합', level:'danger'};
+  }
+
+  // 2. 같은 MOA끼리 → 저항성 위험
+  if (aMoa && bMoa && aMoa === bMoa && aMoa !== '') {
+    return {ok:'warn', reason:'⚠️ 같은 작용기작('+MOA_NAMES[aMoa]+') — 저항성 위험', level:'warn'};
+  }
+
+  // 3. 미생물균 포함 시
+  if (pestA._isMicrobe || pestB._isMicrobe) {
+    var microbe = pestA._isMicrobe ? pestA : pestB;
+    var chem    = pestA._isMicrobe ? pestB : pestA;
+    var inc     = microbe.incompatibleWith||[];
+    var blocked = inc.some(function(i){ return (chem.name||'').includes(i) || (chem.ingredient||'').includes(i); });
+    if (blocked) return {ok:false, reason:'⛔ 미생물균 사멸 우려 — 혼용 불가', level:'danger'};
+    var safe = (microbe.safePesticides||[]).some(function(s){ return (chem.name||'').includes(s); });
+    if (safe) return {ok:true, reason:'✅ 미생물균과 혼용 안전', level:'safe'};
+    return {ok:'warn', reason:'⚠️ 미생물균 혼용 — 사전 소량 테스트 권장', level:'warn'};
+  }
+
+  // 4. 토양살충제 + 경엽살균제 → 보통 시기가 달라 혼용 불필요
+  if (pestA.soilUse && !pestB.soilUse) {
+    return {ok:'info', reason:'ℹ️ 토양처리제 + 경엽제 — 사용 시기가 달라 통상 분리 사용', level:'info'};
+  }
+
+  return {ok:true, reason:'✅ 혼용 가능 (혼용 전 소량 테스트 권장)', level:'safe'};
+}
+
+// ── 방제계획에 토양살충+미생물 통합 ─────────────────────────────
+function buildSprayPlanFull(selectedCrops, targetDisease, totalRounds, includeOptions) {
+  // includeOptions: {soil:bool, microbe:bool}
+  var plan = buildSprayPlan(selectedCrops, targetDisease, totalRounds);
+  if (!plan) return null;
+
+  // 토양 처리 농약 추가
+  if (includeOptions && includeOptions.soil) {
+    var soilPests = getAllDbItems('pest').filter(function(p){ return p.soilUse && p.type==='토양살충제'; });
+    plan.soilPests = soilPests.map(function(p){
+      return {name:p.name, id:p.id, type:p.type, moa:p.moa,
+              maxTimes:p.maxTimes||1, amount:p.amount||'기준량',
+              note:p.note||'', incompatible:p.incompatible||[]};
+    });
+  }
+
+  // 미생물균 추천 추가
+  if (includeOptions && includeOptions.microbe) {
+    var microbes = MASTER_DB.microbes || [];
+    plan.microbes = microbes.map(function(m){
+      return Object.assign({_isMicrobe:true}, m);
+    });
+  }
+
+  // 혼용 가능 여부 매트릭스 생성
+  plan.compatMatrix = _buildCompatMatrix(plan);
+
+  // 사용 횟수별 분류
+  plan.byMaxTimes = _classifyByMaxTimes(plan);
+
+  return plan;
+}
+
+// 혼용 매트릭스 생성
+function _buildCompatMatrix(plan) {
+  var allItems = [];
+  // 방제 계획 농약
+  (plan.rounds||[]).forEach(function(r){
+    (r.pests||[]).forEach(function(p){ if(!allItems.find(function(x){return x.name===p.name;})) allItems.push(p); });
+  });
+  // 토양살충
+  (plan.soilPests||[]).forEach(function(p){ if(!allItems.find(function(x){return x.name===p.name;})) allItems.push(p); });
+  // 미생물
+  (plan.microbes||[]).forEach(function(m){ if(!allItems.find(function(x){return x.name===m.name;})) allItems.push(Object.assign({_isMicrobe:true},m)); });
+
+  var matrix = [];
+  for (var i=0;i<allItems.length;i++) {
+    for (var j=i+1;j<allItems.length;j++) {
+      var result = checkMixCompatibility(allItems[i], allItems[j]);
+      if (result.level !== 'safe') {
+        matrix.push({a:allItems[i].name, b:allItems[j].name, result:result});
+      }
+    }
+  }
+  return matrix;
+}
+
+// 사용 횟수별 분류
+function _classifyByMaxTimes(plan) {
+  var all = [];
+  (plan.rounds||[]).forEach(function(r){
+    (r.pests||[]).forEach(function(p){
+      var found = getAllDbItems('pest').find(function(x){return x.name===p.name;});
+      if (found && !all.find(function(x){return x.name===p.name;})) {
+        all.push({name:p.name, maxTimes:found.maxTimes||'-', type:found.type||'',
+                  moa:p.moa, incompatible:found.incompatible||[]});
+      }
+    });
+  });
+  var groups = {1:[],2:[],3:[],4:[],multi:[]};
+  all.forEach(function(p){
+    var t = p.maxTimes;
+    if (t===1) groups[1].push(p);
+    else if (t===2) groups[2].push(p);
+    else if (t===3) groups[3].push(p);
+    else if (t>=4) groups[4].push(p);
+    else groups.multi.push(p);
+  });
+  return groups;
 }
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
