@@ -11126,7 +11126,16 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   <div id="panel-log" class="panel">
     <div class="today-header">
       <div class="section-title">📖 작업 기록</div>
-      <button style="padding:6px 12px;background:var(--green-dark);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;" onclick="openAddLog()">+ 기록 추가</button>
+      <div style="display:flex;gap:5px;align-items:center;">
+        <button onclick="setLogView('date')" id="log-view-date"
+          style="padding:5px 10px;background:var(--green-dark);color:#fff;border-radius:7px;border:none;font-size:11px;cursor:pointer;font-weight:600;">
+          📅 날짜순
+        </button>
+        <button onclick="setLogView('plant')" id="log-view-plant"
+          style="padding:5px 10px;background:#fff;color:var(--gray-600);border-radius:7px;border:1px solid var(--gray-200);font-size:11px;cursor:pointer;">
+          🌿 식물별
+        </button>
+        <button style="padding:6px 12px;background:var(--green-dark);color:#fff;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;" onclick="openAddLog()">+ 기록 추가</button>
     </div>
     <div id="log-list"></div>
   </div>
@@ -25579,7 +25588,12 @@ function renderSpraySchedulerPanel() {
   var container = document.getElementById('db-list');
   if (!container) return;
 
-  var allPlants = window._allPlants || [];
+  // APP.plants 또는 _allPlants 또는 MASTER_DB 순으로 폴백
+  var allPlants = (APP && APP.plants && APP.plants.length)
+    ? APP.plants
+    : (window._allPlants && window._allPlants.length)
+      ? window._allPlants
+      : (MASTER_DB && MASTER_DB.plants ? MASTER_DB.plants : []);
 
   // 작물 그룹화
   var fruitTrees = allPlants.filter(function(p){
@@ -25767,6 +25781,8 @@ function toggleWeekPref(pref) {
 // ── 방제 스케줄 생성 ─────────────────────────────────────────
 function generateSchedule() {
   var crops    = Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){ return c.value; });
+  // 값이 전체 이름이므로 cropUsage 조회용 기본 이름도 추가 보관
+
   var modeEl   = document.querySelector('input[name="spray-mode"]:checked');
   var mode     = modeEl ? modeEl.value : 'preventive';
   var startStr = (document.getElementById('spray-start-date')||{}).value || new Date().toISOString().slice(0,10);
@@ -25973,6 +25989,198 @@ async function saveScheduleToFirebase(sched) {
     showToast('✅ 방제 스케줄이 저장됐습니다');
   } catch(e) { showToast('저장 실패: '+e.message); }
 }
+
+
+// ══════════════════════════════════════════════════════════
+// 기록 탭 — 식물별 그룹 뷰 (최신 활동 순 정렬)
+// ══════════════════════════════════════════════════════════
+
+var _logViewMode = 'date'; // 'date' | 'plant'
+
+function setLogView(mode) {
+  _logViewMode = mode;
+  // 버튼 스타일 토글
+  var datBtn = document.getElementById('log-view-date');
+  var pltBtn = document.getElementById('log-view-plant');
+  if (datBtn) {
+    datBtn.style.background   = mode==='date' ? 'var(--green-dark)' : '#fff';
+    datBtn.style.color        = mode==='date' ? '#fff' : 'var(--gray-600)';
+    datBtn.style.border       = mode==='date' ? 'none' : '1px solid var(--gray-200)';
+  }
+  if (pltBtn) {
+    pltBtn.style.background   = mode==='plant' ? 'var(--green-dark)' : '#fff';
+    pltBtn.style.color        = mode==='plant' ? '#fff' : 'var(--gray-600)';
+    pltBtn.style.border       = mode==='plant' ? 'none' : '1px solid var(--gray-200)';
+  }
+  renderLogs();
+}
+
+// 식물별 그룹 뷰 렌더러
+function renderLogsByPlant() {
+  var el = document.getElementById('log-list');
+  if (!el) return;
+
+  var logs = APP.logs || [];
+  if (!logs.length) {
+    el.innerHTML = '<div class="empty-state"><span class="emoji">📖</span><p>기록이 없습니다.</p></div>';
+    return;
+  }
+
+  // ── 식물별 그룹핑 ──────────────────────────────────────
+  var groups = {}; // {식물명: {logs:[], latestDate:'', plant:{}}}
+  logs.forEach(function(log) {
+    var name = (log.plantName || log.plant || '기타').trim();
+    if (!groups[name]) {
+      groups[name] = {
+        name:       name,
+        logs:       [],
+        latestDate: '',
+        plant:      getPlantInfo(name) || null,
+      };
+    }
+    groups[name].logs.push(log);
+    var d = (log.date||'').slice(0,10);
+    if (d > groups[name].latestDate) groups[name].latestDate = d;
+  });
+
+  // 최신 활동 순 정렬
+  var sorted = Object.values(groups).sort(function(a,b) {
+    return a.latestDate > b.latestDate ? -1 : 1;
+  });
+
+  var TICON = {
+    '농약살포':'🌿','시비':'🌱','파종':'🌾','수확':'🍎','순치기':'✂️',
+    '병해충':'🐛','기타':'📝','정식':'🌱','개화':'🌸','착과':'🍊',
+    '천연자재':'🧪','제초':'🌿','물주기':'💧','비닐걷음':'🎉',
+    '1차시비':'🌱','2차시비':'🌱','3차시비':'🌱','땅콩수확':'🥜',
+  };
+
+  var h = '';
+  sorted.forEach(function(group) {
+    var p          = group.plant;
+    var emoji      = (p && p.emoji) || '🌿';
+    var hasPlant   = !!p;
+    var plantDate  = p && p.plantDate  ? p.plantDate.slice(0,10)  : '';
+    var harvestDate= p && p.harvestDate? p.harvestDate.slice(0,10) : '';
+    var logCount   = group.logs.length;
+    var latest     = group.latestDate;
+    var isToday    = latest === TODAY_STR;
+
+    // ── 식물 헤더 ─────────────────────────────────────────
+    h += '<div style="margin-bottom:16px;">'
+       + '<div style="display:flex;align-items:center;gap:8px;padding:10px 12px;'
+       + 'background:linear-gradient(135deg,var(--green-light),#F1F8E9);'
+       + 'border:1.5px solid var(--green-mid);border-radius:12px 12px 0 0;'
+       + 'cursor:pointer;" onclick="togglePlantLogGroup(this)">'
+       + '<span style="font-size:22px;">'+emoji+'</span>'
+       + '<div style="flex:1;">'
+       + '<div style="font-size:14px;font-weight:800;color:var(--green-dark);">'+esc(group.name)+'</div>'
+       + '<div style="font-size:10px;color:var(--gray-500);margin-top:1px;">'
+       + (plantDate ? '심은 날: '+plantDate+' · ' : '')
+       + logCount+'건 기록 · 최근: '
+       + '<span style="'+(isToday?'color:var(--green-dark);font-weight:700;':'')+'">'
+       + (isToday ? '오늘' : latest)
+       + '</span></div>'
+       + '</div>'
+       // 접기/펼치기 아이콘
+       + '<span class="plant-group-toggle" style="font-size:16px;color:var(--gray-400);">▼</span>'
+       + '</div>';
+
+    // ── 식물 기본 정보 (있을 때) ─────────────────────────
+    if (hasPlant && (plantDate || harvestDate || (p.note))) {
+      h += '<div class="plant-log-info" style="background:var(--gray-50);border:1px solid var(--green-mid);'
+         + 'border-top:none;padding:8px 12px;font-size:11px;color:var(--gray-600);line-height:1.9;">'
+         + (plantDate  ? '🌱 심은 날: <b>'+plantDate+'</b>　' : '')
+         + (harvestDate? '🍎 수확예정: <b>'+harvestDate+'</b>　' : '')
+         + (p.location ? '📍 위치: '+esc(p.location)+'　' : '')
+         + (p.note     ? '📝 '+esc(p.note) : '')
+         + '</div>';
+    }
+
+    // ── 날짜별 기록 타임라인 ──────────────────────────────
+    // 날짜 최신 순 정렬
+    var sortedLogs = group.logs.slice().sort(function(a,b) {
+      var da = (a.date||'').slice(0,10);
+      var db_ = (b.date||'').slice(0,10);
+      return da > db_ ? -1 : da < db_ ? 1 : 0;
+    });
+
+    h += '<div class="plant-log-body" style="border:1.5px solid var(--green-mid);border-top:none;border-radius:0 0 12px 12px;overflow:hidden;">';
+
+    var lastDateInGroup = '';
+    sortedLogs.forEach(function(log, li) {
+      var dateStr = (log.date||'').slice(0,10);
+      var isTodayLog = dateStr === TODAY_STR;
+
+      // 날짜 구분선
+      if (dateStr !== lastDateInGroup) {
+        lastDateInGroup = dateStr;
+        h += '<div style="padding:6px 12px;background:'+(isTodayLog?'var(--green-dark)':'var(--gray-100)')+';'
+           + 'font-size:11px;font-weight:700;color:'+(isTodayLog?'#fff':'var(--gray-600)')+';'
+           + 'border-top:'+(li>0?'1px solid var(--gray-200)':'none')+';">'
+           + (isTodayLog ? '📅 오늘 · ' : '') + dateStr
+           + '</div>';
+      }
+
+      var typeLbl = log.eventType || log.type || '기타';
+      var icon    = TICON[typeLbl] || '📝';
+      var detail  = log.detail || log.note || '';
+      var material= log.material || '';
+      var canEdit = !!log.id && !log.id.startsWith('new_');
+
+      h += '<div style="display:flex;gap:10px;padding:9px 12px;border-top:0.5px solid var(--gray-100);'
+         + 'background:'+(li%2===0?'#fff':'var(--gray-50)')+'">'
+         // 타임라인 점
+         + '<div style="flex:0 0 auto;display:flex;flex-direction:column;align-items:center;padding-top:2px;">'
+         + '<div style="width:24px;height:24px;border-radius:50%;background:var(--green-dark);'
+         + 'color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center;">'+icon+'</div>'
+         + (li<sortedLogs.length-1?'<div style="width:1.5px;flex:1;background:var(--green-mid);margin:3px 0;min-height:8px;"></div>':'')
+         + '</div>'
+         // 내용
+         + '<div style="flex:1;padding-top:2px;">'
+         + '<div style="display:flex;align-items:center;gap:6px;margin-bottom:2px;">'
+         + '<span style="font-size:12px;font-weight:700;color:var(--green-dark);">'+esc(typeLbl)+'</span>'
+         + (log.time?'<span style="font-size:10px;color:var(--gray-400);">'+esc(log.time)+'</span>':'')
+         + (log._col==='workLogs'?'<span style="font-size:9px;padding:1px 5px;background:var(--blue-light);color:var(--blue-dark);border-radius:4px;">작업일지</span>':'')
+         + '</div>'
+         + (material?'<div style="font-size:11px;color:var(--blue-dark);margin-bottom:2px;">📦 '+esc(material)+'</div>':'')
+         + (detail?'<div style="font-size:12px;color:var(--gray-700);line-height:1.6;">'+esc(detail)+'</div>':'')
+         + '</div>'
+         // 수정 버튼
+         + (canEdit?'<button onclick="openEditLog(\''+esc(log.id)+'\',\''+esc(log._col||'growRecords')+'\')" '
+           +'style="flex:0 0 auto;padding:4px 8px;background:#fff;border:1px solid var(--gray-200);'
+           +'border-radius:6px;font-size:10px;color:var(--gray-500);cursor:pointer;align-self:flex-start;">수정</button>':'')
+         + '</div>';
+    });
+
+    h += '</div></div>'; // plant-log-body, plant-group
+  });
+
+  el.innerHTML = h;
+}
+
+// 식물 그룹 접기/펼치기
+function togglePlantLogGroup(header) {
+  var parent = header.parentElement;
+  var body   = parent.querySelector('.plant-log-body');
+  var info   = parent.querySelector('.plant-log-info');
+  var icon   = header.querySelector('.plant-group-toggle');
+  if (!body) return;
+  var hidden = body.style.display === 'none';
+  body.style.display = hidden ? '' : 'none';
+  if (info) info.style.display = hidden ? '' : 'none';
+  if (icon) icon.textContent   = hidden ? '▼' : '▶';
+}
+
+// renderLogs 오버라이드 — 뷰 모드에 따라 분기
+var _origRenderLogs = renderLogs;
+renderLogs = function() {
+  if (_logViewMode === 'plant') {
+    renderLogsByPlant();
+  } else {
+    _origRenderLogs();
+  }
+};
 
 window.addEventListener('load',function(){ initFirebase(FIREBASE_CONFIG); });
 
