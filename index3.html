@@ -41,10 +41,11 @@
             const BASE_URL = 'http://psis.rda.go.kr/openApi/service.do';
             
             // outType=json 제거 (기본값인 XML로 받음)
-            const targetUrl = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}`;
+            // 방금 구글에서 복사한 웹 앱 URL 주소를 아래 따옴표 안에 넣고, 끝에 ?keyword= 를 붙여줍니다.
+            const url = `https://script.google.com/macros/s/AKfycbyaJLm2lFh7Dbs9Lc3DV_8toltHgN4qAMUeWe7xh-2RIYvw01Ei00wQFtX9XLxwwAetFw/exec?keyword=${encodeURIComponent(keyword)}`;
             
             // 공공데이터와 통신이 더 안정적인 CodeTabs 프록시 사용
-            const url = `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(targetUrl)}`;
+            
 
             try {
                 const response = await fetch(url);
