@@ -70,22 +70,82 @@
             resultDiv.innerHTML = '<div class="empty-msg">데이터를 불러오는 중입니다...</div>';
 
             // ============================================================================
-            // [필수 수정] 새로 배포하신 Code.gs의 웹 앱 URL을 아래 따옴표 안에 넣어주세요!
+            // 🚨 [매우 중요] 브라우저에서 1번 결과가 나왔던 그 웹 앱 주소를 정확히 넣어주세요!
             // ============================================================================
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbyaJLm2lFh7Dbs9Lc3DV_8toltHgN4qAMUeWe7xh-2RIYvw01Ei00wQFtX9XLxwwAetFw/exec';
+            const GAS_URL = 'https://script.google.com/macros/s/여기에_본인의_웹앱_주소를_넣으세요/exec';
             
             const url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
 
             try {
-                const response = await fetch(url);
-                // 새로운 백엔드에 맞춰 텍스트(XML) 대신 JSON 포맷으로 데이터를 받습니다.
+                // 구글 서버의 302 리다이렉트를 끝까지 추적하도록 명시적 옵션 추가
+                const response = await fetch(url, { 
+                    method: 'GET',
+                    redirect: 'follow' 
+                });
                 const data = await response.json(); 
                 
                 displayResults(data, compKeyword, brandKeyword);
                 
             } catch (error) {
                 console.error("API 호출 에러:", error);
-                resultDiv.innerHTML = `<div class="error-msg">서버 통신에 실패했습니다. URL을 확인해 주세요.</div>`;
+                resultDiv.innerHTML = `<div class="error-msg">서버 통신에 실패했습니다. HTML 파일 내의 GAS_URL 주소가 정확한지 다시 한번 확인해 주세요.</div>`;
+            }
+        }
+
+        function displayResults(data, compKeyword, brandKeyword) {
+            const resultDiv = document.getElementById('resultContainer');
+            resultDiv.innerHTML = ''; 
+
+            if (!data.success) {
+                resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message || '알 수 없는 오류'}</div>`;
+                return;
+            }
+
+            const items = data._rawList;
+            
+            if (!items || items.length === 0) {
+                resultDiv.innerHTML = `<div class="empty-msg">검색 결과가 없습니다.</div>`;
+                return;
+            }
+
+            let matchCount = 0;
+
+            items.forEach(item => {
+                const compName = item.compName || item.companName || item.manufacturer || '-';
+                
+                if (compKeyword && !compName.includes(compKeyword)) {
+                    return; 
+                }
+
+                matchCount++;
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item-card';
+                
+                const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
+                const useName = item.useName || item.pestiType || '-';
+                const cropName = item.cropName || item.crpName || item.crop || '-';
+                const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
+                const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
+
+                itemDiv.innerHTML = `
+                    <div class="header-row">
+                        <div class="brand-name">${pestiBrandName} <span class="source-badge">${data.source || ''}</span></div>
+                        <div class="comp-name">${compName}</div>
+                    </div>
+                    
+                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>
+                    <div class="info-row"><strong>사용시기(방법):</strong> ${pestiUse}</div>
+                    
+                    <div class="highlight-box">
+                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>
+                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>
+                    </div>
+                `;
+                resultDiv.appendChild(itemDiv);
+            });
+
+            if (matchCount === 0) {
+                resultDiv.innerHTML = `<div class="empty-msg">해당 회사(${compKeyword})의 '${brandKeyword}' 제품을 찾을 수 없습니다.</div>`;
             }
         }
 
