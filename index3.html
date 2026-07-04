@@ -86,23 +86,24 @@
                 return;
             }
 
+            // 검색된 항목들을 화면에 그립니다.
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item';
                 
-                const trdmrkNm = getXmlValue(item, "trdmrkNm");
-                const prmsnNmstNm = getXmlValue(item, "prmsnNmstNm");
-                const cmpnyNm = getXmlValue(item, "cmpnyNm");
-                const useNm = getXmlValue(item, "useNm");
-                const toxcyNm = getXmlValue(item, "toxcyNm");
+                // [수정된 부분] 데이터 상자 안의 모든 태그명과 값을 무조건 화면에 찍어봅니다.
+                let rawDataHtml = `<div style="font-size:14px; color:#333; line-height:1.8;">`;
+                rawDataHtml += `<strong>🔍 서버가 보낸 원본 데이터 확인:</strong><br><br>`;
+                
+                for (let j = 0; j < item.children.length; j++) {
+                    const node = item.children[j];
+                    // 태그명은 빨간색, 값은 검은색으로 표시
+                    rawDataHtml += `<span style="color:#d32f2f; font-weight:bold;">${node.tagName}</span> : ${node.textContent} <br>`;
+                }
+                rawDataHtml += `</div>`;
 
-                itemDiv.innerHTML = `
-                    <div class="item-title">${trdmrkNm} <span style="font-size:14px; color:#777;">(${prmsnNmstNm})</span></div>
-                    <div class="item-info"><strong>용도:</strong> ${useNm}</div>
-                    <div class="item-info"><strong>독성:</strong> ${toxcyNm}</div>
-                    <div class="item-info"><strong>제조사:</strong> ${cmpnyNm}</div>
-                `;
+                itemDiv.innerHTML = rawDataHtml;
                 resultDiv.appendChild(itemDiv);
             }
         }
