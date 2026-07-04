@@ -112,11 +112,15 @@
             
             // 농약안전정보시스템 기본 URL
             const BASE_URL = 'http://psis.rda.go.kr/openApi/service.do';
+
+            // 1. 원래 호출할 정부 API 주소를 먼저 만듭니다.
+            const targetUrl = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}&outType=json`;
+
+
             
             // 파라미터 조합 (apiKey, 상표명 검색: trdmrkNm, JSON 반환: outType=json)
-            // ※ 만약 품목명으로 검색해야 한다면 trdmrkNm 대신 prmsnNmstNm 을 사용하세요.
-            const url = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}&outType=json`;
-
+            // 2. HTTPS를 지원하는 우회 서버(corsproxy.io)를 앞에 붙여줍니다.
+            const url = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
             try {
                 const response = await fetch(url);
                 const data = await response.json(); 
