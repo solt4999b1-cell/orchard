@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>농약 상세 검색 (상표명 + 회사명)</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f6f8; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        
+        .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
+        
+        label { font-size: 14px; font-weight: bold; color: #555; }
+        input { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+        input:focus { border-color: #4CAF50; outline: none; }
+        
+        button { width: 100%; padding: 14px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #45a049; }
+        
+        #resultContainer { min-height: 120px; }
+        
+        /* 검색 결과 카드 디자인 */
+        .item-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 18px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #2e7d32; }
+        .header-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 12px; }
+        .brand-name { font-size: 20px; font-weight: bold; color: #2e7d32; }
+        .comp-name { font-size: 14px; color: #666; font-weight: bold; }
+        
+        .info-row { margin-bottom: 8px; font-size: 15px; }
+        .highlight-box { background-color: #f1f8e9; border-radius: 6px; padding: 12px; margin-top: 15px; }
+        .highlight-row { margin-bottom: 6px; font-size: 15px; color: #1b5e20; }
+        
+        .error-msg { color: #d32f2f; text-align: center; padding: 20px; background: white; border-radius: 8px; border: 1px solid #ffcdd2; }
+        .empty-msg { text-align: center; padding: 20px; color: #666; }
+    </style>
+</head>
+<body>
+
+    <h2>🌱 농약 상세 검색</h2>
+    
+    <div class="search-container">
+        <div class="input-group">
+            <label for="brandInput">상표명 (필수)</label>
+            <input type="text" id="brandInput" placeholder="예: 두배나 하이파워, 코니도" onkeypress="if(event.keyCode==13) fetchPesticideInfo()">
+        </div>
+        <div class="input-group">
+            <label for="compInput">회사명 (선택)</label>
+            <input type="text" id="compInput" placeholder="예: 중앙프라자 (입력 시 해당 회사만 표시)" onkeypress="if(event.keyCode==13) fetchPesticideInfo()">
+        </div>
+        <button onclick="fetchPesticideInfo()">검색하기</button>
+    </div>
+
+    <div id="resultContainer">
+        <div class="empty-msg">상표명과 회사명을 입력하고 검색해 주세요.</div>
+    </div>
+
+    <script>
+        async function fetchPesticideInfo() {
+            const brandKeyword = document.getElementById('brandInput').value.trim();
+            const compKeyword = document.getElementById('compInput').value.trim();
+            const resultDiv = document.getElementById('resultContainer');
+
+            if (!brandKeyword) {
+                alert('상표명을 입력해주세요.');
+                document.getElementById('brandInput').focus();
+                return;
+            }
+
+            resultDiv.innerHTML = "<div class="empty-msg">데이터를 불러오는 중입니다...</div>";
+
+            // ============================================================================
+            // [필수 수정] 아래 따옴표 안에 선생님께서 만드신 GAS 웹 앱 URL을 넣어주세요!
+            // ============================================================================
+            const GAS_URL = 'https://script.google.com/macros/s/여기에_본인의_웹앱_주소를_넣으세요/exec';
+            
+            const url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
+
+            try {
+                const response = await fetch(url);
+                const text = await response.text(); 
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, "text/xml");
+                
+                displayResults(xmlDoc, compKeyword);
+                
+            } catch (error) {
+                console.error("API 호출 에러:", error);
+                resultDiv.innerHTML = `<div class="error-msg">서버 통신에 실패했습니다. 잠시 후 다시 시도해 주세요.</div>`;
+            }
+        }
+
+        function getXmlValue(item, tagName) {
+            const node = item.getElementsByTagName(tagName)[0];
+            return node ? node.textContent : '-';
+        }
+
+        function displayResults(xmlDoc, compKeyword) {
+            const resultDiv = document.getElementById('resultContainer');
+            resultDiv.innerHTML = ''; 
+
+            const errMsg = xmlDoc.getElementsByTagName("errMsg")[0];
+            if (errMsg) { 
+                resultDiv.innerHTML = `<div class="error-msg">API 오류: ${errMsg.textContent}</div>`; 
+                return; 
+            }
+
+            const items = xmlDoc.getElementsByTagName("item");
+            if (!items || items.length === 0) {
+                resultDiv.innerHTML = `<div class="empty-msg">검색 결과가 없습니다.</div>`;
+                return;
+            }
+
+            let matchCount = 0;
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                const compName = getXmlValue(item, "compName");
+                
+                // [핵심 로직] 회사명이 입력되었는데, 결과의 회사명에 해당 단어가 없으면 건너뜀(필터링)
+                if (compKeyword && !compName.includes(compKeyword)) {
+                    continue; 
+                }
+
+                matchCount++;
+                const itemDiv = document.createElement('div');
+                itemDiv.className = 'item-card';
+                
+                const pestiBrandName = getXmlValue(item, "pestiBrandName");
+                const useName = getXmlValue(item, "useName");
+                const cropName = getXmlValue(item, "cropName");
+                const diseaseWeedName = getXmlValue(item, "diseaseWeedName");
+                const pestiUse = getXmlValue(item, "pestiUse"); // 사용시기/방법
+
+                itemDiv.innerHTML = `
+                    <div class="header-row">
+                        <div class="brand-name">${pestiBrandName}</div>
+                        <div class="comp-name">${compName}</div>
+                    </div>
+                    
+                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>
+                    <div class="info-row"><strong>사용시기:</strong> ${pestiUse}</div>
+                    
+                    <div class="highlight-box">
+                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>
+                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>
+                    </div>
+                `;
+                resultDiv.appendChild(itemDiv);
+            }
+
+            // 필터링 후 남은 결과가 없을 때
+            if (matchCount === 0) {
+                resultDiv.innerHTML = `<div class="empty-msg">해당 회사(${compKeyword})의 '${document.getElementById('brandInput').value}' 제품을 찾을 수 없습니다.</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
