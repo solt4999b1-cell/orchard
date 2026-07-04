@@ -11590,11 +11590,15 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div id="dim-psis-section" style="display:none;margin-top:8px;">
       <div style="display:flex;gap:6px;align-items:center;">
         <button type="button" onclick="lookupPsisByName()"
-          style="flex:1;padding:9px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
-          🔍 PSIS 농약등록정보 자동조회
+          style="flex:2;padding:9px;background:#1565C0;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">
+          🔍 PSIS 자동조회
+        </button>
+        <button type="button" onclick="showPsisRawResponse(document.getElementById('dim-name').value.trim())"
+          style="flex:1;padding:9px;background:#fff;border:1.5px solid #1565C0;color:#1565C0;border-radius:8px;font-size:11px;cursor:pointer;font-weight:600;">
+          🔬 원본응답
         </button>
         <button type="button" onclick="clearPsisResult()"
-          style="padding:9px 12px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">✕</button>
+          style="padding:9px 10px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">✕</button>
       </div>
       <div id="dim-psis-result" style="margin-top:6px;font-size:12px;"></div>
     </div>
@@ -18778,44 +18782,100 @@ function _parseXmlResponse(xml) {
 }
 
 async function queryPsisRegistered(productName) {
-  // ① 상표명으로 조회
-  var data = await _psisRequest('selectPesticideUseInfo', {
-    pestiBrandName: productName
-  });
-  // ② 상표명 실패 시 품목명(성분명)으로 재시도
-  if (!data || !data.length) {
-    data = await _psisRequest('selectPesticideUseInfo', {
-      pestiMtrName: productName
-    });
-  }
-  if (!data || !data.length) return null;
+  var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl().trim() : '';
 
+  // ── GAS 경유 (GET ?keyword= 방식) ────────────────────────
+  if (gasUrl) {
+    try {
+      var ctrl = new AbortController();
+      setTimeout(function(){ ctrl.abort(); }, 15000);
+      // POST 방식으로 GAS 호출
+      var res = await fetch(gasUrl, {
+        method: 'POST',
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify({action: 'psis_reg', productName: productName}),
+        signal: ctrl.signal
+      });
+      var data = await res.json();
+      if (data.success && data.cropUsage && Object.keys(data.cropUsage).length > 0) {
+        return data;
+      }
+    } catch(e) {
+      console.warn('[PSIS] GAS 호출 실패:', e.message);
+    }
+  }
+
+  // ── 직접 API 호출 (CORS 환경에서만 작동) ─────────────────
+  var apiKey = localStorage.getItem('psis_api_key') || '';
+  if (!apiKey) return null;
+
+  var baseUrl = 'http://psis.rda.go.kr/openApi/service.do';
+  var tryParams = [
+    'pestiBrandName=' + encodeURIComponent(productName),
+    'pestiKorName='   + encodeURIComponent(productName),
+  ];
+
+  for (var i=0; i<tryParams.length; i++) {
+    try {
+      var url = baseUrl + '?apiKey=' + encodeURIComponent(apiKey) + '&' + tryParams[i];
+      var r2  = await fetch(url, {method:'GET', mode:'cors'});
+      var txt = await r2.text();
+      if (!txt.includes('<?xml')) continue;
+      var items = _parseXmlItems(txt);
+      if (!items || !items.length) continue;
+      return _buildPsisResult(items, productName);
+    } catch(e2) { continue; }
+  }
+  return null;
+}
+
+// XML <item> 파싱
+function _parseXmlItems(xmlText) {
+  var results = [];
+  var itemRe  = /<item[^>]*>([\s\S]*?)<\/item>/gi;
+  var tagRe   = /<(\w+)[^>]*>([^<]*)<\/\1>/g;
+  var m, tm;
+  while ((m = itemRe.exec(xmlText)) !== null) {
+    var obj = {};
+    tagRe.lastIndex = 0;
+    while ((tm = tagRe.exec(m[1])) !== null) {
+      obj[tm[1]] = tm[2].trim();
+    }
+    if (Object.keys(obj).length > 0) results.push(obj);
+  }
+  return results;
+}
+
+// PSIS 결과 → 앱 포맷 변환
+function _buildPsisResult(items, productName) {
   var cropUsage = {};
-  data.forEach(function(row) {
+  items.forEach(function(row) {
+    // 실제 XML 태그: cropName, diseaseWeedName, useName, compName 등
     var crop = row.cropName || row.crpName || row['작물명'] || '';
     if (!crop) return;
     if (!cropUsage[crop]) cropUsage[crop] = [];
     cropUsage[crop].push({
-      target: row.pestName   || row.useDis    || row['적용병해충']  || '',
-      method: row.useMethod  || row['사용방법']                     || '',
-      amount: row.dilutionRate || row['희석배수']                   || '',
-      safety: row.safetyPrd  || row['안전사용시기']                 || '',
-      times:  row.safetyTimes || row['사용횟수']                    || ''
+      target: row.diseaseWeedName || row.pestName   || '',
+      method: row.useMethod       || row.dilutMethod || '',
+      amount: row.dilutionRate    || row.dilutVal    || '',
+      safety: row.safetyPrd       || '',
+      times:  row.safetyTimes     || ''
     });
   });
-
-  var first = data[0];
+  var first = items[0];
   return {
-    name:         first.pestiBrandName || first['상표명']    || productName,
-    type:         first.pestiType      || first['농약구분']  || '살균제',
-    ingredient:   first.pestiMtrName   || first['품목명']   || '',
-    manufacturer: first.companName     || first['등록회사'] || '',
-    regNo:        first.pestiRegNo     || first['등록번호'] || '',
+    success:      true,
+    name:         first.pestiBrandName || productName,
+    type:         first.useName        || first.pestiType || '',
+    ingredient:   first.pestiKorName   || first.pestiMtrName || '',
+    manufacturer: first.compName       || first.companName   || '',
+    toxicity:     first.indictSymbl    || '',
+    regNo:        first.pestiRegNo     || '',
     status:       '등록',
     cropUsage:    cropUsage,
-    source:       'PSIS_등록',
-    rawCount:     data.length,
-      _rawList:     data,
+    rawCount:     items.length,
+    _rawList:     items,
+    source:       'PSIS_openApi'
   };
 }
 
@@ -22141,6 +22201,92 @@ function clearPsisResult(){
   window._dimPsisData=null;
 }
 
+
+// PSIS 원본 응답을 팝업으로 표시 (디버그용)
+async function showPsisRawResponse(name) {
+  var resultEl = document.getElementById('dim-psis-result');
+  if(resultEl) resultEl.innerHTML = '<span style="color:var(--gray-400);">🔍 PSIS 원본 응답 조회 중...</span>';
+
+  var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl().trim() : '';
+  var key    = localStorage.getItem('psis_api_key') || '';
+
+  var logs   = [];
+  var tried  = [];
+
+  // 시도할 파라미터 조합
+  var params = [
+    {label:'상표명(pestiBrandName)', key:'pestiBrandName', val:name},
+    {label:'품목명(pestiMtrName)',   key:'pestiMtrName',   val:name},
+  ];
+
+  for (var pi=0; pi<params.length; pi++) {
+    var p = params[pi];
+    tried.push(p.label + '=' + name);
+    logs.push('<div style="margin-bottom:10px;padding:8px;background:#F5F5F5;border-radius:6px;">');
+    logs.push('<div style="font-weight:700;color:#1565C0;margin-bottom:4px;">📤 요청 '+( pi+1)+':</div>');
+    logs.push('<div style="font-size:11px;color:#333;">파라미터: <b>'+esc(p.label)+'</b> = "'+esc(p.val)+'"</div>');
+
+    var rawResult = null;
+    try {
+      if (gasUrl) {
+        // GAS 경유
+        var res = await fetch(gasUrl, {
+          method:'POST',
+          headers:{'Content-Type':'text/plain'},
+          body: JSON.stringify({action:'psis_reg', productName:name, psisKey:key, _debugParam: p.key})
+        });
+        rawResult = await res.json();
+      } else if (key) {
+        // 직접 호출
+        var url = 'https://psis.rda.go.kr/psis/api/pestiInfo/selectPesticideUseInfo.do'
+                + '?apiKey=' + encodeURIComponent(key)
+                + '&' + p.key + '=' + encodeURIComponent(p.val)
+                + '&returnType=json';
+        var res2 = await fetch(url, {method:'GET', mode:'cors'});
+        rawResult = await res2.json();
+      } else {
+        logs.push('<div style="color:#E65100;font-size:11px;">⚠️ GAS URL 또는 PSIS API 키가 필요합니다</div>');
+        logs.push('</div>');
+        continue;
+      }
+
+      // 응답 표시
+      var raw = JSON.stringify(rawResult, null, 2);
+      var preview = raw.length > 500 ? raw.slice(0,500)+'...('+raw.length+'자)' : raw;
+
+      if (rawResult && (rawResult.success === false || rawResult.message)) {
+        logs.push('<div style="color:#C62828;font-size:11px;">📥 응답: '+esc(rawResult.error||rawResult.message||'오류')+'</div>');
+      } else if (rawResult && rawResult.cropUsage && Object.keys(rawResult.cropUsage).length > 0) {
+        var crops = Object.keys(rawResult.cropUsage);
+        logs.push('<div style="color:#2E7D32;font-size:11px;font-weight:700;">✅ 결과 있음! 작물 '+crops.length+'개</div>');
+        logs.push('<div style="font-size:10px;color:#555;">적용 작물: '+crops.slice(0,5).map(esc).join(', ')+(crops.length>5?'...':'')+'</div>');
+      } else if (Array.isArray(rawResult) && rawResult.length > 0) {
+        logs.push('<div style="color:#2E7D32;font-size:11px;font-weight:700;">✅ 배열 결과 '+rawResult.length+'건</div>');
+        logs.push('<div style="font-size:10px;color:#555;">첫 번째: '+esc(JSON.stringify(rawResult[0]).slice(0,100))+'</div>');
+      } else {
+        logs.push('<div style="color:#E65100;font-size:11px;">⚠️ 결과 없음 (빈 응답)</div>');
+      }
+
+      logs.push('<details style="margin-top:4px;"><summary style="font-size:10px;cursor:pointer;color:#888;">원본 응답 보기</summary>');
+      logs.push('<pre style="font-size:9px;overflow-x:auto;background:#fff;padding:6px;border-radius:4px;max-height:150px;">'+esc(preview)+'</pre>');
+      logs.push('</details>');
+
+    } catch(e) {
+      logs.push('<div style="color:#C62828;font-size:11px;">❌ 오류: '+esc(e.message)+'</div>');
+    }
+    logs.push('</div>');
+  }
+
+  // 팝업 표시
+  var html2 = '<div style="background:#fff;border:2px solid #1565C0;border-radius:10px;padding:14px;">'
+    + '<div style="font-size:13px;font-weight:700;color:#1565C0;margin-bottom:10px;">🔬 PSIS API 원본 응답 — "'+esc(name)+'"</div>'
+    + logs.join('')
+    + '<div style="font-size:10px;color:#888;margin-top:8px;padding-top:8px;border-top:1px solid #eee;">'
+    + '시도한 파라미터: '+tried.map(esc).join(' / ')
+    + '</div></div>';
+
+  if(resultEl) resultEl.innerHTML = html2;
+}
 </script>
 </body>
 </html>
