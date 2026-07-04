@@ -59,7 +59,7 @@
             const targetUrl = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}&outType=json`;
 
             // 2. ★ HTTPS 혼합 콘텐츠 에러(CORS) 해결을 위한 프록시 서버 경유 주소 ★
-            const url = `https://corsproxy.io/?${encodeURIComponent(targetUrl)}`;
+            const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
             try {
                 const response = await fetch(url);
