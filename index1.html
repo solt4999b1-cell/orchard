@@ -14877,25 +14877,76 @@ function setSyncStatus(online){
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
   if (!dot || !label) return;
-  if (online) {
-    dot.className          = 'sync-dot';
-    label.textContent      = '동기화됨';
-    label.style.color      = 'var(--green-dark)';
+  if (online && db) {
+    dot.className     = 'sync-dot';
+    label.textContent = '✅ 동기화됨';
+    label.style.color = 'var(--green-dark)';
+  } else if (!db) {
+    dot.className     = 'sync-dot offline';
+    label.textContent = '⚠️ Firebase 미연결';
+    label.style.color = '#E65100';
   } else {
-    dot.className          = 'sync-dot offline';
-    label.textContent      = db ? '오프라인' : 'Firebase 미연결';
-    label.style.color      = 'var(--gray-400)';
+    dot.className     = 'sync-dot offline';
+    label.textContent = '오프라인';
+    label.style.color = 'var(--gray-400)';
   }
 }
 async function syncNow(){
   var label = document.getElementById('sync-label');
-  if (label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
+
+  // Firebase 연결 안 됨
+  if (!db) {
+    if (label) { label.textContent = '⚠️ Firebase 미연결'; label.style.color = '#E65100'; }
+    showToast('Firebase에 연결되지 않았습니다.\nFirebase 콘솔에서 Firestore 규칙을 확인하세요.');
+    return;
+  }
+
+  // 동기화 시작
+  if (label) { label.textContent = '동기화 중...'; label.style.color = 'var(--gray-400)'; }
+
   try {
-    await loadAllData();
-    try { renderAll(); } catch(e) {}
+    // Firebase에서 최신 데이터 가져오기
+    var plantsSnap = await db.collection('plants').limit(300).get();
+    if (plantsSnap.docs.length > 0) {
+      APP.plants = plantsSnap.docs.map(function(d){
+        return Object.assign({id:d.id}, d.data());
+      });
+      APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+    }
+
+    var doneSnap = await db.collection('doneTasks').where('date','==',TODAY_STR).get();
+    APP.doneTasks = {};
+    doneSnap.docs.forEach(function(d){ APP.doneTasks[d.id]=d.data(); });
+
+    var wlSnap = await db.collection('workLogs').orderBy('date','desc').limit(80).get();
+    var grSnap = await db.collection('growRecords').orderBy('date','desc').limit(80).get();
+    var wlRows = wlSnap.docs.map(function(d){ return Object.assign({id:d.id,_col:'workLogs'},d.data()); });
+    var grRows = grSnap.docs.map(function(d){
+      var x=d.data();
+      return Object.assign({id:d.id,_col:'growRecords',
+        date:typeof x.date==='string'?x.date.slice(0,10):x.date||'',
+        plantName:x.plantName||x.name||'',type:x.eventType||x.type||'기타',
+        material:x.material||'',detail:x.note||x.detail||'',time:x.time||'',
+      },x);
+    });
+    APP.logs = wlRows.concat(grRows).sort(function(a,b){
+      var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+      if(da!==db_) return da>db_?-1:1;
+      return (a.time||'')>(b.time||'')?-1:1;
+    });
+
+    // 화면 갱신
+    try { renderToday();  } catch(e) {}
+    try { renderPlants(); } catch(e) {}
+    try { renderLogs();   } catch(e) {}
+
     setSyncStatus(true);
+    showToast('✅ 동기화 완료 — 식물 '+APP.plants.length+'개');
+
   } catch(e) {
-    setSyncStatus(false);
+    console.warn('[syncNow] 오류:', e.message);
+    if (label) { label.textContent = '동기화 실패'; label.style.color = '#C62828'; }
+    showToast('동기화 실패: ' + e.message);
   }
 }
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
