@@ -18778,9 +18778,16 @@ function _parseXmlResponse(xml) {
 }
 
 async function queryPsisRegistered(productName) {
+  // ① 상표명으로 조회
   var data = await _psisRequest('selectPesticideUseInfo', {
     pestiBrandName: productName
   });
+  // ② 상표명 실패 시 품목명(성분명)으로 재시도
+  if (!data || !data.length) {
+    data = await _psisRequest('selectPesticideUseInfo', {
+      pestiMtrName: productName
+    });
+  }
   if (!data || !data.length) return null;
 
   var cropUsage = {};
