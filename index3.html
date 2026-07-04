@@ -75,35 +75,38 @@
             const resultDiv = document.getElementById('resultContainer');
             resultDiv.innerHTML = ''; 
 
-            const errMsg = xmlDoc.getElementsByTagName("errMsg")[0];
-            const returnAuthMsg = xmlDoc.getElementsByTagName("returnAuthMsg")[0];
-            if (errMsg) { resultDiv.innerHTML = `<div class="error-msg">API 오류: ${errMsg.textContent}</div>`; return; }
-            if (returnAuthMsg) { resultDiv.innerHTML = `<div class="error-msg">인증 오류: ${returnAuthMsg.textContent}</div>`; return; }
-
             const items = xmlDoc.getElementsByTagName("item");
+
             if (!items || items.length === 0) {
                 resultDiv.innerHTML = "검색 결과가 없습니다. 상표명을 정확히 입력해 보세요.";
                 return;
             }
 
-            // 검색된 항목들을 화면에 그립니다.
+            // 검색된 항목들을 화면에 예쁜 카드로 그립니다.
             for (let i = 0; i < items.length; i++) {
                 const item = items[i];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item';
                 
-                // [수정된 부분] 데이터 상자 안의 모든 태그명과 값을 무조건 화면에 찍어봅니다.
-                let rawDataHtml = `<div style="font-size:14px; color:#333; line-height:1.8;">`;
-                rawDataHtml += `<strong>🔍 서버가 보낸 원본 데이터 확인:</strong><br><br>`;
-                
-                for (let j = 0; j < item.children.length; j++) {
-                    const node = item.children[j];
-                    // 태그명은 빨간색, 값은 검은색으로 표시
-                    rawDataHtml += `<span style="color:#d32f2f; font-weight:bold;">${node.tagName}</span> : ${node.textContent} <br>`;
-                }
-                rawDataHtml += `</div>`;
+                // 서버가 보내준 진짜 태그명 적용
+                const pestiBrandName = getXmlValue(item, "pestiBrandName"); // 상표명
+                const pestiKorName = getXmlValue(item, "pestiKorName");     // 품목명
+                const useName = getXmlValue(item, "useName");               // 용도
+                const indictSymbl = getXmlValue(item, "indictSymbl");       // 독성
+                const compName = getXmlValue(item, "compName");             // 제조사
+                const cropName = getXmlValue(item, "cropName");             // 적용작물
+                const diseaseWeedName = getXmlValue(item, "diseaseWeedName"); // 적용병해충
 
-                itemDiv.innerHTML = rawDataHtml;
+                itemDiv.innerHTML = `
+                    <div class="item-title">${pestiBrandName} <span style="font-size:14px; color:#777;">(${pestiKorName})</span></div>
+                    <div class="item-info"><strong>용도:</strong> ${useName}</div>
+                    <div class="item-info"><strong>독성구분:</strong> ${indictSymbl}</div>
+                    <div class="item-info"><strong>제조사:</strong> ${compName}</div>
+                    <div class="item-info" style="margin-top: 8px; padding: 8px; background-color: #e8f5e9; border-radius: 4px; color: #2e7d32;">
+                        <strong>🌱 적용작물:</strong> ${cropName} <br>
+                        <strong>🐛 적용병해충:</strong> ${diseaseWeedName}
+                    </div>
+                `;
                 resultDiv.appendChild(itemDiv);
             }
         }
