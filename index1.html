@@ -11800,7 +11800,7 @@ const FIREBASE_CONFIG = {
 };
 window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 
-const GAS_OCR_URL = "";  
+const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbyaJLm2lFh7Dbs9Lc3DV_8toltHgN4qAMUeWe7xh-2RIYvw01Ei00wQFtX9XLxwwAetFw/exec";  
 
 const CLAUDE_API_KEY = "";  
 
@@ -11942,6 +11942,11 @@ function startApp() { initFirebase(FIREBASE_CONFIG); }
 function initFirebase(cfg) {
   document.getElementById('loading').classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
+  // GAS URL 자동 설정 (하드코딩된 값이 있으면 localStorage에 저장)
+  if (GAS_OCR_URL && GAS_OCR_URL.includes('script.google.com')) {
+    localStorage.setItem('_runtimeGasUrl', GAS_OCR_URL);
+  }
+
   try {
     if (!firebase.apps.length) firebase.initializeApp(cfg);
     db = firebase.firestore();
