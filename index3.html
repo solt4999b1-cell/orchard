@@ -3,111 +3,98 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>농약 등록정보 검색 (최종 개선판)</title>
+    <title>농약 단일 검색 (JSON 연동판)</title>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f6f8; }
-        h2 { color: #2c3e50; text-align: center; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 20px; }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
+        .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; display: flex; gap: 10px; }
         input { flex: 1; padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
-        button { padding: 12px 24px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; }
-        #resultContainer { background-color: white; border: 1px solid #ddd; padding: 20px; border-radius: 8px; min-height: 120px; }
-        .item { border-bottom: 1px solid #eee; padding: 15px 0; }
-        .item:last-child { border-bottom: none; padding-bottom: 0; }
-        .item-title { font-size: 18px; font-weight: bold; color: #2e7d32; margin-bottom: 8px; }
-        .item-info { font-size: 14px; color: #555; margin-bottom: 4px; line-height: 1.5; }
-        .error-msg { color: #d32f2f; line-height: 1.5; }
+        input:focus { border-color: #4CAF50; outline: none; }
+        button { padding: 12px 20px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; white-space: nowrap; }
+        button:hover { background-color: #45a049; }
+        
+        .item-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 18px; margin-bottom: 15px; border-left: 5px solid #2e7d32; }
+        .header-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 12px; }
+        .brand-name { font-size: 20px; font-weight: bold; color: #2e7d32; }
+        .comp-name { font-size: 14px; color: #666; font-weight: bold; }
+        .info-row { margin-bottom: 8px; font-size: 15px; }
+        .highlight-box { background-color: #e8f5e9; border-radius: 6px; padding: 12px; margin-top: 15px; color: #2e7d32; }
+        .error-msg { color: #d32f2f; text-align: center; padding: 20px; background: white; border-radius: 8px; border: 1px solid #ffcdd2; }
     </style>
 </head>
 <body>
-
-    <h2>🌱 농약 등록정보 검색</h2>
-    
-    <div class="search-box">
-        <input type="text" id="pesticideName" placeholder="예: 코니도, 듀알골드" onkeypress="if(event.keyCode==13) fetchPesticideInfo()">
-        <button onclick="fetchPesticideInfo()">검색</button>
+    <h2>🌱 농약 단일 검색</h2>
+    <div class="search-container">
+        <input type="text" id="keywordInput" placeholder="상표명을 입력하세요 (예: 코니도)" onkeypress="if(event.keyCode==13) searchData()">
+        <button onclick="searchData()">검색</button>
     </div>
-
-    <div id="resultContainer">검색하실 농약의 상표명을 입력하고 검색 버튼을 눌러주세요.</div>
+    <div id="resultContainer"></div>
 
     <script>
-        async function fetchPesticideInfo() {
-            const keyword = document.getElementById('pesticideName').value.trim();
+        async function searchData() {
+            const keyword = document.getElementById('keywordInput').value.trim();
             const resultDiv = document.getElementById('resultContainer');
 
-            if (!keyword) { alert('검색할 농약명을 입력해주세요.'); return; }
-            resultDiv.innerHTML = "데이터를 불러오는 중입니다... (최대 10초 소요)";
-
-            const API_KEY = '20260703XIC8LZPD1SXST1BGHPDEG'; 
-            const BASE_URL = 'http://psis.rda.go.kr/openApi/service.do';
-            
-            // outType=json 제거 (기본값인 XML로 받음)
-            // 방금 구글에서 복사한 웹 앱 URL 주소를 아래 따옴표 안에 넣고, 끝에 ?keyword= 를 붙여줍니다.
-            const url = `https://script.google.com/macros/s/AKfycbyaJLm2lFh7Dbs9Lc3DV_8toltHgN4qAMUeWe7xh-2RIYvw01Ei00wQFtX9XLxwwAetFw/exec?keyword=${encodeURIComponent(keyword)}`;
-            
-            // 공공데이터와 통신이 더 안정적인 CodeTabs 프록시 사용
-            
-
-            try {
-                const response = await fetch(url);
-                const text = await response.text(); 
-                
-                // 프록시 에러 처리 (HTML이나 단순 텍스트로 에러가 넘어올 경우)
-                if (text.includes("Oops") || text.includes("Error") || !text.includes("<?xml")) {
-                    throw new Error("서버 응답 지연");
-                }
-                
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(text, "text/xml");
-                displayResults(xmlDoc);
-                
-            } catch (error) {
-                console.error("API 호출 에러:", error);
-                resultDiv.innerHTML = `<div class="error-msg"><strong>데이터 호출 실패</strong><br>농촌진흥청 서버가 혼잡하여 응답이 지연되고 있습니다. 잠시 후 다시 시도해 주세요.</div>`;
-            }
-        }
-
-        function getXmlValue(item, tagName) {
-            const node = item.getElementsByTagName(tagName)[0];
-            return node ? node.textContent : '정보없음';
-        }
-
-        function displayResults(xmlDoc) {
-            const resultDiv = document.getElementById('resultContainer');
-            resultDiv.innerHTML = ''; 
-
-            const items = xmlDoc.getElementsByTagName("item");
-
-            if (!items || items.length === 0) {
-                resultDiv.innerHTML = "검색 결과가 없습니다. 상표명을 정확히 입력해 보세요.";
+            if (!keyword) {
+                alert('검색어를 입력해주세요.');
                 return;
             }
 
-            // 검색된 항목들을 화면에 예쁜 카드로 그립니다.
-            for (let i = 0; i < items.length; i++) {
-                const item = items[i];
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item';
-                
-                // 서버가 보내준 진짜 태그명 적용
-                const pestiBrandName = getXmlValue(item, "pestiBrandName"); // 상표명
-                const pestiKorName = getXmlValue(item, "pestiKorName");     // 품목명
-                const useName = getXmlValue(item, "useName");               // 용도
-                const indictSymbl = getXmlValue(item, "indictSymbl");       // 독성
-                const compName = getXmlValue(item, "compName");             // 제조사
-                const cropName = getXmlValue(item, "cropName");             // 적용작물
-                const diseaseWeedName = getXmlValue(item, "diseaseWeedName"); // 적용병해충
+            resultDiv.innerHTML = '<div style="text-align:center; color:#666;">데이터를 불러오는 중입니다...</div>';
 
-                itemDiv.innerHTML = `
-                    <div class="item-title">${pestiBrandName} <span style="font-size:14px; color:#777;">(${pestiKorName})</span></div>
-                    <div class="item-info"><strong>용도:</strong> ${useName}</div>
-                    <div class="item-info"><strong>독성구분:</strong> ${indictSymbl}</div>
-                    <div class="item-info"><strong>제조사:</strong> ${compName}</div>
-                    <div class="item-info" style="margin-top: 8px; padding: 8px; background-color: #e8f5e9; border-radius: 4px; color: #2e7d32;">
-                        <strong>🌱 적용작물:</strong> ${cropName} <br>
-                        <strong>🐛 적용병해충:</strong> ${diseaseWeedName}
-                    </div>
-                `;
-                resultDiv.appendChild(itemDiv);
+            // ============================================================================
+            // 🚨 [필수 수정] index4에서 사용하신 최신 구글 웹 앱 주소를 동일하게 넣어주세요!
+            // ============================================================================
+            const GAS_URL = 'https://script.google.com/macros/s/여기에_본인의_웹앱_주소를_넣으세요/exec';
+            
+            const url = `${GAS_URL}?keyword=${encodeURIComponent(keyword)}`;
+
+            try {
+                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                const data = await response.json(); 
+                
+                if (!data.success) {
+                    resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message}</div>`;
+                    return;
+                }
+
+                const items = data._rawList || [];
+                
+                if (items.length === 0) {
+                    resultDiv.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">검색 결과가 없습니다. 정확한 띄어쓰기로 다시 시도해 주세요.</div>`;
+                    return;
+                }
+
+                resultDiv.innerHTML = '';
+                items.forEach(item => {
+                    const itemDiv = document.createElement('div');
+                    itemDiv.className = 'item-card';
+                    
+                    const pestiBrandName = item.pestiBrandName || item.brandName || keyword;
+                    const compName = item.compName || item.companName || item.manufacturer || '-';
+                    const useName = item.useName || item.pestiType || '-';
+                    const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
+                    const cropName = item.cropName || item.crpName || item.crop || '-';
+                    const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
+
+                    itemDiv.innerHTML = `
+                        <div class="header-row">
+                            <div class="brand-name">${pestiBrandName}</div>
+                            <div class="comp-name">${compName}</div>
+                        </div>
+                        <div class="info-row"><strong>용도:</strong> ${useName}</div>
+                        <div class="info-row"><strong>사용시기:</strong> ${pestiUse}</div>
+                        <div class="highlight-box">
+                            <strong>🌾 적용작물:</strong> ${cropName} <br>
+                            <strong style="display:inline-block; margin-top:6px;">🐛 적용병해충:</strong> ${diseaseWeedName}
+                        </div>
+                    `;
+                    resultDiv.appendChild(itemDiv);
+                });
+
+            } catch (error) {
+                console.error(error);
+                resultDiv.innerHTML = `<div class="error-msg">데이터 호출 실패. 네트워크를 확인하거나 잠시 후 다시 시도해 주세요.</div>`;
             }
         }
     </script>
