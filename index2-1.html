@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>농약 등록정보 검색 (프록시 적용 완료)</title>
+    <title>농약 등록정보 검색 (XML 적용 완료)</title>
     <style>
         body {
             font-family: 'Malgun Gothic', '맑은 고딕', sans-serif;
@@ -51,56 +51,74 @@
 
             resultDiv.innerHTML = "데이터를 불러오는 중입니다...";
 
-            // 사용자 인증키 및 원본 API 주소
             const API_KEY = '20260703XIC8LZPD1SXST1BGHPDEG'; 
             const BASE_URL = 'http://psis.rda.go.kr/openApi/service.do';
             
-            // 1. 실제 호출해야 할 타겟 URL 생성
-            const targetUrl = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}&outType=json`;
-
-            // 2. AllOrigins 프록시 서버를 통해 HTTPS -> HTTP 호출 문제(Mixed Content) 우회
+            // outType=json 요청을 무시하므로 아예 제외했습니다.
+            const targetUrl = `${BASE_URL}?apiKey=${API_KEY}&trdmrkNm=${encodeURIComponent(keyword)}`;
             const url = `https://api.allorigins.win/raw?url=${encodeURIComponent(targetUrl)}`;
 
             try {
                 const response = await fetch(url);
-                const data = await response.json(); 
+                // JSON이 아닌 텍스트(XML)로 데이터를 받습니다.
+                const text = await response.text(); 
                 
-                displayResults(data);
+                // 받은 텍스트를 XML 문서로 변환합니다.
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(text, "text/xml");
+                
+                displayResults(xmlDoc);
             } catch (error) {
                 console.error("API 호출 에러:", error);
                 resultDiv.innerHTML = `
                     <div class="error-msg">
                         <strong>데이터 호출 실패</strong><br>
-                        프록시 서버 문제이거나 농약안전정보시스템 서버가 응답하지 않습니다. 잠시 후 다시 시도해 주세요.
+                        프록시 서버 문제이거나 농약안전정보시스템 서버가 응답하지 않습니다.
                     </div>
                 `;
             }
         }
 
-        function displayResults(data) {
+        // XML 데이터에서 특정 태그의 값을 안전하게 꺼내오는 함수
+        function getXmlValue(item, tagName) {
+            const node = item.getElementsByTagName(tagName)[0];
+            return node ? node.textContent : '정보없음';
+        }
+
+        function displayResults(xmlDoc) {
             const resultDiv = document.getElementById('resultContainer');
             resultDiv.innerHTML = ''; 
 
-            // API 응답 구조에 맞게 데이터 추출
-            const items = data?.service?.list || data?.list; 
+            // API 인증 에러 등이 발생했는지 확인
+            const errMsg = xmlDoc.getElementsByTagName("errMsg")[0];
+            const returnAuthMsg = xmlDoc.getElementsByTagName("returnAuthMsg")[0];
+            if (errMsg) {
+                resultDiv.innerHTML = `<div class="error-msg">API 오류: ${errMsg.textContent}</div>`;
+                return;
+            } else if (returnAuthMsg) {
+                resultDiv.innerHTML = `<div class="error-msg">API 인증 오류: ${returnAuthMsg.textContent}</div>`;
+                return;
+            }
+
+            // XML에서 <item> 태그들을 모두 가져옵니다.
+            const items = xmlDoc.getElementsByTagName("item");
 
             if (!items || items.length === 0) {
                 resultDiv.innerHTML = "검색 결과가 없습니다. 상표명을 정확히 입력해 보세요.";
                 return;
             }
 
-            // 결과가 객체 1개일 경우 배열로 통일
-            const itemsArray = Array.isArray(items) ? items : [items];
-
-            itemsArray.forEach(item => {
+            // 검색된 항목들을 화면에 그립니다.
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item';
                 
-                const trdmrkNm = item.trdmrkNm || '정보없음';
-                const prmsnNmstNm = item.prmsnNmstNm || '정보없음';
-                const cmpnyNm = item.cmpnyNm || '정보없음';
-                const useNm = item.useNm || '정보없음';
-                const toxcyNm = item.toxcyNm || '정보없음';
+                const trdmrkNm = getXmlValue(item, "trdmrkNm");
+                const prmsnNmstNm = getXmlValue(item, "prmsnNmstNm");
+                const cmpnyNm = getXmlValue(item, "cmpnyNm");
+                const useNm = getXmlValue(item, "useNm");
+                const toxcyNm = getXmlValue(item, "toxcyNm");
 
                 itemDiv.innerHTML = `
                     <div class="item-title">${trdmrkNm} <span style="font-size:14px; color:#777;">(${prmsnNmstNm})</span></div>
@@ -109,7 +127,7 @@
                     <div class="item-info"><strong>제조사:</strong> ${cmpnyNm}</div>
                 `;
                 resultDiv.appendChild(itemDiv);
-            });
+            }
         }
     </script>
 </body>
