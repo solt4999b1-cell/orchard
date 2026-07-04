@@ -10867,8 +10867,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
     </div>
     <div class="topbar-sync" onclick="syncNow()">
-      <span class="sync-dot" id="sync-dot"></span><span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;"></span><span id="offline-pending-badge" onclick="showPendingPanel()" style="display:none;margin-left:6px;font-size:10px;padding:1px 7px;border-radius:8px;background:#FF8F00;color:#fff;cursor:pointer;"></span>
-      <span id="sync-label">동기화 중</span>
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;">연결 중...</span>
+      <span id="offline-pending-badge" onclick="event.stopPropagation();showPendingPanel()" style="display:none;margin-left:6px;font-size:10px;padding:1px 7px;border-radius:8px;background:#FF8F00;color:#fff;cursor:pointer;"></span>
     </div>
   </div>
 
@@ -14872,8 +14873,31 @@ async function saveLog(){
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 document.querySelectorAll('.modal-bg').forEach(function(m){ m.addEventListener('click',function(e){ if(e.target===m) m.classList.add('hidden'); }); });
 function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
-function setSyncStatus(online){ document.getElementById('sync-dot').className='sync-dot'+(online?'':' offline'); document.getElementById('sync-label').textContent=online?'동기화됨':'오프라인'; }
-async function syncNow(){ setSyncStatus(false); document.getElementById('sync-label').textContent='동기화 중...'; await loadAllData(); renderAll(); setSyncStatus(true); }
+function setSyncStatus(online){
+  var dot   = document.getElementById('sync-dot');
+  var label = document.getElementById('sync-label');
+  if (!dot || !label) return;
+  if (online) {
+    dot.className          = 'sync-dot';
+    label.textContent      = '동기화됨';
+    label.style.color      = 'var(--green-dark)';
+  } else {
+    dot.className          = 'sync-dot offline';
+    label.textContent      = db ? '오프라인' : 'Firebase 미연결';
+    label.style.color      = 'var(--gray-400)';
+  }
+}
+async function syncNow(){
+  var label = document.getElementById('sync-label');
+  if (label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
+  try {
+    await loadAllData();
+    try { renderAll(); } catch(e) {}
+    setSyncStatus(true);
+  } catch(e) {
+    setSyncStatus(false);
+  }
+}
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
 
 async function launchApp(){
