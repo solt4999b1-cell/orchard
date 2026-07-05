@@ -11933,8 +11933,10 @@ async function searchData() {
             // 상세 정보(toxicName, fishToxicGubun)는 전체 응답의 _detail에서 가져옵니다.
 		    // 만약 pestiCode별로 개별 상세 정보가 있다면 item._detail을 써야 하지만, 
 		    // 현재 구조에서는 data._detail을 참조하는 것이 맞습니다.
-		    const toxic = extractSelectedText(detailData.toxicName || '정보 없음');
-		    const fish = extractSelectedText(detailData.fishToxicGubun || '정보 없음');
+		    // 상세 정보 접근
+			const detail = item._detail || {}; // 서버에서 넣어준 상세 데이터
+			const toxic = extractSelectedText(detail.toxicName || '정보 없음');
+			const fish = extractSelectedText(detail.fishToxicGubun || '정보 없음');
 		
 		    itemDiv.innerHTML = `
 		        <div class="header-row">
