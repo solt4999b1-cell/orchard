@@ -11930,14 +11930,13 @@ async function searchData() {
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item-card';
             
-            // 데이터 추출
-            const brandName = item.pestiBrandName || item.brandName || keyword;
-            const compName = item.compName || item.manufacturer || '-';
-            // 이제 여기서 item 대신 상단의 detail 객체를 참조합니다.
-    		const toxic = extractSelectedText(detail.toxicName || '정보 없음');
-    		const fish = extractSelectedText(detail.fishToxicGubun || '정보 없음');
-
-            itemDiv.innerHTML = `
+            // 상세 정보(toxicName, fishToxicGubun)는 전체 응답의 _detail에서 가져옵니다.
+		    // 만약 pestiCode별로 개별 상세 정보가 있다면 item._detail을 써야 하지만, 
+		    // 현재 구조에서는 data._detail을 참조하는 것이 맞습니다.
+		    const toxic = extractSelectedText(detailData.toxicName || '정보 없음');
+		    const fish = extractSelectedText(detailData.fishToxicGubun || '정보 없음');
+		
+		    itemDiv.innerHTML = `
 		        <div class="header-row">
 		            <div class="brand-name">${item.pestiBrandName || item.brandName || keyword}</div>
 		            <div class="comp-name">${item.compName || item.manufacturer || '-'}</div>
@@ -11947,7 +11946,7 @@ async function searchData() {
 		        <div class="info-row"><strong>용도:</strong> ${item.useName || '-'}</div>
 		        <div class="highlight-box">
 		            <strong>🌾 적용작물:</strong> ${item.cropName || '-'} <br>
-		            <strong style="display:inline-block; margin-top:6px;">🐛 적용병해충:</strong> ${item.diseaseWeedName || '-'}
+		            <strong>🐛 적용병해충:</strong> ${item.diseaseWeedName || '-'}
 		        </div>
 		    `;
 		    resultDiv.appendChild(itemDiv);
