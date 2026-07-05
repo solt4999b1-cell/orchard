@@ -11914,7 +11914,12 @@ async function searchData() {
     try {
         const response = await fetch(url, { method: 'GET', redirect: 'follow' });
         const data = await response.json(); 
-        
+
+		// --- 여기를 추가하세요 ---
+        console.log("전체 데이터:", data);
+        if (data._rawList && data._rawList.length > 0) {
+            console.log("첫 번째 아이템의 상세정보:", data._rawList[0]._detail);
+        }
         if (!data.success || !data._rawList || data._rawList.length === 0) {
             resultDiv.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">결과가 없습니다.</div>`;
             return;
