@@ -11928,8 +11928,8 @@ async function searchData() {
             // 데이터 추출
             const brandName = item.pestiBrandName || item.brandName || keyword;
             const compName = item.compName || item.manufacturer || '-';
-            const toxic = extractSelectedText(item.toxicName || '정보 없음');
-            const fish = extractSelectedText(item.fishToxicGubun || '정보 없음');
+            const toxic = extractSelectedText(item._detail && item._detail.toxicName ? item._detail.toxicName : '정보 없음');
+			const fish = extractSelectedText(item._detail && item._detail.fishToxicGubun ? item._detail.fishToxicGubun : '정보 없음');
 
             itemDiv.innerHTML = `
                 <div class="header-row">
