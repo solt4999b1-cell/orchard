@@ -11908,7 +11908,7 @@ async function searchData() {
     if (!keyword) { alert('검색어를 입력해주세요.'); return; }
     resultDiv.innerHTML = '<div style="text-align:center; color:#666;">데이터를 불러오는 중입니다...</div>';
 
-    const GAS_URL = 'https://script.google.com/macros/s/AKfy.../exec'; // 본인의 실제 웹앱 주소
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec'; // 본인의 실제 웹앱 주소
     const url = `${GAS_URL}?keyword=${encodeURIComponent(keyword)}`;
 
     try {
