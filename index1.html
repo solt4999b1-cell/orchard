@@ -11951,21 +11951,21 @@ async function searchData() {
 		    `;
 		    resultDiv.appendChild(itemDiv);
 	   // 카드 렌더링 후, 화면의 select 박스에 값을 자동으로 맞춰주는 로직
-            const toxicEl = document.getElementById('dim-toxic');
-            if (toxicEl) {
-                const toxicVal = toxic.replace(/[\(\)a-zA-Z0-9]/g, '').trim(); // '맹독성 (1a/1b)' -> '맹독성'
-                const options = Array.from(toxicEl.options).map(opt => opt.text);
-                // 가장 비슷한 선택지를 찾아 자동 선택
-                toxicEl.value = options.find(opt => opt.includes(toxicVal)) || '선택';
-            }
+       //     const toxicEl = document.getElementById('dim-toxic');
+       //    if (toxicEl) {
+       //         const toxicVal = toxic.replace(/[\(\)a-zA-Z0-9]/g, '').trim(); // '맹독성 (1a/1b)' -> '맹독성'
+       //         const options = Array.from(toxicEl.options).map(opt => opt.text);
+       //         // 가장 비슷한 선택지를 찾아 자동 선택
+       //         toxicEl.value = options.find(opt => opt.includes(toxicVal)) || '선택';
+       //     }
 
-            const fishEl = document.getElementById('dim-fish-toxicity');
-            if (fishEl) {
-                const fishVal = fish.replace(/[\(\)a-zA-Z0-9]/g, '').trim(); // 'Ⅰ급 (강독성)' -> 'Ⅰ급'
-                const options = Array.from(fishEl.options).map(opt => opt.text);
+       //     const fishEl = document.getElementById('dim-fish-toxicity');
+       //     if (fishEl) {
+       //         const fishVal = fish.replace(/[\(\)a-zA-Z0-9]/g, '').trim(); // 'Ⅰ급 (강독성)' -> 'Ⅰ급'
+       //         const options = Array.from(fishEl.options).map(opt => opt.text);
                 // 가장 비슷한 선택지를 찾아 자동 선택
-                fishEl.value = options.find(opt => opt.includes(fishVal)) || '선택';
-            }
+        //        fishEl.value = options.find(opt => opt.includes(fishVal)) || '선택';
+        //    }
         });
     } catch (error) {
         resultDiv.innerHTML = `<div class="error-msg">호출 실패</div>`;
