@@ -11625,7 +11625,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     <div id="dim-pest-fields">
       <div class="modal-field">
         <label>농약 종류 *</label>
-        <select id="dim-pest-type">
+        <select id="dim-pest-type" onchange="updatePestEmoji()">
           <option>살충제</option><option>살균제</option><option>살균살충제</option>
           <option>비선택성 제초제</option><option>선택성 제초제</option>
           <option>토양살충제</option><option>생장조정제·기타</option>
@@ -11667,24 +11667,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
           <div class="modal-field" style="margin-bottom:0;">
             <label>인축독성</label>
-            <select id="dim-toxicity">
-              <option value="">선택</option>
-              <option value="맹독성">맹독성 (1a/1b)</option>
-              <option value="고독성">고독성 (II)</option>
-              <option value="보통독성">보통독성 (III)</option>
-              <option value="저독성">저독성 (IV)</option>
-              <option value="무독">무독 (U)</option>
-            </select>
+            <input id="dim-toxicity" type="text" placeholder="예: 저독성, 보통독성">
           </div>
           <div class="modal-field" style="margin-bottom:0;">
             <label>어독성</label>
-            <select id="dim-fish-toxicity">
-              <option value="">선택</option>
-              <option value="Ⅰ급(강독성)">Ⅰ급 (강독성)</option>
-              <option value="Ⅱ급(중독성)">Ⅱ급 (중독성)</option>
-              <option value="Ⅲ급(약독성)">Ⅲ급 (약독성)</option>
-              <option value="없음">없음</option>
-            </select>
+            <input id="dim-fish-toxicity" type="text" placeholder="예: Ⅱ급, Ⅲ급">
           </div>
         </div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;">
@@ -11801,10 +11788,12 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
     <input type="hidden" id="dim-edit-id">
     <input type="hidden" id="dim-edit-tab">
-    <div class="modal-btns">
-      <button class="btn-danger" id="dim-delete-btn" style="display:none;" onclick="deleteDbItem()">🗑 삭제</button>
-      <button class="btn-secondary" onclick="closeModal('db-item-modal')">취소</button>
-      <button class="btn-primary" onclick="saveDbItem()">저장</button>
+    <div style="margin-top:14px;">
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <button class="btn-secondary" style="flex:1;" onclick="closeModal('db-item-modal')">취소</button>
+        <button class="btn-primary" style="flex:1;" onclick="saveDbItem()">저장</button>
+      </div>
+      <button class="btn-danger" id="dim-delete-btn" style="display:none;width:100%;" onclick="deleteDbItem()">🗑 삭제</button>
     </div>
   </div>
 </div>
@@ -19039,12 +19028,19 @@ async function queryPsisRegistered(productName) {
           type:         first.useName        || first.pestiType    || '',
           ingredient:   first.pestiKorName   || first.pestiMtrName || '',
           manufacturer: first.compName       || first.companName   || '',
-          toxicity:     first.indictSymbl    || '',
+          moa:          first.indictSymbl    || '',
+          wafindex:     first.wafindex       || '',
+          useSuittime:  first.useSuittime    || '',
+          useNum:       first.useNum         || '',
+          toxicName:    data.toxicName       || '',
+          toxicGubun:   data.toxicGubun      || '',
+          fishToxic:    data.fishToxic       || data.fishToxicGubun || '',
           regNo:        first.pestiRegNo     || '',
           status:       '등록',
           cropUsage:    cropUsage,
           rawCount:     data._rawList.length,
           _rawList:     data._rawList,
+          _detail:      data._detail         || {},
           source:       'PSIS_GAS_GET'
         };
         showDebug('✅ ' + Object.keys(cropUsage).length + '개 작물 정보 로드됨');
@@ -22208,6 +22204,7 @@ async function lookupPsisByName() {
         reg.cropUsage = cu;
       }
       if(reg._rawList && reg._rawList.length > 1) {
+        window._lastRegData = reg;
         _showPsisMultiResult(reg._rawList, '등록농약');
       } else {
         _fillModalFromPsis(reg, '등록농약');
@@ -22327,7 +22324,13 @@ function _showPsisMultiResult(rawList, srcLabel) {
   });
 
   // 전체 데이터 저장
-  window._psisMultiAll = {companies:companies, mfrList:mfrList, srcLabel:srcLabel};
+  var _rd = window._lastRegData || {};
+  window._psisMultiAll = {
+    companies: companies, mfrList: mfrList, srcLabel: srcLabel,
+    toxicName:  _rd.toxicName  || '',
+    toxicGubun: _rd.toxicGubun || '',
+    fishToxic:  _rd.fishToxic  || ''
+  };
   h += '</div>';
   resultEl.innerHTML = h;
 }
@@ -22360,6 +22363,13 @@ function _selectPsisCompany(idx) {
     type:         first.useName||first.pestiType||first['농약구분']||'살충제',
     ingredient:   first.pestiKorName||first.pestiMtrName||first['품목명']||'',
     manufacturer: mfr,
+    moa:          first.indictSymbl||'',
+    wafindex:     first.wafindex||'',
+    useSuittime:  first.useSuittime||'',
+    useNum:       first.useNum||'',
+    toxicName:    (all.toxicName)||'',
+    toxicGubun:   (all.toxicGubun)||'',
+    fishToxic:    (all.fishToxic)||'',
     _rawList:     rows,
     regNo:        first.pestiRegNo||first['등록번호']||'',
     status:       '등록',
@@ -22422,45 +22432,13 @@ function _fillModalFromPsis(data, srcLabel) {
     else if (waf==='1') beeEl.value='낮음';
   }
 
-  // ── 인축독성 (상세조회: toxicName) ──────────────────────────
-  // 인축독성: toxicName (상세조회) 또는 toxicGubun 코드로 설정
+  // ── 인축독성 (toxicName 직접 입력) ─────────────────────────
   var toxEl = document.getElementById('dim-toxicity');
-  if (toxEl) {
-    var toxSrc = data.toxicName || data.toxicGubun || '';
-    // select option value와 정확히 맞춰야 함: 맹독성/고독성/보통독성/저독성/무독
-    var toxOpts = ['맹독성','고독성','보통독성','저독성','무독'];
-    var toxMatched = toxOpts.find(function(o){ return toxSrc.includes(o.replace('독성','')||o); });
-    if (toxMatched) toxEl.value = toxMatched;
-    else if (toxSrc) {
-      // toxicGubun 코드: 1=맹독, 2=고독, 3=보통, 4=저독, 5=무독
-      var codeMap = {'1':'맹독성','2':'고독성','3':'보통독성','4':'저독성','5':'무독'};
-      if (codeMap[toxSrc.trim()]) toxEl.value = codeMap[toxSrc.trim()];
-    }
-  }
+  if (toxEl) toxEl.value = data.toxicName || data.toxicGubun || '';
 
-  // ── 어독성 (상세조회: fishToxicGubun) ────────────────────────
-var fishEl = document.getElementById('dim-fish-toxicity');
-if (fishEl) {
-    // 1. HTML 태그가 포함되어 있다면 제거하고 텍스트만 추출
-    var rawText = (data.fishToxicGubun || '').toString();
-    var fishSrc = rawText.replace(/<[^>]+>/g, '').trim(); 
-    
-    if (fishSrc) {
-        // 2. 범용적인 단어 포함 여부로 판단
-        if (fishSrc.includes('Ⅰ') || fishSrc.includes('1'))
-            fishEl.value = 'Ⅰ급 (강독성)';
-        else if (fishSrc.includes('Ⅱ') || fishSrc.includes('2'))
-            fishEl.value = 'Ⅱ급 (중독성)';
-        else if (fishSrc.includes('Ⅲ') || fishSrc.includes('3'))
-            fishEl.value = 'Ⅲ급 (약독성)';
-        else if (fishSrc.includes('없'))
-            fishEl.value = '없음';
-        else
-            fishEl.value = '선택';
-            
-        console.log('[어독성] 추출된 값:', fishSrc, '→ 선택된 값:', fishEl.value);
-    }
-}
+  // ── 어독성 (fishToxic/fishToxicGubun 직접 입력) ───────────────
+  var fishEl = document.getElementById('dim-fish-toxicity');
+  if (fishEl) fishEl.value = data.fishToxic || data.fishToxicGubun || '';
 
   // ── 작용기작 MOA (목록조회: indictSymbl = IRAC/FRAC 코드) ────
   // 작용기작: indictSymbl (IRAC/FRAC 코드) → 코드+설명
@@ -22576,21 +22554,46 @@ if (fishEl) {
   if(isCancelled){
     h+='<div style="font-size:11px;color:#C62828;">취소일: '+esc(data.cancelDate||'미상')+'</div>';
   } else {
-    h+='<div style="font-size:11px;color:var(--gray-600);margin-bottom:5px;">'
-      +'성분: '+esc(data.ingredient||'-')+' | '+crops.length+'개 작물</div>';
+    h+='<div style="font-size:11px;color:var(--gray-600);margin-bottom:6px;">'
+      +'성분: '+esc(data.ingredient||'-')
+      +' | '+crops.length+'개 작물'
+      +(data.toxicName?' | 인축독성: <b>'+esc(data.toxicName)+'</b>':'')
+      +(data.fishToxic?' | 어독성: <b>'+esc(data.fishToxic)+'</b>':'')
+      +'</div>';
+
+    // ── 작물별 전체 정보 표 ──────────────────────────────────
     if(crops.length){
-      h+='<div style="display:flex;flex-wrap:wrap;gap:4px;">';
-      crops.slice(0,8).forEach(function(crop){
-        var isMy=myPl.some(function(p){return (p.name||'').includes(crop)||crop.includes(p.name||'');});
-        h+='<span style="font-size:10px;padding:2px 7px;border-radius:6px;background:'
-          +(isMy?'var(--green-dark)':'#eee')+';color:'+(isMy?'#fff':'#555')+'">'
-          +(isMy?'⭐':'')+esc(crop)+'</span>';
+      h+='<div style="margin-top:4px;max-height:240px;overflow-y:auto;border-radius:6px;border:1px solid #ddd;">';
+      h+='<table style="width:100%;border-collapse:collapse;font-size:10px;">';
+      h+='<thead><tr style="background:#F5F5F5;position:sticky;top:0;">'
+        +'<th style="padding:5px 6px;text-align:left;border-bottom:1px solid #ddd;font-weight:600;color:#555;">작물</th>'
+        +'<th style="padding:5px 6px;text-align:left;border-bottom:1px solid #ddd;font-weight:600;color:#555;">병해충</th>'
+        +'<th style="padding:5px 6px;text-align:center;border-bottom:1px solid #ddd;font-weight:600;color:#555;">투입량(20L)</th>'
+        +'<th style="padding:5px 6px;text-align:center;border-bottom:1px solid #ddd;font-weight:600;color:#555;">안전기준</th>'
+        +'<th style="padding:5px 6px;text-align:center;border-bottom:1px solid #ddd;font-weight:600;color:#555;">횟수</th>'
+        +'</tr></thead><tbody>';
+      crops.forEach(function(crop, ci){
+        var isMy = myPl.some(function(p){return (p.name||'').includes(crop)||crop.includes(p.name||'');});
+        var usages = data.cropUsage[crop] || [];
+        usages.forEach(function(u, ui){
+          var rowBg = isMy ? '#F1F8E9' : (ci%2===0?'#fff':'#FAFAFA');
+          h+='<tr style="background:'+rowBg+';">';
+          if(ui===0){
+            h+='<td style="padding:5px 6px;border-bottom:1px solid #eee;vertical-align:top;font-weight:'+(isMy?'700':'500')+';color:'+(isMy?'var(--green-dark)':'#333')+';" rowspan="'+usages.length+'">'
+              +(isMy?'⭐ ':'')+esc(crop)+'</td>';
+          }
+          h+='<td style="padding:5px 6px;border-bottom:1px solid #eee;color:#444;">'+esc(u.target||'-')+'</td>'
+            +'<td style="padding:5px 6px;border-bottom:1px solid #eee;text-align:center;color:#1565C0;font-weight:600;">'+esc(calc20L(u.amount))+'</td>'
+            +'<td style="padding:5px 6px;border-bottom:1px solid #eee;text-align:center;color:#E65100;">'+esc(u.safety||'-')+'</td>'
+            +'<td style="padding:5px 6px;border-bottom:1px solid #eee;text-align:center;">'+esc(u.times||'-')+'</td>'
+            +'</tr>';
+        });
       });
-      if(crops.length>8) h+='<span style="font-size:10px;color:#888;">+'+( crops.length-8)+'개</span>';
-      h+='</div>';
+      h+='</tbody></table></div>';
+      h+='<div style="font-size:10px;color:#888;margin-top:4px;">⭐ 내 과수원 작물 | 스크롤하여 전체 보기</div>';
     }
   }
-  h+='<div style="font-size:11px;color:var(--gray-500);margin-top:5px;">👆 필드가 자동으로 채워졌습니다. 확인 후 저장하세요.</div>';
+  h+='<div style="font-size:11px;color:var(--gray-500);margin-top:6px;">👆 필드가 자동으로 채워졌습니다. 확인 후 저장하세요.</div>';
   h+='</div>';
   if(resultEl) resultEl.innerHTML=h;
 }
@@ -22725,6 +22728,46 @@ function applyWarningSample() {
   sel.value = ''; // 선택 초기화
 }
 
+
+function updatePestEmoji() {
+  var typeEl  = document.getElementById('dim-pest-type');
+  var emojiEl = document.getElementById('dim-emoji');
+  if (!typeEl || !emojiEl) return;
+  var emojiMap = {
+    '살충제':          '🐛',
+    '살균제':          '🍄',
+    '살균살충제':      '🌿',
+    '비선택성 제초제': '🌾',
+    '선택성 제초제':   '🌿',
+    '토양살충제':      '🪱',
+    '생장조정제·기타': '🌱'
+  };
+  if (emojiMap[typeEl.value]) emojiEl.value = emojiMap[typeEl.value];
+}
+
+function calc20L(dilutUnit) {
+  var s = (dilutUnit || '').trim();
+
+  // ① ml/20L 또는 g/20L 직접 표기
+  var m1 = s.match(/(\d+(?:\.\d+)?)\s*(ml|g|cc)\/20L/i);
+  if (m1) return m1[1] + m1[2] + '/20L';
+
+  // ② N배 희석 → 20L 기준 ml 계산
+  var m2 = s.match(/(\d[\d,]+)\s*배/);
+  if (m2) {
+    var ratio = parseInt(m2[1].replace(/,/g,''));
+    var ml    = Math.round(20000 / ratio * 10) / 10;
+    if (ml >= 10) ml = Math.round(ml);
+    return ml + 'ml/20L\u00a0(' + ratio + '배)';
+  }
+
+  // ③ 10a당 사용량 (입제·분제 등)
+  if (s.indexOf('10a') >= 0 || s.indexOf('㎏') >= 0 || s.indexOf('kg') >= 0) {
+    return s.replace(/^-\s*/, '').trim() + '\u00a0(10a당)';
+  }
+
+  return s || '-';
+}
 </script>
 </body>
 </html>
