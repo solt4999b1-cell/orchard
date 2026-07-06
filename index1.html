@@ -2,6 +2,14 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<style>
+  /* 이모지 렌더링 전역 강제 */
+  html, body, * {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI',
+      'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+      'Noto Color Emoji', 'Apple SD Gothic Neo', sans-serif !important;
+  }
+</style>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>새솔동 과수원</title>
 
@@ -81,6 +89,12 @@ function extractSelectedText(htmlStr) {
  --font:'Apple SD Gothic Neo',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
 }
 body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-height:100vh;font-size:14px;}
+* { font-family: var(--font); }
+/* 이모지 렌더링 강제 */
+body, button, input, select, textarea, div, span {
+  font-family: 'Apple SD Gothic Neo', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', sans-serif;
+}
 #app{display:none;min-height:100vh;}
 .topbar{background:var(--green-dark);color:#fff;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.2);}
 .topbar-left{display:flex;align-items:center;gap:8px;}
