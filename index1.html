@@ -11614,7 +11614,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 </div>
 
 <!-- GAS OCR 엔진 설정 모달 -->
-<div class="modal-bg hidden" id="gas-settings-modal">
+<div class="modal-bg hidden" id="gas-settings-modal" style="overflow-y:auto;">
   <div class="modal">
     <div class="modal-title">⚙️ API 키 · OCR 설정</div>
 
@@ -11662,11 +11662,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
     </div>
 
-    <div class="modal-btns">
-      <button class="btn-secondary" onclick="testGasConnection()">🔌 GAS 연결 테스트</button>
-      <button class="btn-secondary" onclick="closeModal('gas-settings-modal')">닫기</button>
-      <button class="btn-primary" onclick="saveGasUrl()">GAS URL 저장</button>
-      <button onclick="fixAllEmojis()" style="width:100%;padding:10px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;margin-top:6px;">🎨 Firebase 이모지 일괄 수정</button>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-bottom:8px;">
+      <div style="display:flex;gap:8px;">
+        <button class="btn-secondary" style="flex:1;padding:11px;" onclick="closeModal('gas-settings-modal')">닫기</button>
+        <button class="btn-primary" style="flex:1;padding:11px;" onclick="saveGasUrl()">GAS URL 저장</button>
+      </div>
+      <button class="btn-secondary" style="width:100%;padding:11px;" onclick="testGasConnection()">🔌 GAS 연결 테스트</button>
+      <button style="width:100%;padding:11px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;" onclick="fixAllEmojis()">🎨 Firebase 이모지 일괄 수정</button>
     </div>
   </div>
 </div>
@@ -21355,26 +21357,27 @@ async function testClaudeKey() {
   
   var gasUrl = (typeof getEffectiveGasUrl === 'function') ? getEffectiveGasUrl().trim() : '';
 
+  // GAS URL 있으면 GAS 경유 테스트 (CORS 우회)
   if (gasUrl) {
-    
     try {
       var ctrl = new AbortController();
       setTimeout(function(){ ctrl.abort(); }, 10000);
       var res = await fetch(gasUrl, {
         method: 'POST',
         headers: {'Content-Type':'text/plain'},
-        body: JSON.stringify({action:'analyzePesticide', input:'테스트: 다코닐 살균제 성분은?', claudeKey: key}),
+        body: JSON.stringify({action:'claude_relay', apiKey:key, prompt:'테스트. "OK"만 응답하세요.', maxTokens:30}),
         signal: ctrl.signal
       });
       var data = await res.json();
-      if (data.success) {
-        if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ GAS 경유 AI 분석 정상 작동!</span>';
+      if (data.ok || data.success) {
+        if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ GAS 경유 AI 정상 작동!</span>';
+        _saveClaudeKey(key, inp);
         return;
       }
     } catch(e) {}
   }
 
-  
+  // GAS URL 없거나 실패 시 → 직접 호출 (HTTPS 환경에서만 가능)
   try {
     var ctrl2 = new AbortController();
     setTimeout(function(){ ctrl2.abort(); }, 8000);
@@ -21383,7 +21386,8 @@ async function testClaudeKey() {
       headers: {
         'Content-Type': 'application/json',
         'x-api-key': key,
-        'anthropic-version': '2023-06-01'
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
@@ -21394,23 +21398,21 @@ async function testClaudeKey() {
     });
     var data2 = await res2.json();
     if (data2.content && data2.content[0]) {
-      if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ API 키 정상 확인! AI 기능 사용 가능</span>';
-      
-      if (inp && inp.value.trim()) {
-        localStorage.setItem('claude_api_key', key);
-        inp.value = '';
-        inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)';
-        showToast('✅ API 키 확인 및 저장 완료');
-      }
+      if (status) status.innerHTML = '<span style="color:var(--green-dark);">✅ API 키 정상 확인!</span>';
+      _saveClaudeKey(key, inp);
     } else if (data2.error) {
-      var errMsg = data2.error.message || data2.error.type || '오류';
-      if (status) status.innerHTML = '<span style="color:#C62828;">❌ API 오류: ' + esc(errMsg) + '</span>';
+      if (status) status.innerHTML = '<span style="color:#C62828;">❌ ' + esc(data2.error.message||data2.error.type) + '</span>';
     }
   } catch(e) {
-    if (e.name === 'AbortError') {
-      if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ 타임아웃 — CORS 차단 가능성. GAS URL을 설정하면 해결됩니다.</span>';
+    if (e.name === 'AbortError' || e.message.includes('Load failed') || e.message.includes('fetch')) {
+      // CORS 차단 → GAS URL로만 가능
+      if (gasUrl) {
+        if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ 직접 호출 차단됨. GAS URL로 재시도 중...</span>';
+      } else {
+        if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ 브라우저 CORS 차단 — ⚙️ 설정에서 GAS URL을 입력하면 해결됩니다.</span>';
+      }
     } else {
-      if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ ' + esc(e.message) + ' — GAS URL 설정 권장</span>';
+      if (status) status.innerHTML = '<span style="color:#E65100;">⚠️ ' + esc(e.message) + '</span>';
     }
   }
 }
@@ -23187,6 +23189,15 @@ async function removeDuplicatePesticides() {
   renderMyPestPanel();
   if (typeof renderManagePestList === 'function') renderManagePestList();
   showToast('🧹 중복 '+dups.length+'개 제거 완료');
+}
+
+function _saveClaudeKey(key, inp) {
+  localStorage.setItem('claude_api_key', key);
+  if (inp && inp.value.trim()) {
+    inp.value = '';
+    inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)';
+  }
+  showToast('✅ API 키 저장 완료');
 }
 </script>
 </body>
