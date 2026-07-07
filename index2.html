@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>병해충 진단 · 사진대조</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,7 +10,6 @@
 <style>
 /*═══════════════════════════════════════════════════════════
   디자인 토큰 — '과수 병해충 야외 도감' 컨셉
-  잎(녹)·수피(갈)·잘익은열매(호박금) / 종이흰색 아님(일반 AI톤 회피)
 ═══════════════════════════════════════════════════════════*/
 :root{
   --bg:#F4F7F1; --panel:#FFFFFF; --ink:#1E2B22; --ink-soft:#4B5A4F;
@@ -19,12 +18,19 @@
   --pest:#C24A3A; --pest-l:#F7E2DE;
   --shadow:0 1px 2px rgba(30,43,34,.06),0 8px 24px rgba(30,43,34,.06);
   --r:14px;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
 }
 *{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
 body{margin:0;background:var(--bg);color:var(--ink);
   font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.55;
-  -webkit-text-size-adjust:100%}
-.wrap{max-width:940px;margin:0 auto;padding:20px 16px 80px}
+  -webkit-text-size-adjust:100%;
+  overflow-x:hidden}
+.wrap{max-width:940px;margin:0 auto;
+  padding:calc(16px + var(--safe-t)) calc(16px + var(--safe-r)) calc(80px + var(--safe-b)) calc(16px + var(--safe-l))}
 
 /* 헤더 */
 .hdr{display:flex;align-items:flex-end;gap:12px;margin:6px 4px 20px;
@@ -36,21 +42,22 @@ body{margin:0;background:var(--bg);color:var(--ink);
 /* 작물 선택 */
 .crops{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .crop{border:1.5px solid var(--line);background:var(--panel);color:var(--ink-soft);
-  padding:8px 14px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;
-  transition:.15s}
+  padding:10px 16px;border-radius:999px;font-size:15px;font-weight:500;cursor:pointer;
+  transition:.15s;min-height:44px;-webkit-tap-highlight-color:transparent}
 .crop:hover{border-color:var(--leaf)}
 .crop.on{background:var(--leaf);border-color:var(--leaf);color:#fff}
 .crop-add{display:flex;gap:6px;margin:10px 0 4px}
-.crop-add input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;
-  font:inherit;font-size:14px;background:var(--panel)}
+.crop-add input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:10px;padding:11px 12px;
+  font:inherit;font-size:16px;background:var(--panel)}
 .crop-add button{border:none;background:var(--ink);color:#fff;border-radius:10px;
-  padding:0 14px;font:inherit;font-weight:500;cursor:pointer}
+  padding:0 18px;font:inherit;font-weight:500;cursor:pointer;min-height:44px;flex:none}
 
 /* 탭(병/해충) */
 .tabs{display:flex;gap:4px;margin:18px 0 12px;background:var(--leaf-l);
   padding:4px;border-radius:12px;width:fit-content}
-.tab{border:none;background:transparent;padding:8px 18px;border-radius:9px;
-  font:inherit;font-weight:700;color:var(--leaf-d);cursor:pointer}
+.tab{border:none;background:transparent;padding:10px 22px;border-radius:9px;
+  font:inherit;font-weight:700;color:var(--leaf-d);cursor:pointer;min-height:44px;
+  -webkit-tap-highlight-color:transparent}
 .tab.on{background:var(--panel);box-shadow:var(--shadow)}
 .tab.pest.on{color:var(--pest)}
 
@@ -58,7 +65,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
   overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:.15s;
-  display:flex;flex-direction:column}
+  display:flex;flex-direction:column;-webkit-tap-highlight-color:transparent}
 .card:hover{transform:translateY(-2px);border-color:var(--leaf)}
 .card .thumb{aspect-ratio:4/3;background:var(--leaf-l);position:relative;overflow:hidden}
 .card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
@@ -81,17 +88,20 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .sheet-bg{position:fixed;inset:0;background:rgba(20,30,24,.5);backdrop-filter:blur(2px);
   display:none;align-items:flex-end;justify-content:center;z-index:50}
 .sheet-bg.on{display:flex}
-.sheet{background:var(--bg);width:100%;max-width:940px;max-height:94vh;overflow:auto;
-  border-radius:20px 20px 0 0;padding:18px 16px 30px;animation:up .25s ease}
+.sheet{background:var(--bg);width:100%;max-width:940px;max-height:92dvh;overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:20px 20px 0 0;
+  padding:18px 16px calc(30px + var(--safe-b)) 16px;animation:up .25s ease}
 @keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
 .sheet-hd{display:flex;align-items:center;gap:10px;position:sticky;top:-18px;
   background:var(--bg);padding-top:6px;margin:-6px -2px 12px;z-index:2}
 .sheet-hd .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;
-  background:var(--leaf-l);color:var(--leaf-d)}
+  background:var(--leaf-l);color:var(--leaf-d);white-space:nowrap}
 .sheet-hd .tag.pest{background:var(--pest-l);color:var(--pest)}
-.sheet-hd h2{font-family:'Gowun Batang',serif;font-size:22px;margin:0}
-.sheet-hd .x{margin-left:auto;border:none;background:var(--line);width:34px;height:34px;
-  border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink)}
+.sheet-hd h2{font-family:'Gowun Batang',serif;font-size:22px;margin:0;
+  overflow:hidden;text-overflow:ellipsis}
+.sheet-hd .x{margin-left:auto;border:none;background:var(--line);width:38px;height:38px;
+  border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink);flex:none}
 
 /* 대조 2열 : 내 사진 | 참조 사진 */
 .compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
@@ -105,7 +115,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
   display:flex;align-items:center;justify-content:center;text-align:center;
   color:var(--ink-soft);font-size:13px;cursor:pointer;overflow:hidden;background:var(--leaf-l)}
 .myphoto img{width:100%;height:100%;object-fit:cover}
-.refstrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.refstrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch}
 .refstrip img{height:120px;border-radius:10px;flex:none;cursor:zoom-in;
   border:1px solid var(--line);background:var(--leaf-l)}
 .refstrip .empty{color:var(--ink-soft);font-size:13px;padding:30px 6px}
@@ -114,7 +124,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .webbox h4 span.unoff{font-size:11px;font-weight:700;color:#7a2f22;
   background:#F7E2DE;padding:2px 8px;border-radius:6px;margin-left:2px}
 .webbtn{border:1.5px solid var(--leaf);background:var(--panel);color:var(--leaf-d);
-  border-radius:10px;padding:9px 14px;font:inherit;font-weight:700;cursor:pointer}
+  border-radius:10px;padding:11px 16px;font:inherit;font-weight:700;cursor:pointer;min-height:44px}
 .webbtn:hover{background:var(--leaf-l)}
 .webbtn:disabled{opacity:.5;cursor:default}
 .webstrip{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
@@ -128,20 +138,21 @@ body{margin:0;background:var(--bg);color:var(--ink);
   padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
 .info h4{margin:0 0 8px;font-size:14px;color:var(--leaf-d);
   display:flex;align-items:center;gap:7px}
-.info h4::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber)}
+.info h4::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber);flex:none}
 .info p{margin:0;font-size:14px;color:var(--ink);white-space:pre-wrap}
 .checks li{list-style:none;display:flex;gap:9px;align-items:flex-start;
-  padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+  padding:9px 0;border-bottom:1px dashed var(--line);font-size:15px}
 .checks{margin:0;padding:0}
 .checks li:last-child{border:none}
-.checks input{margin-top:4px;width:17px;height:17px;accent-color:var(--leaf)}
+.checks input{margin-top:3px;width:20px;height:20px;accent-color:var(--leaf);flex:none}
 
 /* 처방 이동 버튼 (핸드오프 트리거) */
 .handoff{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);
   padding:14px 0 4px;margin-top:6px}
 .btn-rx{width:100%;border:none;background:var(--leaf);color:#fff;font:inherit;
-  font-weight:700;font-size:16px;padding:15px;border-radius:14px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow)}
+  font-weight:700;font-size:16px;padding:16px;border-radius:14px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow);
+  flex-wrap:wrap;min-height:52px}
 .btn-rx:active{background:var(--leaf-d)}
 .btn-rx small{font-weight:400;opacity:.85}
 
@@ -149,12 +160,13 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .rx-bg{position:fixed;inset:0;background:rgba(20,30,24,.5);display:none;
   align-items:flex-end;justify-content:center;z-index:60}
 .rx-bg.on{display:flex}
-.rx{background:var(--bg);width:100%;max-width:940px;max-height:94vh;overflow:auto;
-  border-radius:20px 20px 0 0;padding:18px 16px 30px}
+.rx{background:var(--bg);width:100%;max-width:940px;max-height:92dvh;overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  border-radius:20px 20px 0 0;padding:18px 16px calc(30px + var(--safe-b)) 16px}
 .rx-hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
 .rx-hd h2{font-family:'Gowun Batang',serif;font-size:20px;margin:0}
-.rx-hd .x{margin-left:auto;border:none;background:var(--line);width:34px;height:34px;
-  border-radius:50%;font-size:18px;cursor:pointer}
+.rx-hd .x{margin-left:auto;border:none;background:var(--line);width:38px;height:38px;
+  border-radius:50%;font-size:18px;cursor:pointer;flex:none}
 .rx-sub{font-size:13px;color:var(--ink-soft);margin:0 0 14px}
 .rx-sub b{color:var(--leaf-d)}
 .pesti{background:var(--panel);border:1px solid var(--line);border-radius:12px;
@@ -166,7 +178,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .pesti .use.살충{background:var(--pest-l);color:var(--pest)}
 .pesti .meta{font-size:13px;color:var(--ink-soft);margin-top:4px}
 .pesti .back{margin-top:8px;border:1px solid var(--line);background:transparent;
-  border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;cursor:pointer;color:var(--leaf-d)}
+  border-radius:8px;padding:9px 12px;font:inherit;font-size:13px;cursor:pointer;color:var(--leaf-d);min-height:40px}
 
 .foot{text-align:center;color:var(--ink-soft);font-size:11px;margin-top:30px;line-height:1.7}
 .foot a{color:var(--leaf-d)}
@@ -176,6 +188,31 @@ body{margin:0;background:var(--bg);color:var(--ink);
   align-items:center;justify-content:center;cursor:zoom-out}
 .lb.on{display:flex}
 .lb img{max-width:94vw;max-height:94vh;border-radius:8px}
+
+/*═══════════════════════════════════════════════════════════
+  iPhone 12 Pro 등 모바일 최적화 (≤480px, 390×844pt 대응)
+═══════════════════════════════════════════════════════════*/
+@media(max-width:480px){
+  .wrap{padding-left:calc(14px + var(--safe-l));padding-right:calc(14px + var(--safe-r))}
+  .hdr{flex-wrap:wrap;align-items:center;gap:10px;margin:2px 2px 16px}
+  .hdr h1{font-size:21px;flex:1 1 auto}
+  .hdr .sub{flex:1 1 100%;margin-left:0;text-align:left;font-size:12px;
+    order:3;color:var(--ink-soft)}
+  .crops{gap:7px}
+  .crop{padding:9px 14px;font-size:14px}
+  .tabs{width:100%;justify-content:center}
+  .tab{flex:1;padding:11px 0;text-align:center}
+  /* 390px에서 카드 2열 안정화 */
+  .grid{grid-template-columns:repeat(2,1fr);gap:10px}
+  .card .nm{font-size:14px}
+  .sheet,.rx{border-radius:18px 18px 0 0;max-height:94dvh}
+  .sheet-hd h2{font-size:20px}
+  .refstrip img{height:150px}
+  .btn-rx{font-size:15px;padding:15px}
+}
+@media(max-width:360px){
+  .grid{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -186,7 +223,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
       <path d="M14 26C18 20 24 16 30 14" stroke="#E7F0E5" stroke-width="2" stroke-linecap="round"/>
     </svg>
     <h1>병해충 사진대조 도감</h1>
-    <div class="sub">작물을 고르면<br>증상·참조사진으로 좁혀갑니다</div>
+    <div class="sub">작물을 고르면 증상·참조사진으로 좁혀갑니다</div>
   </div>
 
   <!-- 작물 선택 -->
@@ -227,33 +264,25 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 <script>
 /*═══════════════════════════════════════════════════════════════
-  0. 설정  —  실제 앱에 붙일 때 여기만 바꾸면 됩니다
+  0. 설정
 ═══════════════════════════════════════════════════════════════*/
 const CONFIG = {
-  // 기존 GAS 배포 URL (NCPMS 라우팅이 추가된 버전)
   GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
 
-  // 우리 과수원 작물 (NCPMS 작물명 기준). 자유롭게 편집.
   crops: ['사과','배','단감','복숭아','포도','자두','매실','참다래','블루베리','무화과'],
 
-  // NCPMS 작물명 ↔ PSIS 작물명이 다를 때 매핑 (예: '단감'→'감')
   cropMapToPsis: { '단감':'감', '참다래':'참다래(키위)' },
 
-  // 약제 상세(SVC02 독성)·취소(SVC06) 호출 규약.
-  // 여러분 GAS 규약에 맞게 쿼리스트링을 돌려주도록 바꾸세요.
-  // (미설정 시 아래 기본값은 독립 데모 GAS의 psisapi 경로를 사용)
   psisDetail: {
     build: (svc, idKey, idVal) =>
       `target=psisapi&serviceCode=${svc}&${idKey}=${encodeURIComponent(idVal)}`
   },
 
-  displayCount: 100          // NCPMS 목록 페이지당 건수
+  displayCount: 100
 };
 
 /*═══════════════════════════════════════════════════════════════
-  1. AppBus — 두 모듈(진단 ↔ 처방)이 느슨하게 주고받는 이벤트 버스
-     · 'prescription:request'  진단→처방  {cropName, name, type}
-     · 'reference:request'     처방→진단  {cropName, name}
+  1. AppBus
 ═══════════════════════════════════════════════════════════════*/
 const AppBus = {
   _h:{},
@@ -262,52 +291,42 @@ const AppBus = {
 };
 
 /*═══════════════════════════════════════════════════════════════
-  2. NCPMS 클라이언트 — GAS 프록시 호출 + 응답에서 값/사진 추출
-     (응답 스키마가 조금 달라도 견디도록 '탐색형'으로 뽑아냄)
+  2. NCPMS 클라이언트
 ═══════════════════════════════════════════════════════════════*/
 const NCPMS = {
   async call(params){
     const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
     const url = CONFIG.GAS_URL + '?' + qs;
-    window.__lastUrl = url;                       // 디버그용
+    window.__lastUrl = url;
     const res = await fetch(url);
     const jr  = await res.json();
-    window.__lastResp = jr;                        // 디버그용 (콘솔에서 확인 가능)
+    window.__lastResp = jr;
     if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
     return jr.data;
   },
-  // 병 목록
   listSick(cropName){
     return this.call({ serviceCode:'SVC01', cropName, displayCount:CONFIG.displayCount, startPoint:1 });
   },
-  // 해충 목록
   listInsect(cropName){
     return this.call({ serviceCode:'SVC03', cropName, displayCount:CONFIG.displayCount, startPoint:1 });
   },
-  // 병 상세
   detailSick(sickKey){ return this.call({ serviceCode:'SVC05', sickKey }); },
-  // 해충 상세
   detailInsect(insectKey){ return this.call({ serviceCode:'SVC07', insectKey }); },
 
-  /*── 응답 헬퍼 : 어떤 구조든 목록 배열을 찾아냄 ──*/
   rows(data){
-    // service/list/item 등 이름과 무관하게, '배열로 반복되는 항목'을 탐색
     let best=[]; (function dig(n){
       if(Array.isArray(n)){ if(n.length>best.length && typeof n[0]==='object') best=n; n.forEach(dig); return; }
       if(n && typeof n==='object') Object.values(n).forEach(dig);
     })(data);
-    // 배열이 아니라 단일 객체 하나만 온 경우도 처리
     if(best.length===0){
       const one = this.pick(data, ['sickNameKor','insectKorName','cropName']);
       if(one) best=[data.service||data];
     }
     return best;
   },
-  // 후보 키들 중 처음 값이 있는 것 (부분일치 fallback 포함)
   pick(obj, keys){
     if(!obj||typeof obj!=='object') return '';
     for(const k of keys){ if(obj[k]!=null && obj[k]!=='' ) return String(obj[k]); }
-    // 부분일치 (대소문자 무시)
     const lk = keys.map(k=>k.toLowerCase());
     for(const [k,v] of Object.entries(obj)){
       if(v && typeof v==='string' && lk.some(x=>k.toLowerCase().includes(x))) return v;
@@ -321,7 +340,6 @@ const NCPMS = {
       ? ['sickKey','oesTinFern','value']
       : ['insectKey','bugKey','value']);
   },
-  // 객체 전체를 훑어 이미지 URL을 모두 수집 (썸네일/상세 공용)
   images(node){
     const out=new Set();
     (function dig(n){
@@ -335,7 +353,6 @@ const NCPMS = {
     })(node);
     return [...out];
   },
-  // 이미지가 https로 안 뜨면 프록시(data URI)로 교체
   proxyUrl(u){ return CONFIG.GAS_URL + '?target=ncpmsimg&url=' + encodeURIComponent(u); },
 };
 
@@ -347,7 +364,7 @@ const App = {
 
   init(){
     this.renderCrops();
-    AppBus.on('reference:request', d=>this.openFromName(d)); // 처방→진단 역방향
+    AppBus.on('reference:request', d=>this.openFromName(d));
   },
   renderCrops(){
     document.getElementById('crops').innerHTML = CONFIG.crops.map(c=>
@@ -407,10 +424,8 @@ const App = {
         <small>GAS_URL / NCPMS 키 설정을 확인하세요.</small></div>`;
     }
   },
-  // 항목이 안 잡혔을 때, 실제로 무엇이 돌아왔는지 그대로 보여주는 진단 화면
   debugView(data){
     const keys = (data && typeof data==='object') ? Object.keys(data) : [];
-    // 자주 나오는 에러/카운트 필드 힌트
     const hint = NCPMS.pick(data, ['errMsg','error','msg','message','result','resultMsg']);
     const cnt  = NCPMS.pick(data, ['totalCount','totalcount','count']);
     let raw;
@@ -437,7 +452,6 @@ const App = {
         ↳ 이 <b>‘원본 응답’ 내용을 그대로 복사해서 보내주시면</b> 원인(키 미설정/작물명 표기/응답구조)을 정확히 짚어 고쳐드립니다.
       </div>`;
   },
-  // 웹 이미지 보조검색 (GAS → 네이버 이미지). NCPMS에 사진이 없을 때 참고용.
   async webImages(query, btn){
     const strip=document.getElementById('webstrip');
     if(btn){ btn.disabled=true; btn.textContent='검색 중…'; }
@@ -461,7 +475,6 @@ const App = {
     }
   },
   imgFallback(img, encUrl){
-    // https 직접로딩 실패 → 프록시(data URI)로 재시도 (1회만)
     if(img.dataset.tried) { img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; return; }
     img.dataset.tried='1';
     fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl)))
@@ -484,7 +497,6 @@ const App = {
       if(key) detail = this.type==='sick'
         ? await NCPMS.detailSick(key) : await NCPMS.detailInsect(key);
     }catch(e){}
-    // 상세 응답에서 service 노드 벗기기
     const d = detail.service || detail;
 
     const symptoms = NCPMS.pick(d,['symptoms','symptomsText','damageSympttm','virusSymptom']);
@@ -546,7 +558,6 @@ const App = {
         </button>
       </div>`;
   },
-  // 증상 문단 → 체크 항목으로 쪼개기 (마침표/줄바꿈/·)
   symptomsToChecks(text){
     if(!text) return [];
     return text.split(/(?:\r?\n|(?<=다\.)|·|•|;|。)/)
@@ -567,15 +578,11 @@ const App = {
   zoom(src){ document.getElementById('lbImg').src=src; document.getElementById('lb').classList.add('on'); },
   closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); document.body.style.overflow=''; },
 
-  /*── 핸드오프: 진단 → 처방 ──*/
   prescribe(name, type){
     AppBus.emit('prescription:request', { cropName:this.crop, name, type });
   },
-  /*── 역방향: 처방 → 진단 (농약목록에서 '증상 다시보기') ──*/
   async openFromName({cropName, name}){
-    // 현재 목록에서 이름이 일치하는 카드를 찾아 상세 열기
     if(this.crop!==cropName){ await this.selectCrop(cropName); }
-    // 병 탭에서 먼저 찾고 없으면 해충 탭
     const find=()=> (this._rows||[]).findIndex(r=>NCPMS.name(r)===name);
     let idx=find();
     if(idx<0){ this.switchTab(this.type==='sick'?'insect':'sick'); await new Promise(r=>setTimeout(r,300)); idx=find(); }
@@ -584,9 +591,7 @@ const App = {
 };
 
 /*═══════════════════════════════════════════════════════════════
-  4. Rx — 처방(농약) 모듈  [데모: 실제 PSIS를 GAS로 호출]
-     ▸ 실제 앱에서는 여러분의 기존 PSIS 검색 함수로 이 핸들러만 교체하면 됩니다.
-       AppBus.on('prescription:request', ({cropName,name}) => 기존PSIS검색(cropName, name))
+  4. Rx — 처방(농약) 모듈
 ═══════════════════════════════════════════════════════════════*/
 const Rx = {
   init(){ AppBus.on('prescription:request', d=>this.search(d)); },
@@ -600,21 +605,19 @@ const Rx = {
       <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 에 등록된 약제 검색 중…</p>
       <div class="state"><div class="spinner"></div>PSIS 조회 중…</div>`;
     try{
-      // ▼ 기존 과수원앱 GAS 규약: crops + diseases → _psisMultiSearch (SVC01 농약 등록조회)
       const qs=new URLSearchParams({
-        crops: this.psisCrop(cropName),   // 작물명(콤마로 여러 개 가능)
-        diseases: name                    // 병/해충/잡초명 (진딧물 등 해충도 이 파라미터)
+        crops: this.psisCrop(cropName),
+        diseases: name
       }).toString();
       const r=await fetch(CONFIG.GAS_URL+'?'+qs);
       const jr=await r.json();
-      window.__lastPsis = jr;                     // 디버그용(콘솔에서 확인 가능)
-      // 응답이 배열/{items}/{data}/{list}/{rows} 무엇이든 '배열'로 확정
+      window.__lastPsis = jr;
       let list = Array.isArray(jr) ? jr
                : Array.isArray(jr.items) ? jr.items
                : Array.isArray(jr.data)  ? jr.data
                : Array.isArray(jr.list)  ? jr.list
                : Array.isArray(jr.rows)  ? jr.rows
-               : NCPMS.rows(jr);                  // 중첩 배열 탐색
+               : NCPMS.rows(jr);
       if(!Array.isArray(list)) list = [];
       if(jr && jr.ok===false && !list.length) throw new Error(jr.error||'검색 실패');
       this.render(cropName, name, list, jr);
@@ -625,7 +628,7 @@ const Rx = {
   },
   render(cropName, name, rows, jr){
     const box=document.getElementById('rx');
-    this._items = rows;                            // 상세 버튼용 저장
+    this._items = rows;
     this._ctx = { cropName, name };
     const P=(r,keys)=>NCPMS.pick(r,keys);
     const items = rows.map((r,i)=>{
@@ -638,7 +641,7 @@ const Rx = {
         <div class="top"><span class="brand">${brand||'-'}</span>
           ${use?`<span class="use ${useC}">${use}</span>`:''}</div>
         <div class="meta">${komp?komp+' · ':''}${comp||''}</div>
-        <div style="display:flex;gap:6px;margin-top:8px">
+        <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
           <button class="back" onclick="Rx.detailView(${i})">🔬 상세·독성</button>
           <button class="back" onclick="Rx.backToSymptom('${cropName}','${name.replace(/'/g,'')}')">↩ 증상 다시보기</button>
         </div>
@@ -652,7 +655,6 @@ const Rx = {
       <div class="foot" style="margin-top:14px">
         ※ 사용 전 반드시 라벨의 사용적기·희석배수·안전사용기준을 확인하세요.</div>`;
   },
-  // 결과가 비었을 때, _psisMultiSearch가 실제로 뭘 돌려줬는지 그대로 표시
   debugView(jr){
     let raw; try{ raw=JSON.stringify(jr,null,2); }catch(e){ raw=String(jr); }
     if(raw && raw.length>2000) raw=raw.slice(0,2000)+'\n… (생략)';
@@ -667,13 +669,11 @@ const Rx = {
   },
   reopen(){ this.render(this._ctx.cropName, this._ctx.name, this._items, null); },
 
-  // 약제 카드 상세 : SVC01 필드 전체 + (식별자 있으면) SVC02 독성 / SVC06 취소 연결
   detailView(i){
     const item=this._items[i]||{};
     const box=document.getElementById('rx');
     const P=(r,keys)=>NCPMS.pick(r,keys);
     const title=P(item,['pestiBrandName','상표명'])||P(item,['pestiKorName','품목명'])||'농약 상세';
-    // 상세조회(SVC02)용 식별자 후보 탐색
     const idFields=['pestiCode','품목코드','regnNo','등록번호','pestiSeq','품목일련번호','pestiKorName','품목명'];
     const idKey=idFields.find(k=>item[k]!=null && item[k]!=='');
     const rowsHtml=Object.entries(item).map(([k,v])=>
@@ -726,7 +726,7 @@ const Rx = {
 
   backToSymptom(cropName, name){
     this.close();
-    AppBus.emit('reference:request', { cropName, name });  // 처방 → 진단 역방향
+    AppBus.emit('reference:request', { cropName, name });
   },
   close(){ document.getElementById('rxBg').classList.remove('on'); }
 };
