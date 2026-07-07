@@ -20736,8 +20736,8 @@ function renderSpraySchedulerPanel() {
   h += '</div></div>';
   h += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;">';
   h += '<div><div style="font-size:10px;font-weight:600;color:var(--gray-500);margin-bottom:4px;">🌿 작물명 (최대 4개)</div>';
-  h += '<div style="font-size:9px;color:var(--blue-dark);margin-bottom:4px;">※ STEP1 작물 선택 시 자동 입력</div>';
-  for(var _ci=1;_ci<=4;_ci++){h+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;"><input type="hidden" id="psis-crop-'+_ci+'"><div id="psis-crop-disp-'+_ci+'" style="flex:1;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;background:#fff;color:#aaa;min-height:32px;display:flex;align-items:center;">-- 작물'+(_ci>1?' '+_ci:'')+'--</div></div>';}
+  h += '<div style="font-size:9px;color:var(--blue-dark);margin-bottom:4px;">※ STEP1 자동입력 또는 직접 수정 가능</div>';
+  for(var _ci=1;_ci<=4;_ci++){h+='<div style="display:flex;align-items:center;gap:4px;margin-bottom:4px;"><input type="text" id="psis-crop-'+_ci+'" placeholder="작물'+(_ci>1?' '+_ci:'')+' 입력" style="flex:1;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;font-size:12px;background:#fff;" oninput="_onCropInputChange(this,'+_ci+')"></div>';}
   h += '</div>';
   h += '<div><div style="font-size:10px;font-weight:600;color:var(--gray-500);margin-bottom:4px;">🦠 병해충명 (최대 4개)</div>';
   h += '<div style="font-size:9px;color:var(--gray-400);margin-bottom:4px;">직접 입력하세요</div>';
@@ -22920,9 +22920,30 @@ function _cropMatch(api,sel){var a=_normCropName(api),s=_normCropName(sel);if(!a
 
 // ── PSIS 헬퍼 ────────────────────────────────────────────────
 function _psisToggleUse(btn,val){document.querySelectorAll('#psis-use-btns button').forEach(function(b){b.style.background='#fff';b.style.color='#555';b.style.borderColor='var(--gray-200)';b.style.fontWeight='400';});btn.style.background='var(--blue-dark)';btn.style.color='#fff';btn.style.borderColor='var(--blue-dark)';btn.style.fontWeight='700';}
-function _psisSearchReset(){for(var i=1;i<=4;i++){var ce=document.getElementById('psis-crop-'+i);if(ce)ce.value='';var cd=document.getElementById('psis-crop-disp-'+i);if(cd){cd.textContent='-- 작물'+(i>1?' '+i:'')+'--';cd.style.color='#aaa';}var de=document.getElementById('psis-dis-'+i);if(de)de.value='';}['psis-brand','psis-ingredient','psis-moa','psis-company'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});var ab=document.querySelector('#psis-use-btns button[data-use="전체"]');if(ab)_psisToggleUse(ab,'전체');var out=document.getElementById('recommend-result');if(out)out.innerHTML='';document.querySelectorAll('.crop-select').forEach(function(cb){cb.checked=false;});}
+function _psisSearchReset(){for(var i=1;i<=4;i++){var ce=document.getElementById('psis-crop-'+i);if(ce){ce.value='';ce.style.color='';ce.style.fontWeight='';}var de=document.getElementById('psis-dis-'+i);if(de)de.value='';}['psis-brand','psis-ingredient','psis-moa','psis-company'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});var ab=document.querySelector('#psis-use-btns button[data-use="전체"]');if(ab)_psisToggleUse(ab,'전체');var out=document.getElementById('recommend-result');if(out)out.innerHTML='';document.querySelectorAll('.crop-select').forEach(function(cb){cb.checked=false;});}
 function _getPsisSearchParams(){var p={};var ub=document.querySelector('#psis-use-btns button[style*="background:var(--blue-dark)"]');p.use=ub?ub.getAttribute('data-use'):'전체';p.crops=[];p.cropExact=[];for(var i=1;i<=4;i++){var sel=document.getElementById('psis-crop-'+i);var v=(sel&&sel.value)||'';if(v){p.crops.push(v);p.cropExact.push(false);}}p.diseases=[];for(var j=1;j<=4;j++){var d=(document.getElementById('psis-dis-'+j)||{}).value||'';if(d)p.diseases.push(d);}p.brand=(document.getElementById('psis-brand')||{}).value||'';p.ingredient=(document.getElementById('psis-ingredient')||{}).value||'';p.moa=(document.getElementById('psis-moa')||{}).value||'';p.company=(document.getElementById('psis-company')||{}).value||'';return p;}
-function _syncCropToDropdown(cb){if(!cb)return;var cn=(cb.value||'').trim();if(!cn)return;if(cb.checked){for(var i=1;i<=4;i++){var inp=document.getElementById('psis-crop-'+i);var disp=document.getElementById('psis-crop-disp-'+i);if(!inp||inp.value)continue;inp.value=cn;if(disp){disp.textContent=cn;disp.style.color='#333';disp.style.fontWeight='600';}break;}}else{for(var i=1;i<=4;i++){var inp=document.getElementById('psis-crop-'+i);var disp=document.getElementById('psis-crop-disp-'+i);if(inp&&inp.value===cn){inp.value='';if(disp){disp.textContent='-- 작물'+(i>1?' '+i:'')+'--';disp.style.color='#aaa';}break;}}}var chk=Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){return c.dataset.short||c.value;});var dp=document.getElementById('selected-crops-display');if(dp)dp.innerHTML=chk.length?'<span style="color:var(--green-dark);font-weight:600;">선택: </span>'+chk.map(function(n){return'<span style="background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;margin-right:4px;">'+esc(n)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--gray-400);">작물을 선택하세요</span>';}
+function _syncCropToDropdown(cb){
+  if(!cb) return;
+  var cn=(cb.value||'').trim(); if(!cn) return;
+  if(cb.checked){
+    for(var i=1;i<=4;i++){
+      var inp=document.getElementById('psis-crop-'+i);
+      if(!inp||(inp.value||'').trim()) continue;
+      inp.value=cn; inp.style.color='#1565C0'; inp.style.fontWeight='600';
+      break;
+    }
+  } else {
+    for(var i=1;i<=4;i++){
+      var inp=document.getElementById('psis-crop-'+i);
+      if(inp&&inp.value===cn){ inp.value=''; inp.style.color=''; inp.style.fontWeight=''; break; }
+    }
+  }
+  // selected-crops-display 업데이트
+  var vals=[];
+  for(var j=1;j<=4;j++){var el=document.getElementById('psis-crop-'+j);if(el&&(el.value||'').trim())vals.push(el.value.trim());}
+  var dp=document.getElementById('selected-crops-display');
+  if(dp) dp.innerHTML=vals.length?'<span style="color:var(--green-dark);font-weight:600;">선택: </span>'+vals.map(function(n){return'<span style="background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;margin-right:4px;">'+esc(n)+'</span>';}).join(''):'<span style="font-size:11px;color:var(--gray-400);">작물을 선택하세요</span>';
+}
 
 // ── 20L 환산 ─────────────────────────────────────────────────
 function calc20L(d){var s=(d||'').trim();var m1=s.match(/(\d+(?:\.\d+)?)\s*(ml|g|cc)\/20L/i);if(m1)return m1[1]+m1[2]+'/20L';var m2=s.match(/(\d[\d,]+)\s*배/);if(m2){var r=parseInt(m2[1].replace(/,/g,''));var ml=Math.round(20000/r*10)/10;if(ml>=10)ml=Math.round(ml);return ml+'ml/20L\u00a0('+r+'배)';}return s||'-';}
@@ -23230,6 +23251,24 @@ function _saveClaudeKey(key, inp) {
     inp.placeholder = '●●●●●●●●' + key.slice(-6) + ' (저장됨)';
   }
   showToast('✅ API 키 저장 완료');
+}
+
+// 작물명 직접 입력 시 처리
+function _onCropInputChange(inp, slotIdx) {
+  var val = (inp.value||'').trim();
+  inp.style.color = val ? '#1565C0' : '';
+  inp.style.fontWeight = val ? '600' : '';
+  // 선택된 작물 표시 업데이트
+  var chk = Array.from(document.querySelectorAll('.crop-select:checked')).map(function(c){return c.dataset.short||c.value;});
+  var allInputVals = [];
+  for(var i=1;i<=4;i++){var el=document.getElementById('psis-crop-'+i);if(el&&(el.value||'').trim())allInputVals.push((el.value||'').trim());}
+  var dp = document.getElementById('selected-crops-display');
+  if(dp){
+    var display = allInputVals.length ? allInputVals : chk;
+    dp.innerHTML = display.length
+      ? '<span style="color:var(--green-dark);font-weight:600;">선택: </span>' + display.map(function(n){return '<span style="background:var(--green-dark);color:#fff;padding:2px 8px;border-radius:6px;font-size:11px;margin-right:4px;">'+esc(n)+'</span>';}).join('')
+      : '<span style="font-size:11px;color:var(--gray-400);">작물을 선택하세요</span>';
+  }
 }
 </script>
 </body>
