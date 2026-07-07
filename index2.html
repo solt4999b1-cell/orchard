@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="병해충 진단">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="64x64" href="favicon-64.png">
+<link rel="manifest" href="manifest.webmanifest">
 <title>병해충 진단 · 사진대조</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -718,7 +723,7 @@ const Rx = {
     }
   },
   render(cropName, name, rows, jr){
-    this._all = rows || [];
+    this._all = this._dedupe(rows || []);
     this._jr = jr;
     this._ctx = { cropName, name };
     this._fallback = !!(jr && jr._fallback);
@@ -735,6 +740,19 @@ const Rx = {
     this.renderList();
   },
   setFilter(n){ this._filter=n; this.renderList(); },
+  // 화면에 보이는 정보(상표·회사·용도·병해충·희석·안전사용기준)가 같으면 중복으로 보고 하나만 남김
+  _dedupe(rows){
+    const P=(r,k)=>NCPMS.pick(r,k);
+    const seen=new Set(), out=[];
+    for(const r of rows){
+      const sig=[P(r,['pestiBrandName','상표명']),P(r,['compName','회사명','법인명']),
+                 P(r,['useName','용도']),P(r,['diseaseWeedName','병해충명']),
+                 P(r,['dilutUnit']),P(r,['useSuittime']),P(r,['useNum'])].join('|');
+      if(seen.has(sig)) continue;
+      seen.add(sig); out.push(r);
+    }
+    return out;
+  },
   toggleOwn(i){
     const r=this._items[i]; if(!r) return;
     const brand=NCPMS.pick(r,['pestiBrandName','상표명','brandName'])||NCPMS.pick(r,['pestiKorName','품목명']);
@@ -753,18 +771,25 @@ const Rx = {
     let chips='';
     if(this._fallback){
       const names=[...new Set(all.map(dname).filter(Boolean))].sort();
+      const isNear=n=>norm(n)===want||norm(n).includes(want)||want.includes(norm(n));
+      const chip=n=>{
+        const cnt=all.filter(r=>dname(r)===n).length;
+        return `<button class="crop ${this._filter===n?'on':''}" onclick="Rx.setFilter('${n.replace(/'/g,'')}')">${isNear(n)?'★ ':''}${n} ${cnt}</button>`;
+      };
+      const near=names.filter(isNear), rest=names.filter(n=>!isNear(n));
       chips=`<div style="margin:2px 0 12px">
         <div style="font-size:12px;color:#7a2f22;margin-bottom:8px">
-          ‘${name}’ 정확 매칭 0건 → <b>${cropName}</b> 등록 병해충명 중 골라보세요
-          <span style="color:var(--ink-soft)">(NCPMS↔PSIS 표기 차이, ★=유사)</span></div>
+          ‘${name}’와 똑같은 이름이 PSIS에 없어, <b>${cropName}</b>의 유사 병해충명을 골라 약제를 봅니다.
+          <span style="color:var(--ink-soft)">(★=유사)</span></div>
         <div class="crops" style="gap:6px">
-          <button class="crop ${!this._filter?'on':''}" onclick="Rx.setFilter(null)">전체 ${all.length}</button>`
-        + names.map(n=>{
-            const near=norm(n)===want||norm(n).includes(want)||want.includes(norm(n));
-            const cnt=all.filter(r=>dname(r)===n).length;
-            return `<button class="crop ${this._filter===n?'on':''}" onclick="Rx.setFilter('${n.replace(/'/g,'')}')">${near?'★ ':''}${n} ${cnt}</button>`;
-          }).join('')
-        + `</div></div>`;
+          <button class="crop ${!this._filter?'on':''}" onclick="Rx.setFilter(null)">전체 ${all.length}</button>
+          ${near.map(chip).join('')}
+        </div>
+        ${rest.length?`<details style="margin-top:8px">
+          <summary style="font-size:12px;color:var(--ink-soft);cursor:pointer">그 외 병해충명 ${rest.length}개 보기</summary>
+          <div class="crops" style="gap:6px;margin-top:8px">${rest.map(chip).join('')}</div>
+        </details>`:''}
+      </div>`;
     }
 
     const shown = this._filter ? all.filter(r=>dname(r)===this._filter) : all;
