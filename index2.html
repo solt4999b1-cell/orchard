@@ -10,10 +10,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
 <style>
-/*???????????????????????????????????????????????????????????
-  디자인 토큰 ? '과수 병해충 야외 도감' 컨셉
+/*═══════════════════════════════════════════════════════════
+  디자인 토큰 — '과수 병해충 야외 도감' 컨셉
   잎(녹)·수피(갈)·잘익은열매(호박금) / 종이흰색 아님(일반 AI톤 회피)
-???????????????????????????????????????????????????????????*/
+═══════════════════════════════════════════════════════════*/
 :root{
   --bg:#F4F7F1; --panel:#FFFFFF; --ink:#1E2B22; --ink-soft:#4B5A4F;
   --line:#DCE4D5; --leaf:#2E6B3E; --leaf-d:#245331; --leaf-l:#E7F0E5;
@@ -179,7 +179,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .lb.on{display:flex}
 .lb img{max-width:94vw;max-height:94vh;border-radius:8px}
 
-/*??? iPhone 12 Pro 최적화 & 신규 기능 ???*/
+/*═══ iPhone 12 Pro 최적화 & 신규 기능 ═══*/
 /* 세이프에어리어(노치/홈바) */
 .wrap{padding-left:max(16px,env(safe-area-inset-left));
   padding-right:max(16px,env(safe-area-inset-right));
@@ -235,8 +235,8 @@ img{ -webkit-user-select:none; user-select:none }
 
   <!-- 병/해충 탭 -->
   <div class="tabs" id="tabs" style="display:none">
-    <button class="tab on" data-type="sick" onclick="App.switchTab('sick')">?? 병</button>
-    <button class="tab pest" data-type="insect" onclick="App.switchTab('insect')">?? 해충</button>
+    <button class="tab on" data-type="sick" onclick="App.switchTab('sick')">🍂 병</button>
+    <button class="tab pest" data-type="insect" onclick="App.switchTab('insect')">🐛 해충</button>
   </div>
 
   <div id="list"><div class="state">위에서 작물을 선택하세요.</div></div>
@@ -263,9 +263,9 @@ img{ -webkit-user-select:none; user-select:none }
 <div class="lb" id="lb" onclick="this.classList.remove('on')"><img id="lbImg"></div>
 
 <script>
-/*???????????????????????????????????????????????????????????????
-  0. 설정  ?  실제 앱에 붙일 때 여기만 바꾸면 됩니다
-???????????????????????????????????????????????????????????????*/
+/*═══════════════════════════════════════════════════════════════
+  0. 설정  —  실제 앱에 붙일 때 여기만 바꾸면 됩니다
+═══════════════════════════════════════════════════════════════*/
 const CONFIG = {
   // 기존 GAS 배포 URL (NCPMS 라우팅이 추가된 버전)
   GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
@@ -290,22 +290,22 @@ const CONFIG = {
 
   displayCount: 100,         // NCPMS 목록 페이지당 건수
 
-  // 저장소 훅 ? 기본은 localStorage. 실제 앱에선 Firebase로 교체하세요.
+  // 저장소 훅 — 기본은 localStorage. 실제 앱에선 Firebase로 교체하세요.
   //   예) storage:{ get:async(k,f)=>{...Firestore 읽기...}, set:async(k,v)=>{...쓰기...} }
   storage: {
     get(key, fallback){ try{ const v=localStorage.getItem(key); return v?JSON.parse(v):fallback; }catch(e){ return fallback; } },
     set(key, val){ try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){} }
   },
-  // 보유 농약 공급 훅(선택) ? 실앱에서 myPesticides/userDb_pest 상표명 배열을 돌려주게 바꾸면
+  // 보유 농약 공급 훅(선택) — 실앱에서 myPesticides/userDb_pest 상표명 배열을 돌려주게 바꾸면
   // 앱 실행 시 자동으로 '보유'가 표시됩니다. 미설정이면 사용자가 카드에서 직접 표시.
   ownedProvider: null        // 예: async()=> (await firebase...).map(x=>x.pestiBrandName)
 };
 
-/*???????????????????????????????????????????????????????????????
-  1. AppBus ? 두 모듈(진단 ↔ 처방)이 느슨하게 주고받는 이벤트 버스
+/*═══════════════════════════════════════════════════════════════
+  1. AppBus — 두 모듈(진단 ↔ 처방)이 느슨하게 주고받는 이벤트 버스
      · 'prescription:request'  진단→처방  {cropName, name, type}
      · 'reference:request'     처방→진단  {cropName, name}
-???????????????????????????????????????????????????????????????*/
+═══════════════════════════════════════════════════════════════*/
 const AppBus = {
   _h:{},
   on(evt, fn){ (this._h[evt] ||= []).push(fn); return this; },
@@ -337,10 +337,10 @@ const Owned = {
   }
 };
 
-/*???????????????????????????????????????????????????????????????
-  2. NCPMS 클라이언트 ? GAS 프록시 호출 + 응답에서 값/사진 추출
+/*═══════════════════════════════════════════════════════════════
+  2. NCPMS 클라이언트 — GAS 프록시 호출 + 응답에서 값/사진 추출
      (응답 스키마가 조금 달라도 견디도록 '탐색형'으로 뽑아냄)
-???????????????????????????????????????????????????????????????*/
+═══════════════════════════════════════════════════════════════*/
 const NCPMS = {
   async call(params){
     const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
@@ -415,9 +415,9 @@ const NCPMS = {
   proxyUrl(u){ return CONFIG.GAS_URL + '?target=ncpmsimg&url=' + encodeURIComponent(u); },
 };
 
-/*???????????????????????????????????????????????????????????????
-  3. App ? 진단 모듈 UI
-???????????????????????????????????????????????????????????????*/
+/*═══════════════════════════════════════════════════════════════
+  3. App — 진단 모듈 UI
+═══════════════════════════════════════════════════════════════*/
 const App = {
   crop:null, type:'sick', cache:{}, _edit:false,
 
@@ -431,7 +431,7 @@ const App = {
   renderCrops(){
     document.getElementById('crops').innerHTML = CONFIG.crops.map(c=>
       `<button class="crop ${c===this.crop?'on':''}" onclick="${this._edit?`App.removeCrop('${c.replace(/'/g,'')}')`:`App.selectCrop('${c.replace(/'/g,'')}')`}">
-         ${c}${this._edit?'<span class="del">?</span>':''}</button>`
+         ${c}${this._edit?'<span class="del">✕</span>':''}</button>`
     ).join('');
   },
   toggleEdit(){
@@ -481,7 +481,7 @@ const App = {
       box.innerHTML =
         `<div class="hint"${mismatch?' style="background:#F7E2DE;border-color:#e6b3a8;color:#7a2f22"':''}>
            <b>${rows.length}건</b> · 응답 작물: <b>${gotCrops.join(', ')||'-'}</b>
-           ${mismatch?`　? 요청한 <b>${this.crop}</b>와 다릅니다 (NCPMS 작물명 표기 확인 필요)`:''}
+           ${mismatch?`　⚠ 요청한 <b>${this.crop}</b>와 다릅니다 (NCPMS 작물명 표기 확인 필요)`:''}
            <br>아래 항목을 누르면 <b>내 사진</b>과 <b>참조 사진·증상</b>을 나란히 비교합니다.
          </div>`+
         `<div class="grid">`+ rows.map((r,i)=>{
@@ -527,7 +527,7 @@ const App = {
           raw.replace(/</g,'&lt;')}</pre>
       </div>
       <div class="hint">
-        ? 이 <b>‘원본 응답’ 내용을 그대로 복사해서 보내주시면</b> 원인(키 미설정/작물명 표기/응답구조)을 정확히 짚어 고쳐드립니다.
+        ↳ 이 <b>‘원본 응답’ 내용을 그대로 복사해서 보내주시면</b> 원인(키 미설정/작물명 표기/응답구조)을 정확히 짚어 고쳐드립니다.
       </div>`;
   },
   // 웹 이미지 보조검색 (GAS → 네이버 이미지). NCPMS에 사진이 없을 때 참고용.
@@ -543,14 +543,14 @@ const App = {
       if(!items.length){ strip.innerHTML=`<div class="empty">검색 결과가 없습니다.</div>`; }
       else{
         strip.innerHTML = items.map(it=>
-          `<img loading="lazy" src="${it.thumb}" title="${(it.title||'').replace(/"/g,'')} ? 클릭하면 크게"
+          `<img loading="lazy" src="${it.thumb}" title="${(it.title||'').replace(/"/g,'')} — 클릭하면 크게"
              onclick="App.zoom('${it.thumb}')" onerror="this.remove()">`).join('')
           + `<div class="src">이미지 출처: 웹 검색(네이버) · 참고용이며 저작권은 각 출처에 있습니다.</div>`;
       }
-      if(btn){ btn.textContent='?? 다시 검색'; btn.disabled=false; }
+      if(btn){ btn.textContent='🔄 다시 검색'; btn.disabled=false; }
     }catch(e){
       strip.innerHTML=`<div class="empty" style="color:#C24A3A">${e.message}</div>`;
-      if(btn){ btn.textContent='?? 웹 이미지 검색'; btn.disabled=false; }
+      if(btn){ btn.textContent='🔍 웹 이미지 검색'; btn.disabled=false; }
     }
   },
   imgFallback(img, encUrl){
@@ -592,20 +592,20 @@ const App = {
       <div class="sheet-hd">
         <span class="tag ${isPest?'pest':''}">${this.crop} · ${isPest?'해충':'병'}</span>
         <h2>${nm||'-'}</h2>
-        <button class="x" onclick="App.closeSheet()">?</button>
+        <button class="x" onclick="App.closeSheet()">✕</button>
       </div>
       ${en?`<div style="font-size:12px;color:var(--ink-soft);margin:-6px 2px 12px">${en}</div>`:''}
 
       <div class="compare">
         <div class="col">
-          <h3>?? <b>내 사진</b></h3>
+          <h3>📷 <b>내 사진</b></h3>
           <label class="myphoto" id="myphoto">
             <span>여기를 눌러<br>내 밭 사진을 올려<br>오른쪽과 비교하세요</span>
             <input type="file" accept="image/*" capture="environment" hidden onchange="App.setMyPhoto(this)">
           </label>
         </div>
         <div class="col">
-          <h3>?? <b>참조 사진</b> <span style="color:var(--ink-soft);font-weight:400">NCPMS</span></h3>
+          <h3>🔍 <b>참조 사진</b> <span style="color:var(--ink-soft);font-weight:400">NCPMS</span></h3>
           <div class="refstrip">${
             imgs.length
               ? imgs.map(u=>`<img loading="lazy" src="${u}" onclick="App.zoom(this.src)"
@@ -621,7 +621,7 @@ const App = {
           NCPMS 사진이 없거나 부족할 때만 참고하세요. 웹 이미지는 출처가 검증되지 않아
           <b>실제 병해충과 다를 수 있습니다.</b> 최종 판단은 공식 참조사진·증상으로 하세요.</p>
         <button class="webbtn" onclick="App.webImages('${(this.crop+' '+(nm||'')).replace(/'/g,'')}', this)">
-          ?? ‘${this.crop} ${nm}’ 웹 이미지 검색</button>
+          🔍 ‘${this.crop} ${nm}’ 웹 이미지 검색</button>
         <div class="webstrip" id="webstrip"></div>
       </div>
 
@@ -634,7 +634,7 @@ const App = {
 
       <div class="handoff">
         <button class="btn-rx" onclick="App.prescribe('${(nm||'').replace(/'/g,'')}','${this.type}')">
-          ?? 이 ${isPest?'해충':'병'}으로 <b style="margin:0 4px">등록 농약</b> 찾기
+          💊 이 ${isPest?'해충':'병'}으로 <b style="margin:0 4px">등록 농약</b> 찾기
           <small>→ 처방 모듈로</small>
         </button>
       </div>`;
@@ -642,7 +642,7 @@ const App = {
   // 증상 문단 → 체크 항목으로 쪼개기 (마침표/줄바꿈/·)
   symptomsToChecks(text){
     if(!text) return [];
-    return text.split(/(?:\r?\n|(?<=다\.)|·|?|;|。)/)
+    return text.split(/(?:\r?\n|(?<=다\.)|·|•|;|。)/)
       .map(s=>s.trim()).filter(s=>s.length>4).slice(0,8);
   },
   setMyPhoto(input){
@@ -676,11 +676,11 @@ const App = {
   }
 };
 
-/*???????????????????????????????????????????????????????????????
-  4. Rx ? 처방(농약) 모듈  [데모: 실제 PSIS를 GAS로 호출]
-     ? 실제 앱에서는 여러분의 기존 PSIS 검색 함수로 이 핸들러만 교체하면 됩니다.
+/*═══════════════════════════════════════════════════════════════
+  4. Rx — 처방(농약) 모듈  [데모: 실제 PSIS를 GAS로 호출]
+     ▸ 실제 앱에서는 여러분의 기존 PSIS 검색 함수로 이 핸들러만 교체하면 됩니다.
        AppBus.on('prescription:request', ({cropName,name}) => 기존PSIS검색(cropName, name))
-???????????????????????????????????????????????????????????????*/
+═══════════════════════════════════════════════════════════════*/
 const Rx = {
   init(){ AppBus.on('prescription:request', d=>this.search(d)); },
   psisCrop(c){ return CONFIG.cropMapToPsis[c] || c; },
@@ -690,7 +690,7 @@ const Rx = {
     bg.classList.add('on');
     document.body.style.overflow='hidden';
     box.innerHTML=`
-      <div class="rx-hd"><h2>?? 등록 농약</h2><button class="x" onclick="Rx.close()">?</button></div>
+      <div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
       <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 에 등록된 약제 검색 중…</p>
       <div class="state"><div class="spinner"></div>PSIS 조회 중…</div>`;
     try{
@@ -713,7 +713,7 @@ const Rx = {
       if(jr && jr.ok===false && !list.length) throw new Error(jr.error||'검색 실패');
       this.render(cropName, name, list, jr);
     }catch(e){
-      box.innerHTML=`<div class="rx-hd"><h2>?? 등록 농약</h2><button class="x" onclick="Rx.close()">?</button></div>
+      box.innerHTML=`<div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
         <div class="state">조회 실패<br><small>${e.message}</small></div>`;
     }
   },
@@ -793,17 +793,17 @@ const Rx = {
           ${use?`<span class="use ${useC}">${use}</span>`:''}
           ${dn?`<span style="font-size:11px;color:var(--ink-soft)">${dn}</span>`:''}</div>
         <div class="meta">${komp?komp+' · ':''}${comp||''}</div>
-        ${safety?`<div class="meta" style="color:var(--leaf-d);margin-top:4px">?? ${safety}</div>`:''}
+        ${safety?`<div class="meta" style="color:var(--leaf-d);margin-top:4px">🧪 ${safety}</div>`:''}
         <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
           <button class="own-toggle ${own?'on':''}" onclick="Rx.toggleOwn(${i})">${own?'★ 보유':'☆ 보유표시'}</button>
-          <button class="back" onclick="Rx.detailView(${i})">?? 상세·독성</button>
-          <button class="back" onclick="Rx.backToSymptom('${cropName}','${name.replace(/'/g,'')}')">? 증상 다시보기</button>
+          <button class="back" onclick="Rx.detailView(${i})">🔬 상세·독성</button>
+          <button class="back" onclick="Rx.backToSymptom('${cropName}','${name.replace(/'/g,'')}')">↩ 증상 다시보기</button>
         </div>
       </div>`;
     };
     let cards='';
     if(owned.length){
-      cards += `<div class="own-sep">? 보유 중인 농약 ${owned.length}</div>`
+      cards += `<div class="own-sep">✅ 보유 중인 농약 ${owned.length}</div>`
              + owned.map((r,i)=>cardHtml(r,i)).join('');
       if(others.length) cards += `<div class="own-sep">그 외 등록 농약 ${others.length}</div>`;
       cards += others.map((r,idx)=>cardHtml(r, owned.length+idx)).join('');
@@ -812,7 +812,7 @@ const Rx = {
     }
 
     box.innerHTML=`
-      <div class="rx-hd"><h2>?? 등록 농약</h2><button class="x" onclick="Rx.close()">?</button></div>
+      <div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
       <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b>
         ${this._fallback?'':`등록 약제 ${all.length}건`}<span style="color:var(--ink-soft)"> (PSIS)</span></p>
       ${chips}
@@ -847,8 +847,8 @@ const Rx = {
       `<tr><td style="color:var(--ink-soft);white-space:nowrap;padding:4px 12px 4px 0;vertical-align:top">${k}</td>
         <td style="padding:4px 0;word-break:break-all">${(typeof v==='object'?JSON.stringify(v):String(v)).replace(/</g,'&lt;')}</td></tr>`).join('');
     box.innerHTML=`
-      <div class="rx-hd"><h2>?? ${title}</h2><button class="x" onclick="Rx.close()">?</button></div>
-      <p class="rx-sub"><button class="back" onclick="Rx.reopen()">? 약제 목록으로</button></p>
+      <div class="rx-hd"><h2>🔬 ${title}</h2><button class="x" onclick="Rx.close()">✕</button></div>
+      <p class="rx-sub"><button class="back" onclick="Rx.reopen()">↩ 약제 목록으로</button></p>
       <div class="info"><h4>기본 정보 (SVC01)</h4>
         <div class="tbl-wrap"><table style="border-collapse:collapse;width:100%;font-size:13px">${rowsHtml}</table></div></div>
       <div class="info"><h4>독성 · 취소 정보 (SVC02 / SVC06)</h4>
@@ -883,7 +883,7 @@ const Rx = {
     if(!one || typeof one!=='object' || one._parseError) return { err:'표시할 항목 없음' };
     return { one };
   },
-  // 독성·안전 정보 (SVC02) ? 안전값 강조
+  // 독성·안전 정보 (SVC02) — 안전값 강조
   toxBlock(jr){
     const {one, err}=this._extract(jr);
     if(err) return `<div style="margin-bottom:14px"><b>독성 · 안전 정보</b>
@@ -903,12 +903,12 @@ const Rx = {
     return `<div style="margin-bottom:16px">
       <b>독성 · 안전 정보 (SVC02)</b>
       ${chips?`<div style="margin:8px 0">${chips}</div>`:''}
-      ${safety?`<div class="meta" style="color:var(--leaf-d);margin-bottom:8px">?? ${safety}</div>`:''}
+      ${safety?`<div class="meta" style="color:var(--leaf-d);margin-bottom:8px">🧪 ${safety}</div>`:''}
       <details><summary style="cursor:pointer;font-size:12px;color:var(--ink-soft)">전체 필드 보기</summary>
         <div class="tbl-wrap"><table style="border-collapse:collapse;width:100%;font-size:12px;margin-top:6px">${rows}</table></div>
       </details></div>`;
   },
-  // 등록취소 이력 (SVC06) ? 정상 품목이면 이력 없음이 정상
+  // 등록취소 이력 (SVC06) — 정상 품목이면 이력 없음이 정상
   cancelBlock(jr){
     const {one, err}=this._extract(jr);
     if(err) return `<div style="margin-bottom:6px"><b>등록취소 이력 (SVC06)</b>
@@ -917,7 +917,7 @@ const Rx = {
     const rows=Object.entries(one).map(([k,v])=>
       `<tr><td style="color:var(--ink-soft);padding:3px 10px 3px 0;white-space:nowrap;vertical-align:top">${k}</td>
         <td style="padding:3px 0;word-break:break-all">${(typeof v==='object'?JSON.stringify(v):String(v)).replace(/</g,'&lt;')}</td></tr>`).join('');
-    return `<div style="margin-bottom:6px"><b>? 등록취소 이력 (SVC06)</b>
+    return `<div style="margin-bottom:6px"><b>⚠ 등록취소 이력 (SVC06)</b>
       <div class="tbl-wrap"><table style="border-collapse:collapse;width:100%;font-size:12px;margin-top:6px">${rows}</table></div></div>`;
   },
 
@@ -929,9 +929,9 @@ const Rx = {
     if(!document.getElementById('sheetBg').classList.contains('on')) document.body.style.overflow=''; }
 };
 
-/*???????????????????????????????????????????????????????????????
+/*═══════════════════════════════════════════════════════════════
   5. 시작
-???????????????????????????????????????????????????????????????*/
+═══════════════════════════════════════════════════════════════*/
 App.init();
 Rx.init();
 </script>
