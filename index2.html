@@ -362,8 +362,14 @@ const App = {
              this.cache[key]=data; }
       const rows=NCPMS.rows(data);
       if(!rows.length){ box.innerHTML = this.debugView(data); return; }
+      const gotCrops=[...new Set(rows.map(r=>NCPMS.pick(r,['cropName'])).filter(Boolean))];
+      const mismatch = gotCrops.length && !gotCrops.includes(this.crop);
       box.innerHTML =
-        `<div class="hint">아래에서 의심되는 항목을 누르면, <b>내 사진</b>과 <b>참조 사진·증상</b>을 나란히 비교할 수 있어요.</div>`+
+        `<div class="hint"${mismatch?' style="background:#F7E2DE;border-color:#e6b3a8;color:#7a2f22"':''}>
+           <b>${rows.length}건</b> · 응답 작물: <b>${gotCrops.join(', ')||'-'}</b>
+           ${mismatch?`　⚠ 요청한 <b>${this.crop}</b>와 다릅니다 (NCPMS 작물명 표기 확인 필요)`:''}
+           <br>아래 항목을 누르면 <b>내 사진</b>과 <b>참조 사진·증상</b>을 나란히 비교합니다.
+         </div>`+
         `<div class="grid">`+ rows.map((r,i)=>{
           const nm=NCPMS.name(r)||'(이름미상)', en=NCPMS.nameEn(r);
           const imgs=NCPMS.images(r); const th=imgs[0];
