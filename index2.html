@@ -101,21 +101,26 @@ body{margin:0;background:var(--bg);color:var(--ink);
   border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink)}
 
 /* 대조 2열 : 내 사진 | 참조 사진 */
-.compare{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
-@media(max-width:560px){.compare{grid-template-columns:1fr}}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
 .col{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
-  padding:12px;box-shadow:var(--shadow)}
-.col h3{margin:0 0 10px;font-size:13px;letter-spacing:.3px;color:var(--ink-soft);
-  display:flex;align-items:center;gap:6px}
+  padding:10px;box-shadow:var(--shadow);min-width:0}
+.col h3{margin:0 0 8px;font-size:12px;letter-spacing:.2px;color:var(--ink-soft);
+  display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
 .col h3 b{color:var(--leaf-d)}
-.myphoto{aspect-ratio:4/3;border:2px dashed var(--line);border-radius:10px;
-  display:flex;align-items:center;justify-content:center;text-align:center;
-  color:var(--ink-soft);font-size:13px;cursor:pointer;overflow:hidden;background:var(--leaf-l)}
+.myphoto{aspect-ratio:1/1;border:2px dashed var(--line);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.35;
+  color:var(--ink-soft);font-size:12px;cursor:pointer;overflow:hidden;background:var(--leaf-l)}
 .myphoto img{width:100%;height:100%;object-fit:cover}
-.refstrip{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.refstrip img{height:120px;border-radius:10px;flex:none;cursor:zoom-in;
-  border:1px solid var(--line);background:var(--leaf-l)}
-.refstrip .empty{color:var(--ink-soft);font-size:13px;padding:30px 6px}
+/* 참조 대표사진(정사각) */
+.refmain{aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--leaf-l);
+  border:1px solid var(--line)}
+.refmain img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.ph2{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  color:var(--leaf);opacity:.55;font-size:12px;text-align:center;padding:6px}
+/* 참조 썸네일 줄(가로 스크롤, 폭에 맞춤) */
+.refthumbs{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:2px}
+.refthumbs img{height:56px;width:56px;object-fit:cover;border-radius:8px;flex:none;
+  cursor:zoom-in;border:1px solid var(--line);background:var(--leaf-l)}
 
 /* 웹 이미지 보조검색 (비공식·참고용) */
 .webbox h4 span.unoff{font-size:11px;font-weight:700;color:#7a2f22;
@@ -192,7 +197,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .sheet,.rx{padding-bottom:calc(30px + env(safe-area-inset-bottom))}
 /* 시트 높이: 동적 뷰포트(dvh) 우선, 미지원 시 vh */
 .sheet,.rx{max-height:92vh;max-height:92dvh;-webkit-overflow-scrolling:touch}
-.refstrip,.webstrip,.crops{-webkit-overflow-scrolling:touch}
+.refthumbs,.webstrip,.crops{-webkit-overflow-scrolling:touch}
 /* iOS 입력 자동확대 방지: 폰트 16px 이상 */
 .crop-add input{font-size:16px}
 /* 넓은 표는 가로 스크롤 컨테이너로 감싸 화면 밖으로 안 나가게 */
@@ -605,20 +610,24 @@ const App = {
         <div class="col">
           <h3>📷 <b>내 사진</b></h3>
           <label class="myphoto" id="myphoto">
-            <span>여기를 눌러<br>내 밭 사진을 올려<br>오른쪽과 비교하세요</span>
+            <span>탭하여 촬영<br>또는 선택</span>
             <input type="file" accept="image/*" capture="environment" hidden onchange="App.setMyPhoto(this)">
           </label>
         </div>
         <div class="col">
-          <h3>🔍 <b>참조 사진</b> <span style="color:var(--ink-soft);font-weight:400">NCPMS</span></h3>
-          <div class="refstrip">${
+          <h3>🔍 <b>참조</b> <span style="color:var(--ink-soft);font-weight:400">NCPMS</span></h3>
+          <div class="refmain">${
             imgs.length
-              ? imgs.map(u=>`<img loading="lazy" src="${u}" onclick="App.zoom(this.src)"
-                    onerror="App.refImgFallback(this,'${encodeURIComponent(u)}')">`).join('')
-              : `<div class="empty">등록된 참조사진이 없습니다.</div>`
+              ? `<img loading="lazy" src="${imgs[0]}" onclick="App.zoom(this.src)"
+                    onerror="App.refMainFallback(this,'${encodeURIComponent(imgs[0])}')">`
+              : `<div class="ph2">참조사진 없음</div>`
           }</div>
         </div>
       </div>
+      ${imgs.length>1 ? `<div class="refthumbs">${
+        imgs.map(u=>`<img loading="lazy" src="${u}" onclick="App.zoom(this.src)"
+              onerror="App.refImgFallback(this,'${encodeURIComponent(u)}')">`).join('')
+      }</div>` : ''}
 
       <div class="info webbox">
         <h4>웹에서 증상 사진 더 찾기 <span class="unoff">비공식 · 참고용</span></h4>
@@ -661,6 +670,14 @@ const App = {
     fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl)))
       .then(r=>r.json()).then(d=>{ if(d.ok) img.src=d.dataUri; else img.remove(); })
       .catch(()=>img.remove());
+  },
+  refMainFallback(img, encUrl){
+    if(img.dataset.tried){ img.parentNode.innerHTML='<div class="ph2">참조사진 없음</div>'; return; }
+    img.dataset.tried='1';
+    fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl)))
+      .then(r=>r.json()).then(d=>{ if(d.ok) img.src=d.dataUri;
+        else img.parentNode.innerHTML='<div class="ph2">참조사진 없음</div>'; })
+      .catch(()=>img.parentNode.innerHTML='<div class="ph2">참조사진 없음</div>');
   },
   zoom(src){ document.getElementById('lbImg').src=src; document.getElementById('lb').classList.add('on'); },
   closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); document.body.style.overflow=''; },
