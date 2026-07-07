@@ -177,7 +177,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .db-tab.on{color:var(--green-dark);border-bottom-color:var(--green-dark);font-weight:600;}
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;;overscroll-behavior:contain;;overscroll-behavior:contain;touch-action:none;}
 .modal-bg.hidden{display:none;}
-.modal{background:var(--card);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:calc(90vh - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;;touch-action:pan-y;overscroll-behavior:contain;}
+.modal{background:var(--card);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:calc(85vh - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;;touch-action:pan-y;overscroll-behavior:contain;}
 .modal-title{font-size:16px;font-weight:600;color:var(--green-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .modal-field{margin-bottom:12px;}
 .modal-field label{display:block;font-size:12px;font-weight:500;color:var(--gray-700);margin-bottom:4px;}
@@ -11662,13 +11662,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       </div>
     </div>
 
-    <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-bottom:8px;">
-      <div style="display:flex;gap:8px;">
-        <button class="btn-secondary" style="flex:1;padding:11px;" onclick="closeModal('gas-settings-modal')">닫기</button>
-        <button class="btn-primary" style="flex:1;padding:11px;" onclick="saveGasUrl()">GAS URL 저장</button>
-      </div>
-      <button class="btn-secondary" style="width:100%;padding:11px;" onclick="testGasConnection()">🔌 GAS 연결 테스트</button>
-      <button style="width:100%;padding:11px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;" onclick="fixAllEmojis()">🎨 Firebase 이모지 일괄 수정</button>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px;padding-bottom:env(safe-area-inset-bottom,8px);">
+      <button class="btn-secondary" style="padding:10px 6px;font-size:12px;" onclick="closeModal('gas-settings-modal')">닫기</button>
+      <button class="btn-primary" style="padding:10px 6px;font-size:12px;" onclick="saveGasUrl()">GAS URL 저장</button>
+      <button class="btn-secondary" style="padding:10px 6px;font-size:12px;" onclick="testGasConnection()">🔌 GAS 연결</button>
+      <button style="padding:10px 6px;font-size:12px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-weight:600;cursor:pointer;" onclick="fixAllEmojis()">🎨 이모지 수정</button>
     </div>
   </div>
 </div>
