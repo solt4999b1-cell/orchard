@@ -11614,59 +11614,65 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 </div>
 
 <!-- GAS OCR 엔진 설정 모달 -->
-<div class="modal-bg hidden" id="gas-settings-modal" style="overflow-y:auto;">
-  <div class="modal">
-    <div class="modal-title">⚙️ API 키 · OCR 설정</div>
-
-    <!-- Claude API 키 섹션 -->
-    <div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:10px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">🤖 Claude API 키</div>
-      <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:8px;">
-        AI 농약 분석·수확일 검색 등 AI 기능에 사용됩니다.<br>
-        키는 이 기기에만 저장되며 외부로 전송되지 않습니다.
-      </div>
-      <div style="display:flex;gap:6px;margin-bottom:6px;">
-        <input type="password" id="claude-key-input"
-          placeholder="sk-ant-api03-..."
-          style="flex:1;padding:9px 12px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;">
-        <button onclick="toggleClaudeKeyVisible()"
-          style="padding:9px 12px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;cursor:pointer;">👁</button>
-      </div>
-      <div style="display:flex;gap:6px;">
-        <button onclick="saveClaudeKey()"
-          style="flex:2;padding:9px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:600;cursor:pointer;">✅ 저장</button>
-        <button onclick="testClaudeKey()"
-          style="flex:1;padding:9px;background:#fff;border:1px solid var(--green-mid);color:var(--green-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔍 테스트</button>
-        <button onclick="clearClaudeKey()"
-          style="flex:1;padding:9px;background:#fff;border:1px solid var(--gray-200);color:var(--gray-500);border-radius:8px;font-size:12px;cursor:pointer;">🗑 삭제</button>
-      </div>
-      <div id="claude-key-status" style="margin-top:7px;font-size:11px;min-height:18px;"></div>
+<div class="modal-bg hidden" id="gas-settings-modal">
+  <div class="modal" style="display:flex;flex-direction:column;max-height:calc(88vh - env(safe-area-inset-bottom));padding:0;overflow:hidden;">
+    <!-- 헤더 -->
+    <div style="padding:14px 16px 10px;border-bottom:1px solid var(--gray-200);flex-shrink:0;">
+      <div class="modal-title" style="margin-bottom:0;">⚙️ API 키 · GAS 설정</div>
     </div>
 
-    <!-- GAS URL 섹션 -->
-    <div style="background:var(--blue-light);border:1.5px solid var(--blue-mid);border-radius:10px;padding:12px;margin-bottom:14px;">
-      <div style="font-size:13px;font-weight:700;color:var(--blue-dark);margin-bottom:6px;">🔗 Google Apps Script URL</div>
-      <div style="font-size:11px;color:var(--gray-600);line-height:1.8;margin-bottom:8px;">
-        GAS를 연결하면 PSIS API CORS 문제를 해결하고<br>
-        OCR 한글 인식률이 크게 향상됩니다.
+    <!-- 스크롤 영역 -->
+    <div style="flex:1;overflow-y:auto;padding:14px 16px;-webkit-overflow-scrolling:touch;">
+
+      <!-- Claude API 키 섹션 -->
+      <div style="background:var(--green-light);border:1.5px solid var(--green-mid);border-radius:10px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--green-dark);margin-bottom:6px;">🤖 Claude API 키</div>
+        <div style="font-size:10px;color:var(--gray-600);margin-bottom:8px;">AI 농약 분석 등에 사용 · 이 기기에만 저장됩니다</div>
+        <div style="display:flex;gap:6px;margin-bottom:6px;">
+          <input type="password" id="claude-key-input"
+            placeholder="sk-ant-api03-..."
+            style="flex:1;padding:9px 10px;border:1.5px solid var(--gray-200);border-radius:8px;font-size:13px;">
+          <button onclick="toggleClaudeKeyVisible()"
+            style="padding:9px 10px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:13px;cursor:pointer;">👁</button>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button onclick="saveClaudeKey()"
+            style="flex:2;padding:9px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;">✅ 저장</button>
+          <button onclick="testClaudeKey()"
+            style="flex:1;padding:9px;background:#fff;border:1px solid var(--green-mid);color:var(--green-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔍 테스트</button>
+          <button onclick="clearClaudeKey()"
+            style="flex:1;padding:9px;background:#fff;border:1px solid var(--gray-200);color:var(--gray-500);border-radius:8px;font-size:12px;cursor:pointer;">🗑 삭제</button>
+        </div>
+        <div id="claude-key-status" style="margin-top:6px;font-size:11px;min-height:16px;"></div>
       </div>
-      <input id="gas-url-input" type="text"
-        placeholder="https://script.google.com/macros/s/.../exec"
-        style="width:100%;padding:9px 12px;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:12px;box-sizing:border-box;margin-bottom:6px;">
-      <div id="gas-test-result" style="font-size:12px;margin-bottom:6px;min-height:18px;"></div>
-      <div style="font-size:11px;color:var(--gray-500);background:var(--gray-50,#F9F8F6);border-radius:7px;padding:8px 10px;line-height:1.8;margin-bottom:8px;">
-        <b>배포 방법</b><br>
-        ① script.google.com → 새 프로젝트<br>
-        ② GAS_Code.gs 붙여넣기 후 스크립트 속성에 PSIS_API_KEY 저장<br>
-        ③ 배포 → 웹앱 → 액세스: <b>모든 사용자</b>
+
+      <!-- GAS URL 섹션 -->
+      <div style="background:var(--blue-light);border:1.5px solid var(--blue-mid);border-radius:10px;padding:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-dark);margin-bottom:6px;">🔗 GAS URL</div>
+        <div style="font-size:10px;color:var(--gray-600);margin-bottom:8px;">PSIS API CORS 우회 · OCR 인식률 향상</div>
+        <input id="gas-url-input" type="text"
+          placeholder="https://script.google.com/macros/s/.../exec"
+          style="width:100%;padding:9px 10px;border:1.5px solid var(--blue-mid);border-radius:8px;font-size:12px;box-sizing:border-box;margin-bottom:6px;">
+        <div id="gas-test-result" style="font-size:11px;margin-bottom:4px;min-height:16px;"></div>
+        <details style="margin-top:4px;">
+          <summary style="font-size:11px;color:var(--blue-dark);cursor:pointer;font-weight:600;">배포 방법 보기 ▼</summary>
+          <div style="font-size:11px;color:var(--gray-500);padding:8px 0;line-height:1.8;">
+            ① script.google.com → 새 프로젝트<br>
+            ② GAS_Code.gs 붙여넣기 → 스크립트 속성에 PSIS_API_KEY 저장<br>
+            ③ 배포 → 웹앱 → 액세스: <b>모든 사용자</b>
+          </div>
+        </details>
       </div>
     </div>
 
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:14px;padding-bottom:env(safe-area-inset-bottom,8px);">
-      <button class="btn-secondary" style="padding:10px 6px;font-size:12px;" onclick="closeModal('gas-settings-modal')">닫기</button>
-      <button class="btn-primary" style="padding:10px 6px;font-size:12px;" onclick="saveGasUrl()">GAS URL 저장</button>
-      <button class="btn-secondary" style="padding:10px 6px;font-size:12px;" onclick="testGasConnection()">🔌 GAS 연결</button>
-      <button style="padding:10px 6px;font-size:12px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-weight:600;cursor:pointer;" onclick="fixAllEmojis()">🎨 이모지 수정</button>
+    <!-- 고정 버튼 영역 -->
+    <div style="flex-shrink:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom));border-top:1px solid var(--gray-200);background:var(--card);">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+        <button class="btn-secondary" style="padding:11px 6px;font-size:12px;" onclick="closeModal('gas-settings-modal')">닫기</button>
+        <button class="btn-primary" style="padding:11px 6px;font-size:12px;" onclick="saveGasUrl()">GAS URL 저장</button>
+        <button class="btn-secondary" style="padding:11px 6px;font-size:12px;" onclick="testGasConnection()">🔌 GAS 연결</button>
+        <button style="padding:11px 6px;font-size:12px;background:#FF8F00;color:#fff;border-radius:8px;border:none;font-weight:600;cursor:pointer;" onclick="fixAllEmojis()">🎨 이모지 수정</button>
+      </div>
     </div>
   </div>
 </div>
