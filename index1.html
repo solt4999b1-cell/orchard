@@ -15227,8 +15227,9 @@ async function saveLog(){
 
 function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
 document.querySelectorAll('.modal-bg').forEach(function(m){
-  // db-item-modal은 배경 클릭으로 닫히지 않음 (취소 버튼으로만 닫기)
+  // 배경 클릭으로 닫히지 않는 모달
   if(m.id==='db-item-modal') return;
+  if(m.id==='gas-settings-modal') return;
   m.addEventListener('click',function(e){ if(e.target===m) m.classList.add('hidden'); });
 });
 function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
@@ -15942,8 +15943,7 @@ function saveGasUrl() {
       .catch(function(e){ console.warn('GAS URL 저장 실패', e); });
   }
   updateOcrEngineBadge();
-  closeModal('gas-settings-modal');
-  showToast(url ? '✅ Google Drive OCR 연결됨' : '✅ Tesseract.js 모드로 전환됨');
+  showToast(url ? '✅ GAS URL 저장됨' : '✅ Tesseract.js 모드로 전환됨');
 }
 
 async function loadGasUrlSetting() {
