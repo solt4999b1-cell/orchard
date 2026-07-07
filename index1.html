@@ -175,9 +175,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
 .db-tabs::-webkit-scrollbar{display:none;}
 .db-tab{padding:8px 14px;font-size:13px;cursor:pointer;color:#555;border-bottom:2px solid transparent;margin-bottom:-1px;background:none;border-top:none;border-left:none;border-right:none;;white-space:nowrap;flex-shrink:0;}
 .db-tab.on{color:var(--green-dark);border-bottom-color:var(--green-dark);font-weight:600;}
-.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain;}
+.modal-bg{position:fixed;inset:0;padding-bottom:calc(var(--nav-h,60px) + env(safe-area-inset-bottom));background:rgba(0,0,0,.5);z-index:200;display:flex;align-items:flex-end;justify-content:center;overscroll-behavior:contain;}
 .modal-bg.hidden{display:none;}
-.modal{background:var(--card);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:calc(85vh - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;;touch-action:pan-y;overscroll-behavior:contain;}
+.modal{background:var(--card);border-radius:16px 16px 0 0;padding:20px 20px calc(20px + var(--nav-h,60px) + env(safe-area-inset-bottom));width:100%;max-width:480px;max-height:calc(92vh - var(--nav-h,60px) - env(safe-area-inset-bottom));overflow-y:auto;overscroll-behavior:contain;;touch-action:pan-y;overscroll-behavior:contain;}
 .modal-title{font-size:16px;font-weight:600;color:var(--green-dark);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
 .modal-field{margin-bottom:12px;}
 .modal-field label{display:block;font-size:12px;font-weight:500;color:var(--gray-700);margin-bottom:4px;}
@@ -850,6 +850,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
     overflow-y: scroll !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior: contain;
+  }
+
+  #gas-settings-modal {
+    padding-bottom: 0 !important;
   }
 </style>
 <script>
