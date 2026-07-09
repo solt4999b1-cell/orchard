@@ -22834,6 +22834,11 @@ async function showPsisRawResponse(name) {
 
     // [3단계] 최종 성공 여부 판단 (데이터가 있고 가공된 작물이 1개 이상일 때)
     var finalSuccess = hasData && (Object.keys(cu).length > 0);
+    
+    // ▼ 이 3줄을 새로 추가하여 다른 함수들의 지뢰를 제거합니다.
+    data.cropUsage = cu;
+    data.success = finalSuccess;
+    var isSuccess = finalSuccess; // 이 함수를 호출한 컨텍스트나 클로저 방어용
 
     // [4단계] 배경색과 아이콘 설정
     var bg = finalSuccess ? '#E8F5E9' : '#FFF3E0';
