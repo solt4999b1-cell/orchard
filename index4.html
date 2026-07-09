@@ -78,7 +78,9 @@
             `;
 
             try {
-                const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                //const response = await fetch(url, { method: 'GET', redirect: 'follow' });
+                // 옵션을 비우더라도 fetch는 기본적으로 리다이렉트를 추적(follow)합니다.
+                const response = await fetch(url);
                 
                 // JSON 변환 전, 서버 응답을 텍스트로 먼저 받아 에러 페이지(HTML) 여부 판별
                 const rawText = await response.text();
