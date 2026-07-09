@@ -63,17 +63,17 @@
         
             if (!brandKeyword) return;
         
+            // [필수 확인] 배포하신 구글 웹 앱 URL
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 [변경] 구글 스크립트 규격에 맞게 파라미터를 조합합니다.
-            // doGet의 "if (p.crops || p.diseases || p.company)" 또는 handlePsis_ 규격에 맞춰 전송해야 합니다.
-            // 만약 상표명 단독 검색이라면 구글 스크립트 내부 주석에 맞춰 target을 지정하거나 규칙을 따라야 합니다.
-            // 여기서는 다중검색(psisMultiSearch_) 조건에 맞추기 위해 파라미터를 재구성합니다.
+            // 💡 구글 스크립트(Code.gs) 규격에 맞게 파라미터를 명확히 설정합니다.
+            // 기존의 '?keyword=' 대신, 제공해주신 doGet 소스의 다중검색(psisMultiSearch_) 조건에 맞춥니다.
             let url = `${GAS_URL}?target=psis&crops=${encodeURIComponent(brandKeyword)}`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
         
+            // 화면에 현재 통신하려는 URL을 출력
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -83,42 +83,48 @@
             `;
         
             try {
-                const response = await fetch(url);
+                // 💡 구글 리다이렉트 차단 문제를 해결하기 위해 가장 표준적인 Fetch 방식으로 요청합니다.
+                const response = await fetch(url, {
+                    method: 'GET',
+                    mode: 'cors',
+                    credentials: 'omit' // 구글 로그인 세션 간섭 방지
+                });
+                
                 const rawText = await response.text();
                 
                 try {
                     const data = JSON.parse(rawText);
                     
-                    // 💡 [변경] 구글 스크립트는 성공 여부를 'ok'로 보냅니다. (기존 data.success를 데이터 구조에 맞게 매핑)
-                    // 브라우저로 직접 주소를 눌렀을 때 나오는 화면의 데이터 구조(예: 목록 변수명)를 보고 아래를 맞춰야 합니다.
-                    // 만약 실제 목록 데이터가 _rawList가 아니라 다른 이름(예: list, items)이라면 그것도 고쳐야 합니다.
-                    
-                    // 임시로 구글 스크립트 양식에 맞춰 호환성 보정
+                    // 💡 구글 스크립트 결과 포맷(ok: true/false)을 기존 HTML 양식(success)에 맞게 호환 보정
                     const formattedData = {
-                        success: data.ok !== false, // ok가 false가 아니면 성공으로 간주
-                        _rawList: data.list || data.items || data._rawList || [], // 구글이 주는 배열 이름으로 매핑
-                        source: data.source || '공공데이터'
+                        success: data.ok !== false, 
+                        _rawList: data.list || data.items || data._rawList || [], 
+                        source: data.source || '농약정보'
                     };
         
                     displayResults(formattedData, compKeyword, brandKeyword);
                 } catch (parseError) {
                     resultDiv.innerHTML += `
                         <div class="error-msg" style="text-align:left;">
-                            <strong>JSON 파싱 에러:</strong><br>
+                            <strong>JSON 파싱 에러 (확장 프로그램 차단 가능성):</strong><br>
+                            서버 응답이 올바른 JSON 형식이 아닙니다. 브라우저의 광고 차단 확장 프로그램을 끄거나 시크릿 창에서 테스트해 주세요.<br><br>
+                            <strong>서버 응답 원본:</strong><br>
                             <textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">${rawText}</textarea>
                         </div>
                     `;
                 }
+        
             } catch (error) {
                 resultDiv.innerHTML += `
                     <div class="error-msg" style="text-align:left;">
-                        <strong>네트워크 에러:</strong><br>
-                        ${error.message}
+                        <strong>네트워크 / CORS 에러:</strong><br>
+                        ${error.name} : ${error.message}<br><br>
+                        현재 브라우저 환경에서 구글 리다이렉트 주소 통신을 차단하고 있습니다. 
+                        <br><strong>[해결책] Ctrl+Shift+N 을 눌러 '시크릿 창'에서 테스트해 보세요.</strong>
                     </div>
                 `;
             }
         }
-
         function displayResults(data, compKeyword, brandKeyword) {
             const resultDiv = document.getElementById('resultContainer');
             resultDiv.innerHTML = ''; 
