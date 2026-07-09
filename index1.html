@@ -22879,36 +22879,32 @@ async function showPsisRawResponse(name) {
       if (data.message)      h += '메시지: <b style="color:#E65100;">'+esc(data.message)+'</b><br>';
       if (data.error)        h += '오류: <b style="color:#C62828;">'+esc(data.error)+'</b><br>';
 
-      // _rawList로 cropUsage 직접 변환
       // _rawList 또는 list.item으로 cropUsage 직접 변환
 		var cu = {};
+		var items = [];
+		
 		// 1. _rawList가 있는 경우
 		if (data._rawList && data._rawList.length > 0) {
-		    data._rawList.forEach(function(row) {
-		        var crop = row.cropName || row.crpName || '기타';
-		        if (!cu[crop]) cu[crop] = [];
-		        cu[crop].push({
-		            target: row.diseaseWeedName || '',
-		            method: row.pestiUse || '',
-		            amount: row.dilutUnit || '',
-		            safety: row.useSuittime || '',
-		            times:  row.useNum || ''
-		        });
-		    });
+			items = data._rawList;
 		} 
 		// 2. list.item이 있는 경우 (현재 응답 구조)
-		else if (data.list && data.list.item && data.list.item.length > 0) {
-		    data.list.item.forEach(function(row) {
-		        var crop = row.cropName || '기타';
-		        if (!cu[crop]) cu[crop] = [];
-		        cu[crop].push({
-		            target: row.diseaseWeedName || '',
-		            method: row.pestiUse || '',
-		            amount: row.dilutUnit || '',
-		            safety: row.useSuittime || '',
-		            times:  row.useNum || ''
-		        });
-		    });
+		else if (data.list && data.list.item) {
+			items = Array.isArray(data.list.item) ? data.list.item : [data.list.item];
+		}
+		
+		// 추출된 항목을 cu 객체로 변환
+		if (items.length > 0) {
+			items.forEach(function(row) {
+				var crop = row.cropName || '기타';
+				if (!cu[crop]) cu[crop] = [];
+				cu[crop].push({
+					target: row.diseaseWeedName || '',
+					method: row.pestiUse || '',
+					amount: row.dilutUnit || '',
+					safety: row.useSuittime || '',
+					times:  row.useNum || ''
+				});
+			});
 		}
 		data.cropUsage = cu; // 변환된 데이터를 확실하게 할당
       
