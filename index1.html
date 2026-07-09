@@ -22906,7 +22906,7 @@ async function showPsisRawResponse(name) {
 		    });
 		}
 		data.cropUsage = cu; // 변환된 데이터를 확실하게 할당
-      }
+      
       var crops = Object.keys(data.cropUsage||{});
       if (crops.length > 0) {
         h += '적용작물 (<b>'+crops.length+'종</b>): <b style="color:#2E7D32;">'+crops.slice(0,5).map(esc).join(', ')
@@ -22932,6 +22932,7 @@ async function showPsisRawResponse(name) {
     if (resultEl) resultEl.innerHTML =
       '<div style="color:#C62828;font-size:12px;">❌ 오류: '+esc(e.message)+'</div>';
   }
+
 }
 
 function applyWarningSample() {
