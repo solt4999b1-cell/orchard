@@ -22875,21 +22875,37 @@ async function showPsisRawResponse(name) {
       if (data.error)        h += '오류: <b style="color:#C62828;">'+esc(data.error)+'</b><br>';
 
       // _rawList로 cropUsage 직접 변환
-      if ((!data.cropUsage || Object.keys(data.cropUsage).length===0) &&
-          data._rawList && data._rawList.length > 0) {
-        var cu = {};
-        data._rawList.forEach(function(row) {
-          var crop = row.cropName || row.crpName || '기타';
-          if (!cu[crop]) cu[crop] = [];
-          cu[crop].push({
-            target: row.diseaseWeedName || '',
-            method: row.pestiUse        || '',
-            amount: row.dilutUnit       || '',
-            safety: row.useSuittime     || '',
-            times:  row.useNum          || ''
-          });
-        });
-        data.cropUsage = cu;
+      // _rawList 또는 list.item으로 cropUsage 직접 변환
+		var cu = {};
+		// 1. _rawList가 있는 경우
+		if (data._rawList && data._rawList.length > 0) {
+		    data._rawList.forEach(function(row) {
+		        var crop = row.cropName || row.crpName || '기타';
+		        if (!cu[crop]) cu[crop] = [];
+		        cu[crop].push({
+		            target: row.diseaseWeedName || '',
+		            method: row.pestiUse || '',
+		            amount: row.dilutUnit || '',
+		            safety: row.useSuittime || '',
+		            times:  row.useNum || ''
+		        });
+		    });
+		} 
+		// 2. list.item이 있는 경우 (현재 응답 구조)
+		else if (data.list && data.list.item && data.list.item.length > 0) {
+		    data.list.item.forEach(function(row) {
+		        var crop = row.cropName || '기타';
+		        if (!cu[crop]) cu[crop] = [];
+		        cu[crop].push({
+		            target: row.diseaseWeedName || '',
+		            method: row.pestiUse || '',
+		            amount: row.dilutUnit || '',
+		            safety: row.useSuittime || '',
+		            times:  row.useNum || ''
+		        });
+		    });
+		}
+		data.cropUsage = cu; // 변환된 데이터를 확실하게 할당
       }
       var crops = Object.keys(data.cropUsage||{});
       if (crops.length > 0) {
