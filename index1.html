@@ -22838,7 +22838,18 @@ async function showPsisRawResponse(name) {
     
     data.cropUsage = cu;
     data.success = (items.length > 0); // success 변수를 리스트 유무로 정의
-	
+	// 1. [위치 보정] 데이터 상태 확인 및 success 변수 정의 (가장 먼저 선언)
+    var isSuccess = (data && data.ok === true);
+    data.success = isSuccess; 
+
+    // 2. 만약 cropUsage가 없다면 강제로 빈 객체 생성 (화면 에러 방지)
+    if (!data.cropUsage) {
+        data.cropUsage = {};
+    }
+
+    // 3. 배경색 및 아이콘 판단 (이제 에러가 나지 않습니다)
+    var bg = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '#E8F5E9' : '#FFF3E0';
+    var icon = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '✅' : '📭';
 	// 4. 아이콘과 배경색 로직 수정 (success 대신 isSuccess 사용)
 	var bg = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '#E8F5E9' : '#FFF3E0';
 	var icon = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '✅' : '📭';
