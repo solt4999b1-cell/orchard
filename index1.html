@@ -12280,10 +12280,14 @@ function startApp() { initFirebase(FIREBASE_CONFIG); }
 function initFirebase(cfg) {
   document.getElementById('loading').classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
-  // GAS URL 자동 설정 — 코드에 URL이 있으면 localStorage 덮어쓰기
-  if (GAS_OCR_URL && GAS_OCR_URL.includes('script.google.com')) {
+
+  // [수정된 부분] 변수 선언 여부를 먼저 확인합니다.
+  if (typeof GAS_OCR_URL !== 'undefined' && GAS_OCR_URL && GAS_OCR_URL.includes('script.google.com')) {
     localStorage.setItem('_runtimeGasUrl', GAS_OCR_URL);
     _runtimeGasUrl = GAS_OCR_URL;
+  } else {
+    // 만약 GAS_OCR_URL이 없다면, 기존에 저장된 값을 우선 사용합니다.
+    _runtimeGasUrl = localStorage.getItem('_runtimeGasUrl') || '';
   }
 
   try {
