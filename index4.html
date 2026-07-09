@@ -60,15 +60,20 @@
             const brandKeyword = document.getElementById('brandInput').value.trim();
             const compKeyword = document.getElementById('compInput').value.trim();
             const resultDiv = document.getElementById('resultContainer');
-
+        
             if (!brandKeyword) return;
-
-            // [필수 확인] 여기에 배포하신 구글 웹 앱 URL을 정확히 넣어주세요!
-            // 'AKfy...' 부분에 선생님께서 구글 앱스 스크립트에서 복사하신 실제 영문/숫자 주소를 넣어주세요!
+        
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-            const url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
-
-            // 1. 화면에 현재 통신하려는 URL을 직접 출력하여 눈으로 확인합니다.
+            
+            // 💡 [변경] 구글 스크립트 규격에 맞게 파라미터를 조합합니다.
+            // doGet의 "if (p.crops || p.diseases || p.company)" 또는 handlePsis_ 규격에 맞춰 전송해야 합니다.
+            // 만약 상표명 단독 검색이라면 구글 스크립트 내부 주석에 맞춰 target을 지정하거나 규칙을 따라야 합니다.
+            // 여기서는 다중검색(psisMultiSearch_) 조건에 맞추기 위해 파라미터를 재구성합니다.
+            let url = `${GAS_URL}?target=psis&crops=${encodeURIComponent(brandKeyword)}`;
+            if (compKeyword) {
+                url += `&company=${encodeURIComponent(compKeyword)}`;
+            }
+        
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -76,38 +81,39 @@
                 </div>
                 <div class="empty-msg">데이터를 불러오는 중입니다...</div>
             `;
-
+        
             try {
-                //const response = await fetch(url, { method: 'GET', redirect: 'follow' });
-                // 옵션을 비우더라도 fetch는 기본적으로 리다이렉트를 추적(follow)합니다.
                 const response = await fetch(url);
-                
-                // JSON 변환 전, 서버 응답을 텍스트로 먼저 받아 에러 페이지(HTML) 여부 판별
                 const rawText = await response.text();
                 
                 try {
-                    // 정상적인 JSON이라면 변환 후 결과 출력
                     const data = JSON.parse(rawText);
-                    displayResults(data, compKeyword, brandKeyword);
+                    
+                    // 💡 [변경] 구글 스크립트는 성공 여부를 'ok'로 보냅니다. (기존 data.success를 데이터 구조에 맞게 매핑)
+                    // 브라우저로 직접 주소를 눌렀을 때 나오는 화면의 데이터 구조(예: 목록 변수명)를 보고 아래를 맞춰야 합니다.
+                    // 만약 실제 목록 데이터가 _rawList가 아니라 다른 이름(예: list, items)이라면 그것도 고쳐야 합니다.
+                    
+                    // 임시로 구글 스크립트 양식에 맞춰 호환성 보정
+                    const formattedData = {
+                        success: data.ok !== false, // ok가 false가 아니면 성공으로 간주
+                        _rawList: data.list || data.items || data._rawList || [], // 구글이 주는 배열 이름으로 매핑
+                        source: data.source || '공공데이터'
+                    };
+        
+                    displayResults(formattedData, compKeyword, brandKeyword);
                 } catch (parseError) {
-                    // HTML 문서(구글 로그인, 에러 페이지 등)가 넘어왔을 경우 화면에 출력
                     resultDiv.innerHTML += `
                         <div class="error-msg" style="text-align:left;">
-                            <strong>JSON 파싱 에러 (권한 차단 등):</strong><br>
-                            서버가 약속된 JSON이 아닌 다른 형태의 문서(HTML)를 반환했습니다.<br><br>
-                            <strong>서버 응답 원본:</strong><br>
+                            <strong>JSON 파싱 에러:</strong><br>
                             <textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">${rawText}</textarea>
                         </div>
                     `;
                 }
-
             } catch (error) {
-                // Fetch 자체가 실패한 경우 (오타, CORS 차단, 네트워크 단절 등)
                 resultDiv.innerHTML += `
                     <div class="error-msg" style="text-align:left;">
-                        <strong>네트워크 / CORS 에러:</strong><br>
-                        ${error.name} : ${error.message}<br><br>
-                        F12 (개발자 도구)의 Console 탭에서 빨간색 에러 로그를 확인해 주세요.
+                        <strong>네트워크 에러:</strong><br>
+                        ${error.message}
                     </div>
                 `;
             }
