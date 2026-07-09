@@ -56,7 +56,7 @@
     </div>
 
     <script>
-        async function fetchPesticideInfo() {
+       async function fetchPesticideInfo() {
             const brandKeyword = document.getElementById('brandInput').value.trim();
             const compKeyword = document.getElementById('compInput').value.trim();
             const resultDiv = document.getElementById('resultContainer');
@@ -65,12 +65,18 @@
         
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 구글 스크립트 규격에 맞춰 파라미터 키를 명확하게 지정합니다.
-            // 상표명은 crops(작물/대상) 또는 스크립트가 인식하는 기본 파라미터로 매핑됩니다.
-            let url = `${GAS_URL}?target=psis&crops=${encodeURIComponent(brandKeyword)}`;
+            // 💡 [핵심 변경] 구글 스크립트가 상표명으로 인식할 수 있도록 파라미터를 변경합니다.
+            // doGet 맨 아래의 handlePsis_(p) 데모 함수는 기본적으로 ?keyword= 를 받아 상표명을 검색할 확률이 높습니다.
+            let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
+        
+            /* 
+            ⚠️ 만약 위 규칙(?keyword=)으로도 똑같이 items가 비어있다면, 아래 주석을 해제하고 대신 사용해 보세요.
+            let url = `${GAS_URL}?target=psis&pestiBrandName=${encodeURIComponent(brandKeyword)}`;
+            if (compKeyword) { url += `&company=${encodeURIComponent(compKeyword)}`; }
+            */
         
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
@@ -87,24 +93,11 @@
                 try {
                     const data = JSON.parse(rawText);
                     
-                    // 💡 구글 스크립트에서 내려주는 데이터에서 실제 '배열(목록)' 데이터 추출하기
-                    // 스크립트에 따라 list, items, data, _rawList 등 다양한 이름으로 주기 때문에 검증 절차를 거칩니다.
-                    let pestiList = [];
-                    if (Array.isArray(data)) {
-                        pestiList = data;
-                    } else if (data.list && Array.isArray(data.list)) {
-                        pestiList = data.list;
-                    } else if (data.items && Array.isArray(data.items)) {
-                        pestiList = data.items;
-                    } else if (data._rawList && Array.isArray(data._rawList)) {
-                        pestiList = data._rawList;
-                    } else if (data.data && Array.isArray(data.data)) {
-                        pestiList = data.data;
-                    }
+                    // 💡 확인된 구글 스크립트 데이터 포맷인 'items' 배열을 정확히 매핑합니다.
+                    let pestiList = data.items || []; 
         
-                    // HTML displayResults 함수 구조에 맞춰 데이터 포맷 통일
                     const formattedData = {
-                        success: data.ok !== false && (pestiList.length > 0 || data.success !== false),
+                        success: data.ok !== false,
                         _rawList: pestiList,
                         source: data.source || '농약시스템'
                     };
