@@ -7,11 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="병해충 진단">
 
-<!-- ▼ 알약(농약/처방) 파비콘 적용 ▼ -->
+<!-- ▼ 알약(농약/처방) 파비콘 적용 (매니페스트 연결 삭제) ▼ -->
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💊</text></svg>">
-<link rel="manifest" href="manifest3.webmanifest">
-
-<!-- ▼ Firebase: 진단·방제 저장을 관리앱과 같은 Firestore에 기록 ▼ -->
 
 <!-- ▼ Firebase: 진단·방제 저장을 관리앱과 같은 Firestore에 기록 -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -26,11 +23,34 @@ const firebaseConfig = {
   messagingSenderId: "848680345496",
   appId: "1:848680345496:web:11d468c44b412c037795ed"
 };
-  try{
-    if(firebaseConfig.apiKey && !/여기에/.test(firebaseConfig.apiKey) && !firebase.apps.length){
-      firebase.initializeApp(firebaseConfig);
-    }
-  }catch(e){ console.warn('Firebase init 건너뜀(로컬 저장):', e); }
+  /* ▼ Firebase 초기화 (SDK 로드 실패 시 1회 자동 재시도 → 그래도 실패하면 로컬 저장 모드) ▼ */
+  function _fbTryInit(){
+    try{
+      if(typeof firebase === 'undefined') return false;   // SDK 미로드
+      if(firebaseConfig.apiKey && !/여기에/.test(firebaseConfig.apiKey) && !firebase.apps.length){
+        firebase.initializeApp(firebaseConfig);
+      }
+      return firebase.apps.length > 0;
+    }catch(e){ console.warn('Firebase init 오류:', e); return false; }
+  }
+  if(!_fbTryInit()){
+    console.warn('⚠️ Firebase SDK 로드 실패(네트워크/차단) — 재시도합니다. 계속 실패하면 로컬 저장 모드로 동작합니다.');
+    (function _reload(urls, i){
+      if(i >= urls.length){
+        if(_fbTryInit()) console.log('✅ Firebase 재연결 성공');
+        else console.warn('⚠️ Firebase 연결 불가 — 로컬 저장 모드 (관리앱과 데이터 공유 안 됨)');
+        return;
+      }
+      var s = document.createElement('script');
+      s.src = urls[i];
+      s.onload  = function(){ _reload(urls, i+1); };
+      s.onerror = function(){ console.warn('⚠️ Firebase SDK 재로드 실패 — 로컬 저장 모드'); };
+      document.head.appendChild(s);
+    })([
+      'https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js',
+      'https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js'
+    ], 0);
+  }
 </script>
 <title>병해충 진단 · 사진대조</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -68,6 +88,13 @@ body{margin:0;background:var(--bg);color:var(--ink);
   transition:.15s;line-height:1.2}
 .crop:hover{border-color:var(--leaf)}
 .crop.on{background:var(--leaf);border-color:var(--leaf);color:#fff}
+.crop-wrap{display:inline-flex;align-items:stretch;gap:0}
+.crop-wrap .crop{border-top-right-radius:0;border-bottom-right-radius:0}
+.crop-pen{border:1.5px solid var(--line);border-left:none;background:var(--panel);
+  border-radius:0 999px 999px 0;padding:0 10px;font-size:12px;cursor:pointer;
+  color:var(--ink-soft);line-height:1;-webkit-tap-highlight-color:transparent}
+.crop-pen:hover{background:var(--leaf-l);color:var(--leaf-d)}
+.crop-pen:active{background:#d8e8d5}
 .crop-add{display:flex;gap:6px;margin:10px 0 4px}
 .crop-add input{flex:1;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px;
   font:inherit;font-size:14px;background:var(--panel)}
@@ -334,7 +361,12 @@ const AppBus = {
 };
 
 const DB = {
-  fb: (typeof firebase!=='undefined' && firebase.apps && firebase.apps.length) ? firebase.firestore() : null,
+  /* fb를 매 호출 시 평가: SDK가 늦게 로드(재시도 성공)되어도 자동으로 Firestore에 연결됨 */
+  get fb(){
+    try{
+      return (typeof firebase!=='undefined' && firebase.apps && firebase.apps.length) ? firebase.firestore() : null;
+    }catch(e){ return null; }
+  },
   _all(){ try{ return JSON.parse(localStorage.getItem('orchard.db')||'{}'); }catch(e){ return {}; } },
   _save(o){ try{ localStorage.setItem('orchard.db', JSON.stringify(o)); }catch(e){} },
   async list(coll){
@@ -443,17 +475,15 @@ const App = {
   STD_CROPS: [
     "콩","감자","고구마","옥수수","보리","밀","팥","녹두","강낭콩","조","수수","기장","동부","작두콩","귀리","아마란스","퀴노아",
     // ▼ 과수 목록에 헤이즐럿, 헤이즐넛, 호두, 피칸, 아몬드 추가 ▼
-    "사과","배","포도","감귤","복숭아","매실","자두","무화과","살구","블루베리","으름","다래","감","밤","대추","아로니아","체리","망고","용과","모과","앵두","패션푸룻","헤이즐럿","헤이즐넛","호두","피칸","아몬드",
+    "사과","배","포도","감귤","복숭아","매실","자두","무화과","살구","블루베리","다래","감","밤","대추","아로니아","체리","망고","용과","모과","앵두","패션푸룻","헤이즐럿","헤이즐넛","호두","피칸","아몬드",
     "고추","파","마늘","배추","양파","호박","무","상추","시금치","부추","열무","당근","파프리카","수박","딸기","오이","토마토","참외","멜론","양배추","쑥갓","가지","갓","곤드레","곰취","근대","냉이","더덕","도라지","동아","머위","미나리","브로콜리","비름","산마늘","샐러리","생강","순무","아스파라가스","아욱","애호박","여주","오크라","우엉","울외","쥬키니호박","참나물","청경채","치커리","케일","콜라비","파슬리","피망","흑종호박",
     "들깨","참깨","땅콩","오미자","복분자","유채","산수유","담배","구기자","하수오","초피","황기","지황","맥문동","천궁","감초","시호","모란","황금","고본","택사","회향","개똥쑥","갯기름","도라지","둥굴레","면화","배초향","백수오","사탕무","삽주","양마","오갈피","당귀","초석잠"
   ],
 
   async init(){
-    // Datalist(자동완성) 옵션 동적 주입 및 가나다순 정렬
+    // ▼ Datalist(자동완성) 옵션 동적 주입 및 가나다순 정렬 ▼
     const dl = document.createElement('datalist');
     dl.id = 'stdCrops';
-    
-    // ▼ 표준 작물 목록을 복사하여 가나다순으로 정렬한 뒤 화면에 추가 ▼
     const sortedStdCrops = [...this.STD_CROPS].sort((a, b) => a.localeCompare(b, 'ko'));
     dl.innerHTML = sortedStdCrops.map(c => `<option value="${c}"></option>`).join('');
     document.body.appendChild(dl);
@@ -464,6 +494,7 @@ const App = {
     if(q.get('embed')==='1' || (window.self!==window.top && q.has('crop'))) document.body.classList.add('embed');
 
     await Owned.load();
+    await this.loadStdOverrides();   /* 사용자 정의 검색명 매핑 로드 */
     this._crops = await this.loadCrops();
     this.renderCrops();
     AppBus.on('reference:request', d=>this.openFromName(d));
@@ -482,38 +513,80 @@ const App = {
     });
   },
 
+  // ▼ 감자, 양배추 등이 유실수로 오인되지 않도록 수정된 분류 함수 ▼
   isFruit(name, category){
     const cat=(category||'').toLowerCase(), nm=(name||'').toLowerCase();
-    // 1. 수동으로 지정된 카테고리가 있으면 최우선 적용
     if(cat.includes('유실수')||cat.includes('과수')) return true;
     if(cat.includes('채소')||cat.includes('작물')) return false; 
     
-    // 2. 한 글자 과일은 정확히 일치하거나 접미사로 끝날 때만 인정 (예: 단감)
     const exactFruits = ['감', '배', '밤'];
-    if(exactFruits.some(k => nm === k || nm.endsWith(k) && !nm.includes('감자') && !nm.includes('양배추'))) return true;
+    if(exactFruits.some(k => nm === k || (nm.endsWith(k) && !nm.includes('감자') && !nm.includes('양배추')))) return true;
 
-    // 3. 나머지 키워드는 기존처럼 포함 여부로 확인
     return CONFIG.fruitKeywords.some(k => 
       !exactFruits.includes(k) && nm.includes(String(k).toLowerCase())
     );
   },
 
+  /* ═══ 사용자 정의 검색명 매핑 (예: 망고수박 → 수박) ═══
+     Firestore 'cropNameOverrides' 컬렉션에 저장, 오프라인 시 localStorage */
+  _stdOverrides: {},
+  async loadStdOverrides(){
+    try{
+      const rows = await DB.list('cropNameOverrides');
+      this._stdOverrides = {};
+      (rows||[]).forEach(r => { if(r.name && r.stdName) this._stdOverrides[r.name] = { stdName:r.stdName, id:r.id }; });
+    }catch(e){ this._stdOverrides = {}; }
+  },
+  async setStdOverride(name, stdName){
+    const cur = this._stdOverrides[name];
+    if(cur && cur.id){
+      await DB.update('cropNameOverrides', cur.id, { stdName });
+      this._stdOverrides[name].stdName = stdName;
+    }else{
+      const id = await DB.add('cropNameOverrides', { name, stdName, createdAt:Date.now() });
+      this._stdOverrides[name] = { stdName, id };
+    }
+  },
+  _touchStart(id){ this._lp = setTimeout(()=>{ this._lpFired=true; this.quickEdit(id); }, 550); },
+  _touchEnd(){ clearTimeout(this._lp); setTimeout(()=>this._lpFired=false, 60); },
+  async quickEdit(id){
+    const c = this._crops.find(x=>x.id===id); if(!c) return;
+    const cat = c.category || '';
+    const isFruit = cat.includes('유실수') || cat.includes('과수');
+    const ans = prompt(
+      `[${c.displayName}] 편집\n`+
+      `1 = ${isFruit?'채소로':'유실수로'} 전환\n`+
+      `2 = 검색용 표준 작물명 수정 (현재: ${c.ncpmsName})\n`+
+      `번호를 입력하세요.`, '1');
+    if(ans==='1'){ await CropManager.open(); await CropManager.toggleCategory(id); Plan.close(); }
+    else if(ans==='2'){ await CropManager.editStdName(c.name); }
+  },
+
   // 1. 표준 이름 자동 매핑 변환기 (품종 -> 대표 이름)
-  getStandardName(name) {
+ getStandardName(name) {
     if(!name) return '';
+    /* 사용자가 직접 지정한 검색명(오버라이드)이 최우선 */
+    if(this._stdOverrides && this._stdOverrides[name]) return this._stdOverrides[name].stdName;
     const customMap = {
-      '선비잡이콩': '콩', '머루콩': '콩', '하나가리': '콩', // 기존 식재 작물 하드코딩
+      '선비잡이콩': '콩', '머루콩': '콩', '하나가리': '콩',
       '단감': '감', '참다래': '참다래(키위)', '키위': '참다래(키위)', '방울토마토': '토마토'
     };
     if(customMap[name]) return customMap[name];
 
-    // 표준 목록 중 포함되는 단어가 있으면 해당 단어로 매핑 (예: 호랑이강낭콩 -> 강낭콩)
-    const sortedStd = [...this.STD_CROPS].sort((a,b)=>b.length - a.length);
-    for(let std of sortedStd) {
-        if(name.includes(std)) return std;
+    /* 한국어 복합 작물명은 '뒤쪽 단어'가 실제 작물 →
+       가장 뒤에서 끝나는 표준명 우선, 끝 위치가 같으면 더 긴 이름 우선.
+       예: 망고수박→수박, 호랑이강낭콩→강낭콩, 감자→감자(감 오인 방지), 양배추→양배추 */
+    let best = null, bestEnd = -1, bestLen = 0;
+    for(const std of this.STD_CROPS){
+      const idx = name.lastIndexOf(std);
+      if(idx < 0) continue;
+      const end = idx + std.length;
+      if(end > bestEnd || (end === bestEnd && std.length > bestLen)){
+        best = std; bestEnd = end; bestLen = std.length;
+      }
     }
-    return name;
-  },
+    return best || name;
+},
 
   async loadCrops(){
     const raw = await DB.rawPlants();
@@ -559,7 +632,10 @@ const App = {
       const rows=this._crops.filter(x=>(x.category||'기타')===key);
       if(!rows.length) return '';
       return `<div class="cropcat">${icon} ${label} <span class="cnt">(${rows.length}종)</span></div><div class="crops-row">`
-        + rows.map(x=>`<button class="crop ${this.cropObj&&this.cropObj.id===x.id?'on':''}" onclick="App.selectCrop('${x.id}')">${x.displayName}</button>`).join('')
+        + rows.map(x=>`<span class="crop-wrap">
+      		<button class="crop ${this.cropObj&&this.cropObj.id===x.id?'on':''}" onclick="App.selectCrop('${x.id}')">${x.displayName}</button>
+      		<button class="crop-pen" title="작물 편집" onclick="event.stopPropagation();App.quickEdit('${x.id}')">✏️</button>
+	</span>`).join('')
         + `</div>`;
     };
     box.innerHTML = cat('🌳','유실수','유실수') + cat('🥬','채소','채소·작물') + cat('🌱','기타','기타');
@@ -569,6 +645,18 @@ const App = {
     const c=this._crops.find(x=>x.id===id); if(!c) return;
     this.setActive(c);
   },
+  async quickEdit(id){
+    const c = this._crops.find(x=>x.id===id); if(!c) return;
+    const cat = c.category || '';
+    const isFruit = cat.includes('유실수') || cat.includes('과수');
+    const ans = prompt(
+      `[${c.displayName}] 편집\n`+
+      `1 = ${isFruit?'채소로':'유실수로'} 전환\n`+
+      `2 = 검색용 표준 작물명 수정 (현재: ${c.ncpmsName})\n`+
+      `번호를 입력하세요.`, '1');
+    if(ans==='1'){ await CropManager.open(); await CropManager.toggleCategory(id); Plan.close(); }
+    else if(ans==='2'){ await CropManager.editStdName(c.name); }
+},
 
   selectByName(name, psis){
     if(!name) return;
@@ -1037,7 +1125,7 @@ const Plan = {
       cropId:h.cropId||null, cropName:h.cropName||App.crop, disease:h.name, type:h.type,
       brand:P(['pestiBrandName','상표명'])||P(['pestiKorName','품목명']),
       pestiCode:P(['pestiCode']), dilut:P(['dilutUnit']), suit:P(['useSuittime']),
-      useName:P(['useName']), num:parseInt((P(['useNum'])||'1').replace(/[^0-9]/g,''))||1, mode:null
+      useName:P(['useName']), num:Math.min(5, parseInt((P(['useNum'])||'1').replace(/[^0-9]/g,''))||1), mode:null
     };
     this.renderChoice();
   },
@@ -1068,6 +1156,7 @@ const Plan = {
   setSeverity(level, iv){ this.ctx.severity=level; this.ctx.severityInterval=iv; this.buildSchedule(); this.renderSchedule(); },
   buildSchedule(){
     const c=this.ctx; c.entries=[];
+    c.num = Math.min(c.num || 1, 5);   /* 농약 살포 스케줄 최대 5회 제한 */
     if(c.mode==='예방'){
       c.interval=12; c.weekend=true; let d=this._comingSat(new Date());
       for(let k=0;k<c.num;k++){ c.entries.push({date:this._iso(d), done:false}); d=this._comingSat(this._addDays(d,12)); }
@@ -1097,13 +1186,43 @@ const Plan = {
       <div style="display:flex;gap:8px"><button class="back" onclick="Plan.renderChoice()">↩ 다시 선택</button><button class="btn-rx" style="flex:1" onclick="Plan.save()">이 계획 저장</button></div>`);
   },
   toggle(idx){ this.ctx.entries[idx].done=!this.ctx.entries[idx].done; },
+  
+  // ▼ 관리앱 할일 목록과 연동하기 위해 수정된 save 함수 ▼
   async save(){
     const c=this.ctx;
+    
+    // 1. 기존 진단 내역 및 방제 계획 저장
     const dxId = await DB.add('diagnoses', { cropId:c.cropId, cropName:c.cropName, type:c.type, name:c.disease, status:'처방완료', diagnosedAt:Date.now() });
-    await DB.add('sprayPlan', { diagnosisId:dxId, cropId:c.cropId, cropName:c.cropName, disease:c.disease, brandName:c.brand, pestiCode:c.pestiCode, dilutUnit:c.dilut, useSuittime:c.suit, useName:c.useName, mode:c.mode, interval:c.interval, weekend:c.weekend, severity:c.severity||null, preHarvestDays:c.preHarvestDays, entries:c.entries, createdAt:Date.now() });
+    const planId = await DB.add('sprayPlan', { diagnosisId:dxId, cropId:c.cropId, cropName:c.cropName, disease:c.disease, brandName:c.brand, pestiCode:c.pestiCode, dilutUnit:c.dilut, useSuittime:c.suit, useName:c.useName, mode:c.mode, interval:c.interval, weekend:c.weekend, severity:c.severity||null, preHarvestDays:c.preHarvestDays, entries:c.entries, createdAt:Date.now() });
+
+    // 2. 관리앱의 '오늘 할일' 컬렉션으로 방제 스케줄 전송 로직
+    // 주의: 'tasks' 부분은 실제 관리앱에서 사용하는 할일 컬렉션 이름으로 변경해야 할 수 있습니다.
+    const targetCollection = 'tasks'; 
+    
+    for (let i = 0; i < c.entries.length; i++) {
+      const entry = c.entries[i];
+      await DB.add(targetCollection, {
+         title: `[${c.mode}] ${c.cropName} ${c.disease} 방제 ${i+1}차 (${c.brand})`, // 할일 제목
+         date: entry.date,       // 실행 날짜 (YYYY-MM-DD 형식)
+         done: false,            // 완료 여부 
+         category: '방제',         // 작업 분류
+         cropName: c.cropName,   // 관리앱 카드 표시용
+         brandName: c.brand,
+         linkedPlanId: planId,   // 양방향 동기화용 원본 계획 ID
+         entryIndex: i,          // 원본 계획 entries 배열에서의 위치 (양방향 동기화용)
+         createdAt: Date.now()
+      });
+    }
+
+    // 관리앱(iframe 부모)에 계획 저장 알림 → 오늘 할일 즉시 갱신
+    if(window.self !== window.top) {
+      window.parent.postMessage({ type: 'orchard:planSaved', planId: planId }, '*');
+    }
+
     this.close();
-    Toast.show(`${c.mode} 계획을 저장했습니다.`);
+    Toast.show(`${c.mode} 계획을 저장하고 할일 목록에도 추가했습니다.`);
   },
+
   async review(){
     const plans = await DB.list('sprayPlan');
     const today=this._iso(new Date());
@@ -1121,6 +1240,17 @@ const Plan = {
     const plans=await DB.list('sprayPlan'); const p=plans.find(x=>x.id===planId); if(!p) return;
     p.entries[idx].done=!p.entries[idx].done;
     await DB.update('sprayPlan', planId, { entries:p.entries });
+
+    // ▼ 관리앱 할일(tasks)에도 완료 상태 반영 (양방향 동기화) ▼
+    try{
+      const ts = await DB.list('tasks');
+      const t = ts.find(x => x.linkedPlanId===planId
+        && (x.entryIndex===idx || x.date===p.entries[idx].date));
+      if(t) await DB.update('tasks', t.id, { done: p.entries[idx].done });
+      if(window.self !== window.top) {
+        window.parent.postMessage({ type: 'orchard:planSaved', planId: planId }, '*');
+      }
+    }catch(e){ console.warn('tasks 동기화 실패:', e); }
   }
 };
 
@@ -1174,6 +1304,7 @@ const CropManager = {
     App.selectByName(v);
   },
 
+  // ▼ 새롭게 추가된 작물 이름/분류 수정 기능 ▼
   async editCrop(id, currentName, currentCategory) {
     const newName = prompt('수정할 작물 이름을 입력하세요:', currentName);
     if (!newName || newName.trim() === '') return;
@@ -1239,6 +1370,48 @@ const CropManager = {
     App.renderCrops();
   },
 
+  /* ▼ 유실수 ↔ 채소 원터치 전환 ▼ */
+  async toggleCategory(id) {
+    const p = this.plants.find(x => x.id === id); if(!p) return;
+    const curCat = p.category || (App.isFruit(App.getStandardName(p.name), '') ? '유실수' : '채소');
+    const newCat = (curCat.includes('유실수') || curCat.includes('과수')) ? '채소' : '유실수';
+    p.category = newCat;
+
+    if (DB.fb) {
+       await DB.update(CONFIG.plantsCollection, id, { category: newCat });
+    } else if (localStorage.getItem('orchard.plants')) {
+       let arr = JSON.parse(localStorage.getItem('orchard.plants')||'[]');
+       let idx = arr.findIndex(x => x.id === id);
+       if(idx >= 0) { arr[idx].category = newCat; localStorage.setItem('orchard.plants', JSON.stringify(arr)); }
+    }
+    if(window.self !== window.top) {
+       window.parent.postMessage({ type: 'orchard:updateCropInfo', id: id, name: p.name, category: newCat }, '*');
+    }
+    if(typeof Toast !== 'undefined') Toast.show(`'${p.name}' → ${newCat}(으)로 전환했습니다.`);
+    App._crops = await App.loadCrops();
+    App.renderCrops();
+    this.render();
+  },
+
+  /* ▼ 검색용 표준 작물명 수정 (예: 망고수박 → 수박) ▼ */
+  async editStdName(name) {
+    const cur = App.getStandardName(name);
+    const v = prompt(
+      `'${name}'의 검색용 표준 작물명을 입력하세요.\n` +
+      `(현재: ${cur} → 화면 표시: ${cur !== name ? cur+'('+name+')' : name})\n\n` +
+      `예: 수박, 참외, 호박, 콩 …`, cur);
+    if(!v || !v.trim() || v.trim() === cur) return;
+    const std = v.trim();
+    if(!App.STD_CROPS.includes(std)
+       && !confirm(`'${std}'은(는) 표준 작물 목록에 없습니다.\nNCPMS/PSIS 검색 결과가 없을 수 있습니다. 그래도 저장할까요?`)) return;
+
+    await App.setStdOverride(name, std);
+    if(typeof Toast !== 'undefined') Toast.show(`이제 '${name}'은(는) '${std}'(으)로 검색됩니다.`);
+    App._crops = await App.loadCrops();
+    App.renderCrops();
+    this.render();
+  },
+
   render() {
     const box = document.getElementById('planBox');
     document.getElementById('planBg').classList.add('on');
@@ -1251,14 +1424,21 @@ const CropManager = {
        const st = p.status || '재배 중';
        const isGrowing = st !== '수확 완료' && st !== '고사' && st !== 'deleted';
        const loc = p.location || p.spot || '위치 미지정';
-       const cat = p.category || (App.isFruit(App.getStandardName(p.name), '') ? '유실수' : '채소');
+       const std = App.getStandardName(p.name);
+       const cat = p.category || (App.isFruit(std, '') ? '유실수' : '채소');
+       const isFruitCat = cat.includes('유실수') || cat.includes('과수');
        
        return `<div class="info" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; margin-bottom:8px;">
-          <div>
+          <div style="flex:1; min-width:0;">
             <b style="font-size:15px">${p.name}</b> 
             <span style="font-size:11px; background:var(--leaf-l); color:var(--leaf-d); padding:2px 6px; border-radius:4px; margin-left:4px;">${cat}</span>
             <div style="font-size:12px;color:var(--ink-soft);margin-top:2px">📍 ${loc}</div>
-            <button onclick="CropManager.editCrop('${p.id}', '${p.name}', '${cat}')" style="margin-top:6px; font-size:11px; padding:4px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); cursor:pointer;">✏️ 이름/분류 수정</button>
+            <div style="font-size:11px;color:var(--ink-soft);margin-top:2px">🔎 검색명: <b>${std}</b>${std!==p.name?` → 표시: ${std}(${p.name})`:''}</div>
+            <div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:6px;">
+              <button onclick="CropManager.editCrop('${p.id}', '${p.name}', '${cat}')" style="font-size:11px; padding:4px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); cursor:pointer;">✏️ 이름/분류</button>
+              <button onclick="CropManager.toggleCategory('${p.id}')" style="font-size:11px; padding:4px 8px; border:1px solid ${isFruitCat?'#c3ddc0':'#e5d3b8'}; border-radius:6px; background:${isFruitCat?'var(--leaf-l)':'var(--amber-l)'}; cursor:pointer;">↔ ${isFruitCat?'채소로':'유실수로'} 전환</button>
+              <button onclick="CropManager.editStdName('${p.name.replace(/'/g,"\\'")}')" style="font-size:11px; padding:4px 8px; border:1px solid var(--line); border-radius:6px; background:var(--panel); cursor:pointer;">🔤 검색명 수정</button>
+            </div>
           </div>
           <select onchange="CropManager.setStatus('${p.id}', this.value)"
                   style="padding:6px 10px; border:1px solid var(--line); border-radius:8px; font-family:inherit; font-size:14px; background:var(--bg); color:var(--ink);">
