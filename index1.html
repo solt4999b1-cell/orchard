@@ -22820,32 +22820,32 @@ async function showPsisRawResponse(name) {
     var res  = await fetch(getUrl, {method:'GET', signal:ctrl.signal});
     var raw  = await res.text();
     console.log('[PSIS RAW]', raw.slice(0, 500));
-    // [최종 수정 코드: 데이터 구조 파싱 및 변수 할당]
-    // [최종 수정 코드: 데이터 구조 파싱 및 변수 할당]
-    var data = (raw && raw.data) ? raw.data : {}; // 원본 JSON 데이터 객체화
-    
-    // 강제로 UI 변수값 생성
-    var items = (data.list && data.list.item) ? (Array.isArray(data.list.item) ? data.list.item : [data.list.item]) : [];
-    var cu = {};
-    
-    items.forEach(function(row) {
-        var crop = row.cropName || '기타';
-        if (!cu[crop]) cu[crop] = [];
-        cu[crop].push({
-            target: row.diseaseWeedName || '알수없음',
-            method: row.pestiUse || '-'
-        });
-    });
-    
-    data.cropUsage = cu;
-    data.success = (items.length > 0); // success 변수를 리스트 유무로 정의
+	  
+    // [1단계] 안전하게 데이터와 성공 여부 확보
+    var data = (raw && raw.data) ? raw.data : {}; 
+    var isSuccess = (raw && raw.ok === true) || (data && data.totalCount > 0);
 
-    // 3. 배경색 및 아이콘 판단 (이제 에러가 나지 않습니다)
-    var bg = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '#E8F5E9' : '#FFF3E0';
-    var icon = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '✅' : '📭';
-	// 4. 아이콘과 배경색 로직 수정 (success 대신 isSuccess 사용)
-	var bg = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '#E8F5E9' : '#FFF3E0';
-	var icon = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '✅' : '📭';
+    // [2단계] list.item 구조를 cropUsage 객체로 확실하게 변환
+    var cu = {};
+    if (data && data.list && data.list.item) {
+        var items = Array.isArray(data.list.item) ? data.list.item : [data.list.item];
+        items.forEach(function(row) {
+            var crop = row.cropName || '기타';
+            if (!cu[crop]) cu[crop] = [];
+            cu[crop].push({
+                target: row.diseaseWeedName || '알수없음',
+                method: row.pestiUse || '-'
+            });
+        });
+    }
+
+    // [3단계] UI가 검사할 변수들을 데이터 객체에 강제로 주입 (순서 보장)
+    data.cropUsage = cu;
+    data.success = isSuccess && (Object.keys(cu).length > 0);
+
+    // [4단계] 배경색과 아이콘 판단 (선언된 변수만 사용)
+    var bg = data.success ? '#E8F5E9' : '#FFF3E0';
+    var icon = data.success ? '✅' : '📭';
 
     var h = '<div style="background:'+bg+';border:1.5px solid #90CAF9;border-radius:10px;padding:12px;">';
     h += '<div style="font-size:13px;font-weight:700;color:#1565C0;margin-bottom:8px;">'+icon+' GAS 응답 — "'+esc(name)+'"</div>';
