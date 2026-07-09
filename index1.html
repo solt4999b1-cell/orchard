@@ -12043,9 +12043,28 @@ async function searchData() {
 
 		// --- 여기를 추가하세요 ---
         console.log("전체 데이터:", data);
-        if (data._rawList && data._rawList.length > 0) {
-            console.log("첫 번째 아이템의 상세정보:", data._rawList[0]._detail);
-        }
+        // [수정 전 코드] ... data._rawList && data._rawList.length > 0)
+		// [수정 후 코드] 아래 내용을 복사해서 붙여넣으세요.
+		
+		// data.list.item 구조를 확인하여 변환
+		if ((!data.cropUsage || Object.keys(data.cropUsage).length === 0) &&
+		    data.list && data.list.item && data.list.item.length > 0) {
+		    
+		    var cu = {};
+		    // 응답받은 list.item 배열을 순회하며 cropUsage 형태(객체)로 변환
+		    data.list.item.forEach(function(row) {
+		        var crop = row.cropName || '기타';
+		        if (!cu[crop]) cu[crop] = [];
+		        cu[crop].push({
+		            target: row.diseaseWeedName || '',
+		            method: row.pestiUse || '',
+		            amount: row.dilutUnit || '',
+		            safety: row.useSuittime || '',
+		            times:  row.useNum || ''
+		        });
+		    });
+		    data.cropUsage = cu; // 변환된 데이터를 data.cropUsage에 담음
+		}
         if (!data.success || !data._rawList || data._rawList.length === 0) {
             resultDiv.innerHTML = `<div style="text-align:center; padding:20px; color:#666;">결과가 없습니다.</div>`;
             return;
