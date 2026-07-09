@@ -387,6 +387,11 @@ const DB = {
     const a=this._all(); const arr=a[coll]||[]; const i=arr.findIndex(x=>x.id===id);
     if(i>=0){ arr[i]={...arr[i],...patch}; this._save(a); }
   },
+  async remove(coll, id){
+    if(this.fb){ try{ await this.fb.doc(`${coll}/${id}`).delete(); return; }
+      catch(e){ console.warn('FB delete 실패→로컬', e); } }
+    const a=this._all(); a[coll]=(a[coll]||[]).filter(x=>x.id!==id); this._save(a);
+  },
   async rawPlants(){
     if(Array.isArray(window.__ORCHARD_PLANTS)) return window.__ORCHARD_PLANTS;
     try{ const s=localStorage.getItem('orchard.plants'); if(s){ const a=JSON.parse(s); if(Array.isArray(a)) return a; } }catch(e){}
@@ -1227,15 +1232,64 @@ const Plan = {
     const plans = await DB.list('sprayPlan');
     const today=this._iso(new Date());
     const body = plans.length ? plans.slice().reverse().map(p=>{
-      const done=(p.entries||[]).filter(e=>e.done).length;
+      const overdueCnt=(p.entries||[]).filter(e=>!e.done && e.date<today).length;
       const rows=(p.entries||[]).map((e,idx)=>{
         const overdue = !e.done && e.date<today;
-        return `<label class="spray"><input type="checkbox" ${e.done?'checked':''} onchange="Plan.reviewToggle('${p.id}',${idx})"><span><b>${idx+1}차</b> ${e.date} ${overdue?'<b style="color:var(--pest)">· 지남</b>':''}</span></label>`;
+        return `<label class="spray"><input type="checkbox" ${e.done?'checked':''} onchange="Plan.reviewToggle('${p.id}',${idx})"><span><b>${idx+1}차</b> ${e.date} (${this._wd(e.date)}) ${overdue?'<b style="color:var(--pest)">· 지남</b>':''}</span></label>`;
       }).join('');
-      return `<div class="info"><h4>${p.cropName} · ${p.disease} <span style="color:var(--ink-soft);font-weight:400">${p.mode}</span></h4>${rows}</div>`;
-    }).join('') : `<div class="state">저장된 방제 계획이 없습니다.</div>`;
-    this.modal(`<div class="rx-hd"><h2>📋 방제 계획 · 실행 체크</h2><button class="x" onclick="Plan.close()">✕</button></div>${body}`);
+        return `<div class="info"><h4>${p.cropName} · ${p.disease} <span style="color:var(--ink-soft);font-weight:400">${p.mode}</span></h4>
+        	${rows}
+        	<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">
+          	${overdueCnt?`<button class="back prim" onclick="Plan.rescheduleOverdue('${p.id}')">🗓 지난 ${overdueCnt}건 주말로 재조정</button>`:''}
+          	<button class="back" style="border-color:#e6b3a8;color:var(--pest)" onclick="Plan.deletePlan('${p.id}')">🗑 계획 삭제(방제 안 함)</button>
+        	</div>
+      	</div>`;
+       }).join('') : `<div class="state">저장된 방제 계획이 없습니다.</div>`;
+       this.modal(`<div class="rx-hd"><h2>📋 방제 계획 · 실행 체크</h2><button class="x" onclick="Plan.close()">✕</button></div>${body}`);
+   },
+  /* 지난(미완료) 일정을 이번/다음 주말(토요일)로 순차 재조정 */
+  async rescheduleOverdue(planId){
+      const plans=await DB.list('sprayPlan');
+      const p=plans.find(x=>x.id===planId); if(!p) return;
+      const today=this._iso(new Date());
+      let sat=this._comingSat(new Date());
+      const changed=[];
+      (p.entries||[]).forEach((e,idx)=>{
+        if(!e.done && e.date<today){
+          e.date=this._iso(sat);
+          changed.push({idx, date:e.date});
+          sat=this._comingSat(this._addDays(sat,7));   /* 다음 주말로 한 칸씩 */
+        }
+      });
+      if(!changed.length){ Toast.show('지난(미완료) 일정이 없습니다.'); return; }
+      await DB.update('sprayPlan', planId, { entries:p.entries });
+      /* 관리앱 할일(tasks) 날짜도 동기화 (entryIndex 유지 방식) */
+      try{
+        const ts=await DB.list('tasks');
+        for(const ch of changed){
+          const t=ts.find(x=>x.linkedPlanId===planId && x.entryIndex===ch.idx);
+          if(t) await DB.update('tasks', t.id, { date: ch.date });
+        }
+      }catch(e){ console.warn('tasks 재조정 동기화 실패', e); }
+      if(window.self!==window.top) window.parent.postMessage({type:'orchard:planSaved',planId},'*');
+      Toast.show(`지난 일정 ${changed.length}건을 주말로 재조정했습니다.`);
+      this.review();
   },
+
+/* 방제 안 할 계획 삭제 — sprayPlan + 연결된 tasks 함께 삭제 */
+async deletePlan(planId){
+    if(!confirm('이 방제계획을 삭제할까요?\n연결된 할일(방제 일정)도 함께 삭제됩니다.')) return;
+    try{
+      const ts=await DB.list('tasks');
+      const linked=ts.filter(x=>x.linkedPlanId===planId);
+      for(const t of linked) await DB.remove('tasks', t.id);
+    }catch(e){ console.warn('tasks 삭제 실패', e); }
+    await DB.remove('sprayPlan', planId);
+    if(window.self!==window.top) window.parent.postMessage({type:'orchard:planDeleted',planId},'*');
+    Toast.show('방제계획과 연결된 할일을 삭제했습니다.');
+    this.review();
+},
+
   async reviewToggle(planId, idx){
     const plans=await DB.list('sprayPlan'); const p=plans.find(x=>x.id===planId); if(!p) return;
     p.entries[idx].done=!p.entries[idx].done;
