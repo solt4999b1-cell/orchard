@@ -22836,10 +22836,20 @@ async function showPsisRawResponse(name) {
       return;
     }
 
-    var bg   = (data && data.success && data.cropUsage && Object.keys(data.cropUsage).length > 0)
-               ? '#E8F5E9' : '#FFF3E0';
-    var icon = (data && data.success && data.cropUsage && Object.keys(data.cropUsage).length > 0)
-               ? '✅' : '📭';
+	// 1. 데이터가 'ok' 상태인지 확인 (success 대신 ok 사용)
+	var isSuccess = (data && data.ok === true);
+	
+	// 2. 만약 cropUsage가 없다면 강제로 빈 객체 생성 (화면 에러 방지)
+	if (!data.cropUsage) {
+	    data.cropUsage = {};
+	}
+	
+	// 3. UI가 참조하는 success 변수를 강제로 주입
+	data.success = isSuccess; 
+	
+	// 4. 아이콘과 배경색 로직 수정 (success 대신 isSuccess 사용)
+	var bg = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '#E8F5E9' : '#FFF3E0';
+	var icon = (isSuccess && Object.keys(data.cropUsage).length > 0) ? '✅' : '📭';
 
     var h = '<div style="background:'+bg+';border:1.5px solid #90CAF9;border-radius:10px;padding:12px;">';
     h += '<div style="font-size:13px;font-weight:700;color:#1565C0;margin-bottom:8px;">'+icon+' GAS 응답 — "'+esc(name)+'"</div>';
