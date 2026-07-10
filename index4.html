@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>농약 상세 검색 </title>
+    <title>농약 상세 검색 (JSON 연동판)</title>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f6f8; }
         h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
@@ -42,13 +42,14 @@
     <div class="search-container">
         <div class="input-group">
             <label for="brandInput">상표명 (필수)</label>
-            <input type="text" id="brandInput" placeholder="예: 두배나 하이파워, 코니도" onkeypress="if(event.keyCode==13) fetchPesticideInfo()">
+            <!-- 💡 에러 원인이 되던 인라인 자바스크립트를 HTML에서 완전히 걷어냈습니다 -->
+            <input type="text" id="brandInput" placeholder="예: 두배나 하이파워, 코니도">
         </div>
         <div class="input-group">
             <label for="compInput">회사명 (선택)</label>
-            <input type="text" id="compInput" placeholder="예: 중앙프라자 (입력 시 해당 회사만 표시)" onkeypress="if(event.keyCode==13) fetchPesticideInfo()">
+            <input type="text" id="compInput" placeholder="예: 중앙프라자 (입력 시 해당 회사만 표시)">
         </div>
-        <button onclick="fetchPesticideInfo()">검색하기</button>
+        <button id="searchBtn">검색하기</button>
     </div>
 
     <div id="resultContainer">
@@ -56,6 +57,20 @@
     </div>
 
     <script>
+        // HTML이 로드되면 이벤트를 안전하게 바인딩합니다.
+        document.addEventListener('DOMContentLoaded', function() {
+            // 버튼 클릭 이벤트 연결
+            document.getElementById('searchBtn').addEventListener('click', fetchPesticideInfo);
+            
+            // 엔터키 이벤트 연결
+            document.getElementById('brandInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') fetchPesticideInfo();
+            });
+            document.getElementById('compInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') fetchPesticideInfo();
+            });
+        });
+
         async function fetchPesticideInfo() {
             const brandKeyword = document.getElementById('brandInput').value.trim();
             const compKeyword = document.getElementById('compInput').value.trim();
@@ -63,10 +78,9 @@
 
             if (!brandKeyword) return;
 
-            // 구글 웹 앱 URL 고정
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 데이터 200건 요청 확장 및 규격 통일
+            // 200건 확장 요청 옵션 반영
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}&numOfRows=200&displayCount=200&target=psis`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
@@ -87,7 +101,6 @@
                 try {
                     const data = JSON.parse(rawText);[cite: 1]
                     
-                    // data.data.list.item 구조 안전하게 분해
                     let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
                         if (Array.isArray(data.data.list.item)) {
@@ -97,13 +110,12 @@
                         }
                     }
 
-                    // 입력한 상표명이 정확히 포함된 것만 프론트엔드에서 최종 필터링
+                    // 상표명 필터링 적용
                     let pestiList = rawList.filter(item => {
                         const itemName = item.pestiBrandName || item.brandName || '';
                         return itemName.includes(brandKeyword);
                     });
 
-                    // 전체 시스템 건수 추출
                     let totalCount = '143882';
                     if (data.data && data.data.totalCount) {
                         totalCount = data.data.totalCount;
@@ -185,7 +197,7 @@
                 itemDiv.innerHTML = `
                     <div class="header-row">
                         <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>
-                        <div class="comp-name">${compName}</div>[cite: 1]
+                        <div class="comp-name">${compName}</div>
                     </div>
                     
                     <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>[cite: 1]
@@ -199,7 +211,7 @@
                 cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
-            // 현황판 추가 (cssText 정상 문법 반영 완료)
+            // 현황판 추가
             const summaryDiv = document.createElement('div');
             summaryDiv.style.cssText = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
             summaryDiv.innerHTML = `
