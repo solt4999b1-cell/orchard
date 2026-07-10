@@ -53,11 +53,20 @@
     </div>
 
     <script>
-        // 💡 자바스크립트 영역 내부의 오해의 소지가 있는 기호를 전부 완전 평면화 처리했습니다.
         document.addEventListener("DOMContentLoaded", function() {
             var searchButton = document.getElementById("searchBtn");
             if (searchButton) {
                 searchButton.onclick = startSearch;
+            }
+            
+            // 엔터키 연동 처리 안전하게 추가
+            var brandInput = document.getElementById("brandInput");
+            var compInput = document.getElementById("compInput");
+            if (brandInput) {
+                brandInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
+            }
+            if (compInput) {
+                compInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
             }
         });
 
@@ -68,7 +77,6 @@
 
             if (!brandVal) return;
 
-            // 💡 문자열 조각으로 주소를 완벽하게 해체하여 서버 컴파일 간섭을 원천 차단했습니다.
             var p = "https";
             var c = String.fromCharCode(58);
             var s = "//";
@@ -82,7 +90,7 @@
             resultDiv.innerHTML = "<div class='empty-msg'>데이터를 불러오는 중입니다...</div>";
 
             try {
-                var response = await fetch(fullUrl, { method: "GET" });
+                var response = await fetch(fullUrl, { method: "GET" });[cite: 1]
                 var rawText = await response.text();[cite: 1]
                 var data = JSON.parse(rawText);[cite: 1]
                 
@@ -140,9 +148,9 @@
                 var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
                 var useName = item.useName || item.pestiType || "-";
                 var pestiKorName = item.pestiKorName ? " [" + item.pestiKorName + "]" : "";
-                var cropName = item.cropName || item.crpName || item.crop || "-";
-                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || "-";
-                var pestiUse = item.pestiUse || item.useMethod || item.method || "-";
+                var cropName = item.cropName || item.crpName || item.crop || '-';
+                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
+                var pestiUse = item.pestiUse || item.useMethod || item.method || '-';
                 var dilutUnit = item.dilutUnit ? " (" + item.dilutUnit + ")" : "";
                 var useSuittime = item.useSuittime ? " / 시기 " + item.useSuittime : "";
                 var useNum = item.useNum ? " (이용횟수 " + item.useNum + ")" : "";
@@ -151,9 +159,9 @@
                 html += "  <div class='header-row'>";
                 html += "    <div class='brand-name'>" + pestiBrandName + pestiKorName + " <span class='source-badge'>" + (sourceName || "공공데이터") + "</span></div>";
                 html += "    <div class='comp-name'>" + cName + "</div>";
-                htmlContent = "  </div>";
+                html += "  </div>"; // 💡 오타 교정 완료!
                 html += "  <div class='info-row'><strong>효능(용도)</strong> " + useName + "</div>";
-                html += "  <div class='info-row"><strong>사용시기(방법)</strong> " + pestiUse + dilutUnit + useSuittime + useNum + "</div>";
+                html += "  <div class='info-row'><strong>사용시기(방법)</strong> " + pestiUse + dilutUnit + useSuittime + useNum + "</div>"; // 💡 따옴표 교정 완료!
                 html += "  <div class='highlight-box'>";
                 html += "    <div class='highlight-row'><strong>🌾 적용작물</strong> " + cropName + "</div>";
                 html += "    <div class='highlight-row'><strong>🐛 적용병해충</strong> " + diseaseWeedName + "</div>";
@@ -181,8 +189,8 @@
             h += "<div class='portal-box'>";
             h += "  <div class='portal-title'>🚫 조건에 맞는 등록 정보가 없습니다.</div>";
             h += "  <div class='portal-desc'>해당 제품은 입력하신 회사(" + displayComp + ")의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div>";
-            h += "  <button class='btn-naver' onclick='window.open(\"" + nUrl + "\" + \"" + q + "\", \"_blank\")'>🟩 네이버에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
-            h += "  <button class='btn-google' onclick='window.open(\"" + gUrl + "\" + \"" + q + "\", \"_blank\")'>🟦 구글에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
+            h += "  <button class='btn-naver' onclick='window.open(\"" + nUrl + "\" + \"' + q + '\", \"_blank\")'>🟩 네이버에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
+            h += "  <button class='btn-google' onclick='window.open(\"" + gUrl + "\" + \"' + q + '\", \"_blank\")'>🟦 구글에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
             h += "</div>";
             resultDiv.innerHTML = h;
         }
