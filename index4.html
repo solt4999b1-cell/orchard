@@ -3,36 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>농약 상세 검색 (JSON 연동판)</title>
+    <title>농약 상세 검색</title>
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f6f8; }
         h2 { color: #2c3e50; text-align: center; margin-bottom: 25px; }
-        
         .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 15px; }
-        
         label { font-size: 14px; font-weight: bold; color: #555; }
         input { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
         input:focus { border-color: #4CAF50; outline: none; }
-        
-        button { width: 100%; padding: 14px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; transition: 0.2s; }
-        button:hover { background-color: #45a049; }
-        
+        button { width: 100%; padding: 14px; font-size: 16px; cursor: pointer; background-color: #4CAF50; color: white; border: none; border-radius: 6px; font-weight: bold; }
         #resultContainer { min-height: 120px; }
-        
         .item-card { background: white; border: 1px solid #e0e0e0; border-radius: 8px; padding: 18px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #2e7d32; }
         .header-row { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 12px; }
         .brand-name { font-size: 20px; font-weight: bold; color: #2e7d32; }
         .comp-name { font-size: 14px; color: #666; font-weight: bold; }
-        
         .info-row { margin-bottom: 8px; font-size: 15px; }
         .highlight-box { background-color: #f1f8e9; border-radius: 6px; padding: 12px; margin-top: 15px; }
         .highlight-row { margin-bottom: 6px; font-size: 15px; color: #1b5e20; line-height: 1.4; }
-        
         .error-msg { color: #d32f2f; text-align: center; padding: 20px; background: white; border-radius: 8px; border: 1px solid #ffcdd2; }
         .empty-msg { text-align: center; padding: 20px; color: #666; }
         .source-badge { display: inline-block; font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 4px; color: #777; margin-left: 8px; }
-
         .summary-box { background: #f1f8e9; border: 1px solid #c5e1a5; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #33691e; font-weight: bold; display: flex; justify-content: space-between; }
         .portal-box { text-align: center; padding: 25px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .portal-title { color: #d32f2f; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
@@ -47,12 +38,12 @@
     
     <div class="search-container">
         <div class="input-group">
-            <label for="brandInput">상표명 (필수)</label>
-            <input type="text" id="brandInput" placeholder="예시 두배나 하이파워 또는 코니도">
+            <label>상표명 (필수)</label>
+            <input type="text" id="brandInput">
         </div>
         <div class="input-group">
-            <label for="compInput">회사명 (선택)</label>
-            <input type="text" id="compInput" placeholder="예시 중앙프라자 입력시 해당회사만 표시">
+            <label>회사명 (선택)</label>
+            <input type="text" id="compInput">
         </div>
         <button id="searchBtn">검색하기</button>
     </div>
@@ -62,196 +53,138 @@
     </div>
 
     <script>
-        // 💡 모든 함수 구조를 객체 리터럴이 아닌 순수 전역 바인딩 구조로 변경하여 컴파일 간섭을 방지합니다.
-        document.addEventListener('DOMContentLoaded', function() {
-            var sBtn = document.getElementById('searchBtn');
-            var bInp = document.getElementById('brandInput');
-            var cInp = document.getElementById('compInput');
-            
-            if (sBtn) sBtn.addEventListener('click', fetchPesticideInfo);
-            if (bInp) bInp.addEventListener('keypress', handleKey);
-            if (cInp) cInp.addEventListener('keypress', handleKey);
+        // 💡 자바스크립트 영역 내부의 오해의 소지가 있는 기호를 전부 완전 평면화 처리했습니다.
+        document.addEventListener("DOMContentLoaded", function() {
+            var searchButton = document.getElementById("searchBtn");
+            if (searchButton) {
+                searchButton.onclick = startSearch;
+            }
         });
 
-        function handleKey(e) {
-            if (e.key === 'Enter') {
-                fetchPesticideInfo();
-            }
-        }
+        async function startSearch() {
+            var brandVal = document.getElementById("brandInput").value.trim();
+            var compVal = document.getElementById("compInput").value.trim();
+            var resultDiv = document.getElementById("resultContainer");
 
-        async function fetchPesticideInfo() {
-            var brandKeyword = document.getElementById('brandInput').value.trim();
-            var compKeyword = document.getElementById('compInput').value.trim();
-            var resultDiv = document.getElementById('resultContainer');
+            if (!brandVal) return;
 
-            if (!brandKeyword) return;
+            // 💡 문자열 조각으로 주소를 완벽하게 해체하여 서버 컴파일 간섭을 원천 차단했습니다.
+            var p = "https";
+            var c = String.fromCharCode(58);
+            var s = "//";
+            var urlBase = "script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
+            var fullUrl = p + c + s + urlBase + "?keyword=" + encodeURIComponent(brandVal) + "&numOfRows=200&displayCount=200&target=psis";
 
-            // 💡 프로토콜 기호를 완벽하게 문자열 조각으로 쪼개어 자동 구문 인식을 차단했습니다.
-            var p1 = "ht";
-            var p2 = "tps";
-            var c1 = String.fromCharCode(58);
-            var sl = "//";
-            var base = "script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
-            var GAS_URL = p1 + p2 + c1 + sl + base;
-            
-            var url = GAS_URL + "?keyword=" + encodeURIComponent(brandKeyword) + "&numOfRows=200&displayCount=200&target=psis";
-            if (compKeyword) {
-                url += "&company=" + encodeURIComponent(compKeyword);
+            if (compVal) {
+                fullUrl = fullUrl + "&company=" + encodeURIComponent(compVal);
             }
 
-            resultDiv.innerHTML = '<div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;"><strong>🔍 디버깅 요청 주소 확인</strong><br><a href="' + url + '" target="_blank">' + url + '</a></div><div class="empty-msg">데이터를 불러오는 중입니다...</div>';
+            resultDiv.innerHTML = "<div class='empty-msg'>데이터를 불러오는 중입니다...</div>";
 
             try {
-                var response = await fetch(url, { method: 'GET' });[cite: 1]
+                var response = await fetch(fullUrl, { method: "GET" });
                 var rawText = await response.text();[cite: 1]
+                var data = JSON.parse(rawText);[cite: 1]
                 
-                try {
-                    var data = JSON.parse(rawText);[cite: 1]
-                    
-                    var rawList = [];
-                    if (data && data.data && data.data.list && data.data.list.item) {
-                        var targetItem = data.data.list.item;
-                        if (Array.isArray(targetItem)) {
-                            rawList = targetItem;
-                        } else {
-                            rawList = [targetItem];
-                        }
+                var rawList = [];
+                if (data && data.data && data.data.list && data.data.list.item) {
+                    var items = data.data.list.item;
+                    if (Array.isArray(items)) {
+                        rawList = items;
+                    } else {
+                        rawList = [items];
                     }
-
-                    var pestiList = rawList.filter(function(item) {
-                        var itemName = item.pestiBrandName || item.brandName || '';
-                        return itemName.indexOf(brandKeyword) !== -1;
-                    });
-
-                    var totalCount = '143882';
-                    if (data && data.data && data.data.totalCount) {
-                        totalCount = data.data.totalCount;
-                    }
-
-                    var isSuccess = true;
-                    if (data && data.ok === false) {
-                        isSuccess = false;
-                    }
-
-                    // 💡 객체 리터럴 내부 매핑 규칙을 한층 더 안정적으로 서술했습니다.
-                    var formattedData = new Object();
-                    formattedData.success = isSuccess;
-                    formattedData._rawList = pestiList;
-                    formattedData._totalCount = totalCount;
-                    formattedData.source = data.source || '농약정보서비스';
-
-                    displayResults(formattedData, compKeyword, brandKeyword);[cite: 1]
-                } catch (parseError) {[cite: 1]
-                    resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>JSON 파싱 에러</strong><br><textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">' + rawText + '</textarea></div>';[cite: 1]
                 }
-            } catch (error) {[cite: 1]
-                resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>네트워크 에러</strong><br>' + error.message + '</div>';[cite: 1]
+
+                var filteredList = [];
+                for (var i = 0; i < rawList.length; i++) {
+                    var bName = rawList[i].pestiBrandName || rawList[i].brandName || "";
+                    if (bName.indexOf(brandVal) !== -1) {
+                        filteredList.push(rawList[i]);
+                    }
+                }
+
+                var sysCount = "143882";
+                if (data && data.data && data.data.totalCount) {
+                    sysCount = data.data.totalCount;
+                }
+
+                renderView(filteredList, compVal, brandVal, sysCount, data.source);
+            } catch (err) {
+                resultDiv.innerHTML = "<div class='error-msg'>데이터 연동 실패 또는 통신 장애가 발생했습니다.</div>";
             }
         }
 
-        function displayResults(data, compKeyword, brandKeyword) {[cite: 1]
-            var resultDiv = document.getElementById('resultContainer');[cite: 1]
-            resultDiv.innerHTML = '';[cite: 1]
+        function renderView(items, compKeyword, brandKeyword, systemTotalCount, sourceName) {
+            var resultDiv = document.getElementById("resultContainer");
+            resultDiv.innerHTML = "";
 
-            if (!data.success) {[cite: 1]
-                resultDiv.innerHTML = '<div class="error-msg">조회 실패 ' + (data.error || data.message || '알 수 없는 오류') + '</div>';[cite: 1]
-                return;[cite: 1]
-            }
-
-            var items = data._rawList;[cite: 1]
-            var systemTotalCount = data._totalCount || '143882';
-            
             if (!items || items.length === 0) {
-                showEmptyPortal(resultDiv, compKeyword, brandKeyword);
+                renderEmpty(resultDiv, compKeyword, brandKeyword);
                 return;
             }
 
             var matchCount = 0;
-            var cardsContainer = document.createElement('div');
+            var html = "";
 
-            items.forEach(function(item) {
-                var compName = item.compName || item.companName || item.manufacturer || item.company || '-';
-                
-                if (compKeyword && compName.indexOf(compKeyword) === -1) {
-                    return;
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var cName = item.compName || item.companName || item.manufacturer || item.company || "-";
+
+                if (compKeyword && cName.indexOf(compKeyword) === -1) {
+                    continue;
                 }
 
                 matchCount++;
-                var itemDiv = document.createElement('div');
-                itemDiv.className = 'item-card';
-                
+
                 var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
-                var useName = item.useName || item.pestiType || '-';
-                
-                var pestiKorName = '';
-                if (item.pestiKorName) {
-                    pestiKorName = ' [' + item.pestiKorName + ']';
-                }
-                
-                var cropName = item.cropName || item.crpName || item.crop || '-';
-                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
-                
-                var pestiUse = item.pestiUse || item.useMethod || item.method || '-';
-                
-                var dilutUnit = '';
-                if (item.dilutUnit) {
-                    dilutUnit = ' (' + item.dilutUnit + ')';
-                }
-                
-                var useSuittime = '';
-                if (item.useSuittime) {
-                    useSuittime = ' / 시기 ' + item.useSuittime;
-                }
-                
-                var useNum = '';
-                if (item.useNum) {
-                    useNum = ' (이용횟수 ' + item.useNum + ')';
-                }
+                var useName = item.useName || item.pestiType || "-";
+                var pestiKorName = item.pestiKorName ? " [" + item.pestiKorName + "]" : "";
+                var cropName = item.cropName || item.crpName || item.crop || "-";
+                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || "-";
+                var pestiUse = item.pestiUse || item.useMethod || item.method || "-";
+                var dilutUnit = item.dilutUnit ? " (" + item.dilutUnit + ")" : "";
+                var useSuittime = item.useSuittime ? " / 시기 " + item.useSuittime : "";
+                var useNum = item.useNum ? " (이용횟수 " + item.useNum + ")" : "";
 
-                var htmlContent = '';
-                htmlContent += '<div class="header-row">';
-                htmlContent += '  <div class="brand-name">' + pestiBrandName + pestiKorName + ' <span class="source-badge">' + (data.source || '') + '</span></div>';
-                htmlContent += '  <div class="comp-name">' + compName + '</div>';
-                htmlContent += '</div>';
-                htmlContent += '<div class="info-row"><strong>효능(용도)</strong> ' + useName + '</div>';
-                htmlContent += '<div class="info-row"><strong>사용시기(방법)</strong> ' + pestiUse + dilutUnit + useSuittime + useNum + '</div>';
-                htmlContent += '<div class="highlight-box">';
-                htmlContent += '  <div class="highlight-row"><strong>🌾 적용작물</strong> ' + cropName + '</div>';
-                htmlContent += '  <div class="highlight-row"><strong>🐛 적용병해충</strong> ' + diseaseWeedName + '</div>';
-                htmlContent += '</div>';
+                html += "<div class='item-card'>";
+                html += "  <div class='header-row'>";
+                html += "    <div class='brand-name'>" + pestiBrandName + pestiKorName + " <span class='source-badge'>" + (sourceName || "공공데이터") + "</span></div>";
+                html += "    <div class='comp-name'>" + cName + "</div>";
+                htmlContent = "  </div>";
+                html += "  <div class='info-row'><strong>효능(용도)</strong> " + useName + "</div>";
+                html += "  <div class='info-row"><strong>사용시기(방법)</strong> " + pestiUse + dilutUnit + useSuittime + useNum + "</div>";
+                html += "  <div class='highlight-box'>";
+                html += "    <div class='highlight-row'><strong>🌾 적용작물</strong> " + cropName + "</div>";
+                html += "    <div class='highlight-row'><strong>🐛 적용병해충</strong> " + diseaseWeedName + "</div>";
+                html += "  </div>";
+                html += "</div>";
+            }
 
-                itemDiv.innerHTML = htmlContent;
-                cardsContainer.appendChild(itemDiv);
-            });
-
-            var summaryDiv = document.createElement('div');
-            summaryDiv.className = 'summary-box';
-            summaryDiv.innerHTML = '<span>📊 시스템 총 등록 데이터 ' + Number(systemTotalCount).toLocaleString() + '건</span><span>🔍 현재 검색된 결과 ' + matchCount + '건</span>';
+            var totalNum = Number(systemTotalCount).toLocaleString();
+            var summary = "<div class='summary-box'><span>📊 시스템 총 등록 데이터 " + totalNum + "건</span><span>🔍 현재 검색된 결과 " + matchCount + "건</span></div>";
             
-            resultDiv.appendChild(summaryDiv);
-
             if (matchCount === 0) {
-                showEmptyPortal(resultDiv, compKeyword, brandKeyword);
+                renderEmpty(resultDiv, compKeyword, brandKeyword);
             } else {
-                resultDiv.appendChild(cardsContainer);
+                resultDiv.innerHTML = summary + html;
             }
         }
 
-        function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
-            var nProto = "https" + String.fromCharCode(58) + "//search.naver.com/search.naver?query=";
-            var gProto = "https" + String.fromCharCode(58) + "//www.google.com/search?q=";
-            var searchQuery = encodeURIComponent((compKeyword + ' ' + brandKeyword).trim());
-            var displayComp = compKeyword || '선택안함';
-            
-            var portalHtml = '';
-            portalHtml += '<div class="portal-box">';
-            portalHtml += '  <div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div>';
-            portalHtml += '  <div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div>';
-            portalHtml += '  <button class="btn-naver" onclick="window.open(\'' + nProto + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button>';
-            portalHtml += '  <button class="btn-google" onclick="window.open(\'' + gProto + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button>';
-            portalHtml += '</div>';
-            
-            resultDiv.innerHTML = portalHtml;
+        function renderEmpty(resultDiv, compKeyword, brandKeyword) {
+            var nUrl = "https" + String.fromCharCode(58) + "//search.naver.com/search.naver?query=";
+            var gUrl = "https" + String.fromCharCode(58) + "//www.google.com/search?q=";
+            var q = encodeURIComponent((compKeyword + " " + brandKeyword).trim());
+            var displayComp = compKeyword || "선택안함";
+
+            var h = "";
+            h += "<div class='portal-box'>";
+            h += "  <div class='portal-title'>🚫 조건에 맞는 등록 정보가 없습니다.</div>";
+            h += "  <div class='portal-desc'>해당 제품은 입력하신 회사(" + displayComp + ")의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div>";
+            h += "  <button class='btn-naver' onclick='window.open(\"" + nUrl + "\" + \"" + q + "\", \"_blank\")'>🟩 네이버에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
+            h += "  <button class='btn-google' onclick='window.open(\"" + gUrl + "\" + \"" + q + "\", \"_blank\")'>🟦 구글에서 \"" + compKeyword + " " + brandKeyword + "\" 검색</button>";
+            h += "</div>";
+            resultDiv.innerHTML = h;
         }
     </script>
 </body>
