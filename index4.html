@@ -66,13 +66,13 @@
             // [필수 확인] 배포하신 구글 웹 앱 URL
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 공공데이터 API 제한을 풀기 위해 요청 건수(numOfRows, displayCount)를 200건으로 대폭 확장하여 요청합니다.
+            // 데이터 제한을 풀기 위해 200건 요청 옵션 추가
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}&numOfRows=200&displayCount=200&target=psis`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
 
-            // 화면에 현재 통신하려는 URL을 직접 출력[cite: 1]
+            // 디버깅 주소 출력[cite: 1]
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -88,23 +88,28 @@
                 try {
                     const data = JSON.parse(rawText);[cite: 1]
                     
-                    // 💡 확인된 구글 스크립트의 실제 농약 목록 배열 경로 추출 (data.data.list.item)
+                    // 구글 스크립트 데이터 구조 파싱 (data.data.list.item)
                     let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
                         rawList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
                     }
 
-                    // 💡 성분명이 겹쳐서 나오는 타사 농약을 방지하기 위해, 입력한 상표명이 정확히 포함된 것만 최종 필터링
+                    // 상표명에 입력 값이 포함된 것만 최종 필터링
                     let pestiList = rawList.filter(item => {
                         const itemName = item.pestiBrandName || item.brandName || '';
                         return itemName.includes(brandKeyword);
                     });
 
-                    // 데이터 전송 규격 통일 및 시스템 전체 건수(totalCount) 전달
+                    // 전체 건수 안전하게 추출
+                    let totalCount = '143882';
+                    if (data.data && data.data.totalCount) {
+                        totalCount = data.data.totalCount;
+                    }
+
                     const formattedData = {
-                        success: data.ok !== false,
+                        success: (data.ok !== false),
                         _rawList: pestiList,
-                        _totalCount: data.data ? data.data.totalCount : '143882',
+                        _totalCount: totalCount,
                         source: data.source || '농약정보서비스'
                     };
 
@@ -139,7 +144,6 @@
             const items = data._rawList;[cite: 1]
             const systemTotalCount = data._totalCount || '143882';
             
-            // 검색된 결과 배열이 아예 비어있다면 즉시 안내창 출력
             if (!items || items.length === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
                 return;
@@ -149,7 +153,6 @@
             const cardsContainer = document.createElement('div');
 
             items.forEach(item => {[cite: 1]
-                // 법인명(상호명) 추출 필터[cite: 1]
                 const compName = item.compName || item.companName || item.manufacturer || item.company || '-';[cite: 1]
                 
                 if (compKeyword && !compName.includes(compKeyword)) {[cite: 1]
@@ -160,14 +163,12 @@
                 const itemDiv = document.createElement('div');[cite: 1]
                 itemDiv.className = 'item-card';[cite: 1]
                 
-                // PSIS 공공데이터 필드 매핑[cite: 1]
                 const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;[cite: 1]
                 const useName = item.useName || item.pestiType || '-';[cite: 1]
                 const pestiKorName = item.pestiKorName ? ` [${item.pestiKorName}]` : '';
                 const cropName = item.cropName || item.crpName || item.crop || '-';[cite: 1]
                 const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';[cite: 1]
                 
-                // 사용 방법 세부 규칙 정보 조합[cite: 1]
                 const pestiUse = item.pestiUse || item.useMethod || item.method || '-';[cite: 1]
                 const dilutUnit = item.dilutUnit ? ` (${item.dilutUnit})` : '';
                 const useSuittime = item.useSuittime ? ` / 시기: ${item.useSuittime}` : '';
@@ -190,7 +191,7 @@
                 cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
-            // 💡 결과 목록 최상단에 농약 전체 데이터 건수 및 검색 매칭 건수 현황판 출력
+            // 결과창 최상단에 건수 현황판 부착
             const summaryDiv = document.createElement('div');
             summaryDiv.style = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
             summaryDiv.innerHTML = `
@@ -200,7 +201,6 @@
             
             resultDiv.appendChild(summaryDiv);
 
-            // 회사명 필터 적용 이후 최종 건수가 0이 된 경우 처리
             if (matchCount === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
             } else {
@@ -208,7 +208,6 @@
             }
         }
 
-        // 등록 정보 부재 시 우회 포털 버튼 출력 함수
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
             const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
             resultDiv.innerHTML = `
