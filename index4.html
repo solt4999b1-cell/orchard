@@ -63,16 +63,15 @@
 
             if (!brandKeyword) return;
 
-            // [필수 확인] 배포하신 구글 웹 앱 URL
+            // 구글 웹 앱 URL 고정
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 데이터 제한을 풀기 위해 200건 요청 옵션 추가
+            // 데이터 200건 요청 확장 및 규격 통일
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}&numOfRows=200&displayCount=200&target=psis`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
 
-            // 디버깅 주소 출력
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -88,7 +87,7 @@
                 try {
                     const data = JSON.parse(rawText);[cite: 1]
                     
-                    // 구글 스크립트 데이터 구조 파싱 (data.data.list.item)
+                    // data.data.list.item 구조 안전하게 분해
                     let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
                         if (Array.isArray(data.data.list.item)) {
@@ -98,19 +97,18 @@
                         }
                     }
 
-                    // 상표명에 입력 값이 포함된 것만 최종 필터링
+                    // 입력한 상표명이 정확히 포함된 것만 프론트엔드에서 최종 필터링
                     let pestiList = rawList.filter(item => {
                         const itemName = item.pestiBrandName || item.brandName || '';
                         return itemName.includes(brandKeyword);
                     });
 
-                    // 전체 건수 안전하게 추출
+                    // 전체 시스템 건수 추출
                     let totalCount = '143882';
                     if (data.data && data.data.totalCount) {
                         totalCount = data.data.totalCount;
                     }
 
-                    // 성공 여부 판별
                     let isSuccess = true;
                     if (data.ok === false) {
                         isSuccess = false;
@@ -186,7 +184,7 @@
 
                 itemDiv.innerHTML = `
                     <div class="header-row">
-                        <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>[cite: 1]
+                        <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>
                         <div class="comp-name">${compName}</div>[cite: 1]
                     </div>
                     
@@ -201,7 +199,7 @@
                 cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
-            // 💡 [오타 수정 완료] style 속성이 아닌 cssText 문법을 정확히 사용하여 오류를 해결했습니다.
+            // 현황판 추가 (cssText 정상 문법 반영 완료)
             const summaryDiv = document.createElement('div');
             summaryDiv.style.cssText = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
             summaryDiv.innerHTML = `
