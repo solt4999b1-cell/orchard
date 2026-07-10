@@ -63,6 +63,9 @@
     <script>
         // 💡 페이지 로드 시 현재 주소로 QR코드 자동 생성
         document.addEventListener("DOMContentLoaded", function() {
+			generateQr(); // QR 생성 호출
+			var searchButton = document.getElementById("searchBtn");
+        	if (searchButton) searchButton.onclick = startSearch;
             var pageUrl = window.location.href;
             var qrApi = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(pageUrl);
             document.getElementById("qrImg").src = qrApi;
@@ -71,7 +74,16 @@
             var searchButton = document.getElementById("searchBtn");
             if (searchButton) searchButton.onclick = startSearch;
         });
-
+		function generateQr() {
+	        var pageUrl = window.location.href;
+	        var qrApi = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(pageUrl);
+	        var qrImg = document.getElementById("qrImg");
+	        if (qrImg) {
+	            qrImg.src = qrApi;
+	            qrImg.style.display = "block"; // 혹시 숨겨져 있다면 강제 표시
+	            qrImg.onclick = function() { window.open(qrApi, "_blank"); };
+	        }
+	    }
         // ... (나머지 자바스크립트 로직은 이전과 동일하게 유지됩니다) ...
         async function startSearch() {
             var brandVal = document.getElementById("brandInput").value.trim();
