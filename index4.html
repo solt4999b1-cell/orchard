@@ -62,16 +62,22 @@
     </div>
 
     <script>
+        // 💡 모든 함수 구조를 객체 리터럴이 아닌 순수 전역 바인딩 구조로 변경하여 컴파일 간섭을 방지합니다.
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('searchBtn').addEventListener('click', fetchPesticideInfo);
+            var sBtn = document.getElementById('searchBtn');
+            var bInp = document.getElementById('brandInput');
+            var cInp = document.getElementById('compInput');
             
-            document.getElementById('brandInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') fetchPesticideInfo();
-            });
-            document.getElementById('compInput').addEventListener('keypress', function(e) {
-                if (e.key === 'Enter') fetchPesticideInfo();
-            });
+            if (sBtn) sBtn.addEventListener('click', fetchPesticideInfo);
+            if (bInp) bInp.addEventListener('keypress', handleKey);
+            if (cInp) cInp.addEventListener('keypress', handleKey);
         });
+
+        function handleKey(e) {
+            if (e.key === 'Enter') {
+                fetchPesticideInfo();
+            }
+        }
 
         async function fetchPesticideInfo() {
             var brandKeyword = document.getElementById('brandInput').value.trim();
@@ -80,10 +86,13 @@
 
             if (!brandKeyword) return;
 
-            // 💡 [핵심 해결책] 주소 문자열 내의 콜론(:) 기호 조각을 별도로 분리하여 결합시켰습니다.
-            // 이렇게 하면 어떤 파서나 서버 엔진도 이를 문법적 기호로 오인하지 못합니다.
-            var protocol = "https" + String.fromCharCode(58) + "//"; 
-            var GAS_URL = protocol + 'script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+            // 💡 프로토콜 기호를 완벽하게 문자열 조각으로 쪼개어 자동 구문 인식을 차단했습니다.
+            var p1 = "ht";
+            var p2 = "tps";
+            var c1 = String.fromCharCode(58);
+            var sl = "//";
+            var base = "script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
+            var GAS_URL = p1 + p2 + c1 + sl + base;
             
             var url = GAS_URL + "?keyword=" + encodeURIComponent(brandKeyword) + "&numOfRows=200&displayCount=200&target=psis";
             if (compKeyword) {
@@ -100,15 +109,12 @@
                     var data = JSON.parse(rawText);[cite: 1]
                     
                     var rawList = [];
-                    if (data.data) {
-                        if (data.data.list) {
-                            if (data.data.list.item) {
-                                if (Array.isArray(data.data.list.item)) {
-                                    rawList = data.data.list.item;
-                                } else {
-                                    rawList = [data.data.list.item];
-                                }
-                            }
+                    if (data && data.data && data.data.list && data.data.list.item) {
+                        var targetItem = data.data.list.item;
+                        if (Array.isArray(targetItem)) {
+                            rawList = targetItem;
+                        } else {
+                            rawList = [targetItem];
                         }
                     }
 
@@ -118,23 +124,21 @@
                     });
 
                     var totalCount = '143882';
-                    if (data.data) {
-                        if (data.data.totalCount) {
-                            totalCount = data.data.totalCount;
-                        }
+                    if (data && data.data && data.data.totalCount) {
+                        totalCount = data.data.totalCount;
                     }
 
                     var isSuccess = true;
-                    if (data.ok === false) {
+                    if (data && data.ok === false) {
                         isSuccess = false;
                     }
 
-                    var formattedData = {
-                        success: isSuccess,
-                        _rawList: pestiList,
-                        _totalCount: totalCount,
-                        source: data.source || '농약정보서비스'
-                    };
+                    // 💡 객체 리터럴 내부 매핑 규칙을 한층 더 안정적으로 서술했습니다.
+                    var formattedData = new Object();
+                    formattedData.success = isSuccess;
+                    formattedData._rawList = pestiList;
+                    formattedData._totalCount = totalCount;
+                    formattedData.source = data.source || '농약정보서비스';
 
                     displayResults(formattedData, compKeyword, brandKeyword);[cite: 1]
                 } catch (parseError) {[cite: 1]
@@ -234,12 +238,20 @@
         }
 
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
-            var naverUrl = "https" + String.fromCharCode(58) + "//search.naver.com/search.naver?query=";
-            var googleUrl = "https" + String.fromCharCode(58) + "//www.google.com/search?q=";
+            var nProto = "https" + String.fromCharCode(58) + "//search.naver.com/search.naver?query=";
+            var gProto = "https" + String.fromCharCode(58) + "//www.google.com/search?q=";
             var searchQuery = encodeURIComponent((compKeyword + ' ' + brandKeyword).trim());
             var displayComp = compKeyword || '선택안함';
             
-            resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'' + naverUrl + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'(\'' + googleUrl + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
+            var portalHtml = '';
+            portalHtml += '<div class="portal-box">';
+            portalHtml += '  <div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div>';
+            portalHtml += '  <div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div>';
+            portalHtml += '  <button class="btn-naver" onclick="window.open(\'' + nProto + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button>';
+            portalHtml += '  <button class="btn-google" onclick="window.open(\'' + gProto + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button>';
+            portalHtml += '</div>';
+            
+            resultDiv.innerHTML = portalHtml;
         }
     </script>
 </body>
