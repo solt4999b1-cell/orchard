@@ -38,8 +38,8 @@
     
     <div class="search-container">
         <div class="input-group">
-            <label>상표명 (필수)</label>
-            <input type="text" id="brandInput">
+            <label>상표명/품목명 (필수)</label>
+            <input type="text" id="brandInput" placeholder="예: 행운, 가스가마이신">
         </div>
         <div class="input-group">
             <label>회사명 (선택)</label>
@@ -49,7 +49,7 @@
     </div>
 
     <div id="resultContainer">
-        <div class="empty-msg">상표명과 회사명을 입력하고 검색해 주세요.</div>
+        <div class="empty-msg">검색어를 입력하고 검색해 주세요.</div>
     </div>
 
     <script>
@@ -103,7 +103,10 @@
                 var filteredList = [];
                 for (var i = 0; i < rawList.length; i++) {
                     var bName = rawList[i].pestiBrandName || rawList[i].brandName || "";
-                    if (bName.indexOf(brandVal) !== -1) {
+                    var kName = rawList[i].pestiKorName || ""; // 품목명 추출
+                    
+                    // 💡 [핵심 해결] 상표명이나 품목명 둘 중 하나라도 검색어가 포함되어 있으면 통과!
+                    if (bName.indexOf(brandVal) !== -1 || kName.indexOf(brandVal) !== -1) {
                         filteredList.push(rawList[i]);
                     }
                 }
