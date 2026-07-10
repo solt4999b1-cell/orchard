@@ -33,7 +33,6 @@
         .empty-msg { text-align: center; padding: 20px; color: #666; }
         .source-badge { display: inline-block; font-size: 11px; background: #eee; padding: 2px 6px; border-radius: 4px; color: #777; margin-left: 8px; }
 
-        /* 💡 문법 오류 방지를 위해 스타일을 CSS 클래스로 미리 정의해 둡니다. */
         .summary-box { background: #f1f8e9; border: 1px solid #c5e1a5; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 14px; color: #33691e; font-weight: bold; display: flex; justify-content: space-between; }
         .portal-box { text-align: center; padding: 25px; background: white; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .portal-title { color: #d32f2f; font-size: 18px; font-weight: bold; margin-bottom: 10px; }
@@ -63,7 +62,6 @@
     </div>
 
     <script>
-        // DOM 로드 완료 후 이벤트 바인딩
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('searchBtn').addEventListener('click', fetchPesticideInfo);
             
@@ -76,16 +74,14 @@
         });
 
         async function fetchPesticideInfo() {
-            const brandKeyword = document.getElementById('brandInput').value.trim();
-            const compKeyword = document.getElementById('compInput').value.trim();
-            const resultDiv = document.getElementById('resultContainer');
+            var brandKeyword = document.getElementById('brandInput').value.trim();
+            var compKeyword = document.getElementById('compInput').value.trim();
+            var resultDiv = document.getElementById('resultContainer');
 
             if (!brandKeyword) return;
 
-            const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-            
-            // 200건 대용량 요청 옵션 결합
-            let url = GAS_URL + "?keyword=" + encodeURIComponent(brandKeyword) + "&numOfRows=200&displayCount=200&target=psis";
+            var GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+            var url = GAS_URL + "?keyword=" + encodeURIComponent(brandKeyword) + "&numOfRows=200&displayCount=200&target=psis";
             if (compKeyword) {
                 url += "&company=" + encodeURIComponent(compKeyword);
             }
@@ -93,13 +89,13 @@
             resultDiv.innerHTML = '<div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;"><strong>🔍 디버깅: 요청 주소 확인</strong><br><a href="' + url + '" target="_blank">' + url + '</a></div><div class="empty-msg">데이터를 불러오는 중입니다...</div>';
 
             try {
-                const response = await fetch(url, { method: 'GET' });[cite: 1]
-                const rawText = await response.text();[cite: 1]
+                var response = await fetch(url, { method: 'GET' });[cite: 1]
+                var rawText = await response.text();[cite: 1]
                 
                 try {
-                    const data = JSON.parse(rawText);[cite: 1]
+                    var data = JSON.parse(rawText);[cite: 1]
                     
-                    let rawList = [];
+                    var rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
                         if (Array.isArray(data.data.list.item)) {
                             rawList = data.data.list.item;
@@ -108,23 +104,22 @@
                         }
                     }
 
-                    // 프론트엔드 상표명 교차 검증 필터링
-                    let pestiList = rawList.filter(function(item) {
-                        const itemName = item.pestiBrandName || item.brandName || '';
+                    var pestiList = rawList.filter(function(item) {
+                        var itemName = item.pestiBrandName || item.brandName || '';
                         return itemName.indexOf(brandKeyword) !== -1;
                     });
 
-                    let totalCount = '143882';
+                    var totalCount = '143882';
                     if (data.data && data.data.totalCount) {
                         totalCount = data.data.totalCount;
                     }
 
-                    let isSuccess = true;
+                    var isSuccess = true;
                     if (data.ok === false) {
                         isSuccess = false;
                     }
 
-                    const formattedData = {
+                    var formattedData = {
                         success: isSuccess,
                         _rawList: pestiList,
                         _totalCount: totalCount,
@@ -141,7 +136,7 @@
         }
 
         function displayResults(data, compKeyword, brandKeyword) {[cite: 1]
-            const resultDiv = document.getElementById('resultContainer');[cite: 1]
+            var resultDiv = document.getElementById('resultContainer');[cite: 1]
             resultDiv.innerHTML = '';[cite: 1]
 
             if (!data.success) {[cite: 1]
@@ -149,56 +144,57 @@
                 return;[cite: 1]
             }
 
-            const items = data._rawList;[cite: 1]
-            const systemTotalCount = data._totalCount || '143882';
+            var items = data._rawList;[cite: 1]
+            var systemTotalCount = data._totalCount || '143882';
             
             if (!items || items.length === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
                 return;
             }
 
-            let matchCount = 0;
-            const cardsContainer = document.createElement('div');
+            var matchCount = 0;
+            var cardsContainer = document.createElement('div');
 
             items.forEach(function(item) {[cite: 1]
-                const compName = item.compName || item.companName || item.manufacturer || item.company || '-';[cite: 1]
+                var compName = item.compName || item.companName || item.manufacturer || item.company || '-';[cite: 1]
                 
                 if (compKeyword && compName.indexOf(compKeyword) === -1) {[cite: 1]
                     return;[cite: 1]
                 }
 
                 matchCount++;[cite: 1]
-                const itemDiv = document.createElement('div');[cite: 1]
+                var itemDiv = document.createElement('div');[cite: 1]
                 itemDiv.className = 'item-card';[cite: 1]
                 
-                const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;[cite: 1]
-                const useName = item.useName || item.pestiType || '-';[cite: 1]
-                const pestiKorName = item.pestiKorName ? ' [' + item.pestiKorName + ']' : '';
-                const cropName = item.cropName || item.crpName || item.crop || '-';[cite: 1]
-                const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';[cite: 1]
+                var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;[cite: 1]
+                var useName = item.useName || item.pestiType || '-';[cite: 1]
+                var pestiKorName = item.pestiKorName ? ' [' + item.pestiKorName + ']' : '';
+                var cropName = item.cropName || item.crpName || item.crop || '-';[cite: 1]
+                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';[cite: 1]
                 
-                const pestiUse = item.pestiUse || item.useMethod || item.method || '-';[cite: 1]
-                const dilutUnit = item.dilutUnit ? ' (' + item.dilutUnit + ')' : '';
-                const useSuittime = item.useSuittime ? ' / 시기: ' + item.useSuittime : '';
-                const useNum = item.useNum ? ' (이용횟수: ' + item.useNum + ')' : '';
+                var pestiUse = item.pestiUse || item.useMethod || item.method || '-';[cite: 1]
+                var dilutUnit = item.dilutUnit ? ' (' + item.dilutUnit + ')' : '';
+                var useSuittime = item.useSuittime ? ' / 시기: ' + item.useSuittime : '';
+                var useNum = item.useNum ? ' (이용횟수: ' + item.useNum + ')' : '';
 
-                itemDiv.innerHTML = `
-                    <div class="header-row">
-                        <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>
-                        <div class="comp-name">${compName}</div>
-                    </div>
-                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>[cite: 1]
-                    <div class="info-row"><strong>사용시기(방법):</strong> ${pestiUse}${dilutUnit}${useSuittime}${useNum}</div>[cite: 1]
-                    <div class="highlight-box">
-                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>[cite: 1]
-                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>[cite: 1]
-                    </div>
-                `;
+                // 💡 [완벽 변경] 백틱(템플릿 리터럴)을 완전히 걷어내고 안전한 문자열 결합 형태로 변경하여 기호 충돌을 원천 박멸했습니다.
+                var htmlContent = '';
+                htmlContent += '<div class="header-row">';
+                htmlContent += '  <div class="brand-name">' + pestiBrandName + pestiKorName + ' <span class="source-badge">' + (data.source || '') + '</span></div>';
+                htmlContent += '  <div class="comp-name">' + compName + '</div>';
+                htmlContent += '</div>';
+                htmlContent += '<div class="info-row"><strong>효능(용도):</strong> ' + useName + '</div>';
+                htmlContent += '<div class="info-row"><strong>사용시기(방법):</strong> ' + pestiUse + dilutUnit + useSuittime + useNum + '</div>';
+                htmlContent += '<div class="highlight-box">';
+                htmlContent += '  <div class="highlight-row"><strong>🌾 적용작물:</strong> ' + cropName + '</div>';
+                htmlContent += '  <div class="highlight-row"><strong>🐛 적용병해충:</strong> ' + diseaseWeedName + '</div>';
+                htmlContent += '</div>';
+
+                itemDiv.innerHTML = htmlContent;
                 cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
-            // 현황판 추가 (인라인 스타일 기호 분리 완료)
-            const summaryDiv = document.createElement('div');
+            var summaryDiv = document.createElement('div');
             summaryDiv.className = 'summary-box';
             summaryDiv.innerHTML = '<span>📊 시스템 총 등록 데이터: ' + Number(systemTotalCount).toLocaleString() + '건</span><span>🔍 현재 검색된 결과: ' + matchCount + '건</span>';
             
@@ -212,9 +208,11 @@
         }
 
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
-            const searchQuery = encodeURIComponent((compKeyword + ' ' + brandKeyword).trim());
-            const displayComp = compKeyword || '선택안함';
+            var searchQuery = encodeURIComponent((compKeyword + ' ' + brandKeyword).trim());
+            var displayComp = compKeyword || '선택안함';
             
-            resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'https://search.naver.com/search.naver?query=\' + \'' + searchQuery + '\', \'_blank\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'https://www.google.com/search?q=\' + \'' + searchQuery + '\', \'_blank\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
+            resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'https://search.naver.com/search.naver?query=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'https://www.google.com/search?q=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
         }
     </script>
+</body>
+</html>
