@@ -48,13 +48,11 @@
     <div class="search-container">
         <div class="input-group">
             <label for="brandInput">상표명 (필수)</label>
-            <!-- 💡 placeholder 내부에 오류를 일으키던 콜론(:) 기호를 완전히 제거했습니다 -->
             <input type="text" id="brandInput" placeholder="예시 두배나 하이파워 또는 코니도">
         </div>
         <div class="input-group">
             <label for="compInput">회사명 (선택)</label>
-            <!-- 💡 placeholder 내부에 오류를 일으키던 콜론(:) 기호를 완전히 제거했습니다 -->
-            <input type="text" id="compInput" placeholder="예시 중앙프라자 (입력 시 해당 회사만 표시)">
+            <input type="text" id="compInput" placeholder="예시 중앙프라자 입력시 해당회사만 표시">
         </div>
         <button id="searchBtn">검색하기</button>
     </div>
@@ -98,11 +96,15 @@
                     var data = JSON.parse(rawText);[cite: 1]
                     
                     var rawList = [];
-                    if (data.data && data.data.list && data.data.list.item) {
-                        if (Array.isArray(data.data.list.item)) {
-                            rawList = data.data.list.item;
-                        } else {
-                            rawList = [data.data.list.item];
+                    if (data.data) {
+                        if (data.data.list) {
+                            if (data.data.list.item) {
+                                if (Array.isArray(data.data.list.item)) {
+                                    rawList = data.data.list.item;
+                                } else {
+                                    rawList = [data.data.list.item];
+                                }
+                            }
                         }
                     }
 
@@ -112,8 +114,10 @@
                     });
 
                     var totalCount = '143882';
-                    if (data.data && data.data.totalCount) {
-                        totalCount = data.data.totalCount;
+                    if (data.data) {
+                        if (data.data.totalCount) {
+                            totalCount = data.data.totalCount;
+                        }
                     }
 
                     var isSuccess = true;
@@ -170,14 +174,32 @@
                 
                 var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
                 var useName = item.useName || item.pestiType || '-';
-                var pestiKorName = item.pestiKorName ? ' [' + item.pestiKorName + ']' : '';
+                
+                // 💡 에러 유발 가능성이 있던 삼항 연산자(?:)를 완벽한 안전 if문으로 전면 교체
+                var pestiKorName = '';
+                if (item.pestiKorName) {
+                    pestiKorName = ' [' + item.pestiKorName + ']';
+                }
+                
                 var cropName = item.cropName || item.crpName || item.crop || '-';
                 var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
                 
                 var pestiUse = item.pestiUse || item.useMethod || item.method || '-';
-                var dilutUnit = item.dilutUnit ? ' (' + item.dilutUnit + ')' : '';
-                var useSuittime = item.useSuittime ? ' / 시기 ' + item.useSuittime : '';
-                var useNum = item.useNum ? ' (이용횟수 ' + item.useNum + ')' : '';
+                
+                var dilutUnit = '';
+                if (item.dilutUnit) {
+                    dilutUnit = ' (' + item.dilutUnit + ')';
+                }
+                
+                var useSuittime = '';
+                if (item.useSuittime) {
+                    useSuittime = ' / 시기 ' + item.useSuittime;
+                }
+                
+                var useNum = '';
+                if (item.useNum) {
+                    useNum = ' (이용횟수 ' + item.useNum + ')';
+                }
 
                 var htmlContent = '';
                 htmlContent += '<div class="header-row">';
