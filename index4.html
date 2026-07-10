@@ -48,11 +48,13 @@
     <div class="search-container">
         <div class="input-group">
             <label for="brandInput">상표명 (필수)</label>
-            <input type="text" id="brandInput" placeholder="예: 두배나 하이파워, 코니도">
+            <!-- 💡 placeholder 내부에 오류를 일으키던 콜론(:) 기호를 완전히 제거했습니다 -->
+            <input type="text" id="brandInput" placeholder="예시 두배나 하이파워 또는 코니도">
         </div>
         <div class="input-group">
             <label for="compInput">회사명 (선택)</label>
-            <input type="text" id="compInput" placeholder="예: 중앙프라자 (입력 시 해당 회사만 표시)">
+            <!-- 💡 placeholder 내부에 오류를 일으키던 콜론(:) 기호를 완전히 제거했습니다 -->
+            <input type="text" id="compInput" placeholder="예시 중앙프라자 (입력 시 해당 회사만 표시)">
         </div>
         <button id="searchBtn">검색하기</button>
     </div>
@@ -86,7 +88,7 @@
                 url += "&company=" + encodeURIComponent(compKeyword);
             }
 
-            resultDiv.innerHTML = '<div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;"><strong>🔍 디버깅: 요청 주소 확인</strong><br><a href="' + url + '" target="_blank">' + url + '</a></div><div class="empty-msg">데이터를 불러오는 중입니다...</div>';
+            resultDiv.innerHTML = '<div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;"><strong>🔍 디버깅 요청 주소 확인</strong><br><a href="' + url + '" target="_blank">' + url + '</a></div><div class="empty-msg">데이터를 불러오는 중입니다...</div>';
 
             try {
                 var response = await fetch(url, { method: 'GET' });[cite: 1]
@@ -128,10 +130,10 @@
 
                     displayResults(formattedData, compKeyword, brandKeyword);[cite: 1]
                 } catch (parseError) {[cite: 1]
-                    resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>JSON 파싱 에러:</strong><br><textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">' + rawText + '</textarea></div>';[cite: 1]
+                    resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>JSON 파싱 에러</strong><br><textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">' + rawText + '</textarea></div>';[cite: 1]
                 }
             } catch (error) {[cite: 1]
-                resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>네트워크 에러:</strong><br>' + error.message + '</div>';[cite: 1]
+                resultDiv.innerHTML += '<div class="error-msg" style="text-align:left;"><strong>네트워크 에러</strong><br>' + error.message + '</div>';[cite: 1]
             }
         }
 
@@ -140,7 +142,7 @@
             resultDiv.innerHTML = '';[cite: 1]
 
             if (!data.success) {[cite: 1]
-                resultDiv.innerHTML = '<div class="error-msg">조회 실패: ' + (data.error || data.message || '알 수 없는 오류') + '</div>';[cite: 1]
+                resultDiv.innerHTML = '<div class="error-msg">조회 실패 ' + (data.error || data.message || '알 수 없는 오류') + '</div>';[cite: 1]
                 return;[cite: 1]
             }
 
@@ -155,48 +157,47 @@
             var matchCount = 0;
             var cardsContainer = document.createElement('div');
 
-            items.forEach(function(item) {[cite: 1]
-                var compName = item.compName || item.companName || item.manufacturer || item.company || '-';[cite: 1]
+            items.forEach(function(item) {
+                var compName = item.compName || item.companName || item.manufacturer || item.company || '-';
                 
-                if (compKeyword && compName.indexOf(compKeyword) === -1) {[cite: 1]
-                    return;[cite: 1]
+                if (compKeyword && compName.indexOf(compKeyword) === -1) {
+                    return;
                 }
 
-                matchCount++;[cite: 1]
-                var itemDiv = document.createElement('div');[cite: 1]
-                itemDiv.className = 'item-card';[cite: 1]
+                matchCount++;
+                var itemDiv = document.createElement('div');
+                itemDiv.className = 'item-card';
                 
-                var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;[cite: 1]
-                var useName = item.useName || item.pestiType || '-';[cite: 1]
+                var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
+                var useName = item.useName || item.pestiType || '-';
                 var pestiKorName = item.pestiKorName ? ' [' + item.pestiKorName + ']' : '';
-                var cropName = item.cropName || item.crpName || item.crop || '-';[cite: 1]
-                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';[cite: 1]
+                var cropName = item.cropName || item.crpName || item.crop || '-';
+                var diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
                 
-                var pestiUse = item.pestiUse || item.useMethod || item.method || '-';[cite: 1]
+                var pestiUse = item.pestiUse || item.useMethod || item.method || '-';
                 var dilutUnit = item.dilutUnit ? ' (' + item.dilutUnit + ')' : '';
-                var useSuittime = item.useSuittime ? ' / 시기: ' + item.useSuittime : '';
-                var useNum = item.useNum ? ' (이용횟수: ' + item.useNum + ')' : '';
+                var useSuittime = item.useSuittime ? ' / 시기 ' + item.useSuittime : '';
+                var useNum = item.useNum ? ' (이용횟수 ' + item.useNum + ')' : '';
 
-                // 💡 [완벽 변경] 백틱(템플릿 리터럴)을 완전히 걷어내고 안전한 문자열 결합 형태로 변경하여 기호 충돌을 원천 박멸했습니다.
                 var htmlContent = '';
                 htmlContent += '<div class="header-row">';
                 htmlContent += '  <div class="brand-name">' + pestiBrandName + pestiKorName + ' <span class="source-badge">' + (data.source || '') + '</span></div>';
                 htmlContent += '  <div class="comp-name">' + compName + '</div>';
                 htmlContent += '</div>';
-                htmlContent += '<div class="info-row"><strong>효능(용도):</strong> ' + useName + '</div>';
-                htmlContent += '<div class="info-row"><strong>사용시기(방법):</strong> ' + pestiUse + dilutUnit + useSuittime + useNum + '</div>';
+                htmlContent += '<div class="info-row"><strong>효능(용도)</strong> ' + useName + '</div>';
+                htmlContent += '<div class="info-row"><strong>사용시기(방법)</strong> ' + pestiUse + dilutUnit + useSuittime + useNum + '</div>';
                 htmlContent += '<div class="highlight-box">';
-                htmlContent += '  <div class="highlight-row"><strong>🌾 적용작물:</strong> ' + cropName + '</div>';
-                htmlContent += '  <div class="highlight-row"><strong>🐛 적용병해충:</strong> ' + diseaseWeedName + '</div>';
+                htmlContent += '  <div class="highlight-row"><strong>🌾 적용작물</strong> ' + cropName + '</div>';
+                htmlContent += '  <div class="highlight-row"><strong>🐛 적용병해충</strong> ' + diseaseWeedName + '</div>';
                 htmlContent += '</div>';
 
                 itemDiv.innerHTML = htmlContent;
-                cardsContainer.appendChild(itemDiv);[cite: 1]
+                cardsContainer.appendChild(itemDiv);
             });
 
             var summaryDiv = document.createElement('div');
             summaryDiv.className = 'summary-box';
-            summaryDiv.innerHTML = '<span>📊 시스템 총 등록 데이터: ' + Number(systemTotalCount).toLocaleString() + '건</span><span>🔍 현재 검색된 결과: ' + matchCount + '건</span>';
+            summaryDiv.innerHTML = '<span>📊 시스템 총 등록 데이터 ' + Number(systemTotalCount).toLocaleString() + '건</span><span>🔍 현재 검색된 결과 ' + matchCount + '건</span>';
             
             resultDiv.appendChild(summaryDiv);
 
@@ -214,5 +215,3 @@
             resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'https://search.naver.com/search.naver?query=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'https://www.google.com/search?q=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
         }
     </script>
-</body>
-</html>
