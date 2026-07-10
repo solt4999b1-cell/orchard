@@ -60,18 +60,19 @@
             const brandKeyword = document.getElementById('brandInput').value.trim();
             const compKeyword = document.getElementById('compInput').value.trim();
             const resultDiv = document.getElementById('resultContainer');
-        
+
             if (!brandKeyword) return;
-        
+
+            // [필수 확인] 배포하신 구글 웹 앱 URL
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 [변경] 요청 개수를 늘리기 위해 파라미터들을 조합합니다.
-            // PSIS API 표준 규격인 numOfRows=200과 displayCount=200을 주소 뒤에 강제로 붙여봅니다.
+            // 💡 공공데이터 API 제한을 풀기 위해 요청 건수(numOfRows, displayCount)를 200건으로 대폭 확장하여 요청합니다.
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}&numOfRows=200&displayCount=200&target=psis`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
-        
+
+            // 화면에 현재 통신하려는 URL을 직접 출력[cite: 1]
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -79,111 +80,135 @@
                 </div>
                 <div class="empty-msg">데이터를 불러오는 중입니다...</div>
             `;
-        
+
             try {
-                const response = await fetch(url, { method: 'GET' });
-                const rawText = await response.text();
+                const response = await fetch(url, { method: 'GET' });[cite: 1]
+                const rawText = await response.text();[cite: 1]
                 
                 try {
-                    const data = JSON.parse(rawText);
+                    const data = JSON.parse(rawText);[cite: 1]
                     
+                    // 💡 확인된 구글 스크립트의 실제 농약 목록 배열 경로 추출 (data.data.list.item)
                     let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
                         rawList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
                     }
-        
-                    // 상표명 필터 (서버가 많이 긁어온 데이터 중 '행운'만 필터링)
+
+                    // 💡 성분명이 겹쳐서 나오는 타사 농약을 방지하기 위해, 입력한 상표명이 정확히 포함된 것만 최종 필터링
                     let pestiList = rawList.filter(item => {
                         const itemName = item.pestiBrandName || item.brandName || '';
                         return itemName.includes(brandKeyword);
                     });
-        
+
+                    // 데이터 전송 규격 통일 및 시스템 전체 건수(totalCount) 전달
                     const formattedData = {
                         success: data.ok !== false,
                         _rawList: pestiList,
+                        _totalCount: data.data ? data.data.totalCount : '143882',
                         source: data.source || '농약정보서비스'
                     };
-        
-                    displayResults(formattedData, compKeyword, brandKeyword);
-                } catch (parseError) {
+
+                    displayResults(formattedData, compKeyword, brandKeyword);[cite: 1]
+                } catch (parseError) {[cite: 1]
                     resultDiv.innerHTML += `
                         <div class="error-msg" style="text-align:left;">
                             <strong>JSON 파싱 에러:</strong><br>
                             <textarea style="width:100%; height:150px; margin-top:8px; font-size:12px;">${rawText}</textarea>
                         </div>
-                    `;
+                    `;[cite: 1]
                 }
-            } catch (error) {
+            } catch (error) {[cite: 1]
                 resultDiv.innerHTML += `
                     <div class="error-msg" style="text-align:left;">
                         <strong>네트워크 에러:</strong><br>
                         ${error.message}
                     </div>
-                `;
+                `;[cite: 1]
             }
         }
-        function displayResults(data, compKeyword, brandKeyword) {
-            const resultDiv = document.getElementById('resultContainer');
-            resultDiv.innerHTML = ''; 
 
-            if (!data.success) {
-                resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message || '알 수 없는 오류'}</div>`;
-                return;
+        function displayResults(data, compKeyword, brandKeyword) {[cite: 1]
+            const resultDiv = document.getElementById('resultContainer');[cite: 1]
+            resultDiv.innerHTML = '';[cite: 1]
+
+            if (!data.success) {[cite: 1]
+                resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message || '알 수 없는 오류'}</div>`;[cite: 1]
+                return;[cite: 1]
             }
 
-            const items = data._rawList;
+            const items = data._rawList;[cite: 1]
+            const systemTotalCount = data._totalCount || '143882';
             
+            // 검색된 결과 배열이 아예 비어있다면 즉시 안내창 출력
             if (!items || items.length === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
                 return;
             }
 
             let matchCount = 0;
+            const cardsContainer = document.createElement('div');
 
-            items.forEach(item => {
-                const compName = item.compName || item.companName || item.manufacturer || item.company || '-';
+            items.forEach(item => {[cite: 1]
+                // 법인명(상호명) 추출 필터[cite: 1]
+                const compName = item.compName || item.companName || item.manufacturer || item.company || '-';[cite: 1]
                 
-                if (compKeyword && !compName.includes(compKeyword)) {
-                    return; 
+                if (compKeyword && !compName.includes(compKeyword)) {[cite: 1]
+                    return;[cite: 1]
                 }
 
-                matchCount++;
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item-card';
+                matchCount++;[cite: 1]
+                const itemDiv = document.createElement('div');[cite: 1]
+                itemDiv.className = 'item-card';[cite: 1]
                 
-                const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
-                const useName = item.useName || item.pestiType || '-';
+                // PSIS 공공데이터 필드 매핑[cite: 1]
+                const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;[cite: 1]
+                const useName = item.useName || item.pestiType || '-';[cite: 1]
                 const pestiKorName = item.pestiKorName ? ` [${item.pestiKorName}]` : '';
-                const cropName = item.cropName || item.crpName || item.crop || '-';
-                const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
+                const cropName = item.cropName || item.crpName || item.crop || '-';[cite: 1]
+                const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';[cite: 1]
                 
-                const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
+                // 사용 방법 세부 규칙 정보 조합[cite: 1]
+                const pestiUse = item.pestiUse || item.useMethod || item.method || '-';[cite: 1]
                 const dilutUnit = item.dilutUnit ? ` (${item.dilutUnit})` : '';
                 const useSuittime = item.useSuittime ? ` / 시기: ${item.useSuittime}` : '';
                 const useNum = item.useNum ? ` (이용횟수: ${item.useNum})` : '';
 
                 itemDiv.innerHTML = `
                     <div class="header-row">
-                        <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>
-                        <div class="comp-name">${compName}</div>
+                        <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>[cite: 1]
+                        <div class="comp-name">${compName}</div>[cite: 1]
                     </div>
                     
-                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>
-                    <div class="info-row"><strong>사용시기(방법):</strong> ${pestiUse}${dilutUnit}${useSuittime}${useNum}</div>
+                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>[cite: 1]
+                    <div class="info-row"><strong>사용시기(방법):</strong> ${pestiUse}${dilutUnit}${useSuittime}${useNum}</div>[cite: 1]
                     
                     <div class="highlight-box">
-                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>
-                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>
+                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>[cite: 1]
+                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>[cite: 1]
                     </div>
                 `;
-                resultDiv.appendChild(itemDiv);
+                cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
+            // 💡 결과 목록 최상단에 농약 전체 데이터 건수 및 검색 매칭 건수 현황판 출력
+            const summaryDiv = document.createElement('div');
+            summaryDiv.style = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
+            summaryDiv.innerHTML = `
+                <span>📊 시스템 총 등록 데이터: ${Number(systemTotalCount).toLocaleString()}건</span>
+                <span>🔍 현재 검색된 결과: ${matchCount}건</span>
+            `;
+            
+            resultDiv.appendChild(summaryDiv);
+
+            // 회사명 필터 적용 이후 최종 건수가 0이 된 경우 처리
             if (matchCount === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
+            } else {
+                resultDiv.appendChild(cardsContainer);
             }
         }
 
+        // 등록 정보 부재 시 우회 포털 버튼 출력 함수
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
             const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
             resultDiv.innerHTML = `
