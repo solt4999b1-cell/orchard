@@ -80,7 +80,11 @@
 
             if (!brandKeyword) return;
 
-            var GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+            // 💡 [핵심 해결책] 주소 문자열 내의 콜론(:) 기호 조각을 별도로 분리하여 결합시켰습니다.
+            // 이렇게 하면 어떤 파서나 서버 엔진도 이를 문법적 기호로 오인하지 못합니다.
+            var protocol = "https" + String.fromCharCode(58) + "//"; 
+            var GAS_URL = protocol + 'script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+            
             var url = GAS_URL + "?keyword=" + encodeURIComponent(brandKeyword) + "&numOfRows=200&displayCount=200&target=psis";
             if (compKeyword) {
                 url += "&company=" + encodeURIComponent(compKeyword);
@@ -175,7 +179,6 @@
                 var pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
                 var useName = item.useName || item.pestiType || '-';
                 
-                // 💡 에러 유발 가능성이 있던 삼항 연산자(?:)를 완벽한 안전 if문으로 전면 교체
                 var pestiKorName = '';
                 if (item.pestiKorName) {
                     pestiKorName = ' [' + item.pestiKorName + ']';
@@ -231,9 +234,13 @@
         }
 
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
+            var naverUrl = "https" + String.fromCharCode(58) + "//search.naver.com/search.naver?query=";
+            var googleUrl = "https" + String.fromCharCode(58) + "//www.google.com/search?q=";
             var searchQuery = encodeURIComponent((compKeyword + ' ' + brandKeyword).trim());
             var displayComp = compKeyword || '선택안함';
             
-            resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'https://search.naver.com/search.naver?query=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'https://www.google.com/search?q=\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
+            resultDiv.innerHTML = '<div class="portal-box"><div class="portal-title">🚫 조건에 맞는 등록 정보가 없습니다.</div><div class="portal-desc">해당 제품은 입력하신 회사(' + displayComp + ')의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.</div><button class="btn-naver" onclick="window.open(\'' + naverUrl + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟩 네이버에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button><button class="btn-google" onclick="window.open(\'(\'' + googleUrl + '\' + \'' + searchQuery + '\', \'' + '_blank' + '\')">🟦 구글에서 \'' + compKeyword + ' ' + brandKeyword + '\' 검색</button></div>';
         }
     </script>
+</body>
+</html>
