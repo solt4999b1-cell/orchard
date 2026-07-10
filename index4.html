@@ -56,21 +56,21 @@
     </div>
 
     <script>
-       async function fetchPesticideInfo() {
+        async function fetchPesticideInfo() {
             const brandKeyword = document.getElementById('brandInput').value.trim();
             const compKeyword = document.getElementById('compInput').value.trim();
             const resultDiv = document.getElementById('resultContainer');
-        
+
             if (!brandKeyword) return;
-        
+
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 방금 성공하신 주소의 파라미터 규칙 그대로 고정합니다.
+            // 구글 스크립트 규격에 맞춰 파라미터 고정
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
-        
+
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -78,7 +78,7 @@
                 </div>
                 <div class="empty-msg">데이터를 불러오는 중입니다...</div>
             `;
-        
+
             try {
                 const response = await fetch(url, { method: 'GET' });
                 const rawText = await response.text();
@@ -86,20 +86,18 @@
                 try {
                     const data = JSON.parse(rawText);
                     
-                    // 💡 [핵심 변경] 확인된 구글 스크립트의 실제 농약 목록 배열 경로를 정확히 끄집어냅니다.
+                    // 구글 스크립트 실제 농약 목록 배열 경로 추출 (data.data.list.item)
                     let pestiList = [];
                     if (data.data && data.data.list && data.data.list.item) {
-                        // 구조가 배열이면 그대로 쓰고, 만약 검색 결과가 1개여서 객체로 오면 배열로 감싸줍니다.
                         pestiList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
                     }
-        
-                    // HTML 하단 displayResults 함수가 읽을 수 있도록 규격 통일
+
                     const formattedData = {
                         success: data.ok !== false,
                         _rawList: pestiList,
                         source: data.source || '농약정보서비스'
                     };
-        
+
                     displayResults(formattedData, compKeyword, brandKeyword);
                 } catch (parseError) {
                     resultDiv.innerHTML += `
@@ -118,60 +116,52 @@
                 `;
             }
         }
-        
-        
-        
-        
+
         function displayResults(data, compKeyword, brandKeyword) {
             const resultDiv = document.getElementById('resultContainer');
             resultDiv.innerHTML = ''; 
-        
-            // Code.gs에서 에러를 내려준 경우
+
             if (!data.success) {
                 resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message || '알 수 없는 오류'}</div>`;
                 return;
             }
-        
+
             const items = data._rawList;
             
             if (!items || items.length === 0) {
-                resultDiv.innerHTML = `<div class="empty-msg">검색 결과가 없습니다.</div>`;
+                // 검색된 결과가 아예 없을 때 영양제 우회 창 표시
+                showEmptyPortal(resultDiv, compKeyword, brandKeyword);
                 return;
             }
-        
+
             let matchCount = 0;
-        
+
             items.forEach(item => {
-                // 💡 [변경] PSIS 실제 변수명 적용: 법인명(상호명) 추출
+                // PSIS 실제 변수명 매핑: 법인명(상호명)
                 const compName = item.compName || item.companName || item.manufacturer || item.company || '-';
                 
-                // 회사명이 입력되었는데 결과에 해당 문자열이 없으면 건너뜀(필터링)
+                // 회사명 필터링
                 if (compKeyword && !compName.includes(compKeyword)) {
                     return; 
                 }
-        
+
                 matchCount++;
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item-card';
                 
-                // 💡 [변경] 제공해주신 PSIS 데이터 항목 매칭
-                // 1. 상표명: pestiBrandName 사용 (없을 시 사용자가 입력한 상표명 사용)
+                // PSIS 데이터 항목 매칭
                 const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
-                
-                // 2. 효능(용도) 및 품목명: useName(용도: 살균 등) + pestiKorName(품목명: 아족시스트로빈 액상수화제 등)
                 const useName = item.useName || item.pestiType || '-';
                 const pestiKorName = item.pestiKorName ? ` [${item.pestiKorName}]` : '';
-                
-                // 3. 적용작물 및 적용병해충
                 const cropName = item.cropName || item.crpName || item.crop || '-';
                 const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
                 
-                // 4. 사용시기 및 희석배수/사용량
+                // 사용 방법 및 추가 정보 조합
                 const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
                 const dilutUnit = item.dilutUnit ? ` (${item.dilutUnit})` : '';
                 const useSuittime = item.useSuittime ? ` / 시기: ${item.useSuittime}` : '';
                 const useNum = item.useNum ? ` (이용횟수: ${item.useNum})` : '';
-        
+
                 itemDiv.innerHTML = `
                     <div class="header-row">
                         <div class="brand-name">${pestiBrandName}${pestiKorName} <span class="source-badge">${data.source || ''}</span></div>
@@ -188,123 +178,34 @@
                 `;
                 resultDiv.appendChild(itemDiv);
             });
-        
-            // 검색은 되었으나 회사명 필터링 후 남은 결과가 없을 때 (또는 영양제 처리 우회)
+
+            // 회사명 필터 적용 후 남은 결과가 없을 때
             if (matchCount === 0) {
-                const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
-                resultDiv.innerHTML = `
-                    <div style="text-align:center; padding:25px; background:white; border-radius:8px; border:1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <div style="color:#d32f2f; font-size:18px; font-weight:bold; margin-bottom:10px;">
-                            🚫 조건에 맞는 등록 정보가 없습니다.
-                        </div>
-                        <div style="margin-bottom:20px; font-size:15px; color:#555; line-height:1.6;">
-                            해당 제품은 입력하신 회사(${compKeyword || '선택안함'})의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.
-                        </div>
-                        
-                        <button onclick="window.open('https://search.naver.com/search.naver?query=${searchQuery}', '_blank')" 
-                                style="background-color:#03c75a; color:white; margin-bottom:10px; border-radius:30px; width:100%; padding:14px; font-size:16px; font-weight:bold; border:none; cursor:pointer;">
-                            🟩 네이버에서 '${compKeyword} ${brandKeyword}' 검색
-                        </button>
-                        
-                        <button onclick="window.open('https://www.google.com/search?q=${searchQuery}', '_blank')" 
-                                style="background-color:#4285F4; color:white; border-radius:30px; width:100%; padding:14px; font-size:16px; font-weight:bold; border:none; cursor:pointer;">
-                            🟦 구글에서 '${compKeyword} ${brandKeyword}' 검색
-                        </button>
-                    </div>
-                `;
+                showEmptyPortal(resultDiv, compKeyword, brandKeyword);
             }
         }
 
-            // [핵심 추가 로직] 검색된 농약이 없거나, 회사명 필터링 후 남은 결과가 없을 때 (영양제로 간주)
-            if (items.length === 0 || matchCount === 0) {
-                // 상표명과 회사명을 합쳐서 정확도 높은 검색어 생성
-                const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
-                
-                resultDiv.innerHTML = `
-                    <div style="text-align:center; padding:25px; background:white; border-radius:8px; border:1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                        <div style="color:#d32f2f; font-size:18px; font-weight:bold; margin-bottom:10px;">
-                            🚫 농약 등록 정보가 없습니다.
-                        </div>
-                        <div style="margin-bottom:20px; font-size:15px; color:#555; line-height:1.6;">
-                            해당 제품은 농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 높습니다.<br>
-                            아래 버튼을 눌러 인터넷 검색으로 즉시 확인해 보세요.
-                        </div>
-                        
-                        <button onclick="window.open('https://search.naver.com/search.naver?query=${searchQuery}', '_blank')" 
-                                style="background-color:#03c75a; color:white; margin-bottom:10px; border-radius:30px;">
-                            🟩 네이버에서 '${compKeyword} ${brandKeyword}' 검색
-                        </button>
-                        
-                        <button onclick="window.open('https://www.google.com/search?q=${searchQuery}', '_blank')" 
-                                style="background-color:#4285F4; color:white; border-radius:30px;">
-                            🟦 구글에서 '${compKeyword} ${brandKeyword}' 검색
-                        </button>
+        // 영양제/인터넷 검색 안내창 공통 함수
+        function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
+            const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
+            resultDiv.innerHTML = `
+                <div style="text-align:center; padding:25px; background:white; border-radius:8px; border:1px solid #e0e0e0; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <div style="color:#d32f2f; font-size:18px; font-weight:bold; margin-bottom:10px;">
+                        🚫 조건에 맞는 등록 정보가 없습니다.
                     </div>
-                `;
-            }
-        }
-
-        function displayResults(data, compKeyword, brandKeyword) {
-            const resultDiv = document.getElementById('resultContainer');
-            resultDiv.innerHTML = ''; 
-
-            // Code.gs에서 success: false로 에러를 내려준 경우
-            if (!data.success) {
-                resultDiv.innerHTML = `<div class="error-msg">조회 실패: ${data.error || data.message || '알 수 없는 오류'}</div>`;
-                return;
-            }
-
-            // Code.gs가 정리해서 보내준 원본 배열 데이터 가져오기
-            const items = data._rawList;
-            
-            if (!items || items.length === 0) {
-                resultDiv.innerHTML = `<div class="empty-msg">검색 결과가 없습니다.</div>`;
-                return;
-            }
-
-            let matchCount = 0;
-
-            items.forEach(item => {
-                // 백엔드가 API 방식인지 웹 파싱 방식인지에 따라 변수명이 다를 수 있어 유연하게 처리합니다.
-                const compName = item.compName || item.companName || item.manufacturer || '-';
-                
-                // 회사명이 입력되었는데 결과에 해당 문자열이 없으면 건너뜀(필터링)
-                if (compKeyword && !compName.includes(compKeyword)) {
-                    return; 
-                }
-
-                matchCount++;
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'item-card';
-                
-                // 변수 추출 (API 파라미터와 웹 파싱 파라미터 호환 대응)
-                const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
-                const useName = item.useName || item.pestiType || '-';
-                const cropName = item.cropName || item.crpName || item.crop || '-';
-                const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
-                const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
-
-                itemDiv.innerHTML = `
-                    <div class="header-row">
-                        <div class="brand-name">${pestiBrandName} <span class="source-badge">${data.source || ''}</span></div>
-                        <div class="comp-name">${compName}</div>
+                    <div style="margin-bottom:20px; font-size:15px; color:#555; line-height:1.6;">
+                        해당 제품은 입력하신 회사(${compKeyword || '선택안함'})의 제품이 아니거나, <br>농약이 아닌 <strong>영양제 또는 친환경 자재</strong>일 가능성이 있습니다.
                     </div>
-                    
-                    <div class="info-row"><strong>효능(용도):</strong> ${useName}</div>
-                    <div class="info-row"><strong>사용시기(방법):</strong> ${pestiUse}</div>
-                    
-                    <div class="highlight-box">
-                        <div class="highlight-row"><strong>🌾 적용작물:</strong> ${cropName}</div>
-                        <div class="highlight-row"><strong>🐛 적용병해충:</strong> ${diseaseWeedName}</div>
-                    </div>
-                `;
-                resultDiv.appendChild(itemDiv);
-            });
-
-            // 필터링 후 남은 결과가 없을 때
-            if (matchCount === 0) {
-                resultDiv.innerHTML = `<div class="empty-msg">해당 회사(${compKeyword})의 '${brandKeyword}' 제품을 찾을 수 없습니다.</div>`;
-            }
+                    <button onclick="window.open('https://search.naver.com/search.naver?query=${searchQuery}', '_blank')" 
+                            style="background-color:#03c75a; color:white; margin-bottom:10px; border-radius:30px; width:100%; padding:14px; font-size:16px; font-weight:bold; border:none; cursor:pointer;">
+                        🟩 네이버에서 '${compKeyword} ${brandKeyword}' 검색
+                    </button>
+                    <button onclick="window.open('https://www.google.com/search?q=${searchQuery}', '_blank')" 
+                            style="background-color:#4285F4; color:white; border-radius:30px; width:100%; padding:14px; font-size:16px; font-weight:bold; border:none; cursor:pointer;">
+                        🟦 구글에서 '${compKeyword} ${brandKeyword}' 검색
+                    </button>
+                </div>
+            `;
         }
     </script>
 </body>
