@@ -63,9 +63,8 @@
     </div>
 
     <script>
-        // 💡 페이지 로드 시 현재 주소로 QR코드 자동 생성
         document.addEventListener("DOMContentLoaded", function() {
-			// 💡 클릭하면 현재 페이지의 QR코드를 새 창에서 크게 보여줍니다.
+            // 💡 QR 버튼 클릭 이벤트만 설정 (이미지 태그 오류 원인 제거)
             var qrBtn = document.getElementById("qrBtn");
             if (qrBtn) {
                 qrBtn.onclick = function() {
@@ -74,48 +73,45 @@
                     window.open(qrApi, "_blank", "width=350,height=350");
                 };
             }
-			var searchButton = document.getElementById("searchBtn");
-        	if (searchButton) searchButton.onclick = startSearch;
-            var pageUrl = window.location.href;
-            var qrApi = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(pageUrl);
-            document.getElementById("qrImg").src = qrApi;
-            document.getElementById("qrImg").onclick = function() { window.open(qrApi, "_blank"); };
             
             var searchButton = document.getElementById("searchBtn");
             if (searchButton) searchButton.onclick = startSearch;
+            
+            var brandInput = document.getElementById("brandInput");
+            var compInput = document.getElementById("compInput");
+            if (brandInput) brandInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
+            if (compInput) compInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
         });
-		function generateQr() {
-	        var pageUrl = window.location.href;
-	        var qrApi = "https://chart.googleapis.com/chart?chs=150x150&cht=qr&chl=" + encodeURIComponent(pageUrl);
-	        var qrImg = document.getElementById("qrImg");
-	        if (qrImg) {
-	            qrImg.src = qrApi;
-	            qrImg.style.display = "block"; // 혹시 숨겨져 있다면 강제 표시
-	            qrImg.onclick = function() { window.open(qrApi, "_blank"); };
-	        }
-	    }
-        // ... (나머지 자바스크립트 로직은 이전과 동일하게 유지됩니다) ...
+
         async function startSearch() {
             var brandVal = document.getElementById("brandInput").value.trim();
             var compVal = document.getElementById("compInput").value.trim();
             var resultDiv = document.getElementById("resultContainer");
             if (!brandVal) return;
+
             var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
             var fullUrl = GAS_URL + "?keyword=" + encodeURIComponent(brandVal) + "&numOfRows=200&displayCount=200&target=psis";
             if (compVal) fullUrl += "&company=" + encodeURIComponent(compVal);
+            
             resultDiv.innerHTML = "<div class='empty-msg'>데이터를 불러오는 중입니다...</div>";
+            
             try {
                 var response = await fetch(fullUrl, { method: "GET" });
                 var data = JSON.parse(await response.text());
                 var rawList = (data && data.data && data.data.list && data.data.list.item) ? (Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item]) : [];
                 var filteredList = [], seenKeys = {};
+                
                 for (var i = 0; i < rawList.length; i++) {
                     var bName = rawList[i].pestiBrandName || rawList[i].brandName || "";
                     var kName = rawList[i].pestiKorName || ""; 
                     if (bName.indexOf(brandVal) !== -1 || kName.indexOf(brandVal) !== -1) {
                         var uniqueKey = bName + "|" + kName + "|" + (rawList[i].cropName || "");
                         if (!seenKeys[uniqueKey]) { seenKeys[uniqueKey] = rawList[i]; filteredList.push(rawList[i]); }
-                        else { var ep = (seenKeys[uniqueKey].diseaseWeedName || seenKeys[uniqueKey].pestName || ""); var cp = (rawList[i].diseaseWeedName || rawList[i].pestName || ""); if(cp !== "-" && ep.indexOf(cp)===-1) seenKeys[uniqueKey].diseaseWeedName = ep + ", " + cp; }
+                        else { 
+                            var existingItem = seenKeys[uniqueKey];
+                            var cp = (rawList[i].diseaseWeedName || rawList[i].pestName || "-");
+                            if(cp !== "-" && (existingItem.diseaseWeedName||"").indexOf(cp)===-1) existingItem.diseaseWeedName += ", " + cp; 
+                        }
                     }
                 }
                 renderView(filteredList, compVal, brandVal, (data.data ? data.data.totalCount : "143882"), data.source);
@@ -125,15 +121,14 @@
         function renderView(items, compKeyword, brandKeyword, systemTotalCount, sourceName) {
             var resultDiv = document.getElementById("resultContainer"); resultDiv.innerHTML = "";
             if (!items.length) { resultDiv.innerHTML = "<div class='empty-msg'>검색 결과가 없습니다.</div>"; return; }
-            var html = "";
+            var html = "<div class='summary-box'><span>검색 결과 " + items.length + "건</span></div>";
             items.forEach(function(item) {
-                var cName = item.compName || item.manufacturer || "-";
-                if (compKeyword && cName.indexOf(compKeyword) === -1) return;
-                html += "<div class='item-card'><div class='header-row'><div class='brand-name'>" + (item.pestiBrandName || brandKeyword) + " [" + (item.pestiKorName || "") + "]</div><div class='comp-name'>" + cName + "</div></div>";
+                if (compKeyword && (item.compName || item.manufacturer || "-").indexOf(compKeyword) === -1) return;
+                html += "<div class='item-card'><div class='header-row'><div class='brand-name'>" + (item.pestiBrandName || brandKeyword) + " [" + (item.pestiKorName || "") + "]</div><div class='comp-name'>" + (item.compName || "-") + "</div></div>";
                 html += "<div class='info-row'><strong>효능:</strong> " + (item.useName || "-") + "</div>";
                 html += "<div class='highlight-box'><div class='highlight-row'><strong>🌾 작물:</strong> " + (item.cropName || "-") + "</div><div class='highlight-row'><strong>🐛 병해충:</strong> " + (item.diseaseWeedName || "-") + "</div></div></div>";
             });
-            resultDiv.innerHTML = "<div class='summary-box'><span>검색 결과 " + items.length + "건</span></div>" + html;
+            resultDiv.innerHTML = html;
         }
     </script>
 </body>
