@@ -65,18 +65,12 @@
         
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
             
-            // 💡 [이 부분을 수정합니다] target=psis와 함께 pestiBrandName으로 상표명을 직접 찌릅니다.
-            let url = `${GAS_URL}?target=psis&pestiBrandName=${encodeURIComponent(brandKeyword)}`;
+            // 💡 [변경] 요청 개수를 늘리기 위해 파라미터들을 조합합니다.
+            // PSIS API 표준 규격인 numOfRows=200과 displayCount=200을 주소 뒤에 강제로 붙여봅니다.
+            let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}&numOfRows=200&displayCount=200&target=psis`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
-        
-            /* 
-            ⚠️ 만약 위 코드로도 안 나온다면 아래 주석을 번갈아가며 테스트해 보세요. 
-            (구글 스크립트가 상표명을 어떤 변수로 받는지 알아내기 위함입니다)
-            let url = `${GAS_URL}?target=psis&pestiName=${encodeURIComponent(brandKeyword)}`;
-            let url = `${GAS_URL}?target=psis&brandName=${encodeURIComponent(brandKeyword)}`;
-            */
         
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
@@ -93,14 +87,20 @@
                 try {
                     const data = JSON.parse(rawText);
                     
-                    let pestiList = [];
+                    let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
-                        pestiList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
+                        rawList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
                     }
+        
+                    // 상표명 필터 (서버가 많이 긁어온 데이터 중 '행운'만 필터링)
+                    let pestiList = rawList.filter(item => {
+                        const itemName = item.pestiBrandName || item.brandName || '';
+                        return itemName.includes(brandKeyword);
+                    });
         
                     const formattedData = {
                         success: data.ok !== false,
-                        _rawList: pestiList, // 여기서는 html 필터를 일시 해제하고 서버 데이터를 그대로 받습니다.
+                        _rawList: pestiList,
                         source: data.source || '농약정보서비스'
                     };
         
@@ -122,7 +122,6 @@
                 `;
             }
         }
-
         function displayResults(data, compKeyword, brandKeyword) {
             const resultDiv = document.getElementById('resultContainer');
             resultDiv.innerHTML = ''; 
