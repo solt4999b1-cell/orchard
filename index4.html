@@ -64,8 +64,6 @@
             if (!brandKeyword) return;
 
             const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-            
-            // 구글 스크립트 규격에 맞춰 파라미터 고정
             let url = `${GAS_URL}?keyword=${encodeURIComponent(brandKeyword)}`;
             if (compKeyword) {
                 url += `&company=${encodeURIComponent(compKeyword)}`;
@@ -86,11 +84,16 @@
                 try {
                     const data = JSON.parse(rawText);
                     
-                    // 구글 스크립트 실제 농약 목록 배열 경로 추출 (data.data.list.item)
-                    let pestiList = [];
+                    let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
-                        pestiList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
+                        rawList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
                     }
+
+                    // 💡 상표명 전용 필터 적용 (엉뚱한 성분 중복 농약 제거)
+                    let pestiList = rawList.filter(item => {
+                        const itemName = item.pestiBrandName || item.brandName || '';
+                        return itemName.includes(brandKeyword);
+                    });
 
                     const formattedData = {
                         success: data.ok !== false,
@@ -129,7 +132,6 @@
             const items = data._rawList;
             
             if (!items || items.length === 0) {
-                // 검색된 결과가 아예 없을 때 영양제 우회 창 표시
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
                 return;
             }
@@ -137,10 +139,8 @@
             let matchCount = 0;
 
             items.forEach(item => {
-                // PSIS 실제 변수명 매핑: 법인명(상호명)
                 const compName = item.compName || item.companName || item.manufacturer || item.company || '-';
                 
-                // 회사명 필터링
                 if (compKeyword && !compName.includes(compKeyword)) {
                     return; 
                 }
@@ -149,14 +149,12 @@
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'item-card';
                 
-                // PSIS 데이터 항목 매칭
                 const pestiBrandName = item.pestiBrandName || item.brandName || brandKeyword;
                 const useName = item.useName || item.pestiType || '-';
                 const pestiKorName = item.pestiKorName ? ` [${item.pestiKorName}]` : '';
                 const cropName = item.cropName || item.crpName || item.crop || '-';
                 const diseaseWeedName = item.diseaseWeedName || item.pestName || item.target || '-';
                 
-                // 사용 방법 및 추가 정보 조합
                 const pestiUse = item.pestiUse || item.useMethod || item.method || '-';
                 const dilutUnit = item.dilutUnit ? ` (${item.dilutUnit})` : '';
                 const useSuittime = item.useSuittime ? ` / 시기: ${item.useSuittime}` : '';
@@ -179,13 +177,11 @@
                 resultDiv.appendChild(itemDiv);
             });
 
-            // 회사명 필터 적용 후 남은 결과가 없을 때
             if (matchCount === 0) {
                 showEmptyPortal(resultDiv, compKeyword, brandKeyword);
             }
         }
 
-        // 영양제/인터넷 검색 안내창 공통 함수
         function showEmptyPortal(resultDiv, compKeyword, brandKeyword) {
             const searchQuery = encodeURIComponent(`${compKeyword} ${brandKeyword}`.trim());
             resultDiv.innerHTML = `
