@@ -72,7 +72,7 @@
                 url += `&company=${encodeURIComponent(compKeyword)}`;
             }
 
-            // 디버깅 주소 출력[cite: 1]
+            // 디버깅 주소 출력
             resultDiv.innerHTML = `
                 <div style="padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-radius:6px; margin-bottom:15px; word-break:break-all; font-size:13px; color:#0d47a1;">
                     <strong>🔍 디버깅: 요청 주소 확인</strong><br>
@@ -91,7 +91,11 @@
                     // 구글 스크립트 데이터 구조 파싱 (data.data.list.item)
                     let rawList = [];
                     if (data.data && data.data.list && data.data.list.item) {
-                        rawList = Array.isArray(data.data.list.item) ? data.data.list.item : [data.data.list.item];
+                        if (Array.isArray(data.data.list.item)) {
+                            rawList = data.data.list.item;
+                        } else {
+                            rawList = [data.data.list.item];
+                        }
                     }
 
                     // 상표명에 입력 값이 포함된 것만 최종 필터링
@@ -106,8 +110,14 @@
                         totalCount = data.data.totalCount;
                     }
 
+                    // 성공 여부 판별
+                    let isSuccess = true;
+                    if (data.ok === false) {
+                        isSuccess = false;
+                    }
+
                     const formattedData = {
-                        success: (data.ok !== false),
+                        success: isSuccess,
                         _rawList: pestiList,
                         _totalCount: totalCount,
                         source: data.source || '농약정보서비스'
@@ -191,9 +201,9 @@
                 cardsContainer.appendChild(itemDiv);[cite: 1]
             });
 
-            // 결과창 최상단에 건수 현황판 부착
+            // 💡 [오타 수정 완료] style 속성이 아닌 cssText 문법을 정확히 사용하여 오류를 해결했습니다.
             const summaryDiv = document.createElement('div');
-            summaryDiv.style = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
+            summaryDiv.style.cssText = "background:#f1f8e9; border:1px solid #c5e1a5; padding:12px; border-radius:6px; margin-bottom:15px; font-size:14px; color:#33691e; font-weight:bold; display:flex; justify-content:space-between;";
             summaryDiv.innerHTML = `
                 <span>📊 시스템 총 등록 데이터: ${Number(systemTotalCount).toLocaleString()}건</span>
                 <span>🔍 현재 검색된 결과: ${matchCount}건</span>
