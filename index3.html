@@ -267,15 +267,30 @@ img{ -webkit-user-select:none; user-select:none }
 </head>
 <body>
 <div class="wrap">
-  <div class="hdr">
-    <svg class="leafmark" viewBox="0 0 40 40" fill="none">
-      <path d="M20 4C10 8 6 18 8 30c12 4 22-2 24-14C33 8 27 5 20 4Z" fill="#2E6B3E"/>
-      <path d="M14 26C18 20 24 16 30 14" stroke="#E7F0E5" stroke-width="2" stroke-linecap="round"/>
-    </svg>
-    <h1>병해충 진단 · 방제</h1>
-    <div class="sub">내 밭 작물을<br>골라 진단→처방→방제계획</div>
-    <a class="backapp" href="https://solt4999b1-cell.github.io/orchard/index1.html">← 관리앱</a>
-  </div>
+  <div class="hdr" style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+    
+    <!-- 1번째 칸: 제목, 설명, 링크 (왼쪽) -->
+    <div class="hdr-content" style="flex: 1;">
+        <svg class="leafmark" viewBox="0 0 40 40" fill="none" style="width: 40px; height: 40px; vertical-align: middle;">
+            <path d="M20 4C10 8 6 18 8 30c12 4 22-2 24-14C33 8 27 5 20 4Z" fill="#2E6B3E"/>
+            <path d="M14 26C18 20 24 16 30 14" stroke="#E7F0E5" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <h1 style="display: inline-block; vertical-align: middle; margin: 0 0 0 8px;">병해충 진단 · 방제</h1>
+        
+        <h5 style="margin: 5px 0 10px 0; color: #666; font-weight: normal;">제작: 이용호 &nbsp; Copyright 2026.07.10. All Right Reserved</h5>  
+        
+        <div class="sub" style="margin-bottom: 15px;">내 밭 작물을<br>골라 진단→처방→방제계획</div>
+        <a class="backapp" href="https://solt4999b1-cell.github.io/orchard/index1.html" style="text-decoration: none;">← 관리앱</a>
+    </div>
+
+    <!-- 2번째 칸: 120x120 픽셀 그림/QR코드 (오른쪽) -->
+    <div class="hdr-qrcode" style="flex-shrink: 0;">
+        <a href="https://solt4999b1-cell.github.io/orchard/index3.html" target="_blank" style="display: block;">
+            <img src="./2cp8g.png" alt="QR코드" style="width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 6px; display: block;">
+        </a>
+    </div>
+
+</div>
 
   <div id="reviewBar" style="display:flex;gap:8px;justify-content:flex-end;margin:-4px 2px 10px">
     <button class="crop-edit" onclick="CropManager.open()">🌱작물상태 관리</button>
