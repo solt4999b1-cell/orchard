@@ -77,7 +77,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
   margin: 6px 4px 0px; /* 💡 하단 마진을 0으로 없앰 */
   position: relative;
   border-bottom: 2px solid var(--ink);
-  padding-bottom: 6px; /* 💡 내부 하단 공백을 더 줄임 */
+  padding-bottom: 2px !important; /* 밑줄 선과 버튼이 만날 수 있도록 패딩 극소화 */
 }
 
 /* 1번째 칸: 텍스트들을 묶어주는 공간 */
@@ -137,7 +137,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
   border: 1px solid #c3ddc0;
   border-radius: 8px;
   padding: 4px 8px;
-  margin-bottom: 0px; /* 💡 아래로 밀어내는 잔여 여백 제거 */
+  margin: 0 !important; /* 남은 마진 완전 제거 */
+  vertical-align: top;
 }
 	
 .hdr .backapp:active {
@@ -164,8 +165,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
   display: flex;
   gap: 8px;
   justify-content: flex-end;
-  /* 💡 마이너스 마진(-12px)을 주어 헤더 밑줄 바로 밑으로 버튼을 바짝 끌어올립니다 */
-  margin: -12px 2px 10px; 
+  /* 💡 기존 -12px에서 -26px로 마이너스 폭을 대폭 키워 밑줄 선 바로 밑에 강제로 꽂아 넣습니다 */
+  margin: -26px 2px 10px !important;
   position: relative;
   z-index: 10; /* 다른 요소에 묻히지 않도록 레이어 순위 보장 */
 }
@@ -357,13 +358,14 @@ img{ -webkit-user-select:none; user-select:none }
   border: 1.5px solid var(--line);
   background: var(--panel);
   border-radius: 10px;
-  padding: 6px 12px; 
+  padding: 5px 12px; 
   font: inherit;
   font-size: 12px;
   font-weight: 500;
   cursor: pointer;
   color: var(--ink-soft);
-  line-height: 1;
+  line-height: 1.2;
+  vertical-align: middle;
 }
 .crop-edit.on { border-color: var(--pest); color: var(--pest); }
 </style>
