@@ -835,17 +835,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--gray-700);min-heig
     padding-top: var(--topbar-h, 54px);
     touch-action: auto !important;
   }
-  #gas-settings-modal .modal {
-    border-radius: 0 0 16px 16px !important;
+#gas-settings-modal .modal {
+    border-radius: 16px !important; /* 💡 위로 띄울 것이므로 하단 모서리도 둥글게(0 0 16px 16px -> 16px) 바꿨습니다 */
     margin: 0 !important;
     width: 100% !important;
     max-width: 100% !important;
-    height: calc(100vh - var(--topbar-h, 54px) - env(safe-area-inset-bottom));
-    max-height: calc(100vh - var(--topbar-h, 54px) - env(safe-area-inset-bottom)) !important;
+    
+    /* 💡 뒤에 - 30px를 추가하여 밑에서 30px만큼 위로 올립니다 */
+    height: calc(100vh - var(--topbar-h, 54px) - env(safe-area-inset-bottom) - 30px);
+    max-height: calc(100vh - var(--topbar-h, 54px) - env(safe-area-inset-bottom) - 30px) !important;
+    
     display: flex;
     flex-direction: column;
     overflow: hidden;
-  }
+    
+    /* 💡 만약 밑에서 아예 띄우는 레이아웃이라면 아래 여백도 같이 주어야 안전합니다 */
+    bottom: calc(env(safe-area-inset-bottom) + 20px) !important; 
+}
   #gas-settings-modal .modal > div[style*="flex:1"] {
     overflow-y: scroll !important;
     -webkit-overflow-scrolling: touch !important;
