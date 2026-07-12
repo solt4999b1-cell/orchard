@@ -146,12 +146,14 @@ body{margin:0;background:var(--bg);color:var(--ink);
 }
 
 /* 2번째 칸: 120x120 그림/QR코드 영역 (우상단 배치) */
+/* 2번째 칸: 120x120 QR코드 (맨 위쪽 정렬) */
 .hdr-qrcode {
   position: absolute;
-  top: 40px; /* 관리앱 버튼 아래로 자연스럽게 떨어지도록 상단 여백 조절 */
+  top: 0;      /* 💡 기존 4px에서 0으로 올려 맨 위쪽으로 밀착시킵니다 */
   right: 2px;
   flex-shrink: 0;
 }
+
 .hdr-qrcode img {
   width: 120px;
   height: 120px;
