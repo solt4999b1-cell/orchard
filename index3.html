@@ -74,7 +74,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin: 6px 4px 0px; /* 💡 하단 마진을 0으로 없앰 */
+  margin: 6px 4px -4px; /* 💡 하단 마진을 -4px로 → 공간 극소화 */
   position: relative;
   border-bottom: 2px solid var(--ink);
   padding-bottom: 2px !important; /* 밑줄 선과 버튼이 만날 수 있도록 패딩 극소화 */
@@ -160,15 +160,17 @@ body{margin:0;background:var(--bg);color:var(--ink);
   display: block;
 }
 
-/* ── [💡 초강수] 리뷰 바 위치 강제 인상 ── */
+/* ── [💡 초강수] 리뷰 바 위치 강제 인상 + 전체 너비 활용 ── */
 #reviewBar {
   display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  /* 💡 기존 -12px에서 -26px로 마이너스 폭을 대폭 키워 밑줄 선 바로 밑에 강제로 꽂아 넣습니다 */
-  margin: -26px 2px 10px !important;
+  gap: 4px;
+  /* 💡 margin-top을 -38px로 → 관리앱 버튼과 최소 공간 */
+  margin: -38px 2px 8px !important;
   position: relative;
-  z-index: 10; /* 다른 요소에 묻히지 않도록 레이어 순위 보장 */
+  z-index: 10;
+  flex-wrap: wrap;
+  width: calc(100% + 4px); /* 좌우 margin 상쇄 */
+  margin-left: -2px;
 }
 
 /* 작물 선택 */
@@ -353,19 +355,24 @@ img{ -webkit-user-select:none; user-select:none }
 .tox-badge{font-size:11px;font-weight:700;color:var(--ink-soft);background:#eef1ec;border:1px solid var(--line);padding:2px 8px;border-radius:6px}
 .tox-badge.low{color:var(--leaf-d);background:var(--leaf-l);border-color:#c3ddc0}
 
-/* ── 💡 .crop-edit 버튼 스타일 (수정: 상하 6px 패딩 적용으로 터치 영역 및 모바일 가독성 확보) ── */
+/* ── 💡 .crop-edit 버튼 스타일 (전체 너비 활용 + 터치 영역 확보) ── */
 .crop-edit {
   border: 1.5px solid var(--line);
   background: var(--panel);
   border-radius: 10px;
-  padding: 5px 12px; 
+  padding: 6px 10px; 
   font: inherit;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   color: var(--ink-soft);
-  line-height: 1.2;
+  line-height: 1.4;
   vertical-align: middle;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .crop-edit.on { border-color: var(--pest); color: var(--pest); }
 </style>
