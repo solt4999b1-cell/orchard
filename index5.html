@@ -8,7 +8,7 @@
     <link rel="apple-touch-icon" sizes="180x180" href="icon5-180.png">
     <link rel="shortcut icon" href="icon5-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon5-192.png">
-    <link rel="icon" type="image/jpeg" sizes="512x512" href="icon5-512.jpg">
+    <link rel="icon" type="image/jpeg" sizes="512x512" href="icon5-512.png">
 
     <style>
         body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; background-color: #f4f6f8; }
@@ -99,6 +99,23 @@
         .modal-close { background: none; border: none; font-size: 24px; color: #999; cursor: pointer; }
         .modal-close:hover { color: #333; }
         .modal-body { padding: 20px; }
+
+        /* 보유농약관리 버튼 추가 스타일 */
+        .button-group { display: flex; gap: 10px; }
+        .button-group button { flex: 1; }
+        .manage-btn { background-color: #4CAF50; }
+        .manage-btn:hover { background-color: #45a049; }
+        
+        /* 보유농약 모달 스타일 */
+        .my-pesticide-item { background: #e8f5e9; border-left: 4px solid #4CAF50; padding: 12px; margin-bottom: 10px; border-radius: 6px; }
+        .my-pesticide-name { font-weight: bold; color: #2e7d32; margin-bottom: 4px; }
+        .my-pesticide-info { font-size: 12px; color: #555; }
+        .my-pesticide-match { background: #c8e6c9; padding: 8px; border-radius: 4px; margin-top: 5px; font-size: 11px; color: #1b5e20; font-weight: bold; }
+
+        /* 보유농약 강조 스타일 */
+        .item-card.has-match { border-left-color: #4CAF50; background-color: #f1f8f6; }
+        .item-card.has-match .brand-name { color: #2e7d32; }
+        .match-indicator { display: inline-block; background-color: #4CAF50; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; margin-left: 8px; }
     </style>
 </head>
 <body>
@@ -127,79 +144,381 @@
         </div>
         <div class="input-group">
             <label>병해충명 (선택)</label>
-            <input type="text" id="pestInput" placeholder="예: 응애, 진딧물">
+            <input type="text" id="pestInput" placeholder="예: 흰가루병">
         </div>
-        <div style="display: flex; gap: 10px;">
-            <button id="searchBtn" style="flex: 1;">검색하기</button>
-            <button onclick="openMyPesticideModal()" style="flex: 0 0 120px; background-color: #FF9800; cursor: pointer;">💊 보유 농약 관리</button>
+        <div class="button-group">
+            <button onclick="startSearch()">🔍 검색</button>
+            <button class="manage-btn" onclick="openMyPesticideModal()">📋 보유농약관리</button>
         </div>
     </div>
 
-    <div id="resultContainer">
-        <div class="empty-msg">작물명을 입력하고 검색해 주세요.</div>
-    </div>
+    <div id="itemsContainer" class="top-button-container"></div>
+    <div id="resultContainer"></div>
 
-    <!-- 보유 농약 관리 모달 -->
-    <div id="myPesticideModal" class="modal" style="display:none;">
+    <!-- 완료 팝업 모달 -->
+    <div id="completionModal" class="modal" style="display: none;">
         <div class="modal-content">
-            <div class="modal-header">
-                <h3>💊 보유 농약 관리</h3>
-                <button class="modal-close" onclick="closeMyPesticideModal()">✕</button>
-            </div>
-            <div class="modal-body">
-                <div class="input-group">
-                    <label>보유 농약 입력 (쉼표로 구분)</label>
-                    <textarea id="myPesticideInput" placeholder="예: 겔럭시, 행운, 보령젯" style="padding: 12px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Malgun Gothic', sans-serif; font-size: 14px; height: 120px;"></textarea>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <button onclick="saveMyPesticide()" style="flex: 1; padding: 12px; background-color: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">저장</button>
-                    <button onclick="clearMyPesticide()" style="flex: 1; padding: 12px; background-color: #f44336; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">초기화</button>
-                </div>
-                <div id="myPesticideList" style="margin-top: 20px;">
-                    <strong>저장된 농약:</strong>
-                    <div id="pesticideListContent" style="margin-top: 10px; padding: 10px; background: #f5f5f5; border-radius: 6px; min-height: 50px;"></div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 검색 완료 팝업 -->
-    <div id="completionModal" class="modal" style="display:none;">
-        <div class="modal-content" style="max-width: 500px;">
             <div class="modal-header">
                 <h3 id="completionTitle">✅ 검색 완료</h3>
                 <button class="modal-close" onclick="closeCompletionModal()">✕</button>
             </div>
-            <div class="modal-body" id="completionBody">
+            <div id="completionBody" class="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- 보유농약 관리 모달 -->
+    <div id="myPesticideModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📦 보유농약 관리</h3>
+                <button class="modal-close" onclick="closeMyPesticideModal()">✕</button>
+            </div>
+            <div id="myPesticideBody" class="modal-body">
+                <div style="text-align: center; color: #666; padding: 20px;">로드 중...</div>
             </div>
         </div>
     </div>
 
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
+    
     <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            var searchButton = document.getElementById("searchBtn");
-            if (searchButton) searchButton.onclick = startSearch;
+        // ============ Firebase 초기화 (index1.html과 동일) ============
+        var db = null;
+        var firebaseReady = false;
+
+        function initializeFirebase() {
+            if (firebaseReady) return;
             
-            var cropInput = document.getElementById("cropInput");
-            var pestInput = document.getElementById("pestInput");
-            if (cropInput) cropInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
-            if (pestInput) pestInput.onkeypress = function(e) { if (e.keyCode == 13 || e.key == "Enter") startSearch(); };
-            
-            // 모달 외부 클릭 시 닫기
-            window.onclick = function(event) {
-                var myModal = document.getElementById("myPesticideModal");
-                var compModal = document.getElementById("completionModal");
+            try {
+                if (typeof firebase === 'undefined') {
+                    console.warn("Firebase 라이브러리 로드 대기 중...");
+                    setTimeout(initializeFirebase, 500);
+                    return;
+                }
                 
-                if (event.target == myModal) {
-                    myModal.style.display = "none";
+                var firebaseConfig = {
+                    apiKey: "AIzaSyDWZrTWNI7CiQkpIKlJjQq2bODPJL6Jah4",
+                    authDomain: "orchard-fb.firebaseapp.com",
+                    projectId: "orchard-fb",
+                    storageBucket: "orchard-fb.appspot.com",
+                    messagingSenderId: "706066707823",
+                    appId: "1:706066707823:web:6a51b0d30c7ab01848b13b"
+                };
+                
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(firebaseConfig);
                 }
-                if (event.target == compModal) {
-                    compModal.style.display = "none";
-                }
+                db = firebase.firestore();
+                firebaseReady = true;
+                console.log("✅ Firebase 초기화 완료");
+            } catch(e) {
+                console.warn("Firebase 초기화 실패 (오프라인 모드):", e);
+                firebaseReady = false;
+            }
+        }
+
+        // Firebase 스크립트 로드 완료 후 초기화
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', function() {
+                setTimeout(initializeFirebase, 100);
+            });
+        } else {
+            setTimeout(initializeFirebase, 100);
+        }
+
+        // ============ 보유농약 데이터 저장소 ============
+        var window_myPesticideList = [];
+        var USER_DB = {};
+
+        // ============ index1.html에서 복사한 loadMyPesticideList 함수 ============
+        async function loadMyPesticideList() {
+            // Firebase 준비 대기
+            var waitCount = 0;
+            while (!db && waitCount < 20) {
+                await new Promise(function(resolve) { setTimeout(resolve, 100); });
+                waitCount++;
             }
             
-            // 보유 농약 초기 로드
-            loadMyPesticide();
+            if (!db) {
+                console.warn("⚠️ Firebase가 초기화되지 않았습니다. 오프라인 모드로 진행됩니다.");
+                window_myPesticideList = [];
+                USER_DB['pest'] = [];
+                return;
+            }
+            
+            try {
+                var snap = await db.collection('myPesticides').orderBy('registeredAt','desc').get();
+                window_myPesticideList = [];
+                var seen = {};
+                snap.forEach(function(doc){
+                    var d = doc.data(); 
+                    d._id = doc.id; 
+                    d.id = doc.id;
+                    // 이름 중복 제거 (첫번째만 유지)
+                    var nm = (d.name||'').trim().replace(/\s/g,'');
+                    if (nm && seen[nm]) return;
+                    if (nm) seen[nm] = true;
+                    // pest_status 기본값
+                    if (!d.pest_status) d.pest_status = 'have';
+                    window_myPesticideList.push(d);
+                });
+                // USER_DB와 동기화
+                USER_DB['pest'] = window_myPesticideList.map(function(p){
+                    return Object.assign({}, p, {_col:'myPesticides'});
+                });
+                console.log("✅ 보유농약 로드 완료:", window_myPesticideList.length, "개");
+            } catch(e) { 
+                console.error("❌ 보유농약 로드 오류:", e);
+                window_myPesticideList = []; 
+                USER_DB['pest'] = []; 
+            }
+        }
+
+        // ============ 보유농약 모달 관련 함수 ============
+        async function openMyPesticideModal() {
+            var modal = document.getElementById("myPesticideModal");
+            var body = document.getElementById("myPesticideBody");
+            
+            // 로딩 중 표시
+            body.innerHTML = '<div style="text-align: center; padding: 30px; color: #666;">' +
+                '<div style="font-size: 16px; margin-bottom: 10px;">⏳ 보유농약을 불러오는 중...</div>' +
+                '</div>';
+            
+            modal.style.display = "flex";
+            
+            // 보유농약 다시 로드
+            await loadMyPesticideList();
+            
+            if (!firebaseReady) {
+                body.innerHTML = '<div style="text-align: center; padding: 30px; color: #d32f2f;">' +
+                    '<div style="font-size: 48px; margin-bottom: 15px;">⚠️</div>' +
+                    '<div style="font-size: 16px;">Firebase 연결 실패</div>' +
+                    '<div style="font-size: 12px; margin-top: 15px; color: #999;">인터넷 연결을 확인하고 새로고침 해주세요.</div>' +
+                    '</div>';
+            } else if (window_myPesticideList.length === 0) {
+                body.innerHTML = '<div style="text-align: center; padding: 30px; color: #999;">' +
+                    '<div style="font-size: 48px; margin-bottom: 15px;">📦</div>' +
+                    '<div style="font-size: 16px;">등록된 보유농약이 없습니다.</div>' +
+                    '<div style="font-size: 12px; margin-top: 15px; color: #bbb;">index1.html 앱에서 보유농약을 등록하세요.</div>' +
+                    '</div>';
+            } else {
+                var html = '<div style="background: #e8f5e9; padding: 15px; border-radius: 8px; margin-bottom: 15px;">' +
+                    '<strong style="color: #2e7d32; font-size: 16px;">✅ 현재 보유농약: ' + window_myPesticideList.length + '개</strong>' +
+                    '</div>';
+                
+                html += '<div style="max-height: 400px; overflow-y: auto;">';
+                window_myPesticideList.forEach(function(pesti, idx) {
+                    html += '<div class="my-pesticide-item">' +
+                        '<div class="my-pesticide-name">' + (idx+1) + '. ' + (pesti.name || '') + '</div>' +
+                        '<div class="my-pesticide-info">' +
+                            '<div>🔹 <strong>타입:</strong> ' + (pesti.type || '') + '</div>' +
+                            '<div>🔹 <strong>성분:</strong> ' + (pesti.ingredient || '') + '</div>' +
+                            '<div>🔹 <strong>상태:</strong> ' + (pesti.pest_status === 'have' ? '✅ 보유중' : (pesti.pest_status === 'empty' ? '📭 소진' : '미설정')) + '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                html += '</div>';
+                
+                body.innerHTML = html;
+            }
+        }
+
+        function closeMyPesticideModal() {
+            document.getElementById("myPesticideModal").style.display = "none";
+        }
+
+        // ============ 검색 결과와 보유농약 비교 함수 ============
+        function matchMyPesticide(brandName, korName) {
+            // 정규화: 공백 제거, 대문자로 통일
+            var bName = (brandName || '').trim().replace(/\s/g, '').toUpperCase();
+            var kName = (korName || '').trim().replace(/\s/g, '').toUpperCase();
+            
+            for (var i = 0; i < window_myPesticideList.length; i++) {
+                var myName = (window_myPesticideList[i].name || '').trim().replace(/\s/g, '').toUpperCase();
+                var myIngr = (window_myPesticideList[i].ingredient || '').trim().replace(/\s/g, '').toUpperCase();
+                
+                // 이름이 포함되거나 성분이 일치하면 반환
+                if (bName.indexOf(myName) !== -1 || myName.indexOf(bName) !== -1 ||
+                    kName.indexOf(myName) !== -1 || myName.indexOf(kName) !== -1 ||
+                    (myIngr && (bName.indexOf(myIngr) !== -1 || kName.indexOf(myIngr) !== -1))) {
+                    return window_myPesticideList[i];
+                }
+            }
+            return null;
+        }
+
+        // ============ 렌더링 함수에 보유농약 강조 추가 ============
+        function renderCropSearchView(items, cropName, pestVal, idx) {
+            var resultDiv = document.getElementById("resultContainer");
+            var itemsDiv = document.getElementById("itemsContainer");
+            
+            if (idx === 0) {
+                var cropCount = (currentSearchState.allGroupedResults || []).length;
+                if (cropCount > 1) {
+                    itemsDiv.innerHTML = '<div class="filter-buttons">' +
+                        '<button data-filter="all" class="filter-btn active" onclick="filterResults(\'all\')">전체</button>' +
+                        '<button data-filter="multi" class="filter-btn" onclick="filterResults(\'multi\')">교집합만</button>' +
+                        '</div>';
+                }
+                resultDiv.innerHTML = '';
+            }
+            
+            var html = '<div class="category-section" style="margin-bottom: 20px;">';
+            if (currentSearchState.allGroupedResults.length > 1) {
+                html += '<div class="crop-title">🌾 ' + cropName + '</div>';
+            }
+            
+            items.forEach(function(item) {
+                var matchedPesti = matchMyPesticide(item.brandName, item.korName);
+                var cardClass = matchedPesti ? 'item-card has-match' : 'item-card';
+                var matchHtml = matchedPesti ? '<span class="match-indicator">✅ 보유중</span>' : '';
+                
+                html += '<div class="' + cardClass + '">' +
+                    '<div class="header-row">' +
+                        '<div class="brand-name">' + (item.brandName || '-') + matchHtml + '</div>' +
+                        '<div class="comp-name">' + (item.compName || '-') + '</div>' +
+                    '</div>' +
+                    '<div class="info-row"><strong>한글명:</strong> ' + (item.korName || '-') + '</div>' +
+                    '<div class="info-row"><strong>용도:</strong> ' + (item.useName || '-') + '</div>' +
+                    '<div class="highlight-box">' +
+                        '<div class="highlight-row"><strong>✓ 작물:</strong> ' + (item.crops && item.commonCrops ? item.commonCrops.join(", ") : (item.crops || []).join(", ")) + '</div>' +
+                        '<div class="highlight-row"><strong>✓ 대상:</strong> ' + (item.pests || []).join(", ") + '</div>' +
+                    '</div>';
+                
+                if (matchedPesti) {
+                    html += '<div class="my-pesticide-match">' +
+                        '✅ 보유농약: ' + matchedPesti.name + ' (성분: ' + (matchedPesti.ingredient || '') + ')' +
+                    '</div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            resultDiv.innerHTML += html;
+        }
+
+        function renderMultiCropSearchView(commonItems, cropList, pestVal, allResults) {
+            var resultDiv = document.getElementById("resultContainer");
+            var itemsDiv = document.getElementById("itemsContainer");
+            
+            resultDiv.innerHTML = '';
+            
+            itemsDiv.innerHTML = '<div class="filter-buttons">' +
+                '<button data-filter="all" class="filter-btn active" onclick="filterResults(\'all\')">전체</button>' +
+                '<button data-filter="multi" class="filter-btn" onclick="filterResults(\'multi\')">교집합만</button>' +
+                '</div>';
+            
+            var html = '<div class="success-summary">' +
+                '<div class="summary-crops">🌾 선택 작물: ' + cropList.join(', ') + '</div>' +
+                '<div class="summary-count">📊 교집합 농약: ' + commonItems.length + '개</div>' +
+                '</div>';
+            
+            // 교집합 아이템 렌더링 (모두 multi-crop 클래스)
+            commonItems.forEach(function(item) {
+                var matchedPesti = matchMyPesticide(item.brandName, item.korName);
+                var cardClass = 'item-card multi-crop' + (matchedPesti ? ' has-match' : '');
+                var matchHtml = matchedPesti ? '<span class="match-indicator">✅ 보유중</span>' : '';
+                
+                html += '<div class="' + cardClass + '" data-crops="' + item.crops.length + '">' +
+                    '<div class="header-row">' +
+                        '<div class="brand-name">' + (item.brandName || '-') + matchHtml + 
+                            '<span class="multi-badge">교집합 ' + item.commonCrops.length + '작물</span></div>' +
+                        '<div class="comp-name">' + (item.compName || '-') + '</div>' +
+                    '</div>' +
+                    '<div class="info-row"><strong>한글명:</strong> ' + (item.korName || '-') + '</div>' +
+                    '<div class="info-row"><strong>용도:</strong> ' + (item.useName || '-') + '</div>' +
+                    '<div class="highlight-box">' +
+                        '<div class="highlight-row"><strong>✓ 모든 작물에 적용:</strong> ' + item.commonCrops.join(", ") + '</div>' +
+                        '<div class="highlight-row"><strong>✓ 대상:</strong> ' + (item.pests || []).join(", ") + '</div>' +
+                    '</div>';
+                
+                if (matchedPesti) {
+                    html += '<div class="my-pesticide-match">' +
+                        '✅ 보유농약: ' + matchedPesti.name + ' (성분: ' + (matchedPesti.ingredient || '') + ')' +
+                    '</div>';
+                }
+                
+                html += '</div>';
+            });
+            
+            // 각 작물별 개별 결과
+            if (allResults && allResults.length > 0) {
+                html += '<div class="each-crop-results"><div style="font-size: 14px; font-weight: bold; color: #666; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 2px solid #ddd;">📋 작물별 개별 결과</div>';
+                
+                allResults.forEach(function(result) {
+                    var cropName = result.crop;
+                    var cropItems = result.items;
+                    
+                    html += '<div class="crop-section">' +
+                        '<div class="crop-title">🌾 ' + cropName + '</div>' +
+                        '<div class="crop-count-text">' + cropItems.length + '개 농약</div>';
+                    
+                    cropItems.forEach(function(item) {
+                        var matchedPesti = matchMyPesticide(item.brandName, item.korName);
+                        var matchHtml = matchedPesti ? ' <span class="match-indicator">✅</span>' : '';
+                        
+                        html += '<div style="background: white; padding: 8px; margin-top: 8px; border-radius: 4px; border-left: 3px solid #2196F3; font-size: 12px;">' +
+                            '<div style="font-weight: bold; margin-bottom: 2px;">' + (item.brandName || '-') + matchHtml + '</div>' +
+                            '<div style="color: #666; margin-bottom: 2px;">한글명: ' + (item.korName || '-') + '</div>' +
+                            '<div style="color: #666;">회사: ' + (item.compName || '-') + '</div>' +
+                        '</div>';
+                    });
+                    
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
+            
+            resultDiv.innerHTML += html;
+        }
+
+        function filterResults(filterType) {
+            document.querySelectorAll('.filter-btn').forEach(function(btn) {
+                btn.classList.remove('active');
+            });
+            document.querySelector('[data-filter="' + filterType + '"]').classList.add('active');
+            
+            var cards = document.querySelectorAll('.item-card');
+            var visibleCount = 0;
+            
+            cards.forEach(function(card) {
+                if (filterType === 'all') {
+                    card.style.display = 'block';
+                    visibleCount++;
+                } else if (filterType === 'multi') {
+                    if (parseInt(card.getAttribute('data-crops')) > 1) {
+                        card.style.display = 'block';
+                        visibleCount++;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                }
+            });
+            
+            var container = document.getElementById('resultContainer');
+            var noResultMsg = container.querySelector('.no-result-msg');
+            if (visibleCount === 0) {
+                if (!noResultMsg) {
+                    var msg = document.createElement('div');
+                    msg.className = 'no-result-msg';
+                    msg.textContent = '해당하는 농약이 없습니다.';
+                    container.appendChild(msg);
+                }
+            } else if (noResultMsg) {
+                noResultMsg.remove();
+            }
+        }
+
+        // ============ 페이지 로드 시 초기화 ============
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("📄 페이지 로드 완료, Firebase 초기화 시작...");
+            setTimeout(function() {
+                loadMyPesticideList().then(function() {
+                    console.log("✅ 초기 세팅 완료");
+                });
+            }, 500);
         });
 
         var isSearching = false;
@@ -207,7 +526,7 @@
             cropList: [],
             pestVal: '',
             allGroupedResults: [],
-            pageMap: {},  // 각 작물별 현재 페이지 추적
+            pageMap: {},
             loadingMore: false
         };
         
@@ -270,7 +589,7 @@
                 currentSearchState.cropList = cropList;
                 currentSearchState.pestVal = pestVal;
                 currentSearchState.pageMap = {};
-                cropList.forEach(function(c) { currentSearchState.pageMap[c] = 2; }); // 다음 페이지는 2
+                cropList.forEach(function(c) { currentSearchState.pageMap[c] = 2; });
                 
                 // 각 작물별 농약 그룹화
                 var allGroupedResults = [];
@@ -354,7 +673,6 @@
                         renderCropSearchView(allGroupedResults[0].items, cropList[0], pestVal, 0);
                     }
                     
-                    // 백그라운드에서 자동으로 계속 로드 시작
                     autoLoadMoreResults();
                     isSearching = false;
                 }, 300);
@@ -374,7 +692,6 @@
         var autoLoadTimer = null;
         
         function autoLoadMoreResults() {
-            // 자동으로 계속 다음 페이지를 로드
             if (autoLoadTimer) clearInterval(autoLoadTimer);
             
             autoLoadTimer = setInterval(function() {
@@ -383,7 +700,6 @@
                     return;
                 }
                 
-                // 모든 작물의 데이터가 모두 로드되었는지 확인
                 var allComplete = currentSearchState.allGroupedResults.every(function(result) {
                     return !result.hasMore;
                 });
@@ -392,41 +708,35 @@
                     clearInterval(autoLoadTimer);
                     console.log("모든 데이터 로드 완료");
                     
-                    // 모든 데이터를 평탄화하여 showCompletionPopup에 전달
                     var allItems = [];
                     currentSearchState.allGroupedResults.forEach(function(result) {
                         allItems = allItems.concat(result.items);
                     });
                     
-                    // 팝업 표시
-                    setTimeout(function() {
-                        showCompletionPopup(allItems);
-                    }, 500);
-                    
+                    showCompletionPopup(allItems);
                     return;
                 }
                 
-                // 다음 페이지 로드
-                loadMoreResultsAuto();
-            }, 1000);  // 1초마다 확인
+                loadNextPageForCrops();
+            }, 2000);
         }
         
-        async function loadMoreResultsAuto() {
-            if (currentSearchState.loadingMore || !currentSearchState.cropList.length) return;
-            
+        function loadNextPageForCrops() {
+            if (currentSearchState.loadingMore) return;
             currentSearchState.loadingMore = true;
-            var resultDiv = document.getElementById("resultContainer");
             
             var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
+            var promisesMore = [];
             
-            try {
-                var fetchCropData = function(cropName) {
-                    return new Promise(async function(resolve) {
-                        var pageNum = currentSearchState.pageMap[cropName] || 2;
-                        var pageSize = 250;
-                        var startPoint = (pageNum - 1) * pageSize + 1;
-                        
-                        var fullUrl = GAS_URL + "?cropName=" + encodeURIComponent(cropName) + 
+            currentSearchState.cropList.forEach(function(crop) {
+                var resultObj = currentSearchState.allGroupedResults.find(function(r) { return r.crop === crop; });
+                if (resultObj && resultObj.hasMore) {
+                    var page = currentSearchState.pageMap[crop] || 2;
+                    var startPoint = (page - 1) * 250 + 1;
+                    var pageSize = 250;
+                    
+                    var promise = new Promise(async function(resolve) {
+                        var fullUrl = GAS_URL + "?cropName=" + encodeURIComponent(crop) + 
                                       "&startPoint=" + startPoint + "&displayCount=" + pageSize;
                         if (currentSearchState.pestVal) {
                             fullUrl += "&diseaseWeedName=" + encodeURIComponent(currentSearchState.pestVal);
@@ -439,45 +749,29 @@
                                 ? (Array.isArray(responseData.data.list.item) ? responseData.data.list.item : [responseData.data.list.item]) 
                                 : [];
                             
-                            resolve({ crop: cropName, items: rawList, hasMore: rawList.length >= pageSize });
+                            resolve({ crop: crop, items: rawList, hasMore: rawList.length >= pageSize });
                         } catch (e) {
-                            resolve({ crop: cropName, items: [], hasMore: false });
+                            console.error("페이지 로드 오류:", e);
+                            resolve({ crop: crop, items: [], hasMore: false });
                         }
                     });
-                };
-                
-                // 모든 작물의 다음 페이지 로드
-                var cropPromises = currentSearchState.cropList.map(function(crop) { return fetchCropData(crop); });
-                var allResults = await Promise.all(cropPromises);
-                
-                // 페이지 번호 증가
-                allResults.forEach(function(result) {
-                    if (result.items.length > 0) {
-                        currentSearchState.pageMap[result.crop] = (currentSearchState.pageMap[result.crop] || 2) + 1;
-                    }
-                });
-                
-                // 기존 결과에 추가
-                allResults.forEach(function(newResult, idx) {
-                    var groupedResult = currentSearchState.allGroupedResults[idx];
-                    if (!groupedResult) return;
                     
-                    // 새 항목들을 그룹화해서 기존 결과에 추가
-                    var newGroupedMap = {};
-                    for (var i = 0; i < newResult.items.length; i++) {
-                        var item = newResult.items[i];
-                        var bName = item.pestiBrandName || item.brandName || "";
-                        var kName = item.pestiKorName || "";
-                        var groupKey = bName + "|||" + kName;
+                    promisesMore.push(promise);
+                }
+            });
+            
+            if (promisesMore.length > 0) {
+                Promise.all(promisesMore).then(function(results) {
+                    results.forEach(function(newResult) {
+                        var groupedMap = {};
                         
-                        // 기존에 있는지 확인
-                        var exists = groupedResult.items.some(function(g) {
-                            return g.brandName === bName && g.korName === kName;
-                        });
-                        
-                        if (!exists) {
-                            if (!newGroupedMap[groupKey]) {
-                                newGroupedMap[groupKey] = {
+                        newResult.items.forEach(function(item) {
+                            var bName = item.pestiBrandName || item.brandName || "";
+                            var kName = item.pestiKorName || "";
+                            var groupKey = bName + "|||" + kName;
+                            
+                            if (!groupedMap[groupKey]) {
+                                groupedMap[groupKey] = {
                                     brandName: bName,
                                     korName: kName,
                                     compName: item.compName || "-",
@@ -487,7 +781,7 @@
                                 };
                             }
                             
-                            var group = newGroupedMap[groupKey];
+                            var group = groupedMap[groupKey];
                             var crop = item.cropName || "-";
                             var pest = item.diseaseWeedName || "-";
                             
@@ -497,360 +791,73 @@
                             if (group.pests.indexOf(pest) === -1) {
                                 group.pests.push(pest);
                             }
-                        }
-                    }
-                    
-                    // 새 항목들을 기존 결과에 추가
-                    for (var key in newGroupedMap) {
-                        if (newGroupedMap.hasOwnProperty(key)) {
-                            groupedResult.items.push(newGroupedMap[key]);
-                        }
-                    }
-                    
-                    groupedResult.hasMore = newResult.hasMore;
-                });
-                
-                // 화면 업데이트
-                if (currentSearchState.cropList.length > 1) {
-                    // 교집합 다시 계산
-                    var commonItems = currentSearchState.allGroupedResults[0].items.filter(function(item) {
-                        return currentSearchState.allGroupedResults.every(function(result) {
-                            return result.items.some(function(otherItem) {
-                                return otherItem.brandName === item.brandName && otherItem.korName === item.korName;
-                            });
                         });
+                        
+                        var resultObj = currentSearchState.allGroupedResults.find(function(r) { return r.crop === newResult.crop; });
+                        if (resultObj) {
+                            for (var key in groupedMap) {
+                                if (groupedMap.hasOwnProperty(key)) {
+                                    var newItem = groupedMap[key];
+                                    var existingIdx = resultObj.items.findIndex(function(existing) {
+                                        return existing.brandName === newItem.brandName && existing.korName === newItem.korName;
+                                    });
+                                    
+                                    if (existingIdx === -1) {
+                                        resultObj.items.push(newItem);
+                                    } else {
+                                        newItem.crops.forEach(function(c) {
+                                            if (resultObj.items[existingIdx].crops.indexOf(c) === -1) {
+                                                resultObj.items[existingIdx].crops.push(c);
+                                            }
+                                        });
+                                        newItem.pests.forEach(function(p) {
+                                            if (resultObj.items[existingIdx].pests.indexOf(p) === -1) {
+                                                resultObj.items[existingIdx].pests.push(p);
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                            
+                            resultObj.hasMore = newResult.hasMore;
+                            currentSearchState.pageMap[newResult.crop] = (currentSearchState.pageMap[newResult.crop] || 2) + 1;
+                        }
                     });
-                    renderMultiCropSearchView(commonItems, currentSearchState.cropList, currentSearchState.pestVal, currentSearchState.allGroupedResults);
-                } else {
-                    renderCropSearchView(currentSearchState.allGroupedResults[0].items, currentSearchState.cropList[0], currentSearchState.pestVal, 0);
-                }
-                
-            } catch (err) {
-                console.error("추가 로드 오류:", err);
-            }
-            
-            currentSearchState.loadingMore = false;
-        }
-
-        function renderMultiCropSearchView(commonItems, cropList, pestKeyword, allResults) {
-            var resultDiv = document.getElementById("resultContainer"); 
-            resultDiv.innerHTML = "";
-            
-            if (!commonItems || commonItems.length === 0) { 
-                resultDiv.innerHTML = "<div class='error-msg'>⚠️ " + cropList.join(", ") + " 모두에 효과 있는 농약이 없습니다.</div>" +
-                    "<div class='each-crop-results'>";
-                
-                for (var i = 0; i < allResults.length; i++) {
-                    resultDiv.innerHTML += "<div class='crop-section'>" +
-                        "<div class='crop-title'>🌾 " + allResults[i].crop + " (" + allResults[i].items.length + "건)</div>" +
-                        "</div>";
-                }
-                
-                resultDiv.innerHTML += "</div>";
-                return;
-            }
-            
-            var categories = categorizeByType(commonItems);
-            
-            var html = "<div class='top-button-container'><button onclick='scrollToTop()' class='top-button'>⬆ 맨 위로</button></div>";
-            html += "<div class='success-summary'>" +
-                "<div class='summary-crops'>✅ 검색 조건: " + cropList.join(" + ") + (pestKeyword ? " + " + pestKeyword : "") + "</div>" +
-                "<div class='summary-count'>공통 효과 농약: <strong>" + commonItems.length + "건</strong></div>" +
-                "</div>";
-            
-            html += "<div class='crop-statistics'>";
-            for (var i = 0; i < allResults.length; i++) {
-                html += "<div class='stat-box'><strong>" + allResults[i].crop + "</strong>: " + allResults[i].items.length + "건</div>";
-            }
-            html += "</div>";
-            
-            // 카테고리 탭
-            html += "<div class='category-tabs'>";
-            html += "<button class='tab-btn active' onclick=\"switchCategory('all')\">전체 (" + commonItems.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('fungicide')\">🦠 살균제 (" + categories.fungicide.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('insecticide')\">🐛 살충제 (" + categories.insecticide.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('herbicide')\">🌾 제초제 (" + categories.herbicide.length + ")</button>";
-            html += "</div>";
-            
-            html += "<div id='itemsContainer'>";
-            
-            // 전체
-            html += "<div class='category-section' data-category='all'>";
-            commonItems.forEach(function(group) {
-                var commonCrops = group.commonCrops || group.crops;
-                var cropsList = commonCrops.join(", ");
-                var pestsList = group.pests.join(", ");
-                
-                html += "<div class='item-card multi-crop'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'>";
-                html += "<div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "<span class='all-crop-badge'>모든 작물에 효과</span></div>";
-                html += "<div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div>";
-                html += "</div></div>";
-            });
-            html += "</div>";
-            
-            // 살균제
-            html += "<div class='category-section' data-category='fungicide' style='display:none;'>";
-            categories.fungicide.forEach(function(group) {
-                var commonCrops = group.commonCrops || group.crops;
-                var cropsList = commonCrops.join(", ");
-                var pestsList = group.pests.join(", ");
-                
-                html += "<div class='item-card multi-crop'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'>";
-                html += "<div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "<span class='all-crop-badge'>모든 작물에 효과</span></div>";
-                html += "<div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div>";
-                html += "</div></div>";
-            });
-            html += "</div>";
-            
-            // 살충제
-            html += "<div class='category-section' data-category='insecticide' style='display:none;'>";
-            categories.insecticide.forEach(function(group) {
-                var commonCrops = group.commonCrops || group.crops;
-                var cropsList = commonCrops.join(", ");
-                var pestsList = group.pests.join(", ");
-                
-                html += "<div class='item-card multi-crop'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'>";
-                html += "<div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "<span class='all-crop-badge'>모든 작물에 효과</span></div>";
-                html += "<div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div>";
-                html += "</div></div>";
-            });
-            html += "</div>";
-            
-            // 제초제
-            html += "<div class='category-section' data-category='herbicide' style='display:none;'>";
-            categories.herbicide.forEach(function(group) {
-                var commonCrops = group.commonCrops || group.crops;
-                var cropsList = commonCrops.join(", ");
-                var pestsList = group.pests.join(", ");
-                
-                html += "<div class='item-card multi-crop'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'>";
-                html += "<div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "<span class='all-crop-badge'>모든 작물에 효과</span></div>";
-                html += "<div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div>";
-                html += "</div></div>";
-            });
-            html += "</div>";
-            
-            html += "</div>";
-            resultDiv.innerHTML = html;
-        }
-        
-        function categorizeByType(items) {
-            var categories = {
-                fungicide: [],      // 살균제
-                insecticide: [],    // 살충제
-                herbicide: []       // 제초제
-            };
-            
-            items.forEach(function(item) {
-                var useName = item.useName || "";
-                
-                // 우선순위: 제초제 > 살충제 > 살균제
-                if (useName.indexOf("제초") !== -1 || useName.indexOf("잡초") !== -1 || useName.indexOf("맬") !== -1) {
-                    categories.herbicide.push(item);
-                } else if (useName.indexOf("살충") !== -1 || useName.indexOf("해충") !== -1 || useName.indexOf("응애") !== -1 || 
-                          useName.indexOf("진딧물") !== -1 || useName.indexOf("나방") !== -1 || useName.indexOf("벌레") !== -1) {
-                    categories.insecticide.push(item);
-                } else if (useName.indexOf("살균") !== -1 || useName.indexOf("균") !== -1 || useName.indexOf("병") !== -1 || 
-                          useName.indexOf("흰가루") !== -1 || useName.indexOf("탄저") !== -1) {
-                    categories.fungicide.push(item);
-                } else {
-                    // 분류 안 된 항목은 살충제로 기본 분류
-                    categories.insecticide.push(item);
-                }
-            });
-            
-            return categories;
-        }
-        
-        function renderCropSearchView(groupedList, cropKeyword, pestKeyword, totalCount) {
-            var resultDiv = document.getElementById("resultContainer"); 
-            resultDiv.innerHTML = "";
-            if (!groupedList.length) { resultDiv.innerHTML = "<div class='empty-msg'>검색 결과가 없습니다.</div>"; return; }
-            
-            var categories = categorizeByType(groupedList);
-            
-            var html = "<div class='top-button-container'><button onclick='scrollToTop()' class='top-button'>⬆ 맨 위로</button></div>";
-            html += "<div class='summary-box'><span>검색 결과 " + groupedList.length + "건</span><span style='color:#666;font-size:12px;'>" + cropKeyword + (pestKeyword ? " + " + pestKeyword : "") + "</span></div>";
-            
-            // 카테고리 탭
-            html += "<div class='category-tabs'>";
-            html += "<button class='tab-btn active' onclick=\"switchCategory('all')\">전체 (" + groupedList.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('fungicide')\">🦠 살균제 (" + categories.fungicide.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('insecticide')\">🐛 살충제 (" + categories.insecticide.length + ")</button>";
-            html += "<button class='tab-btn' onclick=\"switchCategory('herbicide')\">🌾 제초제 (" + categories.herbicide.length + ")</button>";
-            html += "</div>";
-            
-            html += "<div id='itemsContainer'>";
-            
-            // 전체
-            html += "<div class='category-section' data-category='all'>";
-            groupedList.forEach(function(group) {
-                var cropsList = group.crops.join(", ");
-                var pestsList = group.pests.join(", ");
-                var multiClass = group.crops.length > 1 ? " multi-crop" : "";
-                
-                html += "<div class='item-card" + multiClass + "' data-crops='" + group.crops.length + "'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'><div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList;
-                if (group.crops.length > 1) {
-                    html += " <span class='multi-badge'>다중 작물</span>";
-                }
-                html += "</div><div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div></div></div>";
-            });
-            html += "</div>";
-            
-            // 살균제
-            html += "<div class='category-section' data-category='fungicide' style='display:none;'>";
-            categories.fungicide.forEach(function(group) {
-                var cropsList = group.crops.join(", ");
-                var pestsList = group.pests.join(", ");
-                var multiClass = group.crops.length > 1 ? " multi-crop" : "";
-                
-                html += "<div class='item-card" + multiClass + "'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'><div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "</div><div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div></div></div>";
-            });
-            html += "</div>";
-            
-            // 살충제
-            html += "<div class='category-section' data-category='insecticide' style='display:none;'>";
-            categories.insecticide.forEach(function(group) {
-                var cropsList = group.crops.join(", ");
-                var pestsList = group.pests.join(", ");
-                var multiClass = group.crops.length > 1 ? " multi-crop" : "";
-                
-                html += "<div class='item-card" + multiClass + "'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'><div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "</div><div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div></div></div>";
-            });
-            html += "</div>";
-            
-            // 제초제
-            html += "<div class='category-section' data-category='herbicide' style='display:none;'>";
-            categories.herbicide.forEach(function(group) {
-                var cropsList = group.crops.join(", ");
-                var pestsList = group.pests.join(", ");
-                var multiClass = group.crops.length > 1 ? " multi-crop" : "";
-                
-                html += "<div class='item-card" + multiClass + "'>";
-                html += "<div class='header-row'><div class='brand-name'>" + group.brandName + " [" + group.korName + "]</div><div class='comp-name'>" + group.compName + "</div></div>";
-                html += "<div class='info-row'><strong>효능:</strong> " + group.useName + "</div>";
-                html += "<div class='highlight-box'><div class='highlight-row'><strong>🌾 사용 작물:</strong> " + cropsList + "</div><div class='highlight-row'><strong>🐛 대상 병해충:</strong> " + pestsList + "</div></div></div>";
-            });
-            html += "</div>";
-            
-            html += "</div>";
-            resultDiv.innerHTML = html;
-        }
-        
-        function switchCategory(category) {
-            // 버튼 상태 업데이트
-            document.querySelectorAll('.tab-btn').forEach(function(btn) {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
-            
-            // 섹션 표시/숨김
-            document.querySelectorAll('.category-section').forEach(function(section) {
-                section.style.display = 'none';
-            });
-            document.querySelector('[data-category="' + category + '"]').style.display = 'block';
-            
-            // 맨 위로 스크롤
-            window.scrollTo(0, 0);
-        }
-        
-        function scrollToTop() {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-        
-        // ============ 보유 농약 관리 ============
-        function openMyPesticideModal() {
-            loadMyPesticide();
-            document.getElementById("myPesticideModal").style.display = "flex";
-        }
-        
-        function closeMyPesticideModal() {
-            document.getElementById("myPesticideModal").style.display = "none";
-        }
-        
-        function loadMyPesticide() {
-            var stored = localStorage.getItem("myPesticides") || "";
-            document.getElementById("myPesticideInput").value = stored;
-            
-            if (stored) {
-                var pesticides = stored.split(',').map(function(p) { return p.trim(); }).filter(function(p) { return p.length > 0; });
-                var html = pesticides.map(function(p) { return "<span style='display:inline-block; background: #e3f2fd; padding: 6px 12px; border-radius: 16px; margin: 4px; font-size: 13px; color: #1976D2;'>" + p + "</span>"; }).join("");
-                document.getElementById("pesticideListContent").innerHTML = html;
+                    
+                    currentSearchState.loadingMore = false;
+                });
             } else {
-                document.getElementById("pesticideListContent").innerHTML = "<span style='color: #999;'>저장된 농약이 없습니다.</span>";
+                currentSearchState.loadingMore = false;
             }
         }
         
-        function saveMyPesticide() {
-            var input = document.getElementById("myPesticideInput").value.trim();
-            localStorage.setItem("myPesticides", input);
-            loadMyPesticide();
-            alert("보유 농약이 저장되었습니다!");
-        }
-        
-        function clearMyPesticide() {
-            if (confirm("모든 보유 농약을 삭제하시겠습니까?")) {
-                localStorage.removeItem("myPesticides");
-                loadMyPesticide();
-                alert("초기화 되었습니다!");
-            }
-        }
-        
-        function getMyPesticides() {
-            var stored = localStorage.getItem("myPesticides") || "";
-            return stored.split(',').map(function(p) { return p.trim(); }).filter(function(p) { return p.length > 0; });
-        }
-        
-        // ============ 완료 팝업 ============
         function showCompletionPopup(allItems) {
-            var myPesticides = getMyPesticides();
+            var modal = document.getElementById("completionModal");
+            var title = document.getElementById("completionTitle");
+            var body = document.getElementById("completionBody");
+            
             var foundPesticides = [];
             
-            if (myPesticides.length > 0) {
-                // 보유 농약 중 검색 결과에 있는 것 찾기
+            if (window_myPesticideList.length > 0) {
                 allItems.forEach(function(item) {
-                    var brandName = (item.brandName || "").toUpperCase();
-                    var korName = (item.korName || "").toUpperCase();
-                    
-                    myPesticides.forEach(function(myPesti) {
-                        var myPestiUpper = myPesti.toUpperCase();
-                        if (brandName.indexOf(myPestiUpper) !== -1 || korName.indexOf(myPestiUpper) !== -1) {
+                    var matchedPesti = matchMyPesticide(item.brandName, item.korName);
+                    if (matchedPesti) {
+                        var existIdx = foundPesticides.findIndex(function(fp) {
+                            return fp.name === matchedPesti.name;
+                        });
+                        if (existIdx === -1) {
                             foundPesticides.push({
-                                name: item.brandName,
-                                korName: item.korName,
+                                name: matchedPesti.name,
+                                ingredient: matchedPesti.ingredient,
+                                type: matchedPesti.type,
                                 comp: item.compName,
                                 crops: item.crops,
                                 pests: item.pests
                             });
                         }
-                    });
+                    }
                 });
             }
-            
-            var modal = document.getElementById("completionModal");
-            var title = document.getElementById("completionTitle");
-            var body = document.getElementById("completionBody");
             
             if (foundPesticides.length > 0) {
                 title.textContent = "✅ 보유 농약이 검색되었습니다!";
@@ -861,9 +868,11 @@
                 html += "<div style='max-height: 300px; overflow-y: auto;'>";
                 foundPesticides.forEach(function(pesti, idx) {
                     html += "<div style='background: #f5f5f5; padding: 12px; border-radius: 6px; margin-bottom: 10px; border-left: 4px solid #4CAF50;'>" +
-                        "<div style='font-weight: bold; color: #2e7d32; margin-bottom: 5px;'>" + (idx+1) + ". " + pesti.name + " [" + pesti.korName + "]</div>" +
-                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>회사:</strong> " + pesti.comp + "</div>" +
-                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>사용 작물:</strong> " + pesti.crops.join(", ") + "</div>" +
+                        "<div style='font-weight: bold; color: #2e7d32; margin-bottom: 5px;'>" + (idx+1) + ". " + pesti.name + "</div>" +
+                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>성분:</strong> " + (pesti.ingredient || '-') + "</div>" +
+                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>타입:</strong> " + (pesti.type || '-') + "</div>" +
+                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>회사:</strong> " + (pesti.comp || '-') + "</div>" +
+                        "<div style='font-size: 12px; color: #666; margin-bottom: 3px;'><strong>적용 작물:</strong> " + pesti.crops.join(", ") + "</div>" +
                         "<div style='font-size: 12px; color: #666;'><strong>대상:</strong> " + pesti.pests.join(", ") + "</div>" +
                         "</div>";
                 });
@@ -872,13 +881,14 @@
                 body.innerHTML = html;
             } else {
                 title.textContent = "✅ 검색이 완료되었습니다!";
-                if (myPesticides.length > 0) {
+                if (window_myPesticideList.length > 0) {
+                    var pestiNames = window_myPesticideList.map(function(p) { return p.name; }).join(", ");
                     body.innerHTML = "<div style='text-align: center; padding: 30px;'>" +
                         "<div style='font-size: 48px; margin-bottom: 15px;'>📋</div>" +
                         "<div style='font-size: 16px; color: #2c3e50; margin-bottom: 10px;'>현재 검색 결과에</div>" +
                         "<div style='font-size: 16px; color: #2c3e50; margin-bottom: 20px;'>보유 농약이 없습니다.</div>" +
                         "<div style='font-size: 13px; color: #999; background: #f5f5f5; padding: 15px; border-radius: 6px;'>" +
-                        "보유 농약: " + myPesticides.join(", ") + "</div>" +
+                        "<strong>보유 농약:</strong> " + pestiNames + "</div>" +
                         "</div>";
                 } else {
                     body.innerHTML = "<div style='text-align: center; padding: 30px;'>" +
@@ -894,46 +904,6 @@
         
         function closeCompletionModal() {
             document.getElementById("completionModal").style.display = "none";
-        }
-        
-        function filterResults(filterType) {
-            // 버튼 상태 업데이트
-            document.querySelectorAll('.filter-btn').forEach(function(btn) {
-                btn.classList.remove('active');
-            });
-            document.querySelector('[data-filter="' + filterType + '"]').classList.add('active');
-            
-            // 카드 필터링
-            var cards = document.querySelectorAll('.item-card');
-            var visibleCount = 0;
-            
-            cards.forEach(function(card) {
-                if (filterType === 'all') {
-                    card.style.display = 'block';
-                    visibleCount++;
-                } else if (filterType === 'multi') {
-                    if (parseInt(card.getAttribute('data-crops')) > 1) {
-                        card.style.display = 'block';
-                        visibleCount++;
-                    } else {
-                        card.style.display = 'none';
-                    }
-                }
-            });
-            
-            // 결과 없음 메시지
-            var container = document.getElementById('itemsContainer');
-            var noResultMsg = container.querySelector('.no-result-msg');
-            if (visibleCount === 0) {
-                if (!noResultMsg) {
-                    var msg = document.createElement('div');
-                    msg.className = 'no-result-msg';
-                    msg.textContent = '해당하는 농약이 없습니다.';
-                    container.appendChild(msg);
-                }
-            } else if (noResultMsg) {
-                noResultMsg.remove();
-            }
         }
     </script>
 </body>
