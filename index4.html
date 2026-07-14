@@ -11,14 +11,59 @@
     <link rel="icon" type="image/jpeg" sizes="512x512" href="icon4-512.jpg">
 
     <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box;
+        }
         * { box-sizing: border-box; }
-        body { font-family: 'Malgun Gothic', sans-serif; padding: 20px; margin: 0; background-color: #f4f6f8; }
+        body { 
+            font-family: 'Malgun Gothic', sans-serif; 
+            padding: 20px; 
+            margin: 0; 
+            background-color: #f4f6f8; 
+            max-width: 100%;
+            overflow-x: hidden;
+        }
         .container { max-width: 1200px; margin: 0 auto; }
         
         .header-wrap { display: flex; justify-content: space-between; align-items: center; gap: 20px; margin-bottom: 25px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
         .header-text h2 { color: #2c3e50; margin: 0; font-size: 24px; }
         .header-text h5 { margin: 5px 0 0 0; color: #666; font-size: 12px; }
         .header-image img { width: 80px; height: 80px; border: 1px solid #ddd; border-radius: 4px; }
+        
+        /* Zoom 컨트롤 */
+        .zoom-control { 
+            display: flex; 
+            gap: 5px; 
+            align-items: center; 
+            background: #f5f5f5; 
+            padding: 8px 12px; 
+            border-radius: 6px; 
+            border: 1px solid #ddd;
+        }
+        .zoom-control button { 
+            padding: 5px 10px; 
+            background: white; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        .zoom-control button:hover { 
+            background: #2e7d32; 
+            color: white; 
+            border-color: #2e7d32;
+        }
+        .zoom-control span { 
+            min-width: 35px; 
+            text-align: center; 
+            font-size: 12px;
+            font-weight: bold;
+            color: #555;
+        }
         
         .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .search-section { }
@@ -95,10 +140,9 @@
         .empty-msg { background: white; color: #999; padding: 30px; border-radius: 8px; text-align: center; }
         .loading-msg { background: white; color: #666; padding: 30px; border-radius: 8px; text-align: center; }
         
-        .top-button { 
+        /* TOP/BOTTOM 빨리가기 버튼 */
+        .scroll-button { 
             position: fixed; 
-            bottom: 30px; 
-            right: 30px; 
             width: 50px; 
             height: 50px; 
             background: #2e7d32; 
@@ -110,11 +154,23 @@
             display: none; 
             align-items: center; 
             justify-content: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2); 
-            z-index: 1000;
+            z-index: 999; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            transition: all 0.3s;
         }
-        .top-button:hover { background: #1b5e20; }
-        .top-button.show { display: flex; }
+        .scroll-button:hover { 
+            background: #1b5e20; 
+            transform: scale(1.1);
+        }
+        #topBtn { 
+            bottom: 100px; 
+            right: 30px; 
+        }
+        #bottomBtn { 
+            bottom: 30px; 
+            right: 30px; 
+        }
+        
         
         .no-data { color: #ccc; }
         
@@ -144,6 +200,231 @@
         .page-btn:disabled { cursor: default; background: #f5f5f5; color: #999; }
 
         
+        
+        /* ===== 모바일 반응형 디자인 ===== */
+        @media (max-width: 768px) {
+            body { 
+                padding: 10px; 
+                font-size: 13px; 
+            }
+            
+            .header { padding: 15px 10px; }
+            .header-title { font-size: 18px; }
+            .header-image { width: 60px; height: 60px; }
+            
+            .search-container { padding: 15px 10px; margin: 10px auto; max-width: 95vw; }
+            
+            /* 첫 줄: 용도, 상표명, 회사명 - 1줄에 2-3개 */
+            .search-row { 
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .input-group { 
+                width: calc(50% - 4px);
+                min-width: auto;
+            }
+            /* 회사명은 50% 너비 */
+            .input-group:nth-child(3) {
+                width: calc(50% - 4px);
+            }
+            input, select { 
+                width: 100%; 
+                padding: 10px; 
+                font-size: 14px;
+            }
+            
+            /* 고급 검색 섹션 */
+            .advanced-section { 
+                margin-bottom: 12px; 
+                padding: 10px; 
+            }
+            .section-title { 
+                font-size: 12px; 
+                margin-bottom: 8px;
+            }
+            
+            /* 작물명/병해충명 입력 필드 - 1줄에 2개 */
+            .criteria-row {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+            .input-fields { 
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 8px;
+                width: 100%;
+            }
+            .field-group { 
+                width: calc(50% - 4px);
+                min-width: auto;
+            }
+            .dynamic-input { 
+                width: 100%; 
+                padding: 8px; 
+                font-size: 12px;
+            }
+            
+            /* 검색 버튼 */
+            .search-button { 
+                width: 100%; 
+                padding: 12px; 
+                font-size: 13px;
+                margin-top: 10px;
+            }
+            
+            /* 테이블 */
+            table { font-size: 11px; }
+            td, th { padding: 6px 4px; }
+            
+            .col-num { width: 30px; }
+            .col-yongdo { width: 50px; }
+            .col-crop { width: 60px; }
+            .col-disease { width: 60px; }
+            .col-품목 { width: 80px; }
+            .col-ingredient { width: 50px; }
+            .col-brand { width: 60px; }
+            .col-gubun { width: 40px; }
+            .col-moa { width: 40px; }
+            
+            /* 페이지네이션 */
+            .pagination-wrapper { padding: 10px; margin-top: 10px; }
+            .pagination-info { font-size: 12px; margin-bottom: 10px; }
+            .page-btn { 
+                padding: 6px 8px; 
+                font-size: 11px;
+                min-width: auto;
+            }
+            .page-numbers { gap: 3px; }
+            
+            /* TOP 버튼 */
+            #topBtn { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 18px;
+                bottom: 80px;
+                right: 10px;
+            }
+            #bottomBtn { 
+                width: 45px; 
+                height: 45px; 
+                font-size: 18px;
+                bottom: 20px;
+                right: 10px;
+            }
+            
+            /* 탭 */
+            .tab-btn { 
+                padding: 12px 8px; 
+                font-size: 11px;
+            }
+            
+            /* 결과 컨테이너 */
+            #resultContainer { 
+                margin: 10px auto; 
+                max-width: 95vw;
+                overflow-x: auto;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            body { 
+                padding: 8px; 
+                font-size: 12px; 
+            }
+            
+            .header { padding: 12px 8px; }
+            .header-title { font-size: 16px; }
+            .header-image { width: 50px; height: 50px; }
+            
+            .search-container { padding: 12px 8px; }
+            
+            /* 첫 줄: 용도, 상표명, 회사명 - 1줄에 2개 */
+            .search-row { 
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .input-group { 
+                width: calc(50% - 3px);
+                min-width: auto;
+            }
+            .input-group:nth-child(3) {
+                width: calc(50% - 3px);
+            }
+            input, select { 
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .advanced-section { 
+                padding: 8px; 
+                margin-bottom: 10px;
+            }
+            
+            .section-title { font-size: 11px; }
+            
+            /* 작물명/병해충명 - 1줄에 2개 */
+            .criteria-row {
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+            }
+            .input-fields { 
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                gap: 6px;
+                width: 100%;
+            }
+            .field-group { 
+                width: calc(50% - 3px);
+                min-width: auto;
+            }
+            
+            .dynamic-input { 
+                font-size: 11px;
+                padding: 6px;
+            }
+            
+            .search-button { 
+                padding: 10px;
+                font-size: 12px;
+            }
+            
+            table { font-size: 10px; }
+            td, th { padding: 4px 2px; }
+            
+            .col-num { width: 25px; }
+            .col-yongdo { width: 40px; }
+            .col-crop { width: 50px; }
+            .col-disease { width: 50px; }
+            .col-품목 { width: 70px; }
+            .col-ingredient { width: 40px; }
+            .col-brand { width: 50px; }
+            
+            .page-btn { 
+                padding: 5px 6px; 
+                font-size: 10px;
+            }
+            
+            #topBtn { 
+                width: 40px; 
+                height: 40px; 
+                font-size: 16px;
+                bottom: 75px;
+                right: 10px;
+            }
+            #bottomBtn { 
+                width: 40px; 
+                height: 40px; 
+                font-size: 16px;
+                bottom: 15px;
+                right: 10px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -154,6 +435,15 @@
                 <h2>🌱 농약 상세 검색</h2>
                 <h5>제작: 이용호 &nbsp; Copyright 2026.07.10. All Right Reserved</h5>
             </div>
+            
+            <!-- Zoom 컨트롤 -->
+            <div class="zoom-control">
+                <button onclick="zoomOut()" title="글씨 축소">−</button>
+                <span id="zoomLevel">100%</span>
+                <button onclick="zoomReset()" title="기본 크기">초기</button>
+                <button onclick="zoomIn()" title="글씨 확대">+</button>
+            </div>
+            
             <div class="header-image">
                 <a href="https://solt4999b1-cell.github.io/orchard/index4.html" target="_blank">
                     <img src="./2cp8g.png" alt="QR코드">
@@ -252,7 +542,8 @@
     </div>
 
     <!-- TOP 버튼 -->
-    <button class="top-button" id="topBtn" title="위로 가기">▲</button>
+    <button class="scroll-button" id="topBtn" onclick="scrollToTop()" title="위로 가기">▲</button>
+    <button class="scroll-button" id="bottomBtn" onclick="scrollToBottom()" title="아래로 가기">▼</button>
 
     <script>
         // ===== 설정 =====
@@ -261,6 +552,7 @@
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
+        var currentZoom = 100;  // Zoom 레벨 (기본값 100%)
 
         // ===== TOP 버튼 =====
         var topBtn = document.getElementById("topBtn");
@@ -384,7 +676,71 @@
         }
 
         // ===== 이벤트 리스너 =====
+        // ===== Zoom 기능 =====
+        function initZoom() {
+            var savedZoom = localStorage.getItem('pageZoom');
+            if (savedZoom) {
+                currentZoom = parseInt(savedZoom);
+                applyZoom();
+            }
+        }
+        
+        function applyZoom() {
+            var zoomPercentage = currentZoom / 100;
+            document.body.style.fontSize = (14 * zoomPercentage) + 'px';
+            document.getElementById('zoomLevel').textContent = currentZoom + '%';
+            localStorage.setItem('pageZoom', currentZoom);
+        }
+        
+        function zoomIn() {
+            if (currentZoom < 200) {
+                currentZoom += 10;
+                applyZoom();
+            }
+        }
+        
+        function zoomOut() {
+            if (currentZoom > 80) {
+                currentZoom -= 10;
+                applyZoom();
+            }
+        }
+        
+        function zoomReset() {
+            currentZoom = 100;
+            applyZoom();
+        }
+        
+        // ===== 빨리가기 버튼 =====
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function scrollToBottom() {
+            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        }
+        
+        function updateScrollButtons() {
+            var topBtn = document.getElementById('topBtn');
+            var bottomBtn = document.getElementById('bottomBtn');
+            var scrollTop = window.scrollY || document.documentElement.scrollTop;
+            var scrollHeight = document.documentElement.scrollHeight;
+            var clientHeight = window.innerHeight;
+            
+            // 스크롤이 300px 이상이면 TOP 버튼 표시
+            topBtn.style.display = scrollTop > 300 ? 'flex' : 'none';
+            
+            // 아래에서 300px 이상 떨어져 있으면 BOTTOM 버튼 표시
+            bottomBtn.style.display = (scrollHeight - scrollTop - clientHeight) > 300 ? 'flex' : 'none';
+        }
+        
+        window.addEventListener('scroll', updateScrollButtons);
+
         document.addEventListener("DOMContentLoaded", function() {
+            // Zoom 초기화
+            initZoom();
+            updateScrollButtons();
+            
             var searchBtn = document.getElementById("searchBtn");
             var brandInput = document.getElementById("brandInput");
             var compInput = document.getElementById("compInput");
