@@ -367,91 +367,77 @@
         });
         
         async function performSearch() {
-            if (isSearching) return;
-            
-            var cropInput = document.getElementById("cropInput").value.trim();
-            var diseaseInput = document.getElementById("diseaseInput").value.trim();
-            
-            if (!cropInput) {
-                alert("작물명을 입력해주세요.");
-                return;
-            }
-            
-            isSearching = true;
-            cancelSearch = false;
-            document.getElementById("resultContainer").innerHTML = "";
-            
-            var crops = cropInput.split(",").map(function(c) { return c.trim(); }).filter(Boolean);
-            
-            try {
-                console.time("전체 검색 시간");
-                
-                var promises = crops.map(function(crop) {
-                    return new Promise(async function(resolve) {
-                        try {
-                            var params = { cropName: crop };
-                            if (diseaseInput) params.keyword = diseaseInput;
-                            
-                            const response = await fetch(currentApiUrl, {
-                                method: 'POST',
-                                body: JSON.stringify(params)
-                            });
-                            
-                            const data = await response.json();
-                            resolve(data || []);
-                        } catch (error) {
-                            console.error(crop + " 검색 오류:", error);
-                            resolve([]);
-                        }
-                    });
-                });
-                
-                var allResults = await Promise.all(promises);
-                var mergedResults = [];
-                var seenBrands = new Set();
-                
-                allResults.forEach(function(results, idx) {
-                    (results || []).forEach(function(item) {
-                        var key = item.brandName + "|" + item.compName;
-                        if (!seenBrands.has(key)) {
-                            seenBrands.add(key);
-                            item.crops = (item.crops || []).slice();
-                            item.commonCrops = item.crops.filter(function(c) {
-                                return crops.some(function(crop) {
-                                    return c.toUpperCase().includes(crop.toUpperCase());
-                                });
-                            });
-                            mergedResults.push(item);
-                        } else {
-                            var existing = mergedResults.find(function(r) {
-                                return r.brandName === item.brandName && r.compName === item.compName;
-                            });
-                            if (existing) {
-                                item.crops.forEach(function(crop) {
-                                    if (!existing.crops.includes(crop)) {
-                                        existing.crops.push(crop);
-                                    }
-                                });
-                            }
-                        }
-                    });
-                });
-                
-                console.timeEnd("전체 검색 시간");
-                
-                // Firebase에 검색 기록 저장
-                await saveSearchHistoryToCloud(cropInput, mergedResults);
-                
-                displayResults(mergedResults, crops);
-                showCompletionPopup(mergedResults);
-            } catch (error) {
-                console.error("검색 오류:", error);
-                document.getElementById("resultContainer").innerHTML = 
-                    '<div class="error-msg">검색 중 오류가 발생했습니다: ' + error.message + '</div>';
-            } finally {
-                isSearching = false;
-            }
-        }
+		  try {
+			const cropInput = document.getElementById('cropInput');
+			const keywordInput = document.getElementById('keywordInput');
+			
+			const cropName = cropInput?.value || '';
+			const keyword = keywordInput?.value || '';
+			
+			if (!cropName && !keyword) {
+			  alert('검색어를 입력하세요!');
+			  return;
+			}
+			
+			// 각 검색어를 병렬 처리
+			const promises = [];
+			
+			if (cropName) {
+			  promises.push(
+				fetch(GAS_SCRIPT_URL, {
+				  method: 'POST',
+				  headers: {'Content-Type': 'application/json'},
+				  body: JSON.stringify({cropName: cropName})
+				}).then(r => r.json()).catch(e => {
+				  console.error("검색 오류:", e);
+				  return [];
+				})
+			  );
+			}
+			
+			if (keyword) {
+			  promises.push(
+				fetch(GAS_SCRIPT_URL, {
+				  method: 'POST',
+				  headers: {'Content-Type': 'application/json'},
+				  body: JSON.stringify({keyword: keyword})
+				}).then(r => r.json()).catch(e => {
+				  console.error("검색 오류:", e);
+				  return [];
+				})
+			  );
+			}
+			
+			const results = await Promise.all(promises);
+			
+			// 결과 처리
+			const allResults = [];
+			results.forEach(result => {
+			  if (Array.isArray(result)) {
+				allResults.push(...result);  // 배열이면 펼치기
+			  } else if (result && result.success) {
+				// cropUsage 객체 처리
+				if (result.cropUsage) {
+				  for (const crop in result.cropUsage) {
+					result.cropUsage[crop].forEach(item => {
+					  allResults.push({
+						cropName: crop,
+						...item
+					  });
+					});
+				  }
+				}
+			  }
+			});
+			
+			// 결과 표시
+			displayResults(allResults);
+			
+		  } catch (error) {
+			console.error("검색 오류:", error);
+			alert("검색 중 오류가 발생했습니다.");
+		  }
+		}
         
         function displayResults(items, selectedCrops) {
             var container = document.getElementById("resultContainer");
