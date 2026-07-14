@@ -260,7 +260,7 @@
         var currentTab = 'detail';
         var currentData = [];
         var currentPage = 1;
-        var pageSize = 20;
+        var pageSize = 250;
 
         // ===== TOP 버튼 =====
         var topBtn = document.getElementById("topBtn");
@@ -432,57 +432,105 @@
                 return;
             }
 
-            resultDiv.innerHTML = "<div class='loading-msg'>⏳ 데이터를 불러오는 중입니다...</div>";
+            resultDiv.innerHTML = "<div class='loading-msg'>⏳ 데이터를 불러오는 중입니다...<br><small style='font-size: 12px; color: #999;'>첫 번째 검색 중...</small></div>";
             
             try {
-                // 상표명이 있으면 상표명 검색, 없으면 작물명1로 검색
-                var searchKeyword = brandVal || crops[0];
-                var searchType = brandVal ? 'brand' : 'crop';
+                var allData = [];
                 
-                var fullUrl = GAS_URL + "?keyword=" + encodeURIComponent(searchKeyword) + "&searchType=" + searchType;
-                var response = await fetch(fullUrl, { method: "GET" });
-                var data = await response.json();
+                // Case 1: 상표명이 있으면 상표명 검색
+                if (brandVal) {
+                    resultDiv.innerHTML = "<div class='loading-msg'>⏳ 데이터를 불러오는 중입니다...<br><small style='font-size: 12px; color: #999;'>검색 중: " + brandVal + "</small></div>";
+                    var fullUrl = GAS_URL + "?keyword=" + encodeURIComponent(brandVal) + "&searchType=brand";
+                    var response = await fetch(fullUrl, { method: "GET" });
+                    var data = await response.json();
+                    
+                    if (!data || !data.success) {
+                        resultDiv.innerHTML = "<div class='error-msg'>❌ 검색 실패</div>";
+                        return;
+                    }
+                    allData = data._rawList || [];
+                }
+                // Case 2: 작물명만 있으면 각 작물명으로 검색 후 교집합
+                else if (crops.length > 0) {
+                    var cropSearchResults = [];
+                    
+                    // 각 작물명으로 검색
+                    for (var i = 0; i < crops.length; i++) {
+                        resultDiv.innerHTML = "<div class='loading-msg'>⏳ 데이터를 불러오는 중입니다...<br><small style='font-size: 12px; color: #999;'>(" + (i + 1) + "/" + crops.length + ") " + crops[i] + " 검색 중...</small></div>";
+                        var fullUrl = GAS_URL + "?keyword=" + encodeURIComponent(crops[i]) + "&searchType=crop";
+                        var response = await fetch(fullUrl, { method: "GET" });
+                        var data = await response.json();
+                        
+                        if (data && data.success && data._rawList && data._rawList.length > 0) {
+                            cropSearchResults.push(data._rawList);
+                        }
+                    }
+                    
+                    // 교집합 계산
+                    if (cropSearchResults.length === crops.length) {
+                        resultDiv.innerHTML = "<div class='loading-msg'>⏳ 결과를 정렬 중입니다...<br><small style='font-size: 12px; color: #999;'>교집합 계산 중... (1/2)</small></div>";
+                        
+                        // 첫 번째 검색 결과에서 시작
+                        allData = cropSearchResults[0].filter(function(item) {
+                            var itemKey = (item.pestiBrandName || '') + '|' + (item.pestiKorName || '');
+                            
+                            // 다른 모든 검색 결과에서도 같은 상표명+품목명이 있나?
+                            return cropSearchResults.every(function(searchResult, idx) {
+                                if (idx === 0) return true; // 첫 번째는 이미 확인
+                                return searchResult.some(function(otherItem) {
+                                    var otherKey = (otherItem.pestiBrandName || '') + '|' + (otherItem.pestiKorName || '');
+                                    return itemKey === otherKey;
+                                });
+                            });
+                        });
+                    }
+                }
                 
-                if (!data || !data.success) {
-                    resultDiv.innerHTML = "<div class='error-msg'>❌ 검색 실패</div>";
+                if (allData.length === 0) {
+                    resultDiv.innerHTML = "<div class='empty-msg'>📋 검색 결과가 없습니다. 다른 검색어를 시도해주세요.</div>";
                     return;
                 }
                 
-                // 데이터 필터링
-                currentData = data._rawList || [];
-                
+                // 회사명 필터
+                resultDiv.innerHTML = "<div class='loading-msg'>⏳ 결과를 정렬 중입니다...<br><small style='font-size: 12px; color: #999;'>필터 적용 중...</small></div>";
                 if (compVal) {
-                    currentData = currentData.filter(function(item) {
+                    allData = allData.filter(function(item) {
                         return (item.compName || "").toLowerCase().indexOf(compVal.toLowerCase()) !== -1;
                     });
                 }
                 
+                // 용도 필터
                 if (useVal) {
-                    currentData = currentData.filter(function(item) {
+                    allData = allData.filter(function(item) {
                         return (item.useName || "") === useVal;
                     });
                 }
                 
-                // 작물명 필터 적용 (OR 조건: 입력된 작물명 중 하나라도 포함)
-                if (crops.length > 0) {
-                    currentData = currentData.filter(function(item) {
-                        var itemCrop = item.cropName || '';
-                        // OR: 입력된 작물명 중 하나라도 포함되면 됨
-                        return crops.some(function(crop) {
-                            return itemCrop.indexOf(crop) !== -1;
-                        });
-                    });
-                }
+                currentData = allData;
                 
-                // 병해충명 필터 적용 (OR 조건: 입력된 병해충명 중 하나라도 포함)
-                if (diseases.length > 0) {
-                    currentData = currentData.filter(function(item) {
-                        var itemDisease = item.diseaseWeedName || '';
-                        // OR: 입력된 병해충명 중 하나라도 포함되면 됨
-                        return diseases.some(function(disease) {
-                            return itemDisease.indexOf(disease) !== -1;
+                // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
+                if (brandVal) {
+                    // 작물명 필터 적용 (AND 조건: 입력된 작물명 모두 포함)
+                    if (crops.length > 0) {
+                        currentData = currentData.filter(function(item) {
+                            var itemCrop = item.cropName || '';
+                            // AND: 입력된 모든 작물명이 포함되어야 함
+                            return crops.every(function(crop) {
+                                return itemCrop.indexOf(crop) !== -1;
+                            });
                         });
-                    });
+                    }
+                    
+                    // 병해충명 필터 적용 (AND 조건: 입력된 병해충명 모두 포함)
+                    if (diseases.length > 0) {
+                        currentData = currentData.filter(function(item) {
+                            var itemDisease = item.diseaseWeedName || '';
+                            // AND: 입력된 모든 병해충명이 포함되어야 함
+                            return diseases.every(function(disease) {
+                                return itemDisease.indexOf(disease) !== -1;
+                            });
+                        });
+                    }
                 }
                 
                 // SVC02 상세 정보 통합
@@ -584,6 +632,7 @@
             html += "<option value='20' " + (pageSize === 20 ? 'selected' : '') + ">20개씩</option>";
             html += "<option value='50' " + (pageSize === 50 ? 'selected' : '') + ">50개씩</option>";
             html += "<option value='100' " + (pageSize === 100 ? 'selected' : '') + ">100개씩</option>";
+            html += "<option value='250' " + (pageSize === 250 ? 'selected' : '') + ">250개씩</option>";
             html += "</select>";
             html += "</div>";
             
