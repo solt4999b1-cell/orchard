@@ -32,39 +32,6 @@
         .header-text h5 { margin: 5px 0 0 0; color: #666; font-size: 12px; }
         .header-image img { width: 80px; height: 80px; border: 1px solid #ddd; border-radius: 4px; }
         
-        /* Zoom 컨트롤 */
-        .zoom-control { 
-            display: flex; 
-            gap: 5px; 
-            align-items: center; 
-            background: #f5f5f5; 
-            padding: 8px 12px; 
-            border-radius: 6px; 
-            border: 1px solid #ddd;
-        }
-        .zoom-control button { 
-            padding: 5px 10px; 
-            background: white; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            cursor: pointer; 
-            font-weight: bold;
-            font-size: 12px;
-            transition: all 0.2s;
-        }
-        .zoom-control button:hover { 
-            background: #2e7d32; 
-            color: white; 
-            border-color: #2e7d32;
-        }
-        .zoom-control span { 
-            min-width: 35px; 
-            text-align: center; 
-            font-size: 12px;
-            font-weight: bold;
-            color: #555;
-        }
-        
         .search-container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); margin-bottom: 20px; }
         .search-section { }
         .search-row { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-end; margin-bottom: 20px; }
@@ -435,15 +402,6 @@
                 <h2>🌱 농약 상세 검색</h2>
                 <h5>제작: 이용호 &nbsp; Copyright 2026.07.10. All Right Reserved</h5>
             </div>
-            
-            <!-- Zoom 컨트롤 -->
-            <div class="zoom-control">
-                <button onclick="zoomOut()" title="글씨 축소">−</button>
-                <span id="zoomLevel">100%</span>
-                <button onclick="zoomReset()" title="기본 크기">초기</button>
-                <button onclick="zoomIn()" title="글씨 확대">+</button>
-            </div>
-            
             <div class="header-image">
                 <a href="https://solt4999b1-cell.github.io/orchard/index4.html" target="_blank">
                     <img src="./2cp8g.png" alt="QR코드">
@@ -552,7 +510,6 @@
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
-        var currentZoom = 100;  // Zoom 레벨 (기본값 100%)
 
         // ===== TOP 버튼 =====
         var topBtn = document.getElementById("topBtn");
@@ -676,41 +633,6 @@
         }
 
         // ===== 이벤트 리스너 =====
-        // ===== Zoom 기능 =====
-        function initZoom() {
-            var savedZoom = localStorage.getItem('pageZoom');
-            if (savedZoom) {
-                currentZoom = parseInt(savedZoom);
-                applyZoom();
-            }
-        }
-        
-        function applyZoom() {
-            var zoomPercentage = currentZoom / 100;
-            document.body.style.fontSize = (14 * zoomPercentage) + 'px';
-            document.getElementById('zoomLevel').textContent = currentZoom + '%';
-            localStorage.setItem('pageZoom', currentZoom);
-        }
-        
-        function zoomIn() {
-            if (currentZoom < 200) {
-                currentZoom += 10;
-                applyZoom();
-            }
-        }
-        
-        function zoomOut() {
-            if (currentZoom > 80) {
-                currentZoom -= 10;
-                applyZoom();
-            }
-        }
-        
-        function zoomReset() {
-            currentZoom = 100;
-            applyZoom();
-        }
-        
         // ===== 빨리가기 버튼 =====
         function scrollToTop() {
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -737,8 +659,7 @@
         window.addEventListener('scroll', updateScrollButtons);
 
         document.addEventListener("DOMContentLoaded", function() {
-            // Zoom 초기화
-            initZoom();
+            // Scroll 버튼 초기화
             updateScrollButtons();
             
             var searchBtn = document.getElementById("searchBtn");
