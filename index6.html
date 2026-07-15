@@ -484,16 +484,6 @@
   <div class="modal">
     <div class="modal-title">🧪 새 농약 등록</div>
     
-    <!-- ✅ PSIS 검색 섹션 추가 -->
-    <div class="form-group" style="background: #F5F5F5; padding: 12px; border-radius: 6px; margin-bottom: 16px;">
-      <div class="form-label">🔍 PSIS에서 농약 찾기</div>
-      <div style="display: flex; gap: 8px; margin-bottom: 8px;">
-        <input type="text" id="psis-search-input" class="form-input" placeholder="농약명 또는 회사명 입력..." style="flex: 1; margin: 0;">
-        <button class="btn" onclick="searchPsis()" style="padding: 10px 16px;">검색</button>
-      </div>
-      <div id="psis-results" style="display: none; max-height: 200px; overflow-y: auto;"></div>
-    </div>
-    
     <div class="form-group">
       <label class="form-label">제품명 *</label>
       <input type="text" id="form-name" class="form-input" placeholder="농약명 입력...">
@@ -545,7 +535,16 @@
 
     <div class="form-btns">
       <button class="btn" onclick="savePesticide()">저장</button>
+      <button class="btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검색</button>
       <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
+    </div>
+
+    <!-- PSIS 검색 결과 영역 -->
+    <div id="psis-results-container" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-300);">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--gray-600);">
+        🔍 PSIS 검색 결과 (회사명으로 선택)
+      </div>
+      <div id="psis-results" style="max-height: 200px; overflow-y: auto;"></div>
     </div>
   </div>
 </div>
@@ -878,7 +877,151 @@ function editLocal(id) {
 // PSIS 농약 검색 (모달 내)
 // ════════════════════════════════════════════════════════════════
 
-async function searchPsis() {
+// ✅ 모달에서 바로 검색 (농약명 입력 후)
+async function searchPsisFromModal() {
+  const keyword = document.getElementById('form-name').value.trim();
+  
+  if (!keyword) {
+    showToast('❌ 농약명을 먼저 입력해주세요');
+    return;
+  }
+
+  try {
+    showLoading('PSIS 검색 중...');
+    
+    const data = await GAS.call({
+      target: 'psis',
+      keyword: keyword,
+      displayCount: 50,
+      startPoint: 1
+    });
+
+    const rows = GAS.rows(data);
+    const psisResults = [];
+    
+    rows.forEach(row => {
+      const name = GAS.name(row);
+      if (name) {
+        psisResults.push({
+          id: Math.random().toString(36).substr(2, 9),
+          name: name,
+          data: row
+        });
+      }
+    });
+
+    displayPsisResultsInModal(psisResults);
+    showLoading(null);
+
+  } catch (err) {
+    console.error('❌ PSIS 검색 실패:', err);
+    showToast('❌ 검색 중 오류가 발생했습니다');
+    showLoading(null);
+  }
+}
+
+// PSIS 검색 결과를 모달에 표시
+function displayPsisResultsInModal(results) {
+  const container = document.getElementById('psis-results-container');
+  const resultsList = document.getElementById('psis-results');
+
+  if (results.length === 0) {
+    container.style.display = 'block';
+    resultsList.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--gray-600); font-size: 11px;">검색 결과가 없습니다</div>';
+    return;
+  }
+
+  container.style.display = 'block';
+  
+  // 회사명 기준으로 그룹화하여 중복 제거
+  const companyMap = new Map();
+  results.forEach(r => {
+    const companyName = r.data.companyName || '미분류';
+    if (!companyMap.has(companyName)) {
+      companyMap.set(companyName, r);
+    }
+  });
+
+  // 회사별로 표시
+  resultsList.innerHTML = Array.from(companyMap.entries()).map(([company, r]) => `
+    <div style="padding: 10px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" 
+         onclick="selectPsisResultFromModal(${JSON.stringify(r).replace(/"/g, '&quot;')}, '${company}')">
+      <div style="font-weight: 600; color: var(--green-dark); font-size: 13px;">🏢 ${company || '-'}</div>
+      <div style="font-size: 11px; color: var(--gray-600); margin-top: 2px;">농약: ${r.name}</div>
+    </div>
+  `).join('');
+}
+
+// 모달에서 PSIS 결과 선택
+function selectPsisResultFromModal(resultData, company) {
+  try {
+    const result = JSON.parse(JSON.stringify(resultData).replace(/&quot;/g, '"'));
+    const data = result.data || {};
+
+    // 제품명은 이미 있으니 그대로 유지 또는 PSIS 이름으로 업데이트
+    // document.getElementById('form-name').value = result.name;
+
+    // 제조사 채우기 (회사명)
+    document.getElementById('form-manufacturer').value = company || '';
+
+    // 성분 찾기
+    let ingredient = '';
+    if (data.ingredientName) ingredient = data.ingredientName;
+    else if (data.ingrName) ingredient = data.ingrName;
+    else if (data.mainIngredient) ingredient = data.mainIngredient;
+    
+    if (ingredient) {
+      document.getElementById('form-ingredient').value = ingredient;
+    }
+
+    // 분류 찾기
+    let type = '';
+    let memo = '';
+    
+    if (data.sickNameKor) {
+      memo = `질병: ${data.sickNameKor}`;
+      if (data.sickNameKor.includes('병') || data.sickNameKor.includes('균')) type = '살균제';
+      else if (data.sickNameKor.includes('충')) type = '살충제';
+    }
+    if (data.insectKorName) {
+      if (memo) memo += '\n';
+      memo += `해충: ${data.insectKorName}`;
+      if (data.insectKorName.includes('충')) type = '살충제';
+    }
+    
+    // 작물명 찾기
+    if (data.cropName) {
+      if (memo) memo += '\n';
+      memo += `사용작물: ${data.cropName}`;
+    }
+
+    if (type) {
+      document.getElementById('form-type').value = type;
+    }
+    
+    if (memo) {
+      const existingMemo = document.getElementById('form-memo').value;
+      if (existingMemo) {
+        document.getElementById('form-memo').value = existingMemo + '\n---\n' + memo;
+      } else {
+        document.getElementById('form-memo').value = memo;
+      }
+    }
+
+    // 결과 숨기기
+    document.getElementById('psis-results-container').style.display = 'none';
+    
+    showToast('✅ PSIS 정보가 채워졌습니다');
+    
+  } catch (err) {
+    console.error('❌ 정보 파싱 실패:', err);
+    showToast('⚠️ 일부 정보만 채워졌습니다');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// PSIS 농약 검색 (기존 - 상단에서 사용하던 것)
+// ════════════════════════════════════════════════════════════════
   const keyword = document.getElementById('psis-search-input').value.trim();
   
   if (!keyword) {
@@ -1012,8 +1155,7 @@ function closeRegisterModal() {
   document.getElementById('form-ingredient').value = '';
   document.getElementById('form-manufacturer').value = '';
   document.getElementById('form-memo').value = '';
-  document.getElementById('psis-search-input').value = '';
-  document.getElementById('psis-results').style.display = 'none';
+  document.getElementById('psis-results-container').style.display = 'none';
   document.getElementById('psis-results').innerHTML = '';
 }
 
