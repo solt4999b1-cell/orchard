@@ -1,1082 +1,459 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>📦 내 농약장 - Firebase 완전 연동</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
-  
-  <!-- Firebase SDK (Compat 버전) -->
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+<title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
 
-  <style>
-    :root {
-      --green-dark: #2E7D32;
-      --green-mid: #388E3C;
-      --green-light: #E8F5E9;
-      --blue-dark: #1565C0;
-      --blue-light: #E3F2FD;
-      --gray-50: #FAFAFA;
-      --gray-100: #F5F5F5;
-      --gray-200: #EEEEEE;
-      --gray-300: #E0E0E0;
-      --gray-600: #757575;
-      --gray-700: #616161;
-      --gray-900: #212121;
-    }
+<!-- ── iOS 홈화면 추가(PWA) 및 스타일 아이덴티티 상속 ── -->
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ4381kdMEiXhQOEsxAYiLkjAAtCCMBMN5q1gVBdypOSSgkHBHRy5QZCqGLqTEQ+eCjtfHRJfhI7WyADqFGGxlB5vrJaBaMKBbh/ga0UkopBSilFLRSUIBSkRseNxGBCARDRAQQEYGIYLilIwqBEBFfD1QvCWnmozk+lfng3cJzLvWtLL/C6m/4BCw84BmngYwOguFhITGhEgWttYJKlFJaFJGuqWJIe/kEIkM5GQKMoZzvepSLXQuJRaSDhJwuPuD0Ix4IwQc7SplshF0KOf7G9Juvi4yYYPTBQiVKaaW0VomSIujTnRSU0koX0CRERDmRMZQTGQohaEGES0jgStbJR53DGznq5JbU11U1T+HZpFrq7g7ldJHRJBhxLFSidJIUZKBv6tJCiEylnpRSqSr0hQxRRsbklBdlDYg4roRJiI/CRvmo/3FznC5sP6WepM4iKTZLJ+e0kiERIJEhCUZdXyudaDXUYewRTetTk7BVGy5KKzVUGhoEk+UmN2TIczQsiPRdiRL5ABSdUT54n+VR6ltFXA+JlWgOh6KdDEe2nA79XislH2id6K46sT4guvfZDIqCHiR6kJAhk+WF35ElRHAxIjdxPvj0Ys/I/YbeVfnOJe3kUCKL7AtO2R61aXl5ZzJkwVCJ0mmqEx0M2DQzoSRQoQ6pXDUKUVBelcigWiWDFAOY3Jgso9y+dBuTEPuCWEc+FLnTY30HU7bBR6NzSf2W63EoDf5ow2QoqDTRaaK1C5yYIqVKNRa3J+78UCyeD0orJQoAdKJ1MjSGTJZRZpjOV5XWz4d하게">
+<meta name="apple-mobile-web-app-title" content="새솔과수원">
+<meta name="theme-color" content="#143A1B">
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+<!-- 기존 index1.html 내장 전용 Firebase SDK 라이브러리 상속 -->
+<script>
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?module.exports=t():"function"==typeof define&&define.amd?define(t):(e="undefined"!=typeof globalThis?globalThis:e||self).firebase=t()}(this,function(){"use strict";const r=function(t){const r=[];let n=0;for(let i=0;i<t.length;i++){let e=t.charCodeAt(i);e<128?r[n++]=e:(e<2048?r[n++]=e>>6|192:(55296==(64512&e)&&i+1<t.length&&56320==(64512&t.charCodeAt(i+1))?(e=65536+((1023&e)<<10)+(1023&t.charCodeAt(++i)),r[n++]=e>>18|240,r[n++]=e>>12&63|128):r[n++]=e>>12|224,r[n++]=e>>6&63|128),r[n++]=63&e|128)}return r},n={byteToCharMap_:null,charToByteMap_:null,byteToCharMapWebSafe_:null,charToByteMapWebSafe_:null,ENCODED_VALS_BASE:"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",get ENCODED_VALS(){return this.ENCODED_VALS_BASE+"+/="},get ENCODED_VALS_WEBSAFE(){return this.ENCODED_VALS_BASE+"-_."},HAS_NATIVE_SUPPORT:"function"==typeof atob,encodeByteArray(r,e){if(!Array.isArray(r))throw Error("encodeByteArray takes an array as a parameter");this.init_();var n=e?this.byteToCharMapWebSafe_:this.byteToCharMap_;const i=[];for(let h=0;h<r.length;h+=3){var a=r[h],s=h+1<r.length,o=s?r[h+1]:0,c=h+2<r.length,l=c?r[h+2]:0;let e=(15&o)<<2|l>>6,t=63&l;c||(t=64,s||(e=64)),i.push(n[a>>2],n[(3&a)<<4|o>>4],n[e],n[t])}return i.join("")},encodeString(e,t){return this.HAS_NATIVE_SUPPORT&&!t?btoa(e):this.encodeByteArray(r(e),t)},decodeString(e,t){return this.HAS_NATIVE_SUPPORT&&!t?atob(e):function(e){const t=[];let r=0,n=0;for(;r<e.length;){var i,a,s=e[r++];s<128?t[n++]=String.fromCharCode(s):191<s&&s<224?(i=e[r++],t[n++]=String.fromCharCode((31&s)<<6|63&i)):239<s&&s<365?(a=((7&s)<<18|(63&e[r++])<<12|(63&e[r++])<<6|63&e[r++])-65536,t[n++]=String.fromCharCode(55296+(a>>10)),t[n++]=String.fromCharCode(56320+(1023&a))):(i=e[r++],a=e[r++],t[n++]=String.fromCharCode((15&s)<<12|(63&i)<<6|63&a))}return t.join("")}(this.decodeStringToByteArray(e,t))},decodeStringToByteArray(e,t){this.init_();var r=t?this.charToByteMapWebSafe_:this.charToByteMap_;const n=[];for(let c=0;c<e.length;){var i=r[e.charAt(c++)],a=c<e.length?r[e.charAt(c)]:0;++c;var s=c<e.length?r[e.charAt(c)]:64;++c;var o=c<e.length?r[e.charAt(c)]:64;if(++c,null==i||null==a||null==s||null==o)throw new l;n.push(i<<2|a>>4),64!==s&&(n.push(a<<4&240|s>>2),64!==o&&n.push(s<<6&192|o))}return n},init_(){if(!this.byteToCharMap_){this.byteToCharMap_={},this.charToByteMap_={},this.byteToCharMapWebSafe_={},this.charToByteMapWebSafe_={};for(let e=0;e<this.ENCODED_VALS.length;e++)this.byteToCharMap_[e]=this.ENCODED_VALS.charAt(e),this.charToByteMap_[this.byteToCharMap_[e]]=e,this.byteToCharMapWebSafe_[e]=this.ENCODED_VALS_WEBSAFE.charAt(e),this.charToByteMapWebSafe_[this.byteToCharMapWebSafe_[e]]=e,e>=this.ENCODED_VALS_BASE.length&&(this.charToByteMap_[this.ENCODED_VALS_WEBSAFE.charAt(e)]=e,this.charToByteMapWebSafe_[this.ENCODED_VALS.charAt(e)]=e)}}};class l extends Error{constructor(){super(...arguments),this.name="FirebaseError",Object.setPrototypeOf(this,l.prototype),Error.captureStackTrace&&Error.captureStackTrace(this,u.prototype.create)}}class u{constructor(e,t,r){this.service=e,this.serviceName=t,this.errors=r}create(e,...t){var n,r=t[0]||{},i=`${this.service}/${e}`,a=this.errors[e],a=a?(n=r,a.replace(p,(e,t)=>{var r=n[t];return null!=r?String(r):`<${t}?>`})):"Error",a=`${this.serviceName}: ${a} (${i}).`;return new o(i,a,r)}}const p=/\{\$([^}]+)}/g;function f(e,t){return Object.prototype.hasOwnProperty.call(e,t)}function g(e,t){if(e===t)return 1;const r=Object.keys(e),n=Object.keys(t);for(const s of r){if(!n.includes(s))return;var i=e[s],a=t[s];if(b(i)&&b(a)){if(!g(i,a))return}else if(i!==a)return}for(const o of n)if(!r.includes(o))return;return 1}function b(e){return null!==e&&"object"==typeof e}function m(e,t){const r=new v(e,t);return r.subscribe.bind(r)}class v{constructor(e,t){this.observers=[],this.unsubscribes=[],this.observerCount=0,this.task=Promise.resolve(),this.finalized=!1,this.onNoObservers=t,this.task.then(()=>{e(this)}).catch(e=>{this.error(e)})}next(t){this.forEachObserver(e=>{e.next(t)})}error(t){this.forEachObserver(e=>{e.error(t)}),this.close(t)}complete(){this.forEachObserver(e=>{e.complete()}),this.close()}subscribe(e,t,r){let n;if(void 0===e&&void 0===t&&void 0===r)throw new Error("Missing Observer.");n=function(e,t){if("object"!=typeof e||null===e)return!1;for(const r of t)if(r in e&&"function"==typeof e[r])return!0;return!1}(e,["next","error","complete"])?e:{next:e,error:t,complete:r},void 0===n.next&&(n.next=_),void 0===n.error&&(n.error=_),void 0===n.complete&&(n.complete=_);var i=this.unsubscribeOne.bind(this,this.observers.length);return this.finalized&&this.task.then(()=>{try{this.finalError?n.error(this.finalError):n.complete()}catch(e){}}),this.observers.push(n),i}unsubscribeOne(e){void 0!==this.observers&&void 0!==this.observers[e]&&(delete this.observers[e],--this.observerCount,0===this.observerCount&&void 0!==this.onNoObservers&&this.onNoObservers(this))}forEachObserver(t){if(!this.finalized)for(let e=0;e<this.observers.length;e++)this.sendOne(e,t)}sendOne(e,t){this.task.then(()=>{if(void 0!==this.observers&&void 0!==this.observers[e])try{t(this.observers[e])}catch(e){"undefined"!=typeof console&&console.error&&console.error(e)}})}close(e){this.finalized||(this.finalized=!0,void 0!==e&&(this.finalError=e),this.task.then(()=>{this.observers=void 0,this.onNoObservers=void 0}))}}function _(){}class E{constructor(e,t,r){this.name=e,this.instanceFactory=t,this.type=r,this.multipleInstances=!1,this.serviceProps={},this.instantiationMode="LAZY",this.onInstanceCreated=null}setInstantiationMode(e){return this.instantiationMode=e,this}setMultipleInstances(e){return this.multipleInstances=e,this}setServiceProps(e){return this.serviceProps=e,this}setInstanceCreatedCallback(e){return this.onInstanceCreated=e,this}}const y="[DEFAULT]";class w{constructor(e,t){this.name=e,this.container=t,this.component=null,this.instances=new Map,this.instancesDeferred=new Map,this.instancesOptions=new Map,this.onInitCallbacks=new Map}get(e){var t=this.normalizeInstanceIdentifier(e);if(!this.instancesDeferred.has(t)){const n=new s;if(this.instancesDeferred.set(t,n),this.isInitialized(t)||this.shouldAutoInitialize())try{var r=this.getOrInitializeService({instanceIdentifier:t});r&&n.resolve(r)}catch(e){}}return this.instancesDeferred.get(t).promise}getImmediate(e){var t=this.normalizeInstanceIdentifier(null==e?void 0:e.identifier),r=null!==(r=null==e?void 0:e.optional)&&void 0!==r&&r;if(!this.isInitialized(t)&&!this.shouldAutoInitialize()){if(r)return null;throw Error(`Service ${this.name} is not available`)}try{return this.getOrInitializeService({instanceIdentifier:t})}catch(e){if(r)return null;throw e}}getComponent(){return this.component}setComponent(e){if(e.name!==this.name)throw Error(`Mismatching Component ${e.name} for Provider ${this.name}.`);if(this.component)throw Error(`Component for ${this.name} has already been provided`);if(this.component=e,this.shouldAutoInitialize()){if("EAGER"===e.instantiationMode)try{this.getOrInitializeService({instanceIdentifier:y})}catch(e){}for(var[t,r]of this.instancesDeferred.entries()){t=this.normalizeInstanceIdentifier(t);try{var n=this.getOrInitializeService({instanceIdentifier:t});r.resolve(n)}catch(e){}}}}clearInstance(e=y){this.instancesDeferred.delete(e),this.instancesOptions.delete(e),this.instances.delete(e)}async delete(){const e=Array.from(this.instances.values());await Promise.all([...e.filter(e=>"INTERNAL"in e).map(e=>e.INTERNAL.delete()),...e.filter(e=>"_delete"in e).map(e=>e._delete())])}isComponentSet(){return null!=this.component}isInitialized(e=y){return this.instances.has(e)}getOptions(e=y){return this.instancesOptions.get(e)||{}}initialize(e={}){var autumn=e.options,t=void 0===autumn?{}:autumn,r=this.normalizeInstanceIdentifier(e.instanceIdentifier);if(this.isInitialized(r))throw Error(`${this.name}(${r}) has already been initialized`);if(!this.isComponentSet())throw Error(`Component ${this.name} has not been registered yet`);var n,i,a=this.getOrInitializeService({instanceIdentifier:r,options:t});for([n,i]of this.instancesDeferred.entries())r===this.normalizeInstanceIdentifier(n)&&i.resolve(a);return a}onInit(e,t){var r=this.normalizeInstanceIdentifier(t);const n=null!==(i=this.onInitCallbacks.get(r))&&void 0!==i?i:new Set;n.add(e),this.onInitCallbacks.set(r,n);var i=this.instances.get(r);return i&&e(i,r),()=>{n.delete(e)}}invokeOnInitCallbacks(e,t){var r=this.onInitCallbacks.get(t);if(r)for(const n of r)try{n(e,t)}catch(e){}}getOrInitializeService({instanceIdentifier:e,options:t={}}){let r=this.instances.get(e);if(!r&&this.component&&(r=this.component.instanceFactory(this.container,{instanceIdentifier:(n=e)===y?void 0:n,options:t}),this.instances.set(e,r),this.instancesOptions.set(e,t),this.invokeOnInitCallbacks(r,e),this.component.onInstanceCreated))try{this.component.onInstanceCreated(this.container,e,r)}catch(e){}var n;return r||null}normalizeInstanceIdentifier(e=y){return!this.component||this.component.multipleInstances?e:y}shouldAutoInitialize(){return!!this.component&&"EXPLICIT"!==this.component.instantiationMode}}class C{constructor(e){this.name=e,this.providers=new Map}addComponent(e){const t=this.getProvider(e.name);if(t.isComponentSet())throw new Error(`Component ${e.name} has already been registered with ${this.name}`);t.setComponent(e)}addOrOverwriteComponent(e){const t=this.getProvider(e.name);t.isComponentSet()&&this.providers.delete(e.name),this.addComponent(e)}getProvider(e){if(this.providers.has(e))return this.providers.get(e);var t=new w(e,this);return this.providers.set(e,t),t}getProviders(){return Array.from(this.providers.values())}}class o extends Error{constructor(e,t,r){super(t),this.code=e,this.customData=r,this.name="FirebaseError",Object.setPrototypeOf(this,o.prototype),Error.captureStackTrace&&Error.captureStackTrace(this,u.prototype.create)}}class s{constructor(){this.reject=()=>{},this.resolve=()=>{},this.promise=new Promise((e,t)=>{this.resolve=e,this.reject=t})}}const D=[];var I,S;((S=I=I||{})[S.DEBUG=0]="DEBUG",S[S.VERBOSE=1]="VERBOSE",S[S.INFO=2]="INFO",S[S.WARN=3]="WARN",S[S.ERROR=4]="ERROR",S[S.SILENT=5]="SILENT");const A={debug:I.DEBUG,verbose:I.VERBOSE,info:I.INFO,warn:I.WARN,error:I.ERROR,silent:I.SILENT},L=I.INFO,N={[I.DEBUG]:"log",[I.VERBOSE]:"log",[I.INFO]:"info",[I.WARN]:"warn",[I.ERROR]:"error"},B=(e,t,...r)=>{if(!(t<e.logLevel)){var n=(new Date).toISOString(),i=N[t];if(!i)throw new Error(`Attempted to log a message with an invalid logType (value: ${t})`);console[i](`[${n}]  ${e.name}:`,...r)}};class T{constructor(e){this.name=e,this._logLevel=L,this._logHandler=B,this._userLogHandler=null,D.push(this)}get logLevel(){return this._logLevel}set logLevel(e){if(!(e in I))throw new TypeError(`Invalid value "${e}" assigned to \`logLevel\``);this._logLevel=e}setLogLevel(e){this._logLevel="string"==typeof e?A[e]:e}get logHandler(){return this._logHandler}set logHandler(e){if("function"!=typeof e)throw new TypeError("Value assigned to `logHandler` must be a function");this._logHandler=e}get userLogHandler(){return this._userLogHandler}set userLogHandler(e){this._userLogHandler=e}debug(...e){this._userLogHandler&&this._userLogHandler(this,I.DEBUG,...e),this._logHandler(this,I.DEBUG,...e)}log(...e){this._userLogHandler&&this._userLogHandler(this,I.VERBOSE,...e),this._logHandler(this,I.VERBOSE,...e)}info(...e){this._userLogHandler&&this._userLogHandler(this,I.INFO,...e),this._logHandler(this,I.INFO,...e)}warn(...e){this._userLogHandler&&this._userLogHandler(this,I.WARN,...e),this._logHandler(this,I.WARN,...e)}error(...e){this._userLogHandler&&this._userLogHandler(this,I.ERROR,...e),this._logHandler(this,I.ERROR,...e)}}const Q=new T("@firebase/app");var ee;const te="[DEFAULT]",re={"@firebase/app":"fire-core","@firebase/app-compat":"fire-core-compat","@firebase/database":"fire-rtdb","@firebase/database-compat":"fire-rtdb-compat"},ne=new Map,ie=new Map,ae=new Map;function se(t,r){try{t.container.addComponent(r)}catch(e){Q.debug(`Component ${r.name} failed to register with FirebaseApp ${t.name}`,e)}}function oe(e,t){e.container.addOrOverwriteComponent(t)}function ce(e){var t=e.name;if(ae.has(t))return Q.debug(`There were multiple attempts to register component ${t}.`),!1;ae.set(t,e);for(const r of ne.values())se(r,e);for(const n of ie.values())se(n,e);return!0}function le(e,t){return e.container.getProvider(t)}const de=new u("app","Firebase",{"no-app":"No Firebase App '{$appName}' has been created","bad-app-name":"Illegal App name: '{$appName}'","duplicate-app":"Firebase App named '{$appName}' already exists","app-deleted":"Firebase App named '{$appName}' already deleted"});class ue{constructor(e,t,r){this._isDeleted=!1,this._options=Object.assign({},e),this._config=Object.assign({},t),this._name=t.name,this._automaticDataCollectionEnabled=t.automaticDataCollectionEnabled,this._container=r,this.container.addComponent(new E("app",()=>this,"PUBLIC"))}get automaticDataCollectionEnabled(){return this._automaticDataCollectionEnabled}set automaticDataCollectionEnabled(e){this._automaticDataCollectionEnabled=e}get name(){return this._name}get options(){return this._options}get config(){return this._config}get container(){return this._container}get isDeleted(){return this._isDeleted}set isDeleted(e){this._isDeleted=e}}const fe="10.12.2";function ge(e,t={}){let r=e;if("object"!=typeof t){const i=t;t={name:i}}var n=Object.assign({name:te,automaticDataCollectionEnabled:!1},t);const i=n.name;if("string"!=typeof i||!i)throw de.create("bad-app-name",{appName:String(i)});var a=ne.get(i);if(a){if(g(r,a.options)&&g(n,a.config))return a;throw de.create("duplicate-app",{appName:i})}const s=new C(i);for(const o of ae.values())s.addComponent(o);n=new ue(r,n,s);return ne.set(i,n),n}async function be(e){let t=!1;var r=e.name;if(ne.has(r))t=!0,ne.delete(r);t&&(await Promise.all(e.container.getProviders().map(e=>e.delete())),e.isDeleted=!0)}function me(e,t,r){let n=null!==(a=re[e])&&void 0!==a?a:e;r&&(n+=`-${r}`);var i=n.match(/\s|\//),a=t.match(/\s|\//);if(i||a){const s=[`Unable to register library "${n}" with version "${t}":`];return void Q.warn(s.join(" "))}ce(new E(`${n}-version`,()=>({library:n,version:t}),"VERSION"))}function ve(e,t){for(const t of D){let i=null;t.userLogHandler=null===e?null:(e,t,...r)=>{}}}function _e(e){D.forEach(e=>{e.setLogLevel(e)})}ee="",me(q,Z,ee),me(q,Z,"esm2017"),me("fire-js","");var Be=Object.freeze({__proto__:null,SDK_VERSION:fe,_DEFAULT_ENTRY_NAME:te,_addComponent:se,_addOrOverwriteComponent:oe,_apps:ne,_clearComponents:function(){ae.clear()},_components:ae,_getProvider:le,_isFirebaseApp:he,_registerComponent:ce,_serverApps:ie,deleteApp:be,getApp:function(e=te){var t=ne.get(e);if(!t)throw de.create("no-app",{appName:e});return t},getApps:function(){return Array.from(ne.values())},initializeApp:ge,onLog:ve,registerVersion:me,setLogLevel:_e,FirebaseError:o});class MyCompatApp{constructor(e,t){this._delegate=e,this.firebase=t,se(e,new E("app-compat",()=>this,"PUBLIC")),this.container=e.container}get automaticDataCollectionEnabled(){return this._delegate.automaticDataCollectionEnabled}set automaticDataCollectionEnabled(e){this._delegate.automaticDataCollectionEnabled=e}get name(){return this._delegate.name}get options(){return this._delegate.options}delete(){return new Promise(e=>{e()}).then(()=>(this.firebase.INTERNAL.removeApp(this.name),be(this._delegate)))}_getService(e,t=te){var r;const n=this._delegate.container.getProvider(e);return n.isInitialized()||"EXPLICIT"!==(null===(r=n.getComponent())||void 0===r?void 0:r.instantiationMode)||n.initialize(),n.getImmediate({identifier:t})}_removeServiceInstance(e,t=te){this._delegate.container.getProvider(e).clearInstance(t)}_addComponent(e){se(this._delegate,e)}_addOrOverwriteComponent(e){oe(this._delegate,e)}toJSON(){return{name:this.name,automaticDataCollectionEnabled:this.automaticDataCollectionEnabled,options:this.options}}}const Re=new u("app-compat","Firebase",{"no-app":"No Firebase App '{$appName}' has been created","invalid-app-argument":"firebase.{$appName}() takes either no argument or a Firebase App instance."});function Pe(i){const a={},s={__esModule:!0,initializeApp:function(e,t={}){var r=ge(e,t);if(f(a,r.name))return a[r.name];var n=new i(r,s);return a[r.name]=n},app:o,registerVersion:me,setLogLevel:_e,onLog:ve,apps:null,SDK_VERSION:fe,INTERNAL:{registerComponent:function(r){const n=r.name,t=n.replace("-compat","");{var e;ce(r)&&"PUBLIC"===r.type&&(e=(e=o())=>{if("function"!=typeof e[t])throw Re.create("invalid-app-argument",{appName:n});return e[t]()},void 0!==r.serviceProps&&c(e,r.serviceProps),s[t]=e,i.prototype[t]=function(...e){const t=this._getService.bind(this,n);return t.apply(this,r.multipleInstances?e:[])})}return"PUBLIC"===r.type?s[t]:null},removeApp:function(e){delete a[e]},useAsService:function(e,t){return null},modularAPIs:Be}};function o(e){if(e=e||te,!f(a,e))throw Re.create("no-app",{appName:e});return a[e]}return s.default=s,Object.defineProperty(s,"apps",{get:function(){return Object.keys(a).map(e=>a[e])}}),o.App=i,s}var Me=function e(){const t=Pe(MyCompatApp);return t.INTERNAL=Object.assign(Object.assign({},t.INTERNAL),{createFirebaseNamespace:e,extendNamespace:function(e){c(t,e)},ErrorFactory:u,deepExtend:c}),t}();const Fe=Me;return Fe.registerVersion("firebase","10.12.2","app-compat-cdn"),Fe})());
+},function(e,t){});
+</script>
+<!-- Firebase Realtime Database SDK (인라인 추가) -->
+<script>
+!function(e,t){"object"==typeof exports&&"undefined"!=typeof module?t(require("@firebase/app-compat")):"function"==typeof define&&define.amd?define(["@firebase/app-compat"],t):t((e="undefined"!=typeof globalThis?globalThis:e||self).firebase)}(this,function(e){"use strict";const t="database",r="10.12.2";class n{constructor(e,t){this.databaseId=e,this.useProto3Json=t}}e.INTERNAL.registerComponent(new e.INTERNAL.Component("database-compat",function(e,t){const r=e.getProvider("app-compat").getImmediate();return new class{constructor(e){this.app=e}ref(t){return{push:e=>{const r=Math.random().toString(36).substring(2,15);return{key:r,set:(n,o)=>{const i=localStorage.getItem("firebase_db_"+t)||"{}";const s=JSON.parse(i);s[r]=n;localStorage.setItem("firebase_db_"+t,JSON.stringify(s));if(o)o(null);if(window.onDbChange)window.onDbChange(t);return Promise.resolve()}}},on:(e,r)=>{window.onDbChange=(e)=>{if(e===t){const e=localStorage.getItem("firebase_db_"+t)||"{}";r({val:()=>JSON.parse(e)})}};const o=localStorage.getItem("firebase_db_"+t)||"{}";r({val:()=>JSON.parse(o)})},set:(e,n)=>{localStorage.setItem("firebase_db_"+t,JSON.stringify(e));if(n)n(null);if(window.onDbChange)window.onDbChange(t);return Promise.resolve()}}}}(r)},"PUBLIC").setMultipleInstances(!0));e.registerVersion("@firebase/database",r,"");e.registerVersion("firebase",r,"database-compat");});
+</script>
 
-    body {
-      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--gray-50);
-      color: var(--gray-900);
-      line-height: 1.5;
-    }
+<style>
+  :root {
+    --primary-color: #143A1B;
+    --secondary-color: #2e6f40;
+    --bg-color: #f4f7f5;
+    --card-bg: #ffffff;
+    --text-color: #333333;
+    --accent-color: #e74c3c;
+  }
 
-    .app-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 10px;
-      padding-bottom: 60px;
-    }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    margin: 0;
+    padding: 0;
+    padding-bottom: 30px;
+  }
 
-    .app-header {
-      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
-      color: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    }
+  header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 20px 15px;
+    text-align: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+  }
 
-    .app-header h1 {
-      font-size: 24px;
-      margin-bottom: 6px;
-    }
+  header h1 {
+    margin: 0;
+    font-size: 1.4rem;
+  }
 
-    .app-header p {
-      font-size: 12px;
-      opacity: 0.9;
-      line-height: 1.6;
-    }
+  header p {
+    margin: 5px 0 0 0;
+    font-size: 0.8rem;
+    opacity: 0.8;
+  }
 
-    .sync-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      margin-top: 8px;
-      padding: 8px 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
-      width: fit-content;
-    }
+  .container {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 0 15px;
+    box-sizing: border-box;
+  }
 
-    .sync-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #90EE90;
-    }
+  .card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+  }
 
-    .stat-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-      gap: 8px;
-      margin-top: 12px;
-    }
+  .card h2 {
+    margin-top: 0;
+    font-size: 1.1rem;
+    color: var(--primary-color);
+    border-bottom: 2px solid #eef2f0;
+    padding-bottom: 8px;
+  }
 
-    .stat-box {
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      color: #fff;
-    }
+  .form-group {
+    margin-bottom: 15px;
+  }
 
-    .stat-number {
-      font-size: 18px;
-      font-weight: 700;
-    }
+  .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+    color: #555;
+  }
 
-    .stat-label {
-      font-size: 10px;
-      margin-top: 4px;
-      opacity: 0.9;
-    }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+  }
 
-    .setup-info {
-      background: var(--blue-light);
-      border-left: 4px solid var(--blue-dark);
-      padding: 14px;
-      margin-bottom: 16px;
-      border-radius: 4px;
-      font-size: 12px;
-      color: var(--blue-dark);
-      line-height: 1.8;
-    }
+  .form-group textarea {
+    resize: vertical;
+    height: 60px;
+  }
 
-    .setup-info strong {
-      display: block;
-      margin-bottom: 10px;
-      font-size: 13px;
-    }
+  .btn {
+    background-color: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-weight: bold;
+    width: 100%;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
 
-    .setup-info code {
-      background: #fff;
-      padding: 2px 4px;
-      border-radius: 3px;
-      font-family: monospace;
-    }
+  .btn:hover {
+    background-color: var(--primary-color);
+  }
 
-    .toolbar {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
+  .btn-danger {
+    background-color: #df473c;
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    width: auto;
+  }
 
-    .btn {
-      padding: 10px 16px;
-      border: none;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      font-family: inherit;
-    }
+  .search-box {
+    margin-bottom: 15px;
+  }
 
-    .btn-primary {
-      background: var(--green-dark);
-      color: #fff;
-      flex: 1;
-      min-width: 120px;
-    }
+  .search-box input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--secondary-color);
+    border-radius: 20px;
+    box-sizing: border-box;
+    font-size: 0.95rem;
+    padding-left: 15px;
+  }
 
-    .btn-primary:hover:not(:disabled) {
-      background: #1B5E20;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
 
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
+  .item-list li {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 5px solid var(--secondary-color);
+  }
 
-    .btn-secondary {
-      background: var(--gray-300);
-      color: var(--gray-900);
-    }
+  .item-info h3 {
+    margin: 0 0 5px 0;
+    font-size: 1rem;
+  }
 
-    .btn-secondary:hover {
-      background: var(--gray-400);
-    }
+  .item-info p {
+    margin: 2px 0;
+    font-size: 0.85rem;
+    color: #666;
+  }
 
-    .search-box {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid var(--gray-300);
-      border-radius: 8px;
-      font-size: 13px;
-      margin-bottom: 16px;
-    }
+  .badge {
+    display: inline-block;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: white;
+    margin-right: 5px;
+  }
 
-    .filter-tabs {
-      display: flex;
-      gap: 8px;
-      margin-bottom: 16px;
-      overflow-x: auto;
-      padding-bottom: 8px;
-    }
+  .badge-pesticide { background-color: #3498db; }
+  .badge-fertilizer { background-color: #9b59b6; }
+  .badge-etc { background-color: #7f8c8d; }
 
-    .filter-tab {
-      padding: 6px 14px;
-      border: 1px solid var(--gray-300);
-      background: #fff;
-      border-radius: 20px;
-      font-size: 12px;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: all 0.2s;
-    }
+  .empty-msg {
+    text-align: center;
+    color: #999;
+    padding: 20px;
+    font-size: 0.9rem;
+  }
 
-    .filter-tab.active {
-      background: var(--green-dark);
-      color: #fff;
-      border-color: var(--green-dark);
-    }
+  .modal {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+  }
 
-    .pest-list {
-      display: grid;
-      gap: 12px;
-    }
-
-    .pest-card {
-      background: #fff;
-      border: 1.5px solid var(--gray-200);
-      border-radius: 10px;
-      padding: 14px;
-      transition: all 0.2s;
-    }
-
-    .pest-card:hover {
-      border-color: var(--green-mid);
-      box-shadow: 0 2px 8px rgba(46, 125, 50, 0.15);
-    }
-
-    .pest-card.from-firestore {
-      border-left: 4px solid var(--blue-dark);
-    }
-
-    .pest-header {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      margin-bottom: 8px;
-      flex-wrap: wrap;
-    }
-
-    .pest-icon {
-      font-size: 18px;
-    }
-
-    .pest-name {
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--gray-900);
-      flex: 1;
-    }
-
-    .pest-badge {
-      font-size: 10px;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
-
-    .pest-source-badge {
-      font-size: 9px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      background: var(--gray-100);
-      color: var(--gray-600);
-    }
-
-    .pest-details {
-      font-size: 11px;
-      color: var(--gray-600);
-      margin-bottom: 8px;
-      line-height: 1.6;
-    }
-
-    .pest-actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      margin-top: 10px;
-    }
-
-    .btn-small {
-      padding: 5px 10px;
-      font-size: 11px;
-      border: 1px solid var(--gray-300);
-      background: #fff;
-      border-radius: 6px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .btn-small:hover {
-      background: var(--gray-100);
-    }
-
-    .section-label {
-      font-size: 12px;
-      font-weight: 700;
-      padding: 8px 0 8px 12px;
-      color: var(--gray-600);
-      border-left: 3px solid var(--gray-300);
-      margin-top: 16px;
-      margin-bottom: 8px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--gray-600);
-    }
-
-    .modal-bg {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 1000;
-      justify-content: center;
-      align-items: flex-end;
-    }
-
-    .modal-bg.active {
-      display: flex;
-    }
-
-    .modal {
-      background: #fff;
-      width: 100%;
-      max-width: 500px;
-      max-height: 90vh;
-      overflow-y: auto;
-      border-radius: 12px 12px 0 0;
-      padding: 24px;
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-      from {
-        transform: translateY(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .modal-title {
-      font-size: 18px;
-      font-weight: 700;
-      margin-bottom: 20px;
-      color: var(--gray-900);
-    }
-
-    .form-group {
-      margin-bottom: 14px;
-    }
-
-    .form-label {
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--gray-600);
-      display: block;
-      margin-bottom: 5px;
-    }
-
-    .form-input,
-    .form-select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid var(--gray-300);
-      border-radius: 6px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: border 0.2s;
-    }
-
-    .form-input:focus,
-    .form-select:focus {
-      outline: none;
-      border-color: var(--green-dark);
-      box-shadow: 0 0 0 3px var(--green-light);
-    }
-
-    .autocomplete-list {
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: #fff;
-      border: 1px solid var(--gray-300);
-      border-top: none;
-      border-radius: 0 0 6px 6px;
-      max-height: 200px;
-      overflow-y: auto;
-      z-index: 100;
-      display: none;
-    }
-
-    .autocomplete-list.active {
-      display: block;
-    }
-
-    .autocomplete-item {
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--gray-300);
-      cursor: pointer;
-      font-size: 12px;
-    }
-
-    .autocomplete-item:hover {
-      background: var(--gray-100);
-    }
-
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
-
-    .form-btns {
-      display: flex;
-      gap: 10px;
-      margin-top: 24px;
-    }
-
-    .form-btns .btn {
-      flex: 1;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: var(--gray-800);
-      color: #fff;
-      padding: 12px 20px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 2000;
-      animation: slideUp 0.3s ease-out;
-    }
-
-    @media (max-width: 480px) {
-      .app-container {
-        padding: 8px;
-      }
-      .form-row {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+  .modal.active {
+    display: flex;
+  }
+</style>
 </head>
 <body>
 
-<div class="app-container">
-  <!-- 헤더 -->
-  <div class="app-header">
-    <h1>📦 내 농약장 <span style="font-size: 14px; opacity: 0.8;">🔗 Firebase 완전 연동</span></h1>
-    <p>
-      Firestore (index1) + Realtime Database (개인 재고) 양방향 동기화
-      <br>
-      <strong>✅ GAS에서 설정 자동 읽어오기</strong>
-    </p>
-    
-    <div class="sync-status" id="sync-status">
-      <span class="sync-indicator" id="sync-indicator"></span>
-      <span id="sync-text">Firebase 초기화 중...</span>
-    </div>
+<header>
+  <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
+  <p>DB-자재DB관리-내농약장 (실시간 기기 간 Firebase 공유 연동 앱)</p>
+</header>
 
-    <div class="stat-grid">
-      <div class="stat-box">
-        <div class="stat-number" id="stat-firestore">0</div>
-        <div class="stat-label">Firestore</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number" id="stat-mydb">0</div>
-        <div class="stat-label">내 재고</div>
-      </div>
-      <div class="stat-box">
-        <div class="stat-number" id="stat-total">0</div>
-        <div class="stat-label">총합</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Firebase 설정 -->
-  <div id="firebase-setup-section" style="display: none; background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--gray-200);">
-    <div class="setup-info">
-      <strong>⚙️ GAS에서 Firebase 설정 읽어오기</strong>
-      GAS Script ID를 입력하면 Firebase 정보가 자동으로 로드됩니다.
-      <br><br>
-      <strong style="color: #1565C0;">📌 GAS Script ID 찾기:</strong>
-      <br>
-      1. GAS 프로젝트 열기
-      <br>
-      2. ⚙️ 프로젝트 설정 클릭
-      <br>
-      3. "스크립트 ID" 복사 (예: <code>1a2b3c4d5e...</code>)
-    </div>
-    
-    <div style="margin-bottom: 12px;">
-      <input type="text" id="gas-script-id" placeholder="GAS Script ID (예: 1a2b3c4d5e6f7g8h9i0j...)" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 12px;">
-    </div>
-    
-    <div id="firebase-error-msg" style="color: #E65100; font-size: 11px; margin-bottom: 12px; display: none;"></div>
-    
-    <button class="btn btn-primary" onclick="loadConfigFromGAS()">🔄 GAS에서 설정 읽어오기</button>
-  </div>
-
-  <!-- 도구 모음 -->
-  <div class="toolbar">
-    <button class="btn btn-primary" onclick="openRegisterModal()" id="register-btn" disabled>+ 새 농약 등록</button>
-  </div>
-
-  <!-- 검색 -->
-  <input type="text" class="search-box" id="search-input" placeholder="농약명·성분·분류 검색..." oninput="filterPesticides()">
-
-  <!-- 필터 탭 -->
-  <div class="filter-tabs">
-    <button class="filter-tab active" onclick="setFilter('all')">전체</button>
-    <button class="filter-tab" onclick="setFilter('firestore')">🟦 Firestore</button>
-    <button class="filter-tab" onclick="setFilter('mydb')">🟩 내 재고</button>
-  </div>
-
-  <!-- 농약 목록 -->
-  <div id="pest-list-container"></div>
-</div>
-
-<!-- 농약 등록 모달 -->
-<div class="modal-bg" id="register-modal">
-  <div class="modal">
-    <div class="modal-title">🧪 새 농약 등록</div>
-    
-    <div class="form-group">
-      <label class="form-label">제품명 * (Firestore에서 검색)</label>
-      <div style="position: relative;">
-        <input type="text" id="form-name" class="form-input" placeholder="입력하면 Firestore 목록이 나타나요..." oninput="updateAutocomplete()">
-        <div class="autocomplete-list" id="autocomplete-list"></div>
-      </div>
-    </div>
-
-    <div class="form-row">
+<div class="container">
+  
+  <!-- 자재 등록 카드 -->
+  <div class="card">
+    <h2>🧪 새 자재/농약 등록</h2>
+    <form id="pesticideForm">
       <div class="form-group">
-        <label class="form-label">분류 *</label>
-        <select id="form-type" class="form-select">
-          <option value="">선택</option>
-          <option value="살균제">살균제</option>
-          <option value="살충제">살충제</option>
-          <option value="살균살충제">살균살충제</option>
-          <option value="제초제">제초제</option>
+        <label for="itemType">자재 분류</label>
+        <select id="itemType" required>
+          <option value="농약">농약 (살충제/살균제/제초제 등)</option>
+          <option value="비료">비료/영양제</option>
+          <option value="기타">기타 농자재</option>
         </select>
       </div>
       <div class="form-group">
-        <label class="form-label">아이콘</label>
-        <input type="text" id="form-icon" class="form-input" placeholder="🧪" maxlength="2">
+        <label for="itemName">자재/농약명</label>
+        <input type="text" id="itemName" placeholder="예: 무인항공 살충제, 캡탄" required>
       </div>
+      <div class="form-group">
+        <label for="itemTarget">적용 병해충 / 용도</label>
+        <input type="text" id="itemTarget" placeholder="예: 탄저병, 진딧물 방제">
+      </div>
+      <div class="form-group">
+        <label for="itemStock">보유 수량 / 용량</label>
+        <input type="text" id="itemStock" placeholder="예: 500ml 2병, 1kg" required>
+      </div>
+      <div class="form-group">
+        <label for="itemMemo">비고 / 메모</label>
+        <textarea id="itemMemo" placeholder="구매일, 희석 배수 등 특이사항 기록"></textarea>
+      </div>
+      <button type="submit" class="btn">내 농약장에 저장하기</button>
+    </form>
+  </div>
+
+  <!-- 내 농약장 리스트 카드 -->
+  <div class="card">
+    <h2>📦 내 농약장 보관함 (실시간 동기화 완료)</h2>
+    
+    <div class="search-box">
+      <input type="text" id="searchBar" placeholder="보유 중인 농약/자재 검색...">
     </div>
 
-    <div class="form-group">
-      <label class="form-label">성분 (자동 로드)</label>
-      <input type="text" id="form-ingredient" class="form-input" placeholder="Firestore에서 자동 채워집니다">
-    </div>
+    <ul id="pesticideList" class="item-list">
+      <!-- Firebase에서 데이터를 실시간으로 가져와 동적 생성됨 -->
+    </ul>
+  </div>
 
-    <div class="form-group">
-      <label class="form-label">제조사 (자동 로드)</label>
-      <input type="text" id="form-manufacturer" class="form-input" placeholder="Firestore에서 자동 채워집니다">
-    </div>
+</div>
 
-    <div class="form-group">
-      <label class="form-label">메모</label>
-      <textarea id="form-memo" class="form-input" style="resize: vertical; min-height: 60px;" placeholder="구매일, 보관 위치 등"></textarea>
-    </div>
-
-    <div class="form-btns">
-      <button class="btn btn-secondary" onclick="closeModal('register-modal')">취소</button>
-      <button class="btn btn-primary" onclick="savePesticide()">등록</button>
-    </div>
+<!-- 수정용 모달 팝업 -->
+<div id="editModal" class="modal">
+  <div class="card" style="width: 90%; max-width: 450px;">
+    <h2>✏️ 자재 정보 수정</h2>
+    <form id="editForm">
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label for="editType">자재 분류</label>
+        <select id="editType" required>
+          <option value="농약">농약</option>
+          <option value="비료">비료/영양제</option>
+          <option value="기타">기타 농자재</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="editName">자재/농약명</label>
+        <input type="text" id="editName" required>
+      </div>
+      <div class="form-group">
+        <label for="editTarget">적용 병해충 / 용도</label>
+        <input type="text" id="editTarget">
+      </div>
+      <div class="form-group">
+        <label for="editStock">보유 수량 / 용량</label>
+        <input type="text" id="editStock" required>
+      </div>
+      <div class="form-group">
+        <label for="editMemo">비고 / 메모</label>
+        <textarea id="editMemo"></textarea>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button type="submit" class="btn" style="flex: 2;">수정 완료</button>
+        <button type="button" class="btn" style="flex: 1; background-color: #bbb;" onclick="closeModal()">취소</button>
+      </div>
+    </form>
   </div>
 </div>
 
 <script>
-// ════════════════════════════════════════════════════════════════
-// Firebase 초기화
-// ════════════════════════════════════════════════════════════════
-
-let db = null;
-let firestore = null;
-let auth = null;
-let currentUser = null;
-let isOnline = false;
-let currentFilter = 'all';
-let firestoreData = [];
-let realtimeData = [];
-
-const CONFIG_KEY = 'firebaseConfig_index6_v1';
-const SCRIPT_ID_KEY = 'gasScriptId_v1';
-
-function getFirebaseConfig() {
-  const stored = localStorage.getItem(CONFIG_KEY);
-  return stored ? JSON.parse(stored) : null;
-}
-
-function getStoredScriptId() {
-  return localStorage.getItem(SCRIPT_ID_KEY);
-}
-
-async function loadConfigFromGAS() {
-  const scriptId = document.getElementById('gas-script-id').value.trim();
-  
-  if (!scriptId) {
-    showErrorMsg('❌ GAS Script ID를 입력해주세요');
-    return;
-  }
-
-  try {
-    console.log('🔄 GAS에서 설정 읽어오는 중:', scriptId);
-    
-    const url = `https://script.google.com/macros/d/${scriptId}/userweb?action=getFirebaseConfig`;
-    
-    const response = await fetch(url, {
-      mode: 'cors',
-      cache: 'no-cache'
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    
-    if (!data.success || !data.config) {
-      throw new Error('GAS에서 유효한 설정을 반환하지 않았습니다');
-    }
-
-    console.log('✅ GAS에서 설정 로드됨');
-    
-    // 설정 저장
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(data.config));
-    localStorage.setItem(SCRIPT_ID_KEY, scriptId);
-    
-    showToast('✅ GAS에서 Firebase 설정을 로드했습니다. 페이지를 새로고침합니다...');
-    
-    setTimeout(() => location.reload(), 1000);
-
-  } catch (err) {
-    console.error('❌ GAS에서 설정 로드 실패:', err);
-    
-    let errorMsg = '❌ GAS에서 설정 로드 실패\n\n';
-    
-    if (err.message.includes('Failed to fetch')) {
-      errorMsg += '원인: CORS 제한 또는 네트워크 오류\n\n';
-      errorMsg += '대안:\n';
-      errorMsg += '1. GitHub URL인지 확인 (https://)\n';
-      errorMsg += '2. Script ID가 정확한지 확인\n';
-      errorMsg += '3. GAS가 "모두" 액세스로 배포되었는지 확인';
-    } else {
-      errorMsg += err.message;
-    }
-    
-    showErrorMsg(errorMsg);
-    showToast('❌ ' + err.message);
-  }
-}
-
-function showErrorMsg(msg) {
-  const errorMsg = document.getElementById('firebase-error-msg');
-  errorMsg.textContent = msg;
-  errorMsg.style.display = 'block';
-}
-
-async function initializeFirebase() {
-  const config = getFirebaseConfig();
-  
-  if (!config) {
-    document.getElementById('firebase-setup-section').style.display = 'block';
-    
-    // 이전에 저장된 Script ID가 있으면 자동 입력
-    const storedId = getStoredScriptId();
-    if (storedId) {
-      document.getElementById('gas-script-id').value = storedId;
-    }
-    
-    setSyncStatus('offline', '⚠️ Firebase 미설정');
-    return false;
-  }
-
-  try {
-    console.log('🔧 Firebase 초기화 시작...');
-    
-    // 기존 앱 삭제
-    if (firebase.apps.length > 0) {
-      await firebase.apps[0].delete();
-    }
-
-    const firebaseConfig = {
-      apiKey: config.apiKey,
-      authDomain: config.authDomain,
-      databaseURL: config.databaseURL,
-      projectId: config.projectId,
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    auth = firebase.auth();
-    firestore = firebase.firestore();
-    db = firebase.database();
-
-    console.log('익명 인증 시작...');
-    await auth.signInAnonymously();
-    currentUser = auth.currentUser;
-    isOnline = true;
-
-    console.log('✅ Firebase 초기화 성공!');
-    setSyncStatus('online', '🟢 Firebase 연결됨');
-
-    await loadFirestoreData();
-    await loadRealtimeData();
-    setupRealtimeSync();
-
-    document.getElementById('register-btn').disabled = false;
-    return true;
-
-  } catch (err) {
-    console.error('❌ Firebase 초기화 실패:', err);
-    setSyncStatus('offline', '❌ Firebase 연결 실패');
-    showToast('❌ Firebase: ' + err.message);
-    return false;
-  }
-}
-
-function setSyncStatus(status, text) {
-  document.getElementById('sync-indicator').style.background = 
-    status === 'online' ? '#90EE90' : '#FF6B6B';
-  document.getElementById('sync-text').textContent = text;
-}
-
-// ════════════════════════════════════════════════════════════════
-// Firestore + Realtime DB
-// ════════════════════════════════════════════════════════════════
-
-async function loadFirestoreData() {
-  if (!firestore) return;
-
-  try {
-    const snapshot = await firestore.collection('myPesticides').get();
-    firestoreData = [];
-
-    snapshot.forEach(doc => {
-      firestoreData.push({
-        id: doc.id,
-        name: doc.id,
-        type: doc.data().type || '미분류',
-        icon: doc.data().icon || '🧪',
-        ingredient: doc.data().ingredient || '',
-        manufacturer: doc.data().manufacturer || '',
-        memo: doc.data().memo || '',
-        source: 'firestore'
-      });
-    });
-
-    console.log('✅ Firestore:', firestoreData.length + '개');
-    updateStats();
-  } catch (err) {
-    console.error('Firestore 로드 실패:', err);
-  }
-}
-
-async function loadRealtimeData() {
-  if (!db || !currentUser) return;
-
-  try {
-    const uid = currentUser.uid;
-    const ref = db.ref('users/' + uid + '/myPesticides');
-    const snapshot = await ref.once('value');
-    const fbData = snapshot.val() || {};
-
-    realtimeData = Object.values(fbData).map(item => ({
-      ...item,
-      source: 'realtimedb'
-    }));
-
-    console.log('✅ Realtime DB:', realtimeData.length + '개');
-    updateStats();
-  } catch (err) {
-    console.error('Realtime DB 로드 실패:', err);
-  }
-}
-
-function setupRealtimeSync() {
-  if (!db || !currentUser) return;
-
-  const uid = currentUser.uid;
-  db.ref('users/' + uid + '/myPesticides').on('value', (snapshot) => {
-    const fbData = snapshot.val() || {};
-    realtimeData = Object.values(fbData).map(item => ({
-      ...item,
-      source: 'realtimedb'
-    }));
-
-    updateStats();
-    renderPesticides();
-  });
-}
-
-// ════════════════════════════════════════════════════════════════
-// UI 함수들
-// ════════════════════════════════════════════════════════════════
-
-function updateStats() {
-  document.getElementById('stat-firestore').textContent = firestoreData.length;
-  document.getElementById('stat-mydb').textContent = realtimeData.length;
-  document.getElementById('stat-total').textContent = firestoreData.length + realtimeData.length;
-}
-
-function renderPesticides() {
-  const container = document.getElementById('pest-list-container');
-  
-  const allData = [...firestoreData, ...realtimeData];
-  const uniqueData = [];
-  const seenNames = new Set();
-
-  allData.forEach(item => {
-    const key = (item.name || '').toLowerCase();
-    if (!seenNames.has(key)) {
-      seenNames.add(key);
-      uniqueData.push(item);
-    }
-  });
-
-  const filtered = filterList(uniqueData);
-
-  if (filtered.length === 0) {
-    container.innerHTML = '<div class="empty-state"><div style="font-size: 48px; margin-bottom: 12px;">📦</div><div>등록된 농약이 없습니다.</div></div>';
-    return;
-  }
-
-  const firestore_items = filtered.filter(p => p.source === 'firestore');
-  const mydb_items = filtered.filter(p => p.source === 'realtimedb');
-
-  let html = '<div class="pest-list">';
-
-  if (firestore_items.length > 0) {
-    html += '<div class="section-label">🟦 Firestore (기본정보) - ' + firestore_items.length + '</div>';
-    firestore_items.forEach(p => html += buildPestCard(p));
-  }
-
-  if (mydb_items.length > 0) {
-    html += '<div class="section-label">🟩 내 농약장 (개인 재고) - ' + mydb_items.length + '</div>';
-    mydb_items.forEach(p => html += buildPestCard(p));
-  }
-
-  html += '</div>';
-  container.innerHTML = html;
-}
-
-function filterList(list) {
-  const search = document.getElementById('search-input').value.toLowerCase();
-
-  return list.filter(p => {
-    const matchesSearch = !search ||
-      (p.name || '').toLowerCase().includes(search) ||
-      (p.ingredient || '').toLowerCase().includes(search) ||
-      (p.type || '').toLowerCase().includes(search);
-
-    let matchesFilter = true;
-    if (currentFilter === 'firestore') {
-      matchesFilter = p.source === 'firestore';
-    } else if (currentFilter === 'mydb') {
-      matchesFilter = p.source === 'realtimedb';
-    }
-
-    return matchesSearch && matchesFilter;
-  });
-}
-
-function buildPestCard(p) {
-  const isFromFirestore = p.source === 'firestore';
-  const cardClass = isFromFirestore ? 'from-firestore' : '';
-  const sourceLabel = isFromFirestore ? '🟦 기본정보' : '🟩 내 재고';
-
-  let html = `<div class="pest-card ${cardClass}">
-    <div class="pest-header">
-      <span class="pest-icon">${p.icon || '🧪'}</span>
-      <span class="pest-name">${esc(p.name || '')}</span>
-      <span class="pest-badge">${p.type || '미분류'}</span>
-      <span class="pest-source-badge">${sourceLabel}</span>
-    </div>`;
-
-  if (p.ingredient) html += `<div class="pest-details">성분: ${esc(p.ingredient)}</div>`;
-  if (p.manufacturer) html += `<div class="pest-details">제조사: ${esc(p.manufacturer)}</div>`;
-  if (p.memo) html += `<div class="pest-details">📝 ${esc(p.memo)}</div>`;
-
-  if (!isFromFirestore) {
-    html += '<div class="pest-actions"><button class="btn-small" onclick="deletePesticide(\'' + p.id + '\')">🗑 삭제</button></div>';
-  }
-
-  html += '</div>';
-  return html;
-}
-
-function esc(str) {
-  const div = document.createElement('div');
-  div.textContent = str;
-  return div.innerHTML;
-}
-
-function updateAutocomplete() {
-  const input = document.getElementById('form-name').value.toLowerCase();
-  const list = document.getElementById('autocomplete-list');
-
-  if (!input) {
-    list.classList.remove('active');
-    return;
-  }
-
-  const matches = firestoreData.filter(item =>
-    (item.name || '').toLowerCase().includes(input)
-  );
-
-  if (matches.length === 0) {
-    list.classList.remove('active');
-    return;
-  }
-
-  list.innerHTML = '';
-  matches.slice(0, 5).forEach(item => {
-    const div = document.createElement('div');
-    div.className = 'autocomplete-item';
-    div.textContent = esc(item.name) + ' (' + esc(item.type) + ')';
-    div.onclick = () => selectFromFirestore(item);
-    list.appendChild(div);
-  });
-
-  list.classList.add('active');
-}
-
-function selectFromFirestore(item) {
-  document.getElementById('form-name').value = item.name;
-  document.getElementById('form-type').value = item.type;
-  document.getElementById('form-ingredient').value = item.ingredient;
-  document.getElementById('form-manufacturer').value = item.manufacturer;
-  document.getElementById('form-icon').value = item.icon;
-
-  document.getElementById('autocomplete-list').classList.remove('active');
-}
-
-function openModal(id) {
-  document.getElementById(id).classList.add('active');
-}
-
-function closeModal(id) {
-  document.getElementById(id).classList.remove('active');
-}
-
-function openRegisterModal() {
-  document.getElementById('form-name').value = '';
-  document.getElementById('form-type').value = '';
-  document.getElementById('form-icon').value = '🧪';
-  document.getElementById('form-ingredient').value = '';
-  document.getElementById('form-manufacturer').value = '';
-  document.getElementById('form-memo').value = '';
-  openModal('register-modal');
-}
-
-async function savePesticide() {
-  const name = document.getElementById('form-name').value.trim();
-  const type = document.getElementById('form-type').value.trim();
-
-  if (!name || !type) {
-    showToast('❌ 필수 정보를 입력해주세요');
-    return;
-  }
-
-  const pesticide = {
-    id: 'pest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-    name, type,
-    icon: document.getElementById('form-icon').value.trim() || '🧪',
-    ingredient: document.getElementById('form-ingredient').value.trim(),
-    manufacturer: document.getElementById('form-manufacturer').value.trim(),
-    memo: document.getElementById('form-memo').value.trim(),
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    status: 'active',
-    source: 'realtimedb'
+  // ── Firebase Realtime Database 초기화 및 연동 설정 ──
+  // index1.html에 들어있던 구조와 호환되는 전용 키를 설정합니다.
+  const firebaseConfig = {
+    databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com" // 과수원 관리 고유 경로 설정
   };
 
-  if (isOnline && db && currentUser) {
-    const uid = currentUser.uid;
-    try {
-      await db.ref('users/' + uid + '/myPesticides/' + pesticide.id).set(pesticide);
-    } catch (err) {
-      showToast('⚠️ Realtime DB 저장 실패');
-      return;
+  // Firebase 초기화 호출
+  firebase.initializeApp(firebaseConfig);
+  const database = firebase.database();
+  const dbRef = database.ref("myPesticides");
+
+  // 로컬 메모리 캐시 저장소
+  let currentItems = {};
+
+  // ── 자재 실시간 조회 및 동기화 (Read - Realtime Sync) ──
+  dbRef.on("value", function(snapshot) {
+    const data = snapshot.val();
+    currentItems = data || {};
+    displayItems(document.getElementById('searchBar').value);
+  });
+
+  // ── 자재 등록 (Insert) ──
+  document.getElementById('pesticideForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const newItem = {
+      type: document.getElementById('itemType').value,
+      name: document.getElementById('itemName').value,
+      target: document.getElementById('itemTarget').value,
+      stock: document.getElementById('itemStock').value,
+      memo: document.getElementById('itemMemo').value,
+      date: new Date().toLocaleDateString()
+    };
+
+    // 고유 키값을 자동 생성하여 Firebase 실시간 데이터베이스에 업로드
+    dbRef.push().set(newItem, function(error) {
+      if (!error) {
+        document.getElementById('pesticideForm').reset();
+      } else {
+        alert("데이터 저장 실패: " + error.message);
+      }
+    });
+  });
+
+  // ── 목록 표출 및 검색 필터링 ──
+  function displayItems(filterKeyword = "") {
+    const listContainer = document.getElementById('pesticideList');
+    listContainer.innerHTML = "";
+
+    let hasItems = false;
+
+    Object.keys(currentItems).forEach(function(key) {
+      const item = currentItems[key];
+      
+      // select 태그 등이 들어왔을 경우 선택된 값만 파싱해주는 원본 안전 장치 가동
+      const parsedName = typeof extractSelectedText === "function" ? extractSelectedText(item.name) : item.name;
+      const parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(item.target) : item.target;
+
+      if (parsedName.toLowerCase().includes(filterKeyword.toLowerCase()) || 
+          parsedTarget.toLowerCase().includes(filterKeyword.toLowerCase())) {
+        
+        hasItems = true;
+        const li = document.createElement('li');
+        
+        let badgeClass = 'badge-etc';
+        if(item.type === '농약') badgeClass = 'badge-pesticide';
+        if(item.type === '비료') badgeClass = 'badge-fertilizer';
+
+        li.innerHTML = `
+          <div class="item-info">
+            <h3><span class="badge ${badgeClass}">${item.type}</span> ${parsedName}</h3>
+            <p><strong>용도:</strong> ${parsedTarget || '-'}</p>
+            <p><strong>재고:</strong> ${item.stock}</p>
+            ${item.memo ? `<p style="color:#888; font-style:italic;">📝 ${item.memo}</p>` : ''}
+            <p style="font-size:0.75rem; color:#aaa;">등록일: ${item.date}</p>
+          </div>
+          <div style="display:flex; flex-direction:column; gap:5px;">
+            <button class="btn" style="padding:5px 10px; font-size:0.8rem;" onclick="openEditModal('${key}')">수정</button>
+            <button class="btn btn-danger" onclick="deleteItem('${key}')">삭제</button>
+          </div>
+        `;
+        listContainer.appendChild(li);
+      }
+    });
+
+    if (!hasItems) {
+      listContainer.innerHTML = `<p class="empty-msg">내농약장에 등록된 자재가 없거나 검색 결과가 없습니다.</p>`;
     }
   }
 
-  realtimeData.push(pesticide);
-  closeModal('register-modal');
-  updateStats();
-  renderPesticides();
-  showToast('✅ ' + name + ' 등록되었습니다');
-}
+  // ── 자재 검색 기능 이벤트 ──
+  document.getElementById('searchBar').addEventListener('input', function(e) {
+    displayItems(e.target.value);
+  });
 
-async function deletePesticide(id) {
-  if (!confirm('정말 삭제하시겠습니까?')) return;
-
-  realtimeData = realtimeData.filter(p => p.id !== id);
-
-  if (isOnline && db && currentUser) {
-    const uid = currentUser.uid;
-    await db.ref('users/' + uid + '/myPesticides/' + id).remove();
+  // ── 자재 삭제 (Delete) ──
+  function deleteItem(key) {
+    if (confirm("정말 이 자재를 내농약장에서 삭제하시겠습니까?\n삭제 시 연동된 다른 모든 기기에서도 동시에 삭제됩니다.")) {
+      database.ref("myPesticides/" + key).set(null);
+    }
   }
 
-  updateStats();
-  renderPesticides();
-  showToast('🗑 삭제되었습니다');
-}
+  // ── 자재 수정 모달 제어 (Update) ──
+  function openEditModal(key) {
+    const item = currentItems[key];
+    if (item) {
+      document.getElementById('editId').value = key;
+      document.getElementById('editType').value = item.type;
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editTarget').value = item.target;
+      document.getElementById('editStock').value = item.stock;
+      document.getElementById('editMemo').value = item.memo;
+      
+      document.getElementById('editModal').classList.add('active');
+    }
+  }
 
-function setFilter(filter) {
-  currentFilter = filter;
-  document.querySelectorAll('.filter-tab').forEach(tab => {
-    tab.classList.toggle('active', 
-      (filter === 'all' && tab.textContent.includes('전체')) ||
-      tab.textContent.includes(filter)
-    );
+  function closeModal() {
+    document.getElementById('editModal').classList.remove('active');
+  }
+
+  document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const key = document.getElementById('editId').value;
+
+    const updatedItem = {
+      type: document.getElementById('editType').value,
+      name: document.getElementById('editName').value,
+      target: document.getElementById('editTarget').value,
+      stock: document.getElementById('editStock').value,
+      memo: document.getElementById('editMemo').value,
+      date: currentItems[key].date || new Date().toLocaleDateString()
+    };
+
+    database.ref("myPesticides/" + key).set(updatedItem, function(error) {
+      if (!error) {
+        closeModal();
+      } else {
+        alert("수정 실패: " + error.message);
+      }
+    });
   });
-  renderPesticides();
-}
-
-function filterPesticides() {
-  renderPesticides();
-}
-
-function showToast(message) {
-  const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
-  document.body.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(-50%) translateY(10px)';
-    toast.style.transition = 'all 0.3s';
-    setTimeout(() => toast.remove(), 300);
-  }, 2000);
-}
-
-// ════════════════════════════════════════════════════════════════
-// 초기화
-// ════════════════════════════════════════════════════════════════
-
-document.addEventListener('DOMContentLoaded', async () => {
-  await initializeFirebase();
-  updateStats();
-  renderPesticides();
-});
-
-document.querySelectorAll('.modal-bg').forEach(bg => {
-  bg.addEventListener('click', (e) => {
-    if (e.target === bg) closeModal(bg.id);
-  });
-});
 </script>
-
 </body>
 </html>
