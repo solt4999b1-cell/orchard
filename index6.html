@@ -5,9 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>🔍 농약 찾기 및 내 농약장 - GAS 중심</title>
+  <title>🔍 농약 찾기 및 내 농약장 - 하이브리드</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Firebase SDK (Compat 버전) -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
   
   <style>
     :root {
@@ -65,6 +71,51 @@
       line-height: 1.6;
     }
 
+    .sync-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      width: fit-content;
+    }
+
+    .sync-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #90EE90;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .stat-box {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 8px;
+      border-radius: 6px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      opacity: 0.8;
+      margin-top: 2px;
+    }
+
     .search-section {
       background: #fff;
       padding: 16px;
@@ -110,15 +161,9 @@
       background: #1B5E20;
     }
 
-    .btn-small {
-      padding: 6px 10px;
-      font-size: 11px;
-      background: var(--gray-200);
-      color: var(--gray-700);
-    }
-
-    .btn-small:hover {
+    .btn:disabled {
       background: var(--gray-300);
+      cursor: not-allowed;
     }
 
     .results-section {
@@ -134,7 +179,7 @@
       margin-bottom: 8px;
     }
 
-    .search-result-card {
+    .result-card {
       background: #fff;
       border: 1.5px solid var(--blue-light);
       border-left: 4px solid var(--blue-dark);
@@ -145,7 +190,7 @@
       transition: all 0.2s;
     }
 
-    .search-result-card:hover {
+    .result-card:hover {
       box-shadow: 0 2px 8px rgba(21, 101, 192, 0.2);
       transform: translateY(-1px);
     }
@@ -163,7 +208,7 @@
       line-height: 1.4;
     }
 
-    .my-pesticide-card {
+    .pesticide-card {
       background: #fff;
       border: 1px solid var(--gray-200);
       border-radius: 8px;
@@ -189,9 +234,42 @@
       color: var(--gray-600);
     }
 
+    .source-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    .source-badge.firebase {
+      background: #E3F2FD;
+      color: #1565C0;
+    }
+
+    .source-badge.local {
+      background: #E8F5E9;
+      color: #2E7D32;
+    }
+
     .pesticide-actions {
       display: flex;
       gap: 6px;
+    }
+
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 11px;
+      background: var(--gray-200);
+      color: var(--gray-700);
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-small:hover {
+      background: var(--gray-300);
     }
 
     .empty-state {
@@ -336,10 +414,34 @@
   <div class="app-header">
     <h1>🔍 농약 찾기 및 내 농약장</h1>
     <p>
-      PSIS/NCPMS 검색 + 내 농약 관리
+      GAS 검색 + Firebase DB 기존 농약
       <br>
-      <strong>✅ GAS 중심 설계 (설정 불필요)</strong>
+      <strong>✅ 하이브리드 모드 (모든 데이터 통합)</strong>
     </p>
+    
+    <div class="sync-status" id="sync-status">
+      <span class="sync-indicator" id="sync-indicator"></span>
+      <span id="sync-text">초기화 중...</span>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-number" id="stat-search">0</div>
+        <div class="stat-label">검색결과</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="stat-firebase">0</div>
+        <div class="stat-label">Firebase</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="stat-local">0</div>
+        <div class="stat-label">로컬</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">전체</div>
+      </div>
+    </div>
   </div>
 
   <!-- 검색 섹션 -->
@@ -349,21 +451,32 @@
       <button class="btn" onclick="searchPesticides()">🔍 검색</button>
     </div>
     <div style="font-size: 11px; color: var(--gray-600);">
-      💡 GAS의 PSIS/NCPMS 데이터에서 검색합니다. 결과를 클릭하여 내 농약장에 추가할 수 있습니다.
+      💡 GAS의 PSIS/NCPMS 데이터에서 검색합니다. Firebase DB와 로컬 데이터도 함께 표시됩니다.
     </div>
   </div>
 
   <!-- 검색 결과 섹션 -->
   <div class="results-section" id="search-results-section" style="display: none;">
     <div class="section-title">🔍 검색 결과 (<span id="result-count">0</span>개)</div>
-    <div id="search-results-list" class="search-results-list"></div>
+    <div id="search-results-list"></div>
+  </div>
+
+  <!-- Firebase DB 농약 섹션 -->
+  <div class="results-section" id="firebase-section" style="display: none;">
+    <div class="section-title">🟦 Firebase DB 농약 (<span id="firebase-count">0</span>개)</div>
+    <div id="firebase-list"></div>
+  </div>
+
+  <!-- 로컬 농약 섹션 -->
+  <div class="results-section" id="local-section" style="display: none;">
+    <div class="section-title">📦 로컬 저장 농약 (<span id="local-count">0</span>개)</div>
+    <div id="local-list"></div>
   </div>
 
   <!-- 내 농약장 섹션 -->
   <div class="results-section">
-    <div class="section-title">📦 내 농약장</div>
+    <div class="section-title">➕ 새 농약 등록</div>
     <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
-    <div id="my-pesticides-list" class="my-pesticides-list"></div>
   </div>
 </div>
 
@@ -423,14 +536,14 @@
 
     <div class="form-btns">
       <button class="btn" onclick="savePesticide()">저장</button>
-      <button class="btn btn-small" onclick="closeRegisterModal()">취소</button>
+      <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
     </div>
   </div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// 설정 (index3.html과 동일)
+// 설정
 // ════════════════════════════════════════════════════════════════
 
 const CONFIG = {
@@ -453,8 +566,90 @@ const CONFIG = {
   }
 };
 
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+  authDomain: "orchardapp-b81ca.firebaseapp.com",
+  databaseURL: "https://orchardapp-b81ca-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "orchardapp-b81ca"
+};
+
 // ════════════════════════════════════════════════════════════════
-// GAS 호출 함수 (index3.html과 동일)
+// 전역 변수
+// ════════════════════════════════════════════════════════════════
+
+let db = null;
+let auth = null;
+let currentUser = null;
+let firebaseData = [];
+let localData = CONFIG.storage.get('myPesticides_index6', []);
+let searchResults = [];
+
+// ════════════════════════════════════════════════════════════════
+// Firebase 초기화
+// ════════════════════════════════════════════════════════════════
+
+async function initializeFirebase() {
+  try {
+    console.log('🔧 Firebase 초기화 중...');
+    
+    firebase.initializeApp(FIREBASE_CONFIG);
+    auth = firebase.auth();
+    db = firebase.database();
+
+    try {
+      await auth.signInAnonymously();
+      currentUser = auth.currentUser;
+      console.log('✅ Firebase 익명 인증 성공');
+    } catch (err) {
+      console.warn('⚠️ Firebase 익명 인증 실패 (계속 진행):', err.message);
+      // 계속 진행 (Firebase DB는 읽기 가능)
+    }
+
+    await loadFirebaseData();
+    updateSyncStatus(true);
+    
+  } catch (err) {
+    console.error('❌ Firebase 초기화 실패:', err);
+    updateSyncStatus(false);
+    showToast('⚠️ Firebase 연결 불가 (로컬 데이터만 사용)');
+  }
+}
+
+async function loadFirebaseData() {
+  if (!db) return;
+
+  try {
+    // Realtime DB에서 myPesticides 로드
+    const snapshot = await db.ref('users').get();
+    
+    if (snapshot.exists()) {
+      const users = snapshot.val();
+      firebaseData = [];
+      
+      // 모든 사용자의 농약 수집
+      for (const uid in users) {
+        if (users[uid].myPesticides) {
+          Object.keys(users[uid].myPesticides).forEach(id => {
+            firebaseData.push({
+              id: id,
+              ...users[uid].myPesticides[id],
+              source: 'firebase'
+            });
+          });
+        }
+      }
+      
+      console.log(`✅ Firebase에서 ${firebaseData.length}개의 농약 로드됨`);
+    }
+  } catch (err) {
+    console.warn('⚠️ Firebase 데이터 로드 실패:', err.message);
+  }
+  
+  updateStats();
+}
+
+// ════════════════════════════════════════════════════════════════
+// GAS 호출
 // ════════════════════════════════════════════════════════════════
 
 const GAS = {
@@ -471,26 +666,6 @@ const GAS = {
       console.error('❌ GAS 호출 실패:', err);
       throw err;
     }
-  },
-
-  listSick(cropName) {
-    return this.call({
-      target: 'ncpms',
-      serviceCode: 'SVC01',
-      cropName,
-      displayCount: CONFIG.displayCount,
-      startPoint: 1
-    });
-  },
-
-  listInsect(cropName) {
-    return this.call({
-      target: 'ncpms',
-      serviceCode: 'SVC03',
-      cropName,
-      displayCount: CONFIG.displayCount,
-      startPoint: 1
-    });
   },
 
   rows(data) {
@@ -516,10 +691,6 @@ const GAS = {
     for (const k of keys) {
       if (obj[k] != null && obj[k] !== '') return String(obj[k]);
     }
-    const lk = keys.map(k => k.toLowerCase());
-    for (const [k, v] of Object.entries(obj)) {
-      if (v && typeof v === 'string' && lk.some(x => k.toLowerCase().includes(x))) return v;
-    }
     return '';
   },
 
@@ -532,9 +703,6 @@ const GAS = {
 // 농약 검색
 // ════════════════════════════════════════════════════════════════
 
-let searchResults = [];
-let myPesticides = CONFIG.storage.get('myPesticides_index6', []);
-
 async function searchPesticides() {
   const keyword = document.getElementById('search-input').value.trim();
   
@@ -546,7 +714,6 @@ async function searchPesticides() {
   try {
     showLoading('검색 중...');
     
-    // GAS의 index4 검색 (keyword 기반)
     const data = await GAS.call({
       target: 'psis',
       keyword: keyword,
@@ -555,23 +722,23 @@ async function searchPesticides() {
     });
 
     searchResults = [];
-    
-    // 결과 파싱
     const rows = GAS.rows(data);
+    
     rows.forEach(row => {
       const name = GAS.name(row);
       if (name) {
         searchResults.push({
-          id: Math.random().toString(36).substr(2, 9),
+          id: 'search_' + Math.random().toString(36).substr(2, 9),
           name: name,
           type: '검색결과',
-          source: 'PSIS',
+          source: 'search',
           data: row
         });
       }
     });
 
     displaySearchResults(searchResults);
+    updateStats();
     showLoading(null);
 
   } catch (err) {
@@ -582,44 +749,103 @@ async function searchPesticides() {
 }
 
 function displaySearchResults(results) {
-  const container = document.getElementById('search-results-section');
+  const section = document.getElementById('search-results-section');
   const list = document.getElementById('search-results-list');
   const count = document.getElementById('result-count');
 
   if (results.length === 0) {
-    container.style.display = 'none';
-    showToast('❌ 검색 결과가 없습니다');
+    section.style.display = 'none';
     return;
   }
 
-  container.style.display = 'block';
+  section.style.display = 'block';
   count.textContent = results.length;
 
   list.innerHTML = results.map(r => `
-    <div class="search-result-card" onclick="selectSearchResult('${r.id}')">
+    <div class="result-card" onclick="selectResult('${r.id}')">
       <div class="result-name">💊 ${r.name}</div>
       <div class="result-detail">
-        출처: ${r.source} | 유형: ${r.type}
+        GAS PSIS 검색 결과
       </div>
     </div>
   `).join('');
 }
 
-function selectSearchResult(id) {
+function selectResult(id) {
   const result = searchResults.find(r => r.id === id);
   if (!result) return;
 
-  // 모달에 정보 채우기
   document.getElementById('form-name').value = result.name;
-  document.getElementById('form-type').value = result.type || '';
-  document.getElementById('form-memo').value = `검색으로 추가 (출처: ${result.source})`;
-
+  document.getElementById('form-memo').value = 'GAS 검색으로 추가';
   openRegisterModal();
-  showToast('✅ 농약 정보가 미리 채워졌습니다');
 }
 
 // ════════════════════════════════════════════════════════════════
-// 내 농약장 관리
+// 데이터 표시
+// ════════════════════════════════════════════════════════════════
+
+function displayAllData() {
+  displayFirebaseData();
+  displayLocalData();
+}
+
+function displayFirebaseData() {
+  const section = document.getElementById('firebase-section');
+  const list = document.getElementById('firebase-list');
+  const count = document.getElementById('firebase-count');
+
+  if (firebaseData.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  count.textContent = firebaseData.length;
+
+  list.innerHTML = firebaseData.map(p => `
+    <div class="pesticide-card">
+      <div class="pesticide-info">
+        <div class="pesticide-name">💊 ${p.name || '-'}</div>
+        <div class="pesticide-meta">
+          분류: ${p.type || '미분류'} | 수량: ${p.quantity || 0}${p.unit || '개'}
+          <div class="source-badge firebase">🟦 Firebase</div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function displayLocalData() {
+  const section = document.getElementById('local-section');
+  const list = document.getElementById('local-list');
+  const count = document.getElementById('local-count');
+
+  if (localData.length === 0) {
+    section.style.display = 'none';
+    return;
+  }
+
+  section.style.display = 'block';
+  count.textContent = localData.length;
+
+  list.innerHTML = localData.map(p => `
+    <div class="pesticide-card">
+      <div class="pesticide-info">
+        <div class="pesticide-name">💊 ${p.name}</div>
+        <div class="pesticide-meta">
+          분류: ${p.type} | 수량: ${p.quantity}${p.unit}
+          <div class="source-badge local">📦 로컬</div>
+        </div>
+      </div>
+      <div class="pesticide-actions">
+        <button class="btn-small" onclick="deleteLocal('${p.id}')">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+// 농약 등록 & 관리
 // ════════════════════════════════════════════════════════════════
 
 function openRegisterModal() {
@@ -652,7 +878,7 @@ function savePesticide() {
   }
 
   const pest = {
-    id: 'pest_' + Date.now(),
+    id: 'local_' + Date.now(),
     name,
     type,
     quantity,
@@ -663,51 +889,50 @@ function savePesticide() {
     registeredAt: new Date().toISOString()
   };
 
-  myPesticides.push(pest);
-  CONFIG.storage.set('myPesticides_index6', myPesticides);
+  localData.push(pest);
+  CONFIG.storage.set('myPesticides_index6', localData);
 
-  displayMyPesticides();
+  displayAllData();
+  updateStats();
   closeRegisterModal();
   showToast('✅ 농약이 등록되었습니다');
 }
 
-function deletePesticide(id) {
+function deleteLocal(id) {
   if (!confirm('정말 삭제하시겠습니까?')) return;
 
-  myPesticides = myPesticides.filter(p => p.id !== id);
-  CONFIG.storage.set('myPesticides_index6', myPesticides);
+  localData = localData.filter(p => p.id !== id);
+  CONFIG.storage.set('myPesticides_index6', localData);
 
-  displayMyPesticides();
+  displayAllData();
+  updateStats();
   showToast('✅ 농약이 삭제되었습니다');
-}
-
-function displayMyPesticides() {
-  const list = document.getElementById('my-pesticides-list');
-
-  if (myPesticides.length === 0) {
-    list.innerHTML = '<div class="empty-state">등록된 농약이 없습니다</div>';
-    return;
-  }
-
-  list.innerHTML = myPesticides.map(p => `
-    <div class="my-pesticide-card">
-      <div class="pesticide-info">
-        <div class="pesticide-name">💊 ${p.name}</div>
-        <div class="pesticide-meta">
-          분류: ${p.type} | 수량: ${p.quantity}${p.unit}
-          ${p.ingredient ? '<br/>성분: ' + p.ingredient : ''}
-        </div>
-      </div>
-      <div class="pesticide-actions">
-        <button class="btn-small" onclick="deletePesticide('${p.id}')">삭제</button>
-      </div>
-    </div>
-  `).join('');
 }
 
 // ════════════════════════════════════════════════════════════════
 // UI 유틸
 // ════════════════════════════════════════════════════════════════
+
+function updateStats() {
+  document.getElementById('stat-search').textContent = searchResults.length;
+  document.getElementById('stat-firebase').textContent = firebaseData.length;
+  document.getElementById('stat-local').textContent = localData.length;
+  document.getElementById('stat-total').textContent = 
+    searchResults.length + firebaseData.length + localData.length;
+}
+
+function updateSyncStatus(online) {
+  const indicator = document.getElementById('sync-indicator');
+  const text = document.getElementById('sync-text');
+  
+  if (online) {
+    indicator.style.background = '#90EE90';
+    text.textContent = '✅ Firebase 연결됨';
+  } else {
+    indicator.style.background = '#FF6B6B';
+    text.textContent = '❌ Firebase 연결 실패 (로컬 모드)';
+  }
+}
 
 function showToast(msg) {
   const toast = document.createElement('div');
@@ -735,10 +960,12 @@ function showLoading(msg) {
 // 초기화
 // ════════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ index6.html (GAS 중심) 로드됨');
-  console.log('🔧 설정:', CONFIG);
-  displayMyPesticides();
+document.addEventListener('DOMContentLoaded', async () => {
+  console.log('✅ index6_hybrid.html 로드됨');
+  
+  await initializeFirebase();
+  displayAllData();
+  updateStats();
 });
 </script>
 
