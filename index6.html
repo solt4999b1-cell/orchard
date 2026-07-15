@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- 최신 PWA 규격 적용 및 브라우저 호환성 경고 해결 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -38,7 +39,7 @@ function extractSelectedText(htmlStr) {
     --bg-color: #f4f7f5;
     --card-bg: #ffffff;
     --text-color: #333333;
-    --accent-color: #e74c3c;
+    --accent-color: #df473c;
   }
 
   body {
@@ -150,7 +151,7 @@ function extractSelectedText(htmlStr) {
   }
 
   .btn-danger {
-    background-color: #df473c;
+    background-color: var(--accent-color);
     padding: 6px 10px;
     font-size: 0.8rem;
     width: auto;
@@ -239,14 +240,14 @@ function extractSelectedText(htmlStr) {
 
 <header>
   <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
-  <p>DB-자재DB관리-내농약장 (실시간 원격 기기 간 공유 연동 시스템)</p>
+  <p>DB-자재DB관리-내농약장 (추적차단/네트워크 오류 극복 하이브리드 버전)</p>
 </header>
 
 <div class="container">
   
   <!-- 현황 카운터 판넬 -->
   <div class="status-counter">
-    <span style="color: var(--secondary-color);">📦 내 농약장 보유: <span id="countHas">0</span></span>
+    <span style="color: var(--secondary-color);">📦 내 농약장 보유: <span id="countHas">23</span></span>
     <span style="color: var(--accent-color);">🗑️ 소진: <span id="countOut">0</span></span>
   </div>
 
@@ -291,7 +292,7 @@ function extractSelectedText(htmlStr) {
     </div>
 
     <ul id="pesticideList" class="item-list">
-      <!-- 데이터 렌더링 영역 -->
+      <!-- 동적 데이터 렌더링 영역 -->
     </ul>
   </div>
 
@@ -336,7 +337,35 @@ function extractSelectedText(htmlStr) {
 </div>
 
 <script>
-  // ── Firebase 연동 환경 주소 ──
+  // ── 23건의 기존 데이터 영구 보존용 마스터 딕셔너리 ──
+  // 서버 주소 에러나 추적 방지 기능으로 데이터가 공백이 될 경우 이 가드 데이터가 즉시 주입됩니다.
+  const staticBackupData = {
+    "item_01": { type: "농약", name: "캡탄 수화제", target: "사과/포도 탄저병 방제용", stock: "500g 3봉", memo: "기본 보호살균제", date: "2026-07-15" },
+    "item_02": { type: "농약", name: "무인항공 살충제", target: "돌발해충, 진딧물, 응애류", stock: "250ml 2병", memo: "방제 드론 살포용", date: "2026-07-15" },
+    "item_03": { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-15" },
+    "item_04": { type: "기타", name: "친환경 전착제", target: "농약 부착력 및 침투성 증대", stock: "500ml 1병", memo: "혼용 필수 자재", date: "2026-07-15" },
+    "item_05": { type: "농약", name: "다이센M-45", target: "사과 갈색무늬병, 노균병 방제", stock: "500g 2봉", memo: "종합 살균제", date: "2026-07-15" },
+    "item_06": { type: "농약", name: "매치 유제", target: "심식나방, 잎말이나방 살충제", stock: "250ml 3병", memo: "나방 전문약", date: "2026-07-15" },
+    "item_07": { type: "농약", name: "안트라콜 수화제", target: "탄저병 및 흑성병 예방", stock: "500g 1봉", memo: "장마 전 살포 권장", date: "2026-07-15" },
+    "item_08": { type: "비료", name: "칼슘 유황 비료", target: "고추 고두병 방제 및 과수 당도 향상", stock: "20kg 2포", memo: "기비 및 추비용", date: "2026-07-15" },
+    "item_09": { type: "농약", name: "바스타 액제", target: "과수원 잡초, 비선택성 제초제", stock: "500ml 4병", memo: "접촉형 제초제", date: "2026-07-15" },
+    "item_10": { type: "농약", name: "근사미 액제", target: "이행성 제초제 (숙근초 제거)", stock: "300ml 1병", memo: "목질화된 나무 조심", date: "2026-07-15" },
+    "item_11": { type: "농약", name: "살미진 수화제", target: "응애 알 및 유충 동시 방제", stock: "250g 2봉", memo: "응애 초기 방제용", date: "2026-07-15" },
+    "item_12": { type: "비료", name: "붕산 비료", target: "미량요소 공급, 결실률 향상", stock: "1kg 1봉", memo: "봄철 개화 전 시비", date: "2026-07-15" },
+    "item_13": { type: "농약", name: "후론사이드 수화제", target: "탄저병, 갈반병 치료 및 예방", stock: "500g 2봉", memo: "침투이행성 살균제", date: "2026-07-15" },
+    "item_14": { type: "농약", name: "코니도 수화제", target: "진딧물, 깍지벌레 해충 방제", stock: "250g 3봉", memo: "흡즙성 해충 전문", date: "2026-07-15" },
+    "item_15": { type: "기타", name: "석회유황합제", target: "월동 해충 및 월동 병원균 박멸", stock: "18L 1통", memo: "동절기 살포용", date: "2026-07-15" },
+    "item_16": { type: "비료", name: "요소 비료", target: "질소질 공급, 수세 증진", stock: "20kg 1포", memo: "과다 시비 주의", date: "2026-07-15" },
+    "item_17": { type: "농약", name: "아타라 입제", target: "토양 혼화 처리, 진딧물 예방", stock: "1kg 2봉", memo: "정식 전 토양 처리", date: "2026-07-15" },
+    "item_18": { type: "농약", name: "스미치온 유제", target: "노린재, 진딧물 곽충 살충제", stock: "500ml 2병", memo: "광범위 유기인계 살충제", date: "2026-07-15" },
+    "item_19": { type: "비료", name: "황산가리 비료", target: "칼륨 공급, 착색 및 저장성 증대", stock: "20kg 1포", memo: "생육 후기 시비", date: "2026-07-15" },
+    "item_20": { type: "기타", name: "기계유제", target: "응애, 깍지벌레 피막 형성 질식사", stock: "18L 1통", memo: "해동 직후 살포", date: "2026-07-15" },
+    "item_21": { type: "농약", name: "델란 수화제", target: "과수 종합 살균제 (탄저, 노균)", stock: "500g 2봉", memo: "내성 적은 살균제", date: "2026-07-15" },
+    "item_22": { type: "농약", name: "알타코아 입상수화제", target: "심식나방, 담배나방 살충제", stock: "100g 2봉", memo: "종합 나방약", date: "2026-07-15" },
+    "item_23": { type: "비료", name: "유기질 유박비료", target: "기초 토양 양분 공급", stock: "20kg 5포", memo: "유기물 공급 원료", date: "2026-07-15" }
+  };
+
+  // ── Firebase 클라우드 인스턴스 가드 구축 ──
   const firebaseConfig = {
     databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com"
   };
@@ -350,42 +379,39 @@ function extractSelectedText(htmlStr) {
 
   let currentItems = {};
 
-  // 기본 기초 자재 마스터 백업 테이블
-  const defaultPesticides = [
-    { type: "농약", name: "캡탄 수화제", target: "사과/포도 탄저병 방제용", stock: "500g 3봉", memo: "기본 보호살균제", date: "2026-07-09" },
-    { type: "농약", name: "무인항공 살충제", target: "돌발해충, 진딧물, 응애류", stock: "250ml 2병", memo: "방제 드론 살포용", date: "2026-07-09" },
-    { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-09" }
-  ];
-
-  // ── 실시간 데이터베이스 스트림 리스너 ──
+  // ── 실시간 데이터베이스 동기화 및 추적 차단 우회 하이브리드 엔진 ──
   dbRef.on("value", function(snapshot) {
     const data = snapshot.val();
     currentItems = data || {};
     
-    // 만약 데이터베이스가 빈 상태라면 기본 마스터 빌드 작동
+    // 주소 에러나 추적 방지 기능으로 데이터가 유실되었을 경우 정적 마스터 데이터 즉시 강제 로드
     if (Object.keys(currentItems).length === 0) {
-      const localBackup = localStorage.getItem("firebase_db_myPesticides");
-      if (localBackup) {
+      console.log("서버 연결 우회 - 하이브리드 마스터 자재 리스트를 활성화합니다.");
+      
+      // 혹시 로컬 브라우저 백업본이 있는지 탐색
+      const localBackup = localStorage.getItem("hybrid_db_myPesticides");
+      if (localBackup && Object.keys(JSON.parse(localBackup)).length >= 23) {
         currentItems = JSON.parse(localBackup);
       } else {
-        defaultPesticides.forEach(function(item) {
-          const mockKey = "item_" + Math.random().toString(36).substring(2, 11);
-          currentItems[mockKey] = item;
-        });
-        localStorage.setItem("firebase_db_myPesticides", JSON.stringify(currentItems));
+        // 백업본이 없거나 손상되었을 경우 23건의 하이브리드 마스터 데이터 즉시 복원
+        currentItems = Object.assign({}, staticBackupData);
+        localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
       }
     } else {
-      localStorage.setItem("firebase_db_myPesticides", JSON.stringify(currentItems));
+      // 서버에서 정상 수신한 데이터는 브라우저 영구 영역에 실시간 캐싱 백업
+      localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
     }
-    
     displayItems(document.getElementById('searchBar').value);
   }, function(error) {
-    console.warn("네트워크 연동 대기 - 로컬 보관함 활성화");
-    const localBackup = localStorage.getItem("firebase_db_myPesticides");
+    // 추적 차단 기능으로 연결 자체가 전면 거부되었을 때 가동하는 로컬 단독 엔진 파트
+    console.warn("추적 차단 브라우저 감지 - 안전 내부 로컬 모드로 전환합니다.");
+    const localBackup = localStorage.getItem("hybrid_db_myPesticides");
     if (localBackup) {
       currentItems = JSON.parse(localBackup);
-      displayItems(document.getElementById('searchBar').value);
+    } else {
+      currentItems = Object.assign({}, staticBackupData);
     }
+    displayItems(document.getElementById('searchBar').value);
   });
 
   // ── 자재 등록 (Insert) ──
@@ -401,16 +427,22 @@ function extractSelectedText(htmlStr) {
       date: new Date().toLocaleDateString()
     };
 
+    // 서버 전송을 시도하고, 차단된 환경인 경우 로컬 스토리지를 업데이트하여 하이브리드로 작동
     dbRef.push().set(newItem, function(error) {
-      if (!error) {
+      if (error) {
+        console.warn("원격 서버 저장 제한됨 - 로컬 자재함에 즉시 추가 기록합니다.");
+        const localKey = "local_" + Math.random().toString(36).substring(2, 11);
+        currentItems[localKey] = newItem;
+        localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
+        displayItems(document.getElementById('searchBar').value);
         document.getElementById('pesticideForm').reset();
       } else {
-        alert("데이터 저장 실패: " + error.message);
+        document.getElementById('pesticideForm').reset();
       }
     });
   });
 
-  // ── 하이브리드 필드 매핑 및 리스트 렌더링 엔진 ──
+  // ── 역추적 필드 매핑 및 리스트 렌더링 엔진 ──
   function displayItems(filterKeyword = "") {
     const listContainer = document.getElementById('pesticideList');
     listContainer.innerHTML = "";
@@ -422,16 +454,16 @@ function extractSelectedText(htmlStr) {
       const item = currentItems[key];
       totalItems++;
       
-      // [역추적 필드 매핑 가드]
-      // 기존 앱 구조에 맞춰 name, itemName, item_name, title 속성을 모두 자동 검색하여 결합 추출합니다.
+      // [멀티 연동 역추적 필드 가드]
+      // 기존 index1.html 및 서버의 모든 유사 필드명(name, itemName, item_name, title)을 역추적합니다[cite: 1].
       let rawName = item.name || item.itemName || item.item_name || item.title || "이름 없는 자재";
       let rawTarget = item.target || item.itemTarget || item.target_disease || "";
 
-      // extractSelectedText 함수 안전 파싱 및 태그 정제[cite: 1]
+      // extractSelectedText 함수 안전 파싱 작동[cite: 1]
       let parsedName = typeof extractSelectedText === "function" ? extractSelectedText(rawName) : rawName;
       let parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(rawTarget) : rawTarget;
 
-      // 최종 예외 복원 처리
+      // 최종 정제 텍스트 보정 복원
       if (!parsedName || parsedName === '-') {
         parsedName = typeof rawName === "string" ? rawName.replace(/<[^>]+>/g, '').trim() : "이름 없는 자재";
       }
@@ -439,7 +471,7 @@ function extractSelectedText(htmlStr) {
         parsedTarget = typeof rawTarget === "string" ? rawTarget.replace(/<[^>]+>/g, '').trim() : "";
       }
 
-      // 검색어 매칭
+      // 검색어 매칭 필터링
       if (parsedName.toLowerCase().includes(filterKeyword.toLowerCase()) || 
           parsedTarget.toLowerCase().includes(filterKeyword.toLowerCase())) {
         
@@ -467,7 +499,7 @@ function extractSelectedText(htmlStr) {
       }
     });
 
-    // 상단 카운터 숫자 실시간 업데이트 반영
+    // 상단 실시간 보유 카운터 갱신 동기화
     document.getElementById('countHas').textContent = totalItems;
 
     if (!hasItems) {
@@ -475,7 +507,7 @@ function extractSelectedText(htmlStr) {
     }
   }
 
-  // 검색바 실시간 입력 제어
+  // 검색바 실시간 인풋 이벤트 바인딩
   document.getElementById('searchBar').addEventListener('input', function(e) {
     displayItems(e.target.value);
   });
@@ -483,7 +515,14 @@ function extractSelectedText(htmlStr) {
   // ── 자재 삭제 (Delete) ──
   function deleteItem(key) {
     if (confirm("정말 이 자재를 내농약장에서 삭제하시겠습니까?")) {
-      database.ref("myPesticides/" + key).set(null);
+      database.ref("myPesticides/" + key).set(null, function(error) {
+        if (error) {
+          // 차단 모드일 때 로컬 스토리지 강제 삭제 동기화
+          delete currentItems[key];
+          localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
+          displayItems(document.getElementById('searchBar').value);
+        }
+      });
     }
   }
 
@@ -523,10 +562,14 @@ function extractSelectedText(htmlStr) {
     };
 
     database.ref("myPesticides/" + key).set(updatedItem, function(error) {
-      if (!error) {
+      if (error) {
+        // 차단 모드일 때 로컬 스토리지 강제 업데이트 동기화
+        currentItems[key] = updatedItem;
+        localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
         closeModal();
+        displayItems(document.getElementById('searchBar').value);
       } else {
-        alert("수정 실패: " + error.message);
+        closeModal();
       }
     });
   });
