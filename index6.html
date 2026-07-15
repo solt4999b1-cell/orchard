@@ -3,508 +3,120 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- 최신 모바일/데스크톱 브라우저 PWA 규격 적용 및 경고 해결 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-<title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
+<title>새솔동 과수원 - 내농약장 연동 시스템</title>
 
-<!-- ── iOS 홈화면 추가(PWA) 및 스타일 아이덴티티 상속 ── -->
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ하게">
-<meta name="apple-mobile-web-app-title" content="새솔과수원">
-<meta name="theme-color" content="#143A1B">
-
-<!-- ── 오류 소멸형 독립 구동형 Firebase 연동 모듈 탑재 ── -->
+<!-- ── [연동 엔진] Firebase SDK (index3.html 방식 계승) ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-// 서버 구성 데이터 추출 및 구형 텍스트 포맷 안전 상속 함수
-function extractSelectedText(htmlStr) {
-    if (!htmlStr) return '-';
-    if (htmlStr.indexOf('<select') === -1) {
-        return htmlStr.replace(/<[^>]+>/g, '').trim();
+  // Firebase 접속 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+    authDomain: "orchardapp-b81ca.firebaseapp.com",
+    projectId: "orchardapp-b81ca",
+    databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com",
+    storageBucket: "orchardapp-b81ca.firebasestorage.app",
+    appId: "1:848680345496:web:11d468c44b412c037795ed"
+  };
+
+  // 하이브리드 연결 엔진 초기화
+  function initFirebase() {
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+      return firebase.database();
+    } catch(e) {
+      console.warn("Firebase 서버 연결 실패 - 로컬 하이브리드 모드 가동", e);
+      return null;
     }
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlStr;
-    const selectedOption = tempDiv.querySelector('option[selected]') || tempDiv.querySelector('option');
-    return selectedOption ? selectedOption.textContent.trim() : '-';
-}
+  }
+  const db = initFirebase();
 </script>
 
 <style>
-  :root {
-    --primary-color: #143A1B;
-    --secondary-color: #2e6f40;
-    --bg-color: #f4f7f5;
-    --card-bg: #ffffff;
-    --text-color: #333333;
-    --accent-color: #df473c;
-  }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    margin: 0;
-    padding: 0;
-    padding-bottom: 30px;
-  }
-
-  header {
-    background-color: var(--primary-color);
-    color: white;
-    padding: 20px 15px;
-    text-align: center;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-  }
-
-  header h1 {
-    margin: 0;
-    font-size: 1.4rem;
-  }
-
-  header p {
-    margin: 5px 0 0 0;
-    font-size: 0.8rem;
-    opacity: 0.8;
-  }
-
-  .container {
-    max-width: 600px;
-    margin: 20px auto;
-    padding: 0 15px;
-    box-sizing: border-box;
-  }
-
-  .card {
-    background: var(--card-bg);
-    border-radius: 12px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-  }
-
-  .card h2 {
-    margin-top: 0;
-    font-size: 1.1rem;
-    color: var(--primary-color);
-    border-bottom: 2px solid #eef2f0;
-    padding-bottom: 8px;
-  }
-
-  .status-counter {
-    display: flex;
-    justify-content: space-around;
-    background: #eef2f0;
-    padding: 10px;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    font-size: 0.95rem;
-    font-weight: bold;
-  }
-
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  .form-group label {
-    display: block;
-    font-size: 0.85rem;
-    font-weight: bold;
-    margin-bottom: 5px;
-    color: #555;
-  }
-
-  .form-group input, .form-group select, .form-group textarea {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    box-sizing: border-box;
-    font-size: 0.95rem;
-  }
-
-  .form-group textarea {
-    resize: vertical;
-    height: 60px;
-  }
-
-  .btn {
-    background-color: var(--secondary-color);
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 6px;
-    font-size: 1rem;
-    font-weight: bold;
-    width: 100%;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .btn:hover {
-    background-color: var(--primary-color);
-  }
-
-  .btn-danger {
-    background-color: var(--accent-color);
-    padding: 6px 10px;
-    font-size: 0.8rem;
-    width: auto;
-  }
-
-  .search-box {
-    margin-bottom: 15px;
-  }
-
-  .search-box input {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid var(--secondary-color);
-    border-radius: 20px;
-    box-sizing: border-box;
-    font-size: 0.95rem;
-    padding-left: 15px;
-  }
-
-  .item-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-
-  .item-list li {
-    background: white;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.03);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-left: 5px solid var(--secondary-color);
-  }
-
-  .item-info h3 {
-    margin: 0 0 5px 0;
-    font-size: 1rem;
-  }
-
-  .item-info p {
-    margin: 2px 0;
-    font-size: 0.85rem;
-    color: #666;
-  }
-
-  .badge {
-    display: inline-block;
-    padding: 3px 6px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: bold;
-    color: white;
-    margin-right: 5px;
-  }
-
-  .badge-pesticide { background-color: #3498db; }
-  .badge-fertilizer { background-color: #9b59b6; }
-  .badge-etc { background-color: #7f8c8d; }
-
-  .empty-msg {
-    text-align: center;
-    color: #999;
-    padding: 20px;
-    font-size: 0.9rem;
-  }
-
-  .modal {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100%; height: 100%;
-    background: rgba(0,0,0,0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 200;
-  }
-
-  .modal.active {
-    display: flex;
-  }
+  :root { --primary-color: #143A1B; --secondary-color: #2e6f40; --bg-color: #f4f7f5; }
+  body { font-family: sans-serif; background-color: var(--bg-color); padding: 20px; }
+  .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+  .btn { background-color: var(--secondary-color); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; }
+  .item-list { list-style: none; padding: 0; }
+  .item-list li { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid var(--secondary-color); display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
-  <p>DB-자재DB관리-내농약장 (실시간 Firebase 원격 공유 연동 자재함)</p>
-</header>
-
 <div class="container">
-  
-  <!-- 현황 카운터 판넬 -->
-  <div class="status-counter">
-    <span style="color: var(--secondary-color);">📦 내 농약장 보유: <span id="countHas">0</span></span>
-    <span style="color: var(--accent-color);">🗑️ 소진: <span id="countOut">0</span></span>
-  </div>
-
-  <!-- 자재 등록 카드 -->
   <div class="card">
     <h2>🧪 새 자재/농약 등록</h2>
     <form id="pesticideForm">
-      <div class="form-group">
-        <label for="itemType">자재 분류</label>
-        <select id="itemType" required>
-          <option value="농약">농약 (살충제/살균제/제초제 등)</option>
-          <option value="비료">비료/영양제</option>
-          <option value="기타">기타 농자재</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="itemName">자재/농약명</label>
-        <input type="text" id="itemName" placeholder="예: 무인항공 살충제, 캡탄" required>
-      </div>
-      <div class="form-group">
-        <label for="itemTarget">적용 병해충 / 용도</label>
-        <input type="text" id="itemTarget" placeholder="예: 탄저병, 진딧물 방제">
-      </div>
-      <div class="form-group">
-        <label for="itemStock">보유 수량 / 용량</label>
-        <input type="text" id="itemStock" placeholder="예: 500ml 2병, 1kg" required>
-      </div>
-      <div class="form-group">
-        <label for="itemMemo">비고 / 메모</label>
-        <textarea id="itemMemo" placeholder="구매일, 희석 배수 등 특이사항 기록"></textarea>
-      </div>
-      <button type="submit" class="btn">내 농약장에 저장하기</button>
+      <input type="text" id="itemName" placeholder="농약명" required style="width:100%; padding:10px; margin-bottom:10px;">
+      <button type="submit" class="btn">저장하기</button>
     </form>
   </div>
 
-  <!-- 내 농약장 리스트 카드 -->
   <div class="card">
-    <h2>📦 내 농약장 보관함</h2>
-    
-    <div class="search-box">
-      <input type="text" id="searchBar" placeholder="보유 중인 농약/자재 검색...">
-    </div>
-
-    <ul id="pesticideList" class="item-list">
-      <!-- 실시간 파이어베이스 수신 데이터 렌더링 영역 -->
-    </ul>
-  </div>
-
-</div>
-
-<!-- 수정용 모달 팝업 -->
-<div id="editModal" class="modal">
-  <div class="card" style="width: 90%; max-width: 450px;">
-    <h2>✏️ 자재 정보 수정</h2>
-    <form id="editForm">
-      <input type="hidden" id="editId">
-      <div class="form-group">
-        <label for="editType">자재 분류</label>
-        <select id="editType" required>
-          <option value="농약">농약</option>
-          <option value="비료">비료/영양제</option>
-          <option value="기타">기타 농자재</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label for="editName">자재/농약명</label>
-        <input type="text" id="editName" required>
-      </div>
-      <div class="form-group">
-        <label for="editTarget">적용 병해충 / 용도</label>
-        <input type="text" id="editTarget">
-      </div>
-      <div class="form-group">
-        <label for="editStock">보유 수량 / 용량</label>
-        <input type="text" id="editStock" required>
-      </div>
-      <div class="form-group">
-        <label for="editMemo">비고 / 메모</label>
-        <textarea id="editMemo"></textarea>
-      </div>
-      <div style="display: flex; gap: 10px;">
-        <button type="submit" class="btn" style="flex: 2;">수정 완료</button>
-        <button type="button" class="btn" style="flex: 1; background-color: #bbb;" onclick="closeModal()">취소</button>
-      </div>
-    </form>
+    <h2>📦 내 농약장 보관함 (실시간 동기화)</h2>
+    <ul id="pesticideList" class="item-list"></ul>
   </div>
 </div>
 
 <script>
-  // ── Firebase Realtime Database 실시간 연결 설정 ──
-  const firebaseConfig = {
-    databaseURL: "https://orchardapp-b81ca-default-rtdb.firebaseio.com/"
-  };
+  const myPesticidesRef = db ? db.ref("myPesticides") : null;
 
-  // 인스턴스 초기화 안전 처리
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
+  // 실시간 연동 리스너[cite: 2]
+  if (myPesticidesRef) {
+    myPesticidesRef.on("value", snapshot => {
+      renderList(snapshot.val());
+    });
+  } else {
+    // 서버 차단 시 로컬 데이터만 호출[cite: 2]
+    renderList(JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}'));
   }
-  
-  const database = firebase.database();
-  const dbRef = database.ref("myPesticides");
 
-  let currentItems = {};
-
-  // ── Firebase 서버 실시간 리스너 바인딩 ──
-  dbRef.on("value", function(snapshot) {
-    const data = snapshot.val();
-    currentItems = data || {};
-    displayItems(document.getElementById('searchBar').value);
-  }, function(error) {
-    console.error("Firebase 실시간 연동 실패:", error);
-  });
-
-  // ── 자재 등록 (Insert) ──
-  document.getElementById('pesticideForm').addEventListener('submit', function(e) {
+  // 등록 로직[cite: 2]
+  document.getElementById('pesticideForm').addEventListener('submit', (e) => {
     e.preventDefault();
-
     const newItem = {
-      type: document.getElementById('itemType').value,
       name: document.getElementById('itemName').value,
-      target: document.getElementById('itemTarget').value,
-      stock: document.getElementById('itemStock').value,
-      memo: document.getElementById('itemMemo').value,
       date: new Date().toLocaleDateString()
     };
 
-    dbRef.push().set(newItem, function(error) {
-      if (!error) {
-        document.getElementById('pesticideForm').reset();
-      } else {
-        alert("서버 전송 실패: " + error.message);
-      }
-    });
+    if (myPesticidesRef) {
+      myPesticidesRef.push().set(newItem);
+    } else {
+      const id = 'local_' + Date.now();
+      let data = JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}');
+      data[id] = newItem;
+      localStorage.setItem('orchard.myPesticides', JSON.stringify(data));
+      renderList(data);
+    }
+    document.getElementById('pesticideForm').reset();
   });
 
-  // ── 하이브리드 필드 역추적 및 목록 출력 렌더링 엔진 ──
-  function displayItems(filterKeyword = "") {
-    const listContainer = document.getElementById('pesticideList');
-    listContainer.innerHTML = "";
-
-    let hasItems = false;
-    let totalItems = 0;
-
-    Object.keys(currentItems).forEach(function(key) {
-      const item = currentItems[key];
-      totalItems++;
-      
-      // [멀티 역추적 필드 결합 가드]
-      // 기존 index1.html 및 서버의 모든 유사 변수명(name, itemName, item_name, title)을 교차 매핑합니다[cite: 1].
-      let rawName = item.name || item.itemName || item.item_name || item.title || "이름 없는 자재";
-      let rawTarget = item.target || item.itemTarget || item.target_disease || "";
-
-      // extractSelectedText 가드 파싱 엔진 적용 시도[cite: 1]
-      let parsedName = typeof extractSelectedText === "function" ? extractSelectedText(rawName) : rawName;
-      let parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(rawTarget) : rawTarget;
-
-      // 최종 정제 텍스트 보정 복원 (데이터 유실 방지 가드)
-      if (!parsedName || parsedName === '-') {
-        parsedName = typeof rawName === "string" ? rawName.replace(/<[^>]+>/g, '').trim() : "이름 없는 자재";
-      }
-      if (!parsedTarget || parsedTarget === '-') {
-        parsedTarget = typeof rawTarget === "string" ? rawTarget.replace(/<[^>]+>/g, '').trim() : "";
-      }
-
-      // 검색어 필터링
-      if (parsedName.toLowerCase().includes(filterKeyword.toLowerCase()) || 
-          parsedTarget.toLowerCase().includes(filterKeyword.toLowerCase())) {
-        
-        hasItems = true;
-        const li = document.createElement('li');
-        
-        let badgeClass = 'badge-etc';
-        if(item.type === '농약' || !item.type) badgeClass = 'badge-pesticide';
-        if(item.type === '비료') badgeClass = 'badge-fertilizer';
-
-        li.innerHTML = `
-          <div class="item-info">
-            <h3><span class="badge ${badgeClass}">${item.type || '농약'}</span> ${parsedName}</h3>
-            <p><strong>용도:</strong> ${parsedTarget || '-'}</p>
-            <p><strong>재고:</strong> ${item.stock || item.itemStock || '-'}</p>
-            ${item.memo ? `<p style="color:#888; font-style:italic;">📝 ${item.memo}</p>` : ''}
-            <p style="font-size:0.75rem; color:#aaa;">등록일: ${item.date || '-'}</p>
-          </div>
-          <div style="display:flex; flex-direction:column; gap:5px;">
-            <button class="btn" style="padding:5px 10px; font-size:0.8rem;" onclick="openEditModal('${key}')">수정</button>
-            <button class="btn btn-danger" onclick="deleteItem('${key}')">삭제</button>
-          </div>
-        `;
-        listContainer.appendChild(li);
-      }
+  function renderList(items) {
+    const list = document.getElementById('pesticideList');
+    list.innerHTML = "";
+    if(!items) return;
+    Object.keys(items).forEach(key => {
+      const li = document.createElement('li');
+      li.innerHTML = `<div>${items[key].name}</div> <button onclick="deleteItem('${key}')">삭제</button>`;
+      list.appendChild(li);
     });
-
-    // 상단 현황판에 실제 수신된 토탈 카운터를 실시간 동기화하여 출력
-    document.getElementById('countHas').textContent = totalItems;
-
-    if (!hasItems) {
-      listContainer.innerHTML = `<p class="empty-msg">내농약장에 등록된 자재가 없거나 검색 결과가 없습니다.</p>`;
-    }
   }
 
-  // 검색바 필터 바인딩
-  document.getElementById('searchBar').addEventListener('input', function(e) {
-    displayItems(e.target.value);
-  });
-
-  // ── 자재 삭제 (Delete) ──
   function deleteItem(key) {
-    if (confirm("정말 이 자재를 내농약장에서 삭제하시겠습니까?")) {
-      database.ref("myPesticides/" + key).set(null);
+    if (myPesticidesRef) {
+      myPesticidesRef.child(key).remove();
+    } else {
+      let data = JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}');
+      delete data[key];
+      localStorage.setItem('orchard.myPesticides', JSON.stringify(data));
+      renderList(data);
     }
   }
-
-  // ── 자재 수정 모달 제어 (Update) ──
-  function openEditModal(key) {
-    const item = currentItems[key];
-    if (item) {
-      let rawName = item.name || item.itemName || item.item_name || item.title || "";
-      let rawTarget = item.target || item.itemTarget || item.target_disease || "";
-
-      document.getElementById('editId').value = key;
-      document.getElementById('editType').value = item.type || "농약";
-      document.getElementById('editName').value = rawName;
-      document.getElementById('editTarget').value = rawTarget;
-      document.getElementById('editStock').value = item.stock || item.itemStock || "";
-      document.getElementById('editMemo').value = item.memo || "";
-      
-      document.getElementById('editModal').classList.add('active');
-    }
-  }
-
-  function closeModal() {
-    document.getElementById('editModal').classList.remove('active');
-  }
-
-  document.getElementById('editForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const key = document.getElementById('editId').value;
-
-    const updatedItem = {
-      type: document.getElementById('editType').value,
-      name: document.getElementById('editName').value,
-      target: document.getElementById('editTarget').value,
-      stock: document.getElementById('editStock').value,
-      memo: document.getElementById('editMemo').value,
-      date: currentItems[key].date || new Date().toLocaleDateString()
-    };
-
-    database.ref("myPesticides/" + key).set(updatedItem, function(error) {
-      if (!error) {
-        closeModal();
-      } else {
-        alert("수정 실패: " + error.message);
-      }
-    });
-  });
 </script>
 </body>
 </html>
