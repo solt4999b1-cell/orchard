@@ -3,12 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>📦 내 농약장 - Firebase 완전 연동</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   
-  <!-- Firebase SDK (Compat 버전 - 호환성 높음) -->
+  <!-- Firebase SDK (Compat 버전) -->
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-database-compat.js"></script>
@@ -62,9 +63,6 @@
     .app-header h1 {
       font-size: 24px;
       margin-bottom: 6px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
     }
 
     .app-header p {
@@ -136,10 +134,11 @@
       font-size: 13px;
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .setup-info code {
+      background: #fff;
+      padding: 2px 4px;
+      border-radius: 3px;
+      font-family: monospace;
     }
 
     .toolbar {
@@ -176,6 +175,15 @@
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--gray-300);
+      color: var(--gray-900);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-400);
     }
 
     .search-box {
@@ -419,6 +427,12 @@
       background: var(--gray-100);
     }
 
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
     .form-btns {
       display: flex;
       gap: 10px;
@@ -462,15 +476,15 @@
     <p>
       Firestore (index1) + Realtime Database (개인 재고) 양방향 동기화
       <br>
-      GitHub에서 실행됨
+      <strong>✅ GAS에서 설정 자동 읽어오기</strong>
     </p>
     
     <div class="sync-status" id="sync-status">
       <span class="sync-indicator" id="sync-indicator"></span>
-      <span id="sync-text">초기화 중...</span>
+      <span id="sync-text">Firebase 초기화 중...</span>
     </div>
 
-    <div class="stat-grid" id="stat-grid">
+    <div class="stat-grid">
       <div class="stat-box">
         <div class="stat-number" id="stat-firestore">0</div>
         <div class="stat-label">Firestore</div>
@@ -489,28 +503,25 @@
   <!-- Firebase 설정 -->
   <div id="firebase-setup-section" style="display: none; background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--gray-200);">
     <div class="setup-info">
-      <strong>⚙️ Firebase 설정이 필요합니다</strong>
-      GAS의 Firebase 정보를 아래에 입력하세요.
+      <strong>⚙️ GAS에서 Firebase 설정 읽어오기</strong>
+      GAS Script ID를 입력하면 Firebase 정보가 자동으로 로드됩니다.
       <br><br>
-      필수 입력 정보 (4가지):
+      <strong style="color: #1565C0;">📌 GAS Script ID 찾기:</strong>
       <br>
-      • API Key
+      1. GAS 프로젝트 열기
       <br>
-      • Project ID
+      2. ⚙️ 프로젝트 설정 클릭
       <br>
-      • Database URL
-      <br>
-      • Auth Domain
+      3. "스크립트 ID" 복사 (예: <code>1a2b3c4d5e...</code>)
     </div>
     
-    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px;">
-      <input type="text" id="fb-api-key" placeholder="API Key" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px;">
-      <input type="text" id="fb-project-id" placeholder="Project ID" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px;">
-      <input type="text" id="fb-db-url" placeholder="DB URL" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px;">
-      <input type="text" id="fb-auth-domain" placeholder="Auth Domain" style="padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 12px;">
+    <div style="margin-bottom: 12px;">
+      <input type="text" id="gas-script-id" placeholder="GAS Script ID (예: 1a2b3c4d5e6f7g8h9i0j...)" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; font-size: 12px;">
     </div>
     
-    <button class="btn btn-primary" onclick="saveFirebaseConfigAndInit()">💾 설정 저장 및 초기화</button>
+    <div id="firebase-error-msg" style="color: #E65100; font-size: 11px; margin-bottom: 12px; display: none;"></div>
+    
+    <button class="btn btn-primary" onclick="loadConfigFromGAS()">🔄 GAS에서 설정 읽어오기</button>
   </div>
 
   <!-- 도구 모음 -->
@@ -599,29 +610,79 @@ let firestoreData = [];
 let realtimeData = [];
 
 const CONFIG_KEY = 'firebaseConfig_index6_v1';
+const SCRIPT_ID_KEY = 'gasScriptId_v1';
 
 function getFirebaseConfig() {
   const stored = localStorage.getItem(CONFIG_KEY);
   return stored ? JSON.parse(stored) : null;
 }
 
-function saveFirebaseConfigAndInit() {
-  const config = {
-    apiKey: document.getElementById('fb-api-key').value.trim(),
-    projectId: document.getElementById('fb-project-id').value.trim(),
-    databaseURL: document.getElementById('fb-db-url').value.trim(),
-    authDomain: document.getElementById('fb-auth-domain').value.trim(),
-  };
+function getStoredScriptId() {
+  return localStorage.getItem(SCRIPT_ID_KEY);
+}
 
-  if (!config.apiKey || !config.projectId || !config.databaseURL || !config.authDomain) {
-    showToast('❌ 모든 정보를 입력해주세요');
+async function loadConfigFromGAS() {
+  const scriptId = document.getElementById('gas-script-id').value.trim();
+  
+  if (!scriptId) {
+    showErrorMsg('❌ GAS Script ID를 입력해주세요');
     return;
   }
 
-  localStorage.setItem(CONFIG_KEY, JSON.stringify(config));
-  showToast('✅ 설정 저장됨');
-  
-  setTimeout(() => location.reload(), 500);
+  try {
+    console.log('🔄 GAS에서 설정 읽어오는 중:', scriptId);
+    
+    const url = `https://script.google.com/macros/d/${scriptId}/userweb?action=getFirebaseConfig`;
+    
+    const response = await fetch(url, {
+      mode: 'cors',
+      cache: 'no-cache'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.success || !data.config) {
+      throw new Error('GAS에서 유효한 설정을 반환하지 않았습니다');
+    }
+
+    console.log('✅ GAS에서 설정 로드됨');
+    
+    // 설정 저장
+    localStorage.setItem(CONFIG_KEY, JSON.stringify(data.config));
+    localStorage.setItem(SCRIPT_ID_KEY, scriptId);
+    
+    showToast('✅ GAS에서 Firebase 설정을 로드했습니다. 페이지를 새로고침합니다...');
+    
+    setTimeout(() => location.reload(), 1000);
+
+  } catch (err) {
+    console.error('❌ GAS에서 설정 로드 실패:', err);
+    
+    let errorMsg = '❌ GAS에서 설정 로드 실패\n\n';
+    
+    if (err.message.includes('Failed to fetch')) {
+      errorMsg += '원인: CORS 제한 또는 네트워크 오류\n\n';
+      errorMsg += '대안:\n';
+      errorMsg += '1. GitHub URL인지 확인 (https://)\n';
+      errorMsg += '2. Script ID가 정확한지 확인\n';
+      errorMsg += '3. GAS가 "모두" 액세스로 배포되었는지 확인';
+    } else {
+      errorMsg += err.message;
+    }
+    
+    showErrorMsg(errorMsg);
+    showToast('❌ ' + err.message);
+  }
+}
+
+function showErrorMsg(msg) {
+  const errorMsg = document.getElementById('firebase-error-msg');
+  errorMsg.textContent = msg;
+  errorMsg.style.display = 'block';
 }
 
 async function initializeFirebase() {
@@ -629,12 +690,21 @@ async function initializeFirebase() {
   
   if (!config) {
     document.getElementById('firebase-setup-section').style.display = 'block';
+    
+    // 이전에 저장된 Script ID가 있으면 자동 입력
+    const storedId = getStoredScriptId();
+    if (storedId) {
+      document.getElementById('gas-script-id').value = storedId;
+    }
+    
     setSyncStatus('offline', '⚠️ Firebase 미설정');
     return false;
   }
 
   try {
-    // 기존 앱 삭제 (재초기화 방지)
+    console.log('🔧 Firebase 초기화 시작...');
+    
+    // 기존 앱 삭제
     if (firebase.apps.length > 0) {
       await firebase.apps[0].delete();
     }
@@ -651,11 +721,12 @@ async function initializeFirebase() {
     firestore = firebase.firestore();
     db = firebase.database();
 
+    console.log('익명 인증 시작...');
     await auth.signInAnonymously();
     currentUser = auth.currentUser;
     isOnline = true;
 
-    document.getElementById('firebase-setup-section').style.display = 'none';
+    console.log('✅ Firebase 초기화 성공!');
     setSyncStatus('online', '🟢 Firebase 연결됨');
 
     await loadFirestoreData();
@@ -663,18 +734,19 @@ async function initializeFirebase() {
     setupRealtimeSync();
 
     document.getElementById('register-btn').disabled = false;
-
     return true;
+
   } catch (err) {
-    console.error('Firebase 초기화 실패:', err);
+    console.error('❌ Firebase 초기화 실패:', err);
     setSyncStatus('offline', '❌ Firebase 연결 실패');
-    showToast('❌ Firebase 초기화 실패: ' + err.message);
+    showToast('❌ Firebase: ' + err.message);
     return false;
   }
 }
 
 function setSyncStatus(status, text) {
-  document.getElementById('sync-indicator').style.background = status === 'online' ? '#90EE90' : '#FF6B6B';
+  document.getElementById('sync-indicator').style.background = 
+    status === 'online' ? '#90EE90' : '#FF6B6B';
   document.getElementById('sync-text').textContent = text;
 }
 
@@ -702,7 +774,8 @@ async function loadFirestoreData() {
       });
     });
 
-    console.log('✅ Firestore 데이터:', firestoreData.length + '개');
+    console.log('✅ Firestore:', firestoreData.length + '개');
+    updateStats();
   } catch (err) {
     console.error('Firestore 로드 실패:', err);
   }
@@ -722,7 +795,8 @@ async function loadRealtimeData() {
       source: 'realtimedb'
     }));
 
-    console.log('✅ Realtime DB 데이터:', realtimeData.length + '개');
+    console.log('✅ Realtime DB:', realtimeData.length + '개');
+    updateStats();
   } catch (err) {
     console.error('Realtime DB 로드 실패:', err);
   }
@@ -745,7 +819,7 @@ function setupRealtimeSync() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// UI
+// UI 함수들
 // ════════════════════════════════════════════════════════════════
 
 function updateStats() {
@@ -846,10 +920,6 @@ function esc(str) {
   return div.innerHTML;
 }
 
-// ════════════════════════════════════════════════════════════════
-// 자동완성
-// ════════════════════════════════════════════════════════════════
-
 function updateAutocomplete() {
   const input = document.getElementById('form-name').value.toLowerCase();
   const list = document.getElementById('autocomplete-list');
@@ -890,10 +960,6 @@ function selectFromFirestore(item) {
   document.getElementById('autocomplete-list').classList.remove('active');
 }
 
-// ════════════════════════════════════════════════════════════════
-// CRUD
-// ════════════════════════════════════════════════════════════════
-
 function openModal(id) {
   document.getElementById(id).classList.add('active');
 }
@@ -923,8 +989,7 @@ async function savePesticide() {
 
   const pesticide = {
     id: 'pest_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-    name,
-    type,
+    name, type,
     icon: document.getElementById('form-icon').value.trim() || '🧪',
     ingredient: document.getElementById('form-ingredient').value.trim(),
     manufacturer: document.getElementById('form-manufacturer').value.trim(),
@@ -967,10 +1032,6 @@ async function deletePesticide(id) {
   showToast('🗑 삭제되었습니다');
 }
 
-// ════════════════════════════════════════════════════════════════
-// 필터
-// ════════════════════════════════════════════════════════════════
-
 function setFilter(filter) {
   currentFilter = filter;
   document.querySelectorAll('.filter-tab').forEach(tab => {
@@ -985,10 +1046,6 @@ function setFilter(filter) {
 function filterPesticides() {
   renderPesticides();
 }
-
-// ════════════════════════════════════════════════════════════════
-// 유틸
-// ════════════════════════════════════════════════════════════════
 
 function showToast(message) {
   const toast = document.createElement('div');
