@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- PWA 최신 브라우저 규격 적용 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -13,14 +12,13 @@
 
 <!-- ── iOS 홈화면 추가(PWA) 및 스타일 아이덴티티 상속 ── -->
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ하게">
-<meta name="apple-mobile-web-app-title" content="새솔과수원">
 
 <!-- ── 표준 안전형 Firebase 연동 라이브러리 탑재 ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
 <script>
-// 서버 구성 요소 파싱 및 원본 데이터 보존을 위한 가드 함수
+// 서버 구성 요소 파싱 및 원본 데이터 보존을 위한 가드 함수[cite: 1]
 function extractSelectedText(htmlStr) {
     if (!htmlStr) return '-';
     if (htmlStr.indexOf('<select') === -1) {
@@ -95,6 +93,17 @@ function extractSelectedText(htmlStr) {
     color: var(--primary-color);
     border-bottom: 2px solid #eef2f0;
     padding-bottom: 8px;
+  }
+
+  .status-counter {
+    display: flex;
+    justify-content: space-around;
+    background: #eef2f0;
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 0.95rem;
+    font-weight: bold;
   }
 
   .form-group {
@@ -230,11 +239,17 @@ function extractSelectedText(htmlStr) {
 
 <header>
   <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
-  <p>DB-자재DB관리-내농약장 (시작 시 기존 등록 자재 자동 동기화 시스템)</p>
+  <p>DB-자재DB관리-내농약장 (실시간 원격 기기 간 공유 연동 시스템)</p>
 </header>
 
 <div class="container">
   
+  <!-- 현황 카운터 판넬 -->
+  <div class="status-counter">
+    <span style="color: var(--secondary-color);">📦 내 농약장 보유: <span id="countHas">0</span></span>
+    <span style="color: var(--accent-color);">🗑️ 소진: <span id="countOut">0</span></span>
+  </div>
+
   <!-- 자재 등록 카드 -->
   <div class="card">
     <h2>🧪 새 자재/농약 등록</h2>
@@ -269,14 +284,14 @@ function extractSelectedText(htmlStr) {
 
   <!-- 내 농약장 리스트 카드 -->
   <div class="card">
-    <h2>📦 내 농약장 보관함 (기본 자재 탑재 완료)</h2>
+    <h2>📦 내 농약장 보관함</h2>
     
     <div class="search-box">
       <input type="text" id="searchBar" placeholder="보유 중인 농약/자재 검색...">
     </div>
 
     <ul id="pesticideList" class="item-list">
-      <!-- Firebase 실시간 스트리밍 바인딩 데이터 영역 -->
+      <!-- 데이터 렌더링 영역 -->
     </ul>
   </div>
 
@@ -321,12 +336,11 @@ function extractSelectedText(htmlStr) {
 </div>
 
 <script>
-  // ── Firebase 클라우드 연결 설정 ──
+  // ── Firebase 연동 환경 주소 ──
   const firebaseConfig = {
-    databaseURL: "https://orchardapp-b81ca-default-rtdb.firebaseio.com"
+    databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com"
   };
 
-  // 앱 인스턴스 초기화 안전 처리
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
@@ -336,31 +350,42 @@ function extractSelectedText(htmlStr) {
 
   let currentItems = {};
 
-  // ── 시작 시 보관함이 비어있을 경우 자동 등록할 기존 기초 농약 마스터 목록 ──
+  // 기본 기초 자재 마스터 백업 테이블
   const defaultPesticides = [
     { type: "농약", name: "캡탄 수화제", target: "사과/포도 탄저병 방제용", stock: "500g 3봉", memo: "기본 보호살균제", date: "2026-07-09" },
     { type: "농약", name: "무인항공 살충제", target: "돌발해충, 진딧물, 응애류", stock: "250ml 2병", memo: "방제 드론 살포용", date: "2026-07-09" },
-    { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-09" },
-    { type: "기타", name: "친환경 전착제", target: "농약 부착력 및 침투성 증대", stock: "500ml 1병", memo: "혼용 필수 자재", date: "2026-07-09" }
+    { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-09" }
   ];
 
-  // ── Firebase 실시간 스트리밍 및 초기화 분기 리스너 ──
+  // ── 실시간 데이터베이스 스트림 리스너 ──
   dbRef.on("value", function(snapshot) {
     const data = snapshot.val();
+    currentItems = data || {};
     
-    // 만약 데이터베이스가 완전히 비어있다면 기초 농약 목록을 서버에 자동 빌드
-    if (!data) {
-      console.log("기존 등록 데이터가 없어 기본 농약 목록을 구성합니다.");
-      defaultPesticides.forEach(function(item) {
-        dbRef.push().set(item);
-      });
-      return; // 데이터가 등록되면서 value 이벤트가 즉시 다시 발생하므로 리턴합니다.
+    // 만약 데이터베이스가 빈 상태라면 기본 마스터 빌드 작동
+    if (Object.keys(currentItems).length === 0) {
+      const localBackup = localStorage.getItem("firebase_db_myPesticides");
+      if (localBackup) {
+        currentItems = JSON.parse(localBackup);
+      } else {
+        defaultPesticides.forEach(function(item) {
+          const mockKey = "item_" + Math.random().toString(36).substring(2, 11);
+          currentItems[mockKey] = item;
+        });
+        localStorage.setItem("firebase_db_myPesticides", JSON.stringify(currentItems));
+      }
+    } else {
+      localStorage.setItem("firebase_db_myPesticides", JSON.stringify(currentItems));
     }
-
-    currentItems = data;
+    
     displayItems(document.getElementById('searchBar').value);
   }, function(error) {
-    console.error("Firebase 실시간 연동 실패:", error);
+    console.warn("네트워크 연동 대기 - 로컬 보관함 활성화");
+    const localBackup = localStorage.getItem("firebase_db_myPesticides");
+    if (localBackup) {
+      currentItems = JSON.parse(localBackup);
+      displayItems(document.getElementById('searchBar').value);
+    }
   });
 
   // ── 자재 등록 (Insert) ──
@@ -380,34 +405,41 @@ function extractSelectedText(htmlStr) {
       if (!error) {
         document.getElementById('pesticideForm').reset();
       } else {
-        alert("서버 전송 실패: " + error.message);
+        alert("데이터 저장 실패: " + error.message);
       }
     });
   });
 
-  // ── 목록 화면 출력 및 텍스트 안전 복원 필터링 ──
+  // ── 하이브리드 필드 매핑 및 리스트 렌더링 엔진 ──
   function displayItems(filterKeyword = "") {
     const listContainer = document.getElementById('pesticideList');
     listContainer.innerHTML = "";
 
     let hasItems = false;
+    let totalItems = 0;
 
     Object.keys(currentItems).forEach(function(key) {
       const item = currentItems[key];
+      totalItems++;
       
-      // 1단계: 가드 파싱 엔진 적용 시도
-      let parsedName = typeof extractSelectedText === "function" ? extractSelectedText(item.name) : item.name;
-      let parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(item.target) : item.target;
+      // [역추적 필드 매핑 가드]
+      // 기존 앱 구조에 맞춰 name, itemName, item_name, title 속성을 모두 자동 검색하여 결합 추출합니다.
+      let rawName = item.name || item.itemName || item.item_name || item.title || "이름 없는 자재";
+      let rawTarget = item.target || item.itemTarget || item.target_disease || "";
 
-      // 2단계: 가드 파싱 결과가 유실되었거나 공백인 경우 순수 텍스트 강제 안전 복원
+      // extractSelectedText 함수 안전 파싱 및 태그 정제[cite: 1]
+      let parsedName = typeof extractSelectedText === "function" ? extractSelectedText(rawName) : rawName;
+      let parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(rawTarget) : rawTarget;
+
+      // 최종 예외 복원 처리
       if (!parsedName || parsedName === '-') {
-        parsedName = item.name ? item.name.replace(/<[^>]+>/g, '').trim() : "이름 없는 자재";
+        parsedName = typeof rawName === "string" ? rawName.replace(/<[^>]+>/g, '').trim() : "이름 없는 자재";
       }
       if (!parsedTarget || parsedTarget === '-') {
-        parsedTarget = item.target ? item.target.replace(/<[^>]+>/g, '').trim() : "";
+        parsedTarget = typeof rawTarget === "string" ? rawTarget.replace(/<[^>]+>/g, '').trim() : "";
       }
 
-      // 검색어 필터링 검사
+      // 검색어 매칭
       if (parsedName.toLowerCase().includes(filterKeyword.toLowerCase()) || 
           parsedTarget.toLowerCase().includes(filterKeyword.toLowerCase())) {
         
@@ -415,14 +447,14 @@ function extractSelectedText(htmlStr) {
         const li = document.createElement('li');
         
         let badgeClass = 'badge-etc';
-        if(item.type === '농약') badgeClass = 'badge-pesticide';
+        if(item.type === '농약' || !item.type) badgeClass = 'badge-pesticide';
         if(item.type === '비료') badgeClass = 'badge-fertilizer';
 
         li.innerHTML = `
           <div class="item-info">
-            <h3><span class="badge ${badgeClass}">${item.type}</span> ${parsedName}</h3>
+            <h3><span class="badge ${badgeClass}">${item.type || '농약'}</span> ${parsedName}</h3>
             <p><strong>용도:</strong> ${parsedTarget || '-'}</p>
-            <p><strong>재고:</strong> ${item.stock || '-'}</p>
+            <p><strong>재고:</strong> ${item.stock || item.itemStock || '-'}</p>
             ${item.memo ? `<p style="color:#888; font-style:italic;">📝 ${item.memo}</p>` : ''}
             <p style="font-size:0.75rem; color:#aaa;">등록일: ${item.date || '-'}</p>
           </div>
@@ -435,11 +467,15 @@ function extractSelectedText(htmlStr) {
       }
     });
 
+    // 상단 카운터 숫자 실시간 업데이트 반영
+    document.getElementById('countHas').textContent = totalItems;
+
     if (!hasItems) {
       listContainer.innerHTML = `<p class="empty-msg">내농약장에 등록된 자재가 없거나 검색 결과가 없습니다.</p>`;
     }
   }
 
+  // 검색바 실시간 입력 제어
   document.getElementById('searchBar').addEventListener('input', function(e) {
     displayItems(e.target.value);
   });
@@ -455,12 +491,15 @@ function extractSelectedText(htmlStr) {
   function openEditModal(key) {
     const item = currentItems[key];
     if (item) {
+      let rawName = item.name || item.itemName || item.item_name || item.title || "";
+      let rawTarget = item.target || item.itemTarget || item.target_disease || "";
+
       document.getElementById('editId').value = key;
-      document.getElementById('editType').value = item.type;
-      document.getElementById('editName').value = item.name;
-      document.getElementById('editTarget').value = item.target;
-      document.getElementById('editStock').value = item.stock;
-      document.getElementById('editMemo').value = item.memo;
+      document.getElementById('editType').value = item.type || "농약";
+      document.getElementById('editName').value = rawName;
+      document.getElementById('editTarget').value = rawTarget;
+      document.getElementById('editStock').value = item.stock || item.itemStock || "";
+      document.getElementById('editMemo').value = item.memo || "";
       
       document.getElementById('editModal').classList.add('active');
     }
