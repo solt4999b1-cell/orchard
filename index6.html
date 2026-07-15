@@ -2,121 +2,108 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>새솔동 과수원 - 내농약장 연동 시스템</title>
-
-<!-- ── [연동 엔진] Firebase SDK (index3.html 방식 계승) ── -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>새솔동 과수원 - 내농약장</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-
-<script>
-  // Firebase 접속 설정
-  const firebaseConfig = {
-    apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
-    authDomain: "orchardapp-b81ca.firebaseapp.com",
-    projectId: "orchardapp-b81ca",
-    databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com",
-    storageBucket: "orchardapp-b81ca.firebasestorage.app",
-    appId: "1:848680345496:web:11d468c44b412c037795ed"
-  };
-
-  // 하이브리드 연결 엔진 초기화
-  function initFirebase() {
-    try {
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-      return firebase.database();
-    } catch(e) {
-      console.warn("Firebase 서버 연결 실패 - 로컬 하이브리드 모드 가동", e);
-      return null;
-    }
-  }
-  const db = initFirebase();
-</script>
-
 <style>
-  :root { --primary-color: #143A1B; --secondary-color: #2e6f40; --bg-color: #f4f7f5; }
-  body { font-family: sans-serif; background-color: var(--bg-color); padding: 20px; }
+  body { font-family: sans-serif; background-color: #f4f7f5; padding: 20px; }
   .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-  .btn { background-color: var(--secondary-color); color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; }
+  .btn { background-color: #2e6f40; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; }
   .item-list { list-style: none; padding: 0; }
-  .item-list li { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid var(--secondary-color); display: flex; justify-content: space-between; }
+  .item-list li { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #2e6f40; display: flex; justify-content: space-between; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <div class="card">
-    <h2>🧪 새 자재/농약 등록</h2>
+    <h2>🧪 자재 등록</h2>
     <form id="pesticideForm">
-      <input type="text" id="itemName" placeholder="농약명" required style="width:100%; padding:10px; margin-bottom:10px;">
+      <input type="text" id="itemName" placeholder="농약 이름" required style="width:100%; padding:10px; margin-bottom:10px;">
       <button type="submit" class="btn">저장하기</button>
     </form>
   </div>
 
   <div class="card">
-    <h2>📦 내 농약장 보관함 (실시간 동기화)</h2>
+    <h2>📦 보관함</h2>
     <ul id="pesticideList" class="item-list"></ul>
   </div>
 </div>
 
 <script>
-  const myPesticidesRef = db ? db.ref("myPesticides") : null;
+  const firebaseConfig = { databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com/" };
+  
+  let database = null;
+  let dbRef = null;
+  let currentItems = {};
 
-  // 실시간 연동 리스너[cite: 2]
-  if (myPesticidesRef) {
-    myPesticidesRef.on("value", snapshot => {
-      renderList(snapshot.val());
-    });
-  } else {
-    // 서버 차단 시 로컬 데이터만 호출[cite: 2]
-    renderList(JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}'));
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    database = firebase.database();
+    dbRef = database.ref("myPesticides");
+  } catch (e) {
+    console.warn("Firebase 연결 실패, 로컬 모드로 전환합니다.");
   }
 
-  // 등록 로직[cite: 2]
-  document.getElementById('pesticideForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const newItem = {
-      name: document.getElementById('itemName').value,
-      date: new Date().toLocaleDateString()
-    };
-
-    if (myPesticidesRef) {
-      myPesticidesRef.push().set(newItem);
+  // 1. 데이터 로드 로직 (서버 실패 시 로컬 백업 우선)
+  function loadData() {
+    if (dbRef) {
+      dbRef.on("value", snapshot => {
+        currentItems = snapshot.val() || {};
+        localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
+        render();
+      }, err => {
+        console.warn("서버 동기화 실패, 로컬 데이터 사용");
+        currentItems = JSON.parse(localStorage.getItem("orchard_local_db") || "{}");
+        render();
+      });
     } else {
-      const id = 'local_' + Date.now();
-      let data = JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}');
-      data[id] = newItem;
-      localStorage.setItem('orchard.myPesticides', JSON.stringify(data));
-      renderList(data);
+      currentItems = JSON.parse(localStorage.getItem("orchard_local_db") || "{}");
+      render();
     }
-    document.getElementById('pesticideForm').reset();
-  });
+  }
 
-  function renderList(items) {
+  // 2. 리스트 렌더링
+  function render() {
     const list = document.getElementById('pesticideList');
     list.innerHTML = "";
-    if(!items) return;
-    Object.keys(items).forEach(key => {
+    Object.keys(currentItems).forEach(key => {
       const li = document.createElement('li');
-      li.innerHTML = `<div>${items[key].name}</div> <button onclick="deleteItem('${key}')">삭제</button>`;
+      li.innerHTML = `<div>${currentItems[key].name}</div> <button onclick="deleteItem('${key}')">삭제</button>`;
       list.appendChild(li);
     });
   }
 
-  function deleteItem(key) {
-    if (myPesticidesRef) {
-      myPesticidesRef.child(key).remove();
+  // 3. 등록
+  document.getElementById('pesticideForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('itemName').value;
+    const newItem = { name: name, date: new Date().toLocaleDateString() };
+
+    if (dbRef) {
+      dbRef.push().set(newItem);
     } else {
-      let data = JSON.parse(localStorage.getItem('orchard.myPesticides') || '{}');
-      delete data[key];
-      localStorage.setItem('orchard.myPesticides', JSON.stringify(data));
-      renderList(data);
+      const key = 'local_' + Date.now();
+      currentItems[key] = newItem;
+      localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
+      render();
     }
-  }
+    document.getElementById('itemName').value = "";
+  });
+
+  // 4. 삭제
+  window.deleteItem = function(key) {
+    if (dbRef) {
+      dbRef.child(key).remove();
+    } else {
+      delete currentItems[key];
+      localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
+      render();
+    }
+  };
+
+  loadData();
 </script>
 </body>
 </html>
