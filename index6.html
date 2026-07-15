@@ -13,6 +13,8 @@
 
 <!-- ── iOS 홈화면 추가(PWA) 및 스타일 아이덴티티 상속 ── -->
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ하게">
+<meta name="apple-mobile-web-app-title" content="새솔과수원">
+<meta name="theme-color" content="#143A1B">
 
 <!-- ── 표준 안전형 Firebase 연동 라이브러리 탑재 ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -240,7 +242,7 @@ function extractSelectedText(htmlStr) {
 
 <header>
   <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
-  <p>DB-자재DB관리-내농약장 (추적차단/네트워크 오류 극복 하이브리드 버전)</p>
+  <p>DB-자재DB관리-내농약장 (스토리지 및 보안 차단 우회 하이브리드 엔진)</p>
 </header>
 
 <div class="container">
@@ -292,7 +294,7 @@ function extractSelectedText(htmlStr) {
     </div>
 
     <ul id="pesticideList" class="item-list">
-      <!-- 동적 데이터 렌더링 영역 -->
+      <!-- 자바스크립트로 강제 빌드되는 영역 -->
     </ul>
   </div>
 
@@ -337,9 +339,9 @@ function extractSelectedText(htmlStr) {
 </div>
 
 <script>
-  // ── 23건의 기존 데이터 영구 보존용 마스터 딕셔너리 ──
-  // 서버 주소 에러나 추적 방지 기능으로 데이터가 공백이 될 경우 이 가드 데이터가 즉시 주입됩니다.
-  const staticBackupData = {
+  // ── 23건의 기존 데이터를 브라우저 런타임 메모리에 영구 상주시키는 가드 마스터 딕셔너리 ──
+  // 브라우저 추적 차단 기능이나 URL 경고로 인해 스토리지 접근이 막히더라도 이 가드 배열은 무조건 살아남아 렌더링을 보장합니다.
+  const staticMemoryBackupData = {
     "item_01": { type: "농약", name: "캡탄 수화제", target: "사과/포도 탄저병 방제용", stock: "500g 3봉", memo: "기본 보호살균제", date: "2026-07-15" },
     "item_02": { type: "농약", name: "무인항공 살충제", target: "돌발해충, 진딧물, 응애류", stock: "250ml 2병", memo: "방제 드론 살포용", date: "2026-07-15" },
     "item_03": { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-15" },
@@ -365,11 +367,15 @@ function extractSelectedText(htmlStr) {
     "item_23": { type: "비료", name: "유기질 유박비료", target: "기초 토양 양분 공급", stock: "20kg 5포", memo: "유기물 공급 원료", date: "2026-07-15" }
   };
 
-  // ── Firebase 클라우드 인스턴스 가드 구축 ──
+  // 실행 변수 초기화
+  let currentItems = Object.assign({}, staticMemoryBackupData);
+
+  // ── Firebase 클라우드 연결 엔진 설정 ──
   const firebaseConfig = {
     databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com"
   };
 
+  // 인스턴스 중복 방지 초기화
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
@@ -377,42 +383,33 @@ function extractSelectedText(htmlStr) {
   const database = firebase.database();
   const dbRef = database.ref("myPesticides");
 
-  let currentItems = {};
-
-  // ── 실시간 데이터베이스 동기화 및 추적 차단 우회 하이브리드 엔진 ──
+  // ── 브라우저 추적 차단 및 주소 오류 우회 리스너 바인딩 ──
   dbRef.on("value", function(snapshot) {
     const data = snapshot.val();
-    currentItems = data || {};
-    
-    // 주소 에러나 추적 방지 기능으로 데이터가 유실되었을 경우 정적 마스터 데이터 즉시 강제 로드
-    if (Object.keys(currentItems).length === 0) {
-      console.log("서버 연결 우회 - 하이브리드 마스터 자재 리스트를 활성화합니다.");
-      
-      // 혹시 로컬 브라우저 백업본이 있는지 탐색
-      const localBackup = localStorage.getItem("hybrid_db_myPesticides");
-      if (localBackup && Object.keys(JSON.parse(localBackup)).length >= 23) {
-        currentItems = JSON.parse(localBackup);
-      } else {
-        // 백업본이 없거나 손상되었을 경우 23건의 하이브리드 마스터 데이터 즉시 복원
-        currentItems = Object.assign({}, staticBackupData);
+    if (data && Object.keys(data).length > 0) {
+      currentItems = data;
+      try {
         localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
+      } catch (e) {
+        console.warn("추적방지 기능으로 브라우저 스토리지 접근이 제한되었습니다.");
       }
-    } else {
-      // 서버에서 정상 수신한 데이터는 브라우저 영구 영역에 실시간 캐싱 백업
-      localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
     }
     displayItems(document.getElementById('searchBar').value);
   }, function(error) {
-    // 추적 차단 기능으로 연결 자체가 전면 거부되었을 때 가동하는 로컬 단독 엔진 파트
-    console.warn("추적 차단 브라우저 감지 - 안전 내부 로컬 모드로 전환합니다.");
-    const localBackup = localStorage.getItem("hybrid_db_myPesticides");
-    if (localBackup) {
-      currentItems = JSON.parse(localBackup);
-    } else {
-      currentItems = Object.assign({}, staticBackupData);
-    }
+    console.warn("원격 서버 액세스 차단됨 - 메모리 상주 보관함을 강제 가동합니다.");
+    try {
+      const localBackup = localStorage.getItem("hybrid_db_myPesticides");
+      if (localBackup && Object.keys(JSON.parse(localBackup)).length >= 23) {
+        currentItems = JSON.parse(localBackup);
+      }
+    } catch(e) {}
     displayItems(document.getElementById('searchBar').value);
   });
+
+  // 초기 시작 시 기본 메모리 로드 보장
+  setTimeout(function() {
+    displayItems("");
+  }, 100);
 
   // ── 자재 등록 (Insert) ──
   document.getElementById('pesticideForm').addEventListener('submit', function(e) {
@@ -427,22 +424,18 @@ function extractSelectedText(htmlStr) {
       date: new Date().toLocaleDateString()
     };
 
-    // 서버 전송을 시도하고, 차단된 환경인 경우 로컬 스토리지를 업데이트하여 하이브리드로 작동
     dbRef.push().set(newItem, function(error) {
       if (error) {
-        console.warn("원격 서버 저장 제한됨 - 로컬 자재함에 즉시 추가 기록합니다.");
-        const localKey = "local_" + Math.random().toString(36).substring(2, 11);
-        currentItems[localKey] = newItem;
-        localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
-        displayItems(document.getElementById('searchBar').value);
-        document.getElementById('pesticideForm').reset();
-      } else {
-        document.getElementById('pesticideForm').reset();
+        console.warn("원격 저장 거부됨 - 메모리 보관함에 임시 할당합니다.");
       }
+      const localKey = "memory_" + Math.random().toString(36).substring(2, 11);
+      currentItems[localKey] = newItem;
+      displayItems(document.getElementById('searchBar').value);
+      document.getElementById('pesticideForm').reset();
     });
   });
 
-  // ── 역추적 필드 매핑 및 리스트 렌더링 엔진 ──
+  // ── 하이브리드 필드 역추적 및 목록 출력 렌더링 엔진 ──
   function displayItems(filterKeyword = "") {
     const listContainer = document.getElementById('pesticideList');
     listContainer.innerHTML = "";
@@ -454,16 +447,16 @@ function extractSelectedText(htmlStr) {
       const item = currentItems[key];
       totalItems++;
       
-      // [멀티 연동 역추적 필드 가드]
-      // 기존 index1.html 및 서버의 모든 유사 필드명(name, itemName, item_name, title)을 역추적합니다[cite: 1].
+      // [멀티 역추적 필드 결합 가드]
+      // index1.html 및 서버에 존재할 수 있는 모든 필드 명칭(name, itemName, item_name, title)을 추적합니다[cite: 1].
       let rawName = item.name || item.itemName || item.item_name || item.title || "이름 없는 자재";
       let rawTarget = item.target || item.itemTarget || item.target_disease || "";
 
-      // extractSelectedText 함수 안전 파싱 작동[cite: 1]
+      // extractSelectedText 함수 안전 정제 추출 가동[cite: 1]
       let parsedName = typeof extractSelectedText === "function" ? extractSelectedText(rawName) : rawName;
       let parsedTarget = typeof extractSelectedText === "function" ? extractSelectedText(rawTarget) : rawTarget;
 
-      // 최종 정제 텍스트 보정 복원
+      // 정제 실패 시 원본 데이터를 무조건 강제 매핑하여 유실 방지
       if (!parsedName || parsedName === '-') {
         parsedName = typeof rawName === "string" ? rawName.replace(/<[^>]+>/g, '').trim() : "이름 없는 자재";
       }
@@ -471,7 +464,7 @@ function extractSelectedText(htmlStr) {
         parsedTarget = typeof rawTarget === "string" ? rawTarget.replace(/<[^>]+>/g, '').trim() : "";
       }
 
-      // 검색어 매칭 필터링
+      // 검색어 필터링
       if (parsedName.toLowerCase().includes(filterKeyword.toLowerCase()) || 
           parsedTarget.toLowerCase().includes(filterKeyword.toLowerCase())) {
         
@@ -499,7 +492,7 @@ function extractSelectedText(htmlStr) {
       }
     });
 
-    // 상단 실시간 보유 카운터 갱신 동기화
+    // 현황판 보유 숫자 동기화 업데이팅
     document.getElementById('countHas').textContent = totalItems;
 
     if (!hasItems) {
@@ -507,7 +500,7 @@ function extractSelectedText(htmlStr) {
     }
   }
 
-  // 검색바 실시간 인풋 이벤트 바인딩
+  // 검색바 필터 바인딩
   document.getElementById('searchBar').addEventListener('input', function(e) {
     displayItems(e.target.value);
   });
@@ -516,12 +509,8 @@ function extractSelectedText(htmlStr) {
   function deleteItem(key) {
     if (confirm("정말 이 자재를 내농약장에서 삭제하시겠습니까?")) {
       database.ref("myPesticides/" + key).set(null, function(error) {
-        if (error) {
-          // 차단 모드일 때 로컬 스토리지 강제 삭제 동기화
-          delete currentItems[key];
-          localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
-          displayItems(document.getElementById('searchBar').value);
-        }
+        delete currentItems[key];
+        displayItems(document.getElementById('searchBar').value);
       });
     }
   }
@@ -562,15 +551,9 @@ function extractSelectedText(htmlStr) {
     };
 
     database.ref("myPesticides/" + key).set(updatedItem, function(error) {
-      if (error) {
-        // 차단 모드일 때 로컬 스토리지 강제 업데이트 동기화
-        currentItems[key] = updatedItem;
-        localStorage.setItem("hybrid_db_myPesticides", JSON.stringify(currentItems));
-        closeModal();
-        displayItems(document.getElementById('searchBar').value);
-      } else {
-        closeModal();
-      }
+      currentItems[key] = updatedItem;
+      closeModal();
+      displayItems(document.getElementById('searchBar').value);
     });
   });
 </script>
