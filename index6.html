@@ -1022,6 +1022,8 @@ function selectPsisResultFromModal(resultData, company) {
 // ════════════════════════════════════════════════════════════════
 // PSIS 농약 검색 (기존 - 상단에서 사용하던 것)
 // ════════════════════════════════════════════════════════════════
+
+async function searchPsis() {
   const keyword = document.getElementById('psis-search-input').value.trim();
   
   if (!keyword) {
