@@ -3,107 +3,83 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>새솔동 과수원 - 내농약장</title>
+<title>새솔동 과수원 - 내농약장 방제 최적화</title>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   body { font-family: sans-serif; background-color: #f4f7f5; padding: 20px; }
   .card { background: #fff; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-  .btn { background-color: #2e6f40; color: white; border: none; padding: 12px; width: 100%; border-radius: 6px; }
-  .item-list { list-style: none; padding: 0; }
-  .item-list li { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #2e6f40; display: flex; justify-content: space-between; }
+  .pesti { background: white; padding: 15px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #2e6f40; }
+  .pesti.owned { border-left-color: #E39B2E; } 
+  .badge { font-size: 11px; padding: 2px 8px; border-radius: 6px; background: #eef1ec; margin-right: 5px; }
 </style>
 </head>
 <body>
 
 <div class="container">
   <div class="card">
-    <h2>🧪 자재 등록</h2>
-    <form id="pesticideForm">
-      <input type="text" id="itemName" placeholder="농약 이름" required style="width:100%; padding:10px; margin-bottom:10px;">
-      <button type="submit" class="btn">저장하기</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2>📦 보관함</h2>
-    <ul id="pesticideList" class="item-list"></ul>
+    <h2>📦 내 농약장 보관함 (실시간 동기화)</h2>
+    <div id="pesticideList">데이터를 불러오는 중...</div>
   </div>
 </div>
 
 <script>
-  const firebaseConfig = { databaseURL: "https://orchardapp-b81ca-default-rtdb.firebaseio.com/" };
-  
-  let database = null;
-  let dbRef = null;
-  let currentItems = {};
+  const firebaseConfig = { databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com/" };
+  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    database = firebase.database();
-    dbRef = database.ref("myPesticides");
-  } catch (e) {
-    console.warn("Firebase 연결 실패, 로컬 모드로 전환합니다.");
-  }
+  let myPesticidesData = {}; // DB에서 읽어올 보유 농약 데이터
+  let pestiListFromPsis = []; // PSIS에서 불러온 추천 방제 농약 데이터
 
-  // 1. 데이터 로드 로직 (서버 실패 시 로컬 백업 우선)
-  function loadData() {
-    if (dbRef) {
-      dbRef.on("value", snapshot => {
-        currentItems = snapshot.val() || {};
-        localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
-        render();
-      }, err => {
-        console.warn("서버 동기화 실패, 로컬 데이터 사용");
-        currentItems = JSON.parse(localStorage.getItem("orchard_local_db") || "{}");
-        render();
-      });
-    } else {
-      currentItems = JSON.parse(localStorage.getItem("orchard_local_db") || "{}");
-      render();
-    }
-  }
+  // 1. Firebase에서 보유 농약 읽어오기
+  db.ref("myPesticides").on("value", snapshot => {
+    myPesticidesData = snapshot.val() || {};
+    mergeAndRender();
+  });
 
-  // 2. 리스트 렌더링
-  function render() {
+  // 2. PSIS 등 외부 데이터를 불러와 정렬 후 렌더링
+  function mergeAndRender() {
     const list = document.getElementById('pesticideList');
     list.innerHTML = "";
-    Object.keys(currentItems).forEach(key => {
-      const li = document.createElement('li');
-      li.innerHTML = `<div>${currentItems[key].name}</div> <button onclick="deleteItem('${key}')">삭제</button>`;
-      list.appendChild(li);
+    
+    // 보유 농약 브랜드명 추출[cite: 2]
+    const ownedBrands = Object.values(myPesticidesData).map(item => item.name);
+
+    // 정렬 로직: 보유 여부(Owned) > 독성 낮음 > 방제 횟수 적음[cite: 3]
+    pestiListFromPsis.sort((a, b) => {
+      const aOwned = ownedBrands.includes(a.brand);
+      const bOwned = ownedBrands.includes(b.brand);
+      if (aOwned !== bOwned) return aOwned ? -1 : 1;
+      
+      // 독성 등급 수치화 비교 (낮은 것이 우선)[cite: 3]
+      const aTox = parseInt(a.toxRank || 2);
+      const bTox = parseInt(b.toxRank || 2);
+      if (aTox !== bTox) return aTox - bTox;
+
+      // 방제 횟수 비교[cite: 3]
+      return parseInt(a.num || 1) - parseInt(b.num || 1);
+    });
+
+    pestiListFromPsis.forEach(item => {
+      const isOwned = ownedBrands.includes(item.brand);
+      const div = document.createElement('div');
+      div.className = `pesti ${isOwned ? 'owned' : ''}`;
+      div.innerHTML = `
+        <div style="font-weight:bold">${isOwned ? '✅ 보유함: ' : '🛒 필요: '} ${item.brand}</div>
+        <div class="badge">용도: ${item.use}</div>
+        <div class="badge">독성등급: ${item.toxRank}</div>
+      `;
+      list.appendChild(div);
     });
   }
 
-  // 3. 등록
-  document.getElementById('pesticideForm').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = document.getElementById('itemName').value;
-    const newItem = { name: name, date: new Date().toLocaleDateString() };
-
-    if (dbRef) {
-      dbRef.push().set(newItem);
-    } else {
-      const key = 'local_' + Date.now();
-      currentItems[key] = newItem;
-      localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
-      render();
-    }
-    document.getElementById('itemName').value = "";
-  });
-
-  // 4. 삭제
-  window.deleteItem = function(key) {
-    if (dbRef) {
-      dbRef.child(key).remove();
-    } else {
-      delete currentItems[key];
-      localStorage.setItem("orchard_local_db", JSON.stringify(currentItems));
-      render();
-    }
-  };
-
-  loadData();
+  // 예시 데이터 연동 호출 (PSIS 데이터 연동 파트 시뮬레이션)[cite: 3]
+  pestiListFromPsis = [
+    { brand: "캡탄 수화제", use: "탄저병", toxRank: 1, num: 2 },
+    { brand: "신규 살충제", use: "진딧물", toxRank: 2, num: 3 },
+    { brand: "후론사이드", use: "탄저병", toxRank: 1, num: 1 }
+  ];
+  mergeAndRender();
 </script>
 </body>
 </html>
