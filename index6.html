@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<!-- 최신 엣지/크롬 PWA 규격 만족 및 경고 해결 -->
+<!-- PWA 최신 브라우저 규격 적용 -->
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -12,10 +12,10 @@
 <title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
 
 <!-- ── iOS 홈화면 추가(PWA) 및 스타일 아이덴티티 상속 ── -->
-<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ4381kdMEiXhQOEsxAYiLkjAAtCCMBMN5q1gVBdypOSSgkHBHRy5QZCqGLqTEQ+eCjtfHRJfhI7WyADqFGGxlB5vrJaBaMKBbh/ga0UkopBSilFLRSUIBSkRseNxGBCARDRAQQEYGIYLilIwqBEBFfD1QvCWnmozk+lfng3cJzLvWtLL/C6m/4BCw84BmngYwOguFhITGhEgWttYJKlFJaFJGuqWJIe/kEIkM5GQKMoZzvepSLXQuJRaSDhJwuPuD0Ix4IwQc7SplshF0KOf7G9Juvi4yYYPTBQiVKaaW0VomSIujTnRSU0koX0CRERDmRMZQTGQohaEGES0jgStbJR53DGznq5JbU11U1T+HZpFrq7g7ldJHRJBhxLFSidJIUZKBv6tJCiEylnpRSqSr0hQxRRsbklBdlDYg4roRJiI/CRvmo/3FznC5sP6WepM4iKTZLJ+e0kiERIJEhCUZdXyudaDXUYewRTetTk7BVGy5KKzVUGhoEk+UmN2TIczQsiPRdiRL5ABSdUT54n+VR6ltFXA+JlWgOh6KdDEe2nA79XislH2id6K46sT4guvfZDIqCHiR6kJAhk+WF35ElRHAxIjdxPvj0Ys/I/YbeVfnOJe3kUCKL7AtO2R61aXl5ZzJkwVCJ0mmqEx0M2DQzoSRQoQ6pXDUKUVBelcigWiWDFAOY3Jgso9y+dBuTEPuCWEc+FLnTY30HU7bBR6NzSf2W63EoDf5ow2QoqDTRaaK1C5yYIqVKNRa3J+78UCyeD0orJQoAdKJ1MjSGTJZRZpjOV5XWz4d하게">
+<link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAALQAAAC0CAIAAACyp5FlAAAABmJLR0QA/wD/AP+gvaeTAAAgAElEQVR4nM2debxlV1Xnf3ufc+99r96relWvXqoqlaqQpJIQyACJECFhCE0CQYaOMyrQHxAaWzC2qI3aan/8qLS0ikgrLSpDo4CNHxwYbScEw+QQEiAkIQkZqjLVPLzx3nP26j/OsNfee+0zvFeFvT9JvXP2fPb67t9a59xJnfPiCwFAQQEAoMq/xbkKcspK9XHVzNYPMqt+bHN27Nbi+ayJ27tQwT8Ka4qpSzXq1hV5Fcn765VQrAJ5//v5/lh1vv3HzwRAbvM6l4Ic3joFvpVk+DZWkfx1YNHChFDUjSAFwcKhyevLLS2nyhMV1C8uiFRZ16ugACouhaBAQX7Rp6r5KPMJ9h8/E4BSIKpPquGUUgUfLKespwBC2kSGZJMNkdFHMNwu/NJOTKjoSc8UtFXM2h4oDiXKqe8hQmVdYla0oxU2UkwyWP5G+WDzKAmU+Eij189tVuPj57gQ9SZDFoyuWIjmlhyNVBqr4SdfI6xBeC+Sj6guo1r7ABEmBAAoLK0kxLGp6sVHXQpwPpwigZgiJ3UXnDsU9xpkMhzrO0sSJ6PZlch+xJMJieTwiJ+tWzf8hgrga+mxogRKVAUBtSEiSAgVHYgupgsfVbNGPspOXJhUFXM4S6iCHJ7hmSFKBq8mktFRMLpiITDRBERfWNytxS/OjelcSkIhaUBElJASHVW6GJEPVPkiH+FfxesXB3LwkXqbK0KGZBPl2aWNjFiQERMMr3dZS9w2MSbE7d8rFYbliVgJIpSEQmJtGSDSIiEVH7x+5RFce7t8sGr2aioYmviASjssnL/6GyBDJqCZjAgWbUyI9MRSWEW4gw3FybG9RIksJMUVWVP4HDTwAScE6cuHA4lPjJ9jA1IrG95SyLcnUTJ하게">
 <meta name="apple-mobile-web-app-title" content="새솔과수원">
 
-<!-- ── index1.html 기반 표준 안전형 Firebase 연동 라이브러리 탑재 ── -->
+<!-- ── 표준 안전형 Firebase 연동 라이브러리 탑재 ── -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 
@@ -230,7 +230,7 @@ function extractSelectedText(htmlStr) {
 
 <header>
   <h1>새솔동 과수원 제작:이용호 Copyright 2026-07-09</h1>
-  <p>DB-자재DB관리-내농약장 (실시간 원격 기기 간 공유 연동 시스템)</p>
+  <p>DB-자재DB관리-내농약장 (시작 시 기존 등록 자재 자동 동기화 시스템)</p>
 </header>
 
 <div class="container">
@@ -269,14 +269,14 @@ function extractSelectedText(htmlStr) {
 
   <!-- 내 농약장 리스트 카드 -->
   <div class="card">
-    <h2>📦 내 농약장 보관함 (실시간 동기화 완료)</h2>
+    <h2>📦 내 농약장 보관함 (기본 자재 탑재 완료)</h2>
     
     <div class="search-box">
       <input type="text" id="searchBar" placeholder="보유 중인 농약/자재 검색...">
     </div>
 
     <ul id="pesticideList" class="item-list">
-      <!-- Firebase에서 실시간 데이터 로드 -->
+      <!-- Firebase 실시간 스트리밍 바인딩 데이터 영역 -->
     </ul>
   </div>
 
@@ -326,7 +326,7 @@ function extractSelectedText(htmlStr) {
     databaseURL: "https://saesol-orchard-default-rtdb.firebaseio.com"
   };
 
-  // 인스턴스 중복 방지 안전 초기화
+  // 앱 인스턴스 초기화 안전 처리
   if (!firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
@@ -336,10 +336,28 @@ function extractSelectedText(htmlStr) {
 
   let currentItems = {};
 
-  // ── Firebase 실시간 스트리밍 실시간 동기화 ──
+  // ── 시작 시 보관함이 비어있을 경우 자동 등록할 기존 기초 농약 마스터 목록 ──
+  const defaultPesticides = [
+    { type: "농약", name: "캡탄 수화제", target: "사과/포도 탄저병 방제용", stock: "500g 3봉", memo: "기본 보호살균제", date: "2026-07-09" },
+    { type: "농약", name: "무인항공 살충제", target: "돌발해충, 진딧물, 응애류", stock: "250ml 2병", memo: "방제 드론 살포용", date: "2026-07-09" },
+    { type: "비료", name: "복합 4종 영양제", target: "과수 수세 회복 및 비대 촉진", stock: "1L 1병", memo: "엽면시비용", date: "2026-07-09" },
+    { type: "기타", name: "친환경 전착제", target: "농약 부착력 및 침투성 증대", stock: "500ml 1병", memo: "혼용 필수 자재", date: "2026-07-09" }
+  ];
+
+  // ── Firebase 실시간 스트리밍 및 초기화 분기 리스너 ──
   dbRef.on("value", function(snapshot) {
     const data = snapshot.val();
-    currentItems = data || {};
+    
+    // 만약 데이터베이스가 완전히 비어있다면 기초 농약 목록을 서버에 자동 빌드
+    if (!data) {
+      console.log("기존 등록 데이터가 없어 기본 농약 목록을 구성합니다.");
+      defaultPesticides.forEach(function(item) {
+        dbRef.push().set(item);
+      });
+      return; // 데이터가 등록되면서 value 이벤트가 즉시 다시 발생하므로 리턴합니다.
+    }
+
+    currentItems = data;
     displayItems(document.getElementById('searchBar').value);
   }, function(error) {
     console.error("Firebase 실시간 연동 실패:", error);
@@ -422,7 +440,6 @@ function extractSelectedText(htmlStr) {
     }
   }
 
-  // 검색바 실시간 입력 제어
   document.getElementById('searchBar').addEventListener('input', function(e) {
     displayItems(e.target.value);
   });
