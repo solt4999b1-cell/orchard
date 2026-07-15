@@ -575,6 +575,7 @@
     <div class="sync-status" id="sync-status">
       <span class="sync-indicator" id="sync-indicator"></span>
       <span id="sync-text">Firebase 초기화 중...</span>
+      <button class="btn-small" onclick="document.getElementById('firebase-setup-section').style.display='block'" title="Firebase 설정 변경" style="margin-left: auto; font-size: 11px;">⚙️ 설정</button>
     </div>
 
     <div class="stat-grid">
@@ -593,11 +594,14 @@
     </div>
   </div>
 
-  <!-- Firebase 설정 -->
-  <div id="firebase-setup-section" style="display: none; background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--gray-200);">
+  <!-- Firebase 설정 (선택사항) -->
+  <div id="firebase-setup-section" style="display: none; background: #fff3cd; padding: 20px; border-radius: 8px; margin-bottom: 16px; border: 1px solid #ffc107;">
     <div class="setup-info">
-      <strong>⚙️ GAS에서 Firebase 설정 읽어오기</strong>
-      GAS Script ID를 입력하면 Firebase 정보가 자동으로 로드됩니다.
+      <strong style="color: #856404;">⚙️ Firebase 설정 (선택사항)</strong>
+      <br>
+      현재 기본 Firebase 설정(orchardapp-b81ca)을 사용 중입니다.
+      <br><br>
+      다른 프로젝트를 사용하려면 GAS Script ID를 입력하세요:
       <br><br>
       <strong style="color: #1565C0;">📌 GAS Script ID 찾기:</strong>
       <br>
@@ -614,17 +618,18 @@
     
     <div id="firebase-error-msg" style="color: #E65100; font-size: 11px; margin-bottom: 12px; display: none;"></div>
     
-    <button class="btn btn-primary" onclick="loadConfigFromGAS()">🔄 GAS에서 설정 읽어오기</button>
+    <button class="btn btn-primary" onclick="loadConfigFromGAS()" style="background: #1565C0;">🔄 GAS에서 설정 로드</button>
+    <button class="btn" onclick="document.getElementById('firebase-setup-section').style.display='none'" style="background: var(--gray-200); color: var(--gray-700);">취소</button>
   </div>
 
-  <!-- 농약 검색 (PSIS/NCPMS) -->
+  <!-- 농약 검색 (Firestore + Realtime DB 통합) -->
   <div class="psis-search-section">
     <div class="psis-search-bar">
       <input type="text" class="psis-search-input" id="psis-search-input" placeholder="농약명 또는 성분 검색 (예: 탄저병, 유황, 살충제...)" onkeypress="if(event.key==='Enter') searchPesticides()">
       <button class="psis-search-btn" onclick="searchPesticides()">🔍 검색</button>
     </div>
     <div style="font-size: 11px; color: var(--gray-600);">
-      💡 PSIS/NCPMS 데이터베이스에서 농약을 검색합니다. 아래에서 농약을 선택하면 내 농약장에 추가할 수 있습니다.
+      💡 Firestore (공용 농약) + Realtime DB (내 농약)에서 동시 검색합니다. 검색 결과에서 농약을 선택하여 내 농약장에 추가할 수 있습니다.
     </div>
   </div>
 
@@ -846,8 +851,20 @@ function selectPesticideFromSearch(id, name) {
 }
 
 function getFirebaseConfig() {
+  // 1. localStorage에 저장된 설정 사용
   const stored = localStorage.getItem(CONFIG_KEY);
-  return stored ? JSON.parse(stored) : null;
+  if (stored) return JSON.parse(stored);
+  
+  // 2. 기본 설정 (orchardapp-b81ca 프로젝트)
+  // GAS 설정이 없어도 작동합니다
+  const defaultConfig = {
+    apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+    authDomain: "orchardapp-b81ca.firebaseapp.com",
+    databaseURL: "https://orchardapp-b81ca-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "orchardapp-b81ca"
+  };
+  
+  return defaultConfig;
 }
 
 function getStoredScriptId() {
@@ -863,11 +880,13 @@ async function loadConfigFromGAS() {
   }
 
   try {
-    console.log('🔄 GAS에서 설정 읽어오는 중:', scriptId);
+    console.log('🔄 GAS에서 Firebase 설정 읽어오는 중:', scriptId);
     
-    const url = `https://script.google.com/macros/d/${scriptId}/userweb?action=getFirebaseConfig`;
+    // GAS Web App URL (배포된 웹 앱 형식)
+    const url = `https://script.google.com/macros/s/${scriptId}/exec?action=getFirebaseConfig`;
     
     const response = await fetch(url, {
+      method: 'GET',
       mode: 'cors',
       cache: 'no-cache'
     });
@@ -879,10 +898,10 @@ async function loadConfigFromGAS() {
     const data = await response.json();
     
     if (!data.success || !data.config) {
-      throw new Error('GAS에서 유효한 설정을 반환하지 않았습니다');
+      throw new Error(data.error || 'GAS에서 유효한 설정을 반환하지 않았습니다');
     }
 
-    console.log('✅ GAS에서 설정 로드됨');
+    console.log('✅ GAS에서 Firebase 설정 로드됨:', data.config.projectId);
     
     // 설정 저장
     localStorage.setItem(CONFIG_KEY, JSON.stringify(data.config));
@@ -895,16 +914,17 @@ async function loadConfigFromGAS() {
   } catch (err) {
     console.error('❌ GAS에서 설정 로드 실패:', err);
     
-    let errorMsg = '❌ GAS에서 설정 로드 실패\n\n';
+    let errorMsg = '❌ GAS에서 Firebase 설정 로드 실패\n\n';
     
     if (err.message.includes('Failed to fetch')) {
-      errorMsg += '원인: CORS 제한 또는 네트워크 오류\n\n';
-      errorMsg += '대안:\n';
-      errorMsg += '1. GitHub URL인지 확인 (https://)\n';
-      errorMsg += '2. Script ID가 정확한지 확인\n';
-      errorMsg += '3. GAS가 "모두" 액세스로 배포되었는지 확인';
+      errorMsg += '원인: CORS 또는 네트워크 오류\n\n';
+      errorMsg += '확인 사항:\n';
+      errorMsg += '1. GAS를 웹 앱으로 배포했는지 확인\n';
+      errorMsg += '2. Script ID가 정확한지 확인 (macros/s/... 부분)\n';
+      errorMsg += '3. GAS의 doGet() 함수에 action 처리 코드 확인\n';
+      errorMsg += '4. GAS 배포 시 "모두" 액세스 권한 설정 확인';
     } else {
-      errorMsg += err.message;
+      errorMsg += '상세: ' + err.message;
     }
     
     showErrorMsg(errorMsg);
@@ -922,16 +942,16 @@ async function initializeFirebase() {
   const config = getFirebaseConfig();
   
   if (!config) {
-    document.getElementById('firebase-setup-section').style.display = 'block';
-    
-    // 이전에 저장된 Script ID가 있으면 자동 입력
-    const storedId = getStoredScriptId();
-    if (storedId) {
-      document.getElementById('gas-script-id').value = storedId;
-    }
-    
+    console.error('❌ Firebase 설정을 찾을 수 없습니다');
     setSyncStatus('offline', '⚠️ Firebase 미설정');
     return false;
+  }
+
+  // Firebase 설정이 기본값인 경우 GAS 설정 섹션 표시 (선택사항)
+  const isDefaultConfig = !localStorage.getItem(CONFIG_KEY);
+  if (isDefaultConfig) {
+    console.log('💡 기본 Firebase 설정(orchardapp-b81ca)을 사용 중입니다');
+    // GAS 설정 섹션은 숨긴 상태 유지
   }
 
   try {
