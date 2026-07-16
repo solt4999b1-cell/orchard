@@ -288,6 +288,29 @@
                 font-size: 11px;
             }
             
+            /* ✅ 태블릿 카테고리 탭 스타일 */
+            .category-tabs {
+                grid-template-columns: 1fr 1fr 1fr 1fr;  /* 4개씩 2줄 */
+                gap: 8px;
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            .category-tab {
+                padding: 10px 12px;
+                font-size: 12px;
+                min-height: 42px;
+            }
+            
+            /* ✅ 태블릿 진행도 바 스타일 */
+            .progress-container {
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            .progress-message {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            
             /* 결과 컨테이너 */
             #resultContainer { 
                 margin: 10px auto; 
@@ -390,6 +413,36 @@
                 font-size: 16px;
                 bottom: 15px;
                 right: 10px;
+            }
+            
+            /* ✅ 모바일 카테고리 탭 스타일 */
+            .category-tabs {
+                grid-template-columns: 1fr 1fr;  /* 2개씩 4줄 */
+                gap: 6px;
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            .category-tab {
+                padding: 8px 10px;
+                font-size: 12px;
+                min-height: 40px;  /* 터치하기 좋은 크기 */
+            }
+            
+            /* ✅ 모바일 진행도 바 스타일 */
+            .progress-container {
+                padding: 12px;
+                margin-bottom: 15px;
+            }
+            .progress-message {
+                font-size: 12px;
+                margin-bottom: 8px;
+            }
+            .progress-bar {
+                height: 6px;
+                margin-bottom: 6px;
+            }
+            .progress-status {
+                font-size: 11px;
             }
         }
         
