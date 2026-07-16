@@ -716,7 +716,7 @@
                         result.push(item);
                     }
                 });
-                // 작물명 정렬은 제품별 검색에는 미적용 (각 제품이 여러 작물에 쓰임)
+                // ✅ 중복 제거만 하고 정렬은 유지 (sortByCropName 제거)
                 return result;
             } else if (tab === 'target') {
                 // 적용대상별/품목별: 작물+병해충+품목명+유효성분함유량이 같으면 1개만
@@ -736,11 +736,11 @@
                     }
                 });
                 
-                // 작물명으로 정렬
-                return sortByCropName(result);
+                // ✅ 중복 제거만 하고 정렬은 유지 (sortByCropName 제거)
+                return result;
             } else {
-                // 적용대상별/제품검색: 작물명으로 정렬 후 반환
-                return sortByCropName(data);
+                // ✅ 중복 제거만 하고 정렬은 유지 (sortByCropName 제거)
+                return data;
             }
         }
 
