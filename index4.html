@@ -437,65 +437,101 @@
         /* ✅ 진행도 바 강화 */
         .progress-container {
             background: white;
-            padding: 15px;
+            padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             display: none;
-            border: 2px solid #2196F3;
+            border: 3px solid #2196F3;
+            border-left: 6px solid #2196F3;
         }
         .progress-container.show {
             display: block;
             animation: slideIn 0.3s ease;
         }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .progress-header {
+            margin-bottom: 15px;
         }
         .progress-message {
-            font-size: 13px;
+            font-size: 14px;
             font-weight: bold;
             color: #0d47a1;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
             gap: 8px;
         }
         .progress-message::before {
             content: "⏳";
-            font-size: 16px;
+            font-size: 18px;
             animation: spin 1.5s linear infinite;
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        #progressStep {
+            background: #2196F3;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .progress-counter {
+            font-size: 13px;
+            color: #1565c0;
+            font-weight: bold;
         }
         .progress-bar {
             width: 100%;
-            height: 8px;
+            height: 10px;
             background-color: #e0e0e0;
-            border-radius: 4px;
+            border-radius: 5px;
             overflow: hidden;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             border: 1px solid #2196F3;
         }
         .progress-fill {
             height: 100%;
             background: linear-gradient(90deg, #2196F3, #1976D2, #2196F3);
-            border-radius: 4px;
+            border-radius: 5px;
             width: 0%;
             transition: width 0.2s ease;
             box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
             animation: pulse 1.5s infinite;
         }
+        .progress-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 12px;
+        }
+        .stat-item {
+            background: #f0f7ff;
+            padding: 8px 12px;
+            border-radius: 6px;
+            border-left: 3px solid #2196F3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .stat-label {
+            font-weight: bold;
+            color: #0d47a1;
+        }
+        .stat-item span:last-child {
+            color: #1565c0;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.8; }
         }
-        .progress-status {
-            font-size: 13px;
-            color: #0d47a1;
-            font-weight: bold;
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         /* ✅ 테이블 스크롤 */
@@ -504,6 +540,51 @@
         }
         table {
             min-width: 1200px;
+        }
+        
+        /* ✅ 상단 스크롤 표시 */
+        .scroll-indicator {
+            width: 100%;
+            height: 8px;
+            background-color: #f0f0f0;
+            border-radius: 4px 4px 0 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: -4px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+        }
+        .scroll-indicator::-webkit-scrollbar {
+            height: 8px;
+        }
+        .scroll-indicator::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 4px;
+        }
+        .scroll-indicator::-webkit-scrollbar-thumb {
+            background: #2196F3;
+            border-radius: 4px;
+        }
+        .scroll-indicator-content {
+            width: 1200px;
+            height: 1px;
+        }
+        
+        .table-wrapper {
+            -webkit-overflow-scrolling: touch;
+            overflow-x: auto;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 0 0 4px 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #2196F3;
+            border-radius: 4px;
         }
         
         /* ✅ 카테고리 탭 */
@@ -547,17 +628,35 @@
                 margin-bottom: 8px;
             }
             .progress-container {
-                padding: 12px;
+                padding: 15px;
                 margin-bottom: 15px;
-                border: 2px solid #2196F3;
+                border: 3px solid #2196F3;
+                border-left: 6px solid #2196F3;
+            }
+            .progress-header {
+                margin-bottom: 12px;
             }
             .progress-message {
                 font-size: 13px;
-                margin-bottom: 10px;
+                margin-bottom: 6px;
+                font-weight: bold;
+            }
+            .progress-counter {
+                font-size: 12px;
+                color: #1565c0;
+                font-weight: bold;
+                margin-bottom: 8px;
             }
             .progress-bar {
-                height: 8px;
-                margin-bottom: 8px;
+                height: 10px;
+                margin-bottom: 10px;
+            }
+            .progress-stats {
+                grid-template-columns: 1fr 1fr;
+            }
+            .stat-item {
+                padding: 6px 10px;
+                font-size: 11px;
             }
             .category-tabs {
                 grid-template-columns: 1fr 1fr;
@@ -698,11 +797,27 @@
 
         <!-- ✅ 진행도 바 -->
         <div id="progressContainer" class="progress-container">
-            <div class="progress-message">검색 진행 중...</div>
+            <div class="progress-header">
+                <div class="progress-message" id="progressMessage">
+                    <span id="progressStep">1단계</span>: 데이터 로드 중...
+                </div>
+                <div class="progress-counter">
+                    <span id="progressCount">0</span>개 검색됨
+                </div>
+            </div>
             <div class="progress-bar">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
-            <div class="progress-status"><span id="progressCount">0</span>개 / <span id="progressTotal">0</span>개</div>
+            <div class="progress-stats">
+                <div class="stat-item">
+                    <span class="stat-label">검색 진행:</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">소요 시간:</span>
+                    <span id="progressTime">0초</span>
+                </div>
+            </div>
         </div>
 
         <div id="resultContainer">
@@ -719,6 +834,7 @@
         var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
         var currentTab = 'detail';
         var currentCategory = 'all';  // ✅ 카테고리 필터
+        var searchStartTime = 0;  // ✅ 검색 시작 시간
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
@@ -941,6 +1057,29 @@
             }
         }
 
+        // ✅ 진행도 업데이트 함수
+        function updateProgress(step, message, percent, count) {
+            var progressContainer = document.getElementById('progressContainer');
+            var progressStep = document.getElementById('progressStep');
+            var progressMessage = document.getElementById('progressMessage');
+            var progressFill = document.getElementById('progressFill');
+            var progressPercent = document.getElementById('progressPercent');
+            var progressCount = document.getElementById('progressCount');
+            var progressTime = document.getElementById('progressTime');
+            
+            // 진행도 표시
+            progressContainer.classList.add('show');
+            progressStep.textContent = step;
+            progressMessage.textContent = step + ': ' + message;
+            progressFill.style.width = percent + '%';
+            progressPercent.textContent = Math.round(percent) + '%';
+            progressCount.textContent = count;
+            
+            // 소요 시간 업데이트
+            var elapsedSeconds = Math.round((Date.now() - searchStartTime) / 1000);
+            progressTime.textContent = elapsedSeconds + '초';
+        }
+
         // ✅ 펼치기/접기 함수
         function toggleSearchSection() {
             var searchSection = document.getElementById('searchSection');
@@ -1028,6 +1167,10 @@
 
         // ===== 검색 실행 =====
         async function startSearch() {
+            // ✅ 검색 시작 - 진행도 초기화
+            searchStartTime = Date.now();
+            updateProgress('1단계', '데이터 로드 중...', 10, 0);
+            
             var brandVal = document.getElementById("brandInput").value.trim();
             var compVal = document.getElementById("compInput").value.trim();
             var useVal = document.getElementById("useFilter").value.trim();
@@ -1051,6 +1194,7 @@
             // 입력 필수 조건: 상표명/품목명 또는 작물명1
             if (!brandVal && !crops.length) {
                 resultDiv.innerHTML = "<div class='empty-msg'>⚠️ 상표명/품목명 또는 작물명1을 입력하세요.</div>";
+                document.getElementById('progressContainer').classList.remove('show');
                 return;
             }
 
@@ -1130,15 +1274,22 @@
                 
                 currentData = allData;
                 
-                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음
+                // ✅ 2단계: 정렬
+                updateProgress('2단계', '데이터 정렬 중...', 50, allData.length);
                 sortByOwnership();
                 
-                // ✅ 정렬 후 테이블 다시 그리기
-                console.log('🔧 renderTable() 호출 직전 currentData 첫 항목:', currentData[0]?.pestiBrandName);
-                console.log('📋 currentData 길이:', currentData.length);
+                // ✅ 3단계: 필터링 및 표시
+                updateProgress('3단계', '필터링 및 결과 표시...', 85, currentData.length);
                 currentPage = 1;
                 renderTable();
-                console.log('✅ renderTable() 호출 완료');
+                
+                // ✅ 검색 완료
+                updateProgress('완료!', '✅ 검색이 완료되었습니다', 100, currentData.length);
+                
+                // 2초 후 진행도 바 자동 숨김
+                setTimeout(function() {
+                    document.getElementById('progressContainer').classList.remove('show');
+                }, 2000);
                 
                 // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
                 if (brandVal) {
@@ -1225,8 +1376,13 @@
             html += "</div>";
             html += "</div>";
             
+            // ✅ 상단 스크롤 표시
+            html += "<div class='scroll-indicator' id='topScrollIndicator'>";
+            html += "<div class='scroll-indicator-content'></div>";
+            html += "</div>";
+            
             // 테이블
-            html += "<div class='table-wrapper'>";
+            html += "<div class='table-wrapper' id='mainTableWrapper'>";
             html += "<table>";
             
             // 탭별 헤더
@@ -1258,6 +1414,29 @@
             html += renderPagination(currentPage, totalPages, displayData.length);
             
             resultDiv.innerHTML = html;
+            
+            // ✅ 스크롤 동기화
+            setTimeout(function() {
+                syncTableScroll();
+            }, 100);
+        }
+        
+        // ✅ 테이블 스크롤 동기화 함수
+        function syncTableScroll() {
+            var topScroll = document.getElementById('topScrollIndicator');
+            var tableWrapper = document.getElementById('mainTableWrapper');
+            
+            if (!topScroll || !tableWrapper) return;
+            
+            // 테이블 스크롤 → 상단 표시 동기화
+            tableWrapper.addEventListener('scroll', function() {
+                topScroll.scrollLeft = tableWrapper.scrollLeft;
+            });
+            
+            // 상단 표시 스크롤 → 테이블 동기화
+            topScroll.addEventListener('scroll', function() {
+                tableWrapper.scrollLeft = topScroll.scrollLeft;
+            });
         }
 
         // ===== 페이지네이션 렌더링 =====
