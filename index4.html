@@ -589,6 +589,49 @@
             initializeFirebase();
         }
 
+        // ✅ 정렬 함수 (재사용 가능)
+        function sortByOwnership() {
+            if (currentData.length > 0) {
+                currentData.sort(function(a, b) {
+                    var aBrandName = a.pestiBrandName || a.name || '';
+                    var bBrandName = b.pestiBrandName || b.name || '';
+                    
+                    // 🔄 포함 검색으로 변경
+                    var aOwned = myPesticides.some(function(pesticide) {
+                        return aBrandName.includes(pesticide) || pesticide.includes(aBrandName);
+                    });
+                    var bOwned = myPesticides.some(function(pesticide) {
+                        return bBrandName.includes(pesticide) || pesticide.includes(bBrandName);
+                    });
+                    
+                    // 1️⃣ 보유 여부
+                    if (aOwned && !bOwned) return -1;
+                    if (!aOwned && bOwned) return 1;
+                    
+                    // 2️⃣ 방제 횟수
+                    var aUseNum = parseInt(a.useNum || '0') || 999;
+                    var bUseNum = parseInt(b.useNum || '0') || 999;
+                    if (aUseNum !== bUseNum) return aUseNum - bUseNum;
+                    
+                    // 3️⃣ 독성
+                    var toxicOrder = {'저독성': 1, '중독성': 2, '고독성': 3, '극독성': 4};
+                    var aToxic = toxicOrder[a.toxicGubun || '-'] || 999;
+                    var bToxic = toxicOrder[b.toxicGubun || '-'] || 999;
+                    if (aToxic !== bToxic) return aToxic - bToxic;
+                    
+                    return 0;
+                });
+                
+                var ownedCount = currentData.filter(function(item) {
+                    var brandName = item.pestiBrandName || item.name || '';
+                    return myPesticides.some(function(pesticide) {
+                        return brandName.includes(pesticide) || pesticide.includes(brandName);
+                    });
+                }).length;
+                console.log('✅ 정렬 완료: 보유(' + ownedCount + '개) → 방제횟수 적음 → 독성 낮음');
+            }
+        }
+
         // ===== TOP 버튼 =====
         var topBtn = document.getElementById("topBtn");
         window.addEventListener("scroll", function() {
@@ -863,75 +906,15 @@
                 
                 currentData = allData;
                 
-                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음 (index6 방식)
-                if (currentData.length > 0) {
-                    // 디버깅: 처음 몇 개 항목 확인
-                    console.log('🔍 검색 결과 첫 항목 정보:');
-                    for (let i = 0; i < Math.min(3, currentData.length); i++) {
-                        console.log('  항목 ' + i + ':', {
-                            pestiBrandName: currentData[i].pestiBrandName,
-                            name: currentData[i].name,
-                            useNum: currentData[i].useNum,
-                            toxicGubun: currentData[i].toxicGubun
-                        });
-                    }
-                    
-                    console.log('📋 보유 농약 목록:', myPesticides);
-                    
-                    currentData.sort(function(a, b) {
-                        var aBrandName = a.pestiBrandName || a.name || '';
-                        var bBrandName = b.pestiBrandName || b.name || '';
-                        
-                        // 🔄 포함 검색으로 변경 (예: "근사미(바스타)" ↔ "바스타")
-                        var aOwned = myPesticides.some(function(pesticide) {
-                            return aBrandName.includes(pesticide) || pesticide.includes(aBrandName);
-                        });
-                        var bOwned = myPesticides.some(function(pesticide) {
-                            return bBrandName.includes(pesticide) || pesticide.includes(bBrandName);
-                        });
-                        
-                        // 1️⃣ 보유 여부 (보유한 것이 먼저)
-                        if (aOwned && !bOwned) return -1;
-                        if (!aOwned && bOwned) return 1;
-                        
-                        // 2️⃣ 방제 횟수가 적은 것이 먼저
-                        var aUseNum = parseInt(a.useNum || '0') || 999;
-                        var bUseNum = parseInt(b.useNum || '0') || 999;
-                        if (aUseNum !== bUseNum) return aUseNum - bUseNum;
-                        
-                        // 3️⃣ 독성이 낮은 것이 먼저 (undefined 처리)
-                        var toxicOrder = {'저독성': 1, '중독성': 2, '고독성': 3, '극독성': 4};
-                        var aToxic = toxicOrder[a.toxicGubun || '-'] || 999;
-                        var bToxic = toxicOrder[b.toxicGubun || '-'] || 999;
-                        if (aToxic !== bToxic) return aToxic - bToxic;
-                        
-                        return 0;
-                    });
-                    
-                    var ownedCount = currentData.filter(function(item) {
-                        var brandName = item.pestiBrandName || item.name || '';
-                        return myPesticides.some(function(pesticide) {
-                            return brandName.includes(pesticide) || pesticide.includes(brandName);
-                        });
-                    }).length;
-                    console.log('✅ 정렬 완료: 보유(' + ownedCount + '개) → 방제횟수 적음 → 독성 낮음');
-                    
-                    // 정렬 후 처음 몇 개 항목 확인
-                    console.log('📊 정렬 후 결과 (처음 5개):');
-                    for (let i = 0; i < Math.min(5, currentData.length); i++) {
-                        var brandName = currentData[i].pestiBrandName || currentData[i].name || '';
-                        var isOwned = myPesticides.some(function(pesticide) {
-                            return brandName.includes(pesticide) || pesticide.includes(brandName);
-                        });
-                        console.log('  ' + (i+1) + '번: ' + brandName + 
-                                   ' | 보유: ' + (isOwned ? 'O' : 'X') + 
-                                   ' | 횟수: ' + currentData[i].useNum + 
-                                   ' | 독성: ' + (currentData[i].toxicGubun || '-'));
-                    }
-                }
-                // ✅ 정렬 후 테이블 다시 그리기 (새로 추가) ← 여기!
+                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음
+                sortByOwnership();
+                
+                // ✅ 정렬 후 테이블 다시 그리기
+                console.log('🔧 renderTable() 호출 직전 currentData 첫 항목:', currentData[0]?.pestiBrandName);
+                console.log('📋 currentData 길이:', currentData.length);
                 currentPage = 1;
                 renderTable();
+                console.log('✅ renderTable() 호출 완료');
                 
                 // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
                 if (brandVal) {
@@ -941,7 +924,7 @@
                             var itemCrop = item.cropName || '';
                             // AND: 입력된 모든 작물명이 포함되어야 함
                             return crops.every(function(crop) {
-                                return itemCrop.indexOf(crop) !== -1;
+                                return itemCrop.indexOf(crop) !== -1
                             });
                         });
                     }
@@ -956,6 +939,9 @@
                             });
                         });
                     }
+                    
+                    // ✅ 추가 필터 후 다시 정렬!
+                    sortByOwnership();
                 }
                 
                 // SVC02 상세 정보 통합
