@@ -929,6 +929,9 @@
                                    ' | 독성: ' + (currentData[i].toxicGubun || '-'));
                     }
                 }
+                // ✅ 정렬 후 테이블 다시 그리기 (새로 추가) ← 여기!
+                currentPage = 1;
+                displayResults();
                 
                 // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
                 if (brandVal) {
