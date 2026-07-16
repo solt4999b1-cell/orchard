@@ -79,6 +79,26 @@
         .pagination-control button { padding: 8px 15px; font-size: 13px; }
         
         .table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
+        
+        /* 스크롤바 스타일 */
+        .table-wrapper::-webkit-scrollbar {
+            height: 12px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #c0c0c0;
+            border-radius: 4px;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+        .table-wrapper {
+            scrollbar-color: #c0c0c0 #f1f1f1;
+            scrollbar-width: thin;
+        }
+        
         table { width: 100%; border-collapse: collapse; }
         thead { background-color: #f5f5f5; }
         th { padding: 12px; text-align: left; font-size: 12px; font-weight: bold; color: #333; border-bottom: 2px solid #ddd; white-space: nowrap; }
