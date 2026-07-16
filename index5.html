@@ -50,39 +50,40 @@
     .app-container {
       max-width: 900px;
       margin: 0 auto;
-      padding: 10px;
-      padding-bottom: 60px;
+      padding: 4px;
+      padding-bottom: 40px;
     }
 
     .app-header {
       background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
       color: #fff;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 4px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
     .app-header h1 {
-      font-size: 24px;
-      margin-bottom: 6px;
+      font-size: 18px;
+      margin-bottom: 2px;
     }
 
     .app-header p {
-      font-size: 12px;
+      font-size: 10px;
       opacity: 0.9;
-      line-height: 1.6;
+      line-height: 1.4;
+      margin: 0;
     }
 
     .sync-status {
       display: flex;
       align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      margin-top: 8px;
-      padding: 8px 12px;
+      gap: 4px;
+      font-size: 9px;
+      margin-top: 4px;
+      padding: 4px 8px;
       background: rgba(255, 255, 255, 0.2);
-      border-radius: 6px;
+      border-radius: 4px;
       width: fit-content;
     }
 
@@ -96,49 +97,49 @@
 
     .stat-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
-      gap: 8px;
-      margin-top: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 4px;
+      margin-top: 4px;
     }
 
     .stat-box {
       background: rgba(255, 255, 255, 0.2);
-      padding: 8px;
-      border-radius: 6px;
+      padding: 4px;
+      border-radius: 4px;
       text-align: center;
     }
 
     .stat-number {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
     }
 
     .stat-label {
-      font-size: 10px;
+      font-size: 8px;
       opacity: 0.8;
-      margin-top: 2px;
+      margin-top: 1px;
     }
 
     .search-section {
       background: #fff;
-      padding: 16px;
+      padding: 8px;
       border-radius: 8px;
-      margin-bottom: 16px;
+      margin-bottom: 2px;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
     }
 
     .search-bar {
       display: flex;
-      gap: 8px;
-      margin-bottom: 12px;
+      gap: 4px;
+      margin-bottom: 0px;
     }
 
     .search-input {
       flex: 1;
-      padding: 10px 12px;
+      padding: 6px 8px;
       border: 1px solid var(--gray-300);
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: 4px;
+      font-size: 11px;
       font-family: inherit;
     }
 
@@ -149,14 +150,14 @@
     }
 
     .btn {
-      padding: 10px 16px;
+      padding: 6px 12px;
       background: var(--green-dark);
       color: #fff;
       border: none;
-      border-radius: 6px;
+      border-radius: 4px;
       font-weight: 600;
       cursor: pointer;
-      font-size: 13px;
+      font-size: 12px;
       transition: background 0.2s;
     }
 
@@ -170,16 +171,16 @@
     }
 
     .results-section {
-      margin-bottom: 20px;
+      margin-bottom: 4px;
     }
 
     .section-title {
-      font-size: 13px;
-      font-weight: 700;
-      padding: 8px 0 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 0 4px 8px;
       color: var(--gray-600);
-      border-left: 3px solid var(--green-dark);
-      margin-bottom: 8px;
+      border-left: 2px solid var(--green-dark);
+      margin-bottom: 4px;
     }
 
     .result-card {
@@ -329,24 +330,24 @@
     }
 
     .form-group {
-      margin-bottom: 14px;
+      margin-bottom: 6px;
     }
 
     .form-label {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 600;
       color: var(--gray-600);
       display: block;
-      margin-bottom: 5px;
+      margin-bottom: 2px;
     }
 
     .form-input,
     .form-select {
       width: 100%;
-      padding: 10px;
+      padding: 6px;
       border: 1px solid var(--gray-300);
-      border-radius: 6px;
-      font-size: 13px;
+      border-radius: 4px;
+      font-size: 11px;
       font-family: inherit;
     }
 
@@ -354,19 +355,19 @@
     .form-select:focus {
       outline: none;
       border-color: var(--green-dark);
-      box-shadow: 0 0 0 3px var(--green-light);
+      box-shadow: 0 0 0 2px var(--green-light);
     }
 
     .form-row {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      gap: 6px;
     }
 
     .form-btns {
       display: flex;
-      gap: 10px;
-      margin-top: 24px;
+      gap: 4px;
+      margin-top: 8px;
     }
 
     .form-btns .btn {
@@ -395,17 +396,108 @@
     }
 
     @media (max-width: 480px) {
-      .app-container {
-        padding: 8px;
+      body {
+        font-size: 11px;
       }
+      
+      .app-container {
+        padding: 2px;
+        padding-bottom: 30px;
+      }
+      
+      .app-header {
+        padding: 6px;
+        margin-bottom: 2px;
+        border-radius: 6px;
+      }
+      
+      .app-header h1 {
+        font-size: 14px;
+        margin-bottom: 1px;
+      }
+      
+      .app-header p {
+        font-size: 9px;
+        line-height: 1.3;
+      }
+      
+      .stat-grid {
+        gap: 2px;
+        margin-top: 2px;
+      }
+      
+      .stat-box {
+        padding: 3px;
+        border-radius: 3px;
+      }
+      
+      .stat-number {
+        font-size: 12px;
+      }
+      
+      .stat-label {
+        font-size: 7px;
+        margin-top: 0px;
+      }
+      
+      .sync-status {
+        gap: 2px;
+        font-size: 8px;
+        margin-top: 2px;
+        padding: 3px 6px;
+        border-radius: 3px;
+      }
+      
+      .search-section {
+        padding: 4px;
+        margin-bottom: 2px;
+        border-radius: 6px;
+      }
+      
+      .search-bar {
+        flex-direction: column;
+        gap: 2px;
+        margin-bottom: 0px;
+      }
+      
+      .search-input {
+        padding: 4px 6px;
+        border-radius: 3px;
+        font-size: 10px;
+      }
+      
       .form-row {
         grid-template-columns: 1fr;
       }
-      .search-bar {
-        flex-direction: column;
-      }
+      
       .btn {
         width: 100%;
+        padding: 6px;
+        font-size: 11px;
+        border-radius: 4px;
+      }
+      
+      .btn-small {
+        padding: 4px 8px;
+        font-size: 10px;
+      }
+      
+      .header-wrap {
+        gap: 4px !important;
+      }
+      
+      .header-text h1 {
+        margin-bottom: 2px !important;
+        font-size: 16px !important;
+      }
+      
+      .header-text h5 {
+        font-size: 9px !important;
+      }
+      
+      .header-image img {
+        width: 60px !important;
+        height: 60px !important;
       }
     }
   </style>
@@ -415,15 +507,15 @@
 <div class="app-container">
   <!-- 헤더 -->
   
-    <div class="header-wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 20px; position: relative;">
+    <div class="header-wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;">
       <div class="header-text" style="flex: 1;">
-          <h1 style="margin-top: 0; margin-bottom: 10px;">🌱 내 농약장 관리</h1>
-          <h5 style="margin: 0; color: #666;">제작: 이용호 &nbsp; Copyright 2026.07.16. All Right Reserved</h5>
+          <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리</h1>
+          <h5 style="margin: 0; color: #666; font-size: 11px;">제작: 이용호 &nbsp; Copyright 2026.07.16. All Right Reserved</h5>
       </div>
   
       <div class="header-image" style="flex-shrink: 0;">
           <a href="https://solt4999b1-cell.github.io/orchard/index5.html" target="_blank" style="display: block;">
-              <img src="./2cp8g.png" alt="QR코드" style="width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 4px; display: block;">
+              <img src="./2cp8g.png" alt="QR코드" style="width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 4px; display: block;">
           </a>
       </div>
     </div>  
