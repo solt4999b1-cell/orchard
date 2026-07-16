@@ -392,7 +392,21 @@
                 right: 10px;
             }
         }
+        
+        /* ✅ 보유 농약 행 스타일 */
+        .row-owned {
+            background-color: #e8f5e9 !important;
+        }
+        
+        .row-owned td {
+            color: #1b5e20;
+            font-weight: bold;
+        }
     </style>
+    
+    <!-- ✅ Firebase 라이브러리 -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
 </head>
 <body>
 
@@ -510,6 +524,76 @@
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
+
+        // ✅ Firebase 설정 (GAS에서 가져오기)
+        let firebaseConfig = null;
+        let myPesticides = [];
+
+        async function initializeFirebase() {
+            try {
+                console.log('🔧 Firebase 초기화 중...');
+                
+                // GAS에서 Firebase 설정 요청
+                const response = await fetch(GAS_URL + '?action=getFirebaseConfig');
+                const data = await response.json();
+                
+                if (data.success) {
+                    firebaseConfig = data.config;
+                    console.log('✅ Firebase 설정 로드됨');
+                    
+                    // Firebase 초기화
+                    if (!firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                        console.log('✅ Firebase 초기화 완료');
+                    }
+                    
+                    // 보유 농약 로드
+                    await loadMyPesticides();
+                } else {
+                    console.error('❌ Firebase 설정 로드 실패:', data.error);
+                }
+            } catch (err) {
+                console.error('❌ Firebase 초기화 오류:', err);
+            }
+        }
+
+        async function loadMyPesticides() {
+            try {
+                const db = firebase.firestore();
+                const snapshot = await db.collection('myPesticides').get();
+                
+                console.log('🔍 Firestore 문서 수:', snapshot.docs.length + '개');
+                
+                myPesticides = [];
+                snapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    console.log('📄 문서 ID:', doc.id, '내용:', data);
+                    
+                    // 여러 필드명 시도
+                    const name = data.name || data.상품명 || data.pestiBrandName || data.농약명 || '';
+                    if (name) {
+                        myPesticides.push(name);
+                    }
+                });
+                
+                console.log('✅ 보유 농약 로드됨:', myPesticides.length + '개');
+                console.log('   농약 목록:', myPesticides);
+                
+                // 로드된 농약 확인
+                if (myPesticides.length === 0) {
+                    console.warn('⚠️ 보유 농약이 없거나 필드명이 맞지 않습니다!');
+                }
+            } catch (err) {
+                console.error('❌ 보유 농약 로드 실패:', err);
+            }
+        }
+
+        // 페이지 로드 시 Firebase 초기화
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeFirebase);
+        } else {
+            initializeFirebase();
+        }
 
         // ===== TOP 버튼 =====
         var topBtn = document.getElementById("topBtn");
@@ -785,6 +869,36 @@
                 
                 currentData = allData;
                 
+                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음
+                if (myPesticides.length > 0 || currentData.length > 0) {
+                    currentData.sort(function(a, b) {
+                        var aOwned = myPesticides.includes(a.pestiBrandName || a.name || '');
+                        var bOwned = myPesticides.includes(b.pestiBrandName || b.name || '');
+                        
+                        // 1️⃣ 보유 여부 (보유한 것이 먼저)
+                        if (aOwned && !bOwned) return -1;
+                        if (!aOwned && bOwned) return 1;
+                        
+                        // 2️⃣ 방제 횟수가 적은 것이 먼저
+                        var aUseNum = parseInt(a.useNum || '0') || 999;
+                        var bUseNum = parseInt(b.useNum || '0') || 999;
+                        if (aUseNum !== bUseNum) return aUseNum - bUseNum;
+                        
+                        // 3️⃣ 독성이 낮은 것이 먼저
+                        var toxicOrder = {'저독성': 1, '중독성': 2, '고독성': 3, '극독성': 4};
+                        var aToxic = toxicOrder[a.toxicGubun || '-'] || 999;
+                        var bToxic = toxicOrder[b.toxicGubun || '-'] || 999;
+                        if (aToxic !== bToxic) return aToxic - bToxic;
+                        
+                        return 0;
+                    });
+                    
+                    var ownedCount = currentData.filter(function(item) {
+                        return myPesticides.includes(item.pestiBrandName || item.name || '');
+                    }).length;
+                    console.log('✅ 정렬 완료: 보유(' + ownedCount + '개) → 방제횟수 적음 → 독성 낮음');
+                }
+                
                 // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
                 if (brandVal) {
                     // 작물명 필터 적용 (AND 조건: 입력된 작물명 모두 포함)
@@ -983,7 +1097,7 @@
                 "<th class='col-품목'>품목명</th>" +
                 "<th class='col-ingredient'>유효성분<br>함유량</th>" +
                 "<th class='col-brand'>상표명</th>" +
-                "<th class='col-guidebook'>작물보호제<br>지침서</th>" +
+                "<th class='col-guidebook'>농약보유<br>여부</th>" +
                 "<th class='col-toxin'>인축독성</th>" +
                 "<th class='col-fish'>어독성</th>" +
                 "<th class='col-dilute'>희석배수</th>" +
@@ -996,7 +1110,12 @@
         }
 
         function renderDetailRow(item, num) {
-            return "<tr>" +
+            // ✅ 보유 농약 확인
+            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            var rowClass = isOwned ? " class='row-owned'" : "";
+            var marker = isOwned ? "⭐ " : "";
+            
+            return "<tr" + rowClass + ">" +
                 "<td class='col-num'>" + num + "</td>" +
                 "<td class='col-gubun'>" + (item.cmpaItmNm || "제조") + "</td>" +
                 "<td class='col-yongdo'>" + (item.useName || "-") + "</td>" +
@@ -1004,8 +1123,8 @@
                 "<td class='col-disease'>" + (item.diseaseWeedName || "-") + "</td>" +
                 "<td class='col-품목'>" + (item.pestiKorName || "-") + "</td>" +
                 "<td class='col-ingredient'>" + getIngredientAmount(item) + "</td>" +
-                "<td class='col-brand'><strong>" + (item.pestiBrandName || "-") + "</strong></td>" +
-                "<td class='col-guidebook'><span class='no-data'>-</span></td>" +
+                "<td class='col-brand'><strong>" + marker + (item.pestiBrandName || "-") + "</strong></td>" +
+                "<td class='col-guidebook'>" + (isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-") + "</td>" +
                 "<td class='col-toxin'>" + (item.toxicGubun || "-") + "</td>" +
                 "<td class='col-fish'>" + (item.fishToxic || "-") + "</td>" +
                 "<td class='col-dilute'>" + (item.dilutUnit || "-") + "</td>" +
@@ -1026,7 +1145,7 @@
                 "<th class='col-품목'>품목명</th>" +
                 "<th class='col-ingredient'>유효성분<br>함유량</th>" +
                 "<th class='col-brand'>상표명</th>" +
-                "<th class='col-guidebook'>작물보호제<br>지침서</th>" +
+                "<th class='col-guidebook'>농약보유<br>여부</th>" +
                 "<th class='col-toxin'>인축독성</th>" +
                 "<th class='col-fish'>어독성</th>" +
                 "<th class='col-moa'>작용기작</th>" +
@@ -1035,14 +1154,19 @@
         }
 
         function renderProductRow(item, num) {
-            return "<tr>" +
+            // ✅ 보유 농약 확인
+            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            var rowClass = isOwned ? " class='row-owned'" : "";
+            var marker = isOwned ? "⭐ " : "";
+            
+            return "<tr" + rowClass + ">" +
                 "<td class='col-num'>" + num + "</td>" +
                 "<td class='col-gubun'>" + (item.cmpaItmNm || "제조") + "</td>" +
                 "<td class='col-yongdo'>" + (item.useName || "-") + "</td>" +
                 "<td class='col-품목'>" + (item.pestiKorName || "-") + "</td>" +
                 "<td class='col-ingredient'>" + getIngredientAmount(item) + "</td>" +
-                "<td class='col-brand'><strong>" + (item.pestiBrandName || "-") + "</strong></td>" +
-                "<td class='col-guidebook'><span class='no-data'>-</span></td>" +
+                "<td class='col-brand'><strong>" + marker + (item.pestiBrandName || "-") + "</strong></td>" +
+                "<td class='col-guidebook'>" + (isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-") + "</td>" +
                 "<td class='col-toxin'>" + (item.toxicGubun || "-") + "</td>" +
                 "<td class='col-fish'>" + (item.fishToxic || "-") + "</td>" +
                 "<td class='col-moa'>" + (item.indictSymbl || "-") + "</td>" +
@@ -1064,13 +1188,18 @@
         }
 
         function renderTargetRow(item, num) {
-            return "<tr>" +
+            // ✅ 보유 농약 확인
+            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            var rowClass = isOwned ? " class='row-owned'" : "";
+            var marker = isOwned ? "⭐ " : "";
+            
+            return "<tr" + rowClass + ">" +
                 "<td class='col-num'>" + num + "</td>" +
                 "<td class='col-yongdo'>" + (item.useName || "-") + "</td>" +
                 "<td class='col-crop'>" + (item.cropName || "-") + "</td>" +
                 "<td class='col-disease'>" + (item.diseaseWeedName || "-") + "</td>" +
                 "<td class='col-품목'>" + (item.pestiKorName || "-") + " " + getIngredientAmount(item) + "</td>" +
-                "<td class='col-brand'><strong>" + (item.pestiBrandName || "-") + "</strong></td>" +
+                "<td class='col-brand'><strong>" + marker + (item.pestiBrandName || "-") + "</strong></td>" +
                 "<td class='col-moa'>" + (item.indictSymbl || "-") + "</td>" +
                 "</tr>";
         }
