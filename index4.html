@@ -404,9 +404,10 @@
         }
     </style>
     
-    <!-- ✅ Firebase 라이브러리 -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js"></script>
+    <!-- ✅ Firebase 라이브러리 (index6과 동일 - 10.5.0 compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
 </head>
 <body>
 
@@ -525,66 +526,59 @@
         var currentPage = 1;
         var pageSize = 250;
 
-        // ✅ Firebase 설정 (GAS에서 가져오기)
-        let firebaseConfig = null;
-        let myPesticides = [];
+        // ✅ Firebase 설정 (index6과 동일)
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+            authDomain: "orchardapp-b81ca.firebaseapp.com",
+            projectId: "orchardapp-b81ca"
+        };
 
+        // ✅ Firebase 전역 변수
+        let db = null;
+        let myPesticides = [];  // 보유 농약 목록
+
+        // ✅ Firebase 초기화 (index6과 동일)
         async function initializeFirebase() {
             try {
                 console.log('🔧 Firebase 초기화 중...');
                 
-                // GAS에서 Firebase 설정 요청
-                const response = await fetch(GAS_URL + '?action=getFirebaseConfig');
-                const data = await response.json();
-                
-                if (data.success) {
-                    firebaseConfig = data.config;
-                    console.log('✅ Firebase 설정 로드됨');
-                    
-                    // Firebase 초기화
-                    if (!firebase.apps.length) {
-                        firebase.initializeApp(firebaseConfig);
-                        console.log('✅ Firebase 초기화 완료');
-                    }
-                    
-                    // 보유 농약 로드
-                    await loadMyPesticides();
-                } else {
-                    console.error('❌ Firebase 설정 로드 실패:', data.error);
+                if (!firebase.apps.length) {
+                    firebase.initializeApp(FIREBASE_CONFIG);
+                    console.log('✅ Firebase 초기화 완료');
                 }
+                
+                db = firebase.firestore();
+                
+                // 보유 농약 로드
+                await loadMyPesticides();
             } catch (err) {
                 console.error('❌ Firebase 초기화 오류:', err);
             }
         }
 
+        // ✅ Firestore에서 보유 농약 로드 (index6과 동일)
         async function loadMyPesticides() {
             try {
-                const db = firebase.firestore();
+                if (!db) return;
+                
+                console.log('🔄 Firestore에서 보유 농약 로드 중...');
+                
                 const snapshot = await db.collection('myPesticides').get();
-                
-                console.log('🔍 Firestore 문서 수:', snapshot.docs.length + '개');
-                
                 myPesticides = [];
-                snapshot.docs.forEach(doc => {
+                
+                snapshot.forEach(doc => {
                     const data = doc.data();
-                    console.log('📄 문서 ID:', doc.id, '내용:', data);
-                    
-                    // 여러 필드명 시도
-                    const name = data.name || data.상품명 || data.pestiBrandName || data.농약명 || '';
+                    const name = data.name || data.상품명 || '';
                     if (name) {
                         myPesticides.push(name);
+                        console.log('📄 로드됨:', name);
                     }
                 });
                 
-                console.log('✅ 보유 농약 로드됨:', myPesticides.length + '개');
-                console.log('   농약 목록:', myPesticides);
-                
-                // 로드된 농약 확인
-                if (myPesticides.length === 0) {
-                    console.warn('⚠️ 보유 농약이 없거나 필드명이 맞지 않습니다!');
-                }
+                console.log('✅ 보유 농약 로드 완료:', myPesticides.length + '개');
+                console.log('   목록:', myPesticides);
             } catch (err) {
-                console.error('❌ 보유 농약 로드 실패:', err);
+                console.error('❌ 보유 농약 로드 오류:', err);
             }
         }
 
@@ -869,11 +863,32 @@
                 
                 currentData = allData;
                 
-                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음
-                if (myPesticides.length > 0 || currentData.length > 0) {
+                // ✅ 정렬: 보유 → 방제 횟수 적음 → 독성 낮음 (index6 방식)
+                if (currentData.length > 0) {
+                    // 디버깅: 처음 몇 개 항목 확인
+                    console.log('🔍 검색 결과 첫 항목 정보:');
+                    for (let i = 0; i < Math.min(3, currentData.length); i++) {
+                        console.log('  항목 ' + i + ':', {
+                            pestiBrandName: currentData[i].pestiBrandName,
+                            name: currentData[i].name,
+                            useNum: currentData[i].useNum,
+                            toxicGubun: currentData[i].toxicGubun
+                        });
+                    }
+                    
+                    console.log('📋 보유 농약 목록:', myPesticides);
+                    
                     currentData.sort(function(a, b) {
-                        var aOwned = myPesticides.includes(a.pestiBrandName || a.name || '');
-                        var bOwned = myPesticides.includes(b.pestiBrandName || b.name || '');
+                        var aBrandName = a.pestiBrandName || a.name || '';
+                        var bBrandName = b.pestiBrandName || b.name || '';
+                        
+                        // 🔄 포함 검색으로 변경 (예: "근사미(바스타)" ↔ "바스타")
+                        var aOwned = myPesticides.some(function(pesticide) {
+                            return aBrandName.includes(pesticide) || pesticide.includes(aBrandName);
+                        });
+                        var bOwned = myPesticides.some(function(pesticide) {
+                            return bBrandName.includes(pesticide) || pesticide.includes(bBrandName);
+                        });
                         
                         // 1️⃣ 보유 여부 (보유한 것이 먼저)
                         if (aOwned && !bOwned) return -1;
@@ -884,7 +899,7 @@
                         var bUseNum = parseInt(b.useNum || '0') || 999;
                         if (aUseNum !== bUseNum) return aUseNum - bUseNum;
                         
-                        // 3️⃣ 독성이 낮은 것이 먼저
+                        // 3️⃣ 독성이 낮은 것이 먼저 (undefined 처리)
                         var toxicOrder = {'저독성': 1, '중독성': 2, '고독성': 3, '극독성': 4};
                         var aToxic = toxicOrder[a.toxicGubun || '-'] || 999;
                         var bToxic = toxicOrder[b.toxicGubun || '-'] || 999;
@@ -894,9 +909,25 @@
                     });
                     
                     var ownedCount = currentData.filter(function(item) {
-                        return myPesticides.includes(item.pestiBrandName || item.name || '');
+                        var brandName = item.pestiBrandName || item.name || '';
+                        return myPesticides.some(function(pesticide) {
+                            return brandName.includes(pesticide) || pesticide.includes(brandName);
+                        });
                     }).length;
                     console.log('✅ 정렬 완료: 보유(' + ownedCount + '개) → 방제횟수 적음 → 독성 낮음');
+                    
+                    // 정렬 후 처음 몇 개 항목 확인
+                    console.log('📊 정렬 후 결과 (처음 5개):');
+                    for (let i = 0; i < Math.min(5, currentData.length); i++) {
+                        var brandName = currentData[i].pestiBrandName || currentData[i].name || '';
+                        var isOwned = myPesticides.some(function(pesticide) {
+                            return brandName.includes(pesticide) || pesticide.includes(brandName);
+                        });
+                        console.log('  ' + (i+1) + '번: ' + brandName + 
+                                   ' | 보유: ' + (isOwned ? 'O' : 'X') + 
+                                   ' | 횟수: ' + currentData[i].useNum + 
+                                   ' | 독성: ' + (currentData[i].toxicGubun || '-'));
+                    }
                 }
                 
                 // 상표명이 있을 때만 추가 필터 적용 (작물명만 검색했으면 이미 위에서 교집합 처리)
@@ -1110,10 +1141,14 @@
         }
 
         function renderDetailRow(item, num) {
-            // ✅ 보유 농약 확인
-            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            // ✅ 보유 농약 확인 (포함 검색)
+            var brandName = item.pestiBrandName || item.name || '';
+            var isOwned = myPesticides.some(function(pesticide) {
+                return brandName.includes(pesticide) || pesticide.includes(brandName);
+            });
             var rowClass = isOwned ? " class='row-owned'" : "";
             var marker = isOwned ? "⭐ " : "";
+            var ownedStatus = isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-";
             
             return "<tr" + rowClass + ">" +
                 "<td class='col-num'>" + num + "</td>" +
@@ -1124,7 +1159,7 @@
                 "<td class='col-품목'>" + (item.pestiKorName || "-") + "</td>" +
                 "<td class='col-ingredient'>" + getIngredientAmount(item) + "</td>" +
                 "<td class='col-brand'><strong>" + marker + (item.pestiBrandName || "-") + "</strong></td>" +
-                "<td class='col-guidebook'>" + (isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-") + "</td>" +
+                "<td class='col-guidebook'>" + ownedStatus + "</td>" +
                 "<td class='col-toxin'>" + (item.toxicGubun || "-") + "</td>" +
                 "<td class='col-fish'>" + (item.fishToxic || "-") + "</td>" +
                 "<td class='col-dilute'>" + (item.dilutUnit || "-") + "</td>" +
@@ -1154,10 +1189,14 @@
         }
 
         function renderProductRow(item, num) {
-            // ✅ 보유 농약 확인
-            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            // ✅ 보유 농약 확인 (포함 검색)
+            var brandName = item.pestiBrandName || item.name || '';
+            var isOwned = myPesticides.some(function(pesticide) {
+                return brandName.includes(pesticide) || pesticide.includes(brandName);
+            });
             var rowClass = isOwned ? " class='row-owned'" : "";
             var marker = isOwned ? "⭐ " : "";
+            var ownedStatus = isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-";
             
             return "<tr" + rowClass + ">" +
                 "<td class='col-num'>" + num + "</td>" +
@@ -1166,7 +1205,7 @@
                 "<td class='col-품목'>" + (item.pestiKorName || "-") + "</td>" +
                 "<td class='col-ingredient'>" + getIngredientAmount(item) + "</td>" +
                 "<td class='col-brand'><strong>" + marker + (item.pestiBrandName || "-") + "</strong></td>" +
-                "<td class='col-guidebook'>" + (isOwned ? "<span style='color: #2e7d32; font-weight: bold;'>보유</span>" : "-") + "</td>" +
+                "<td class='col-guidebook'>" + ownedStatus + "</td>" +
                 "<td class='col-toxin'>" + (item.toxicGubun || "-") + "</td>" +
                 "<td class='col-fish'>" + (item.fishToxic || "-") + "</td>" +
                 "<td class='col-moa'>" + (item.indictSymbl || "-") + "</td>" +
@@ -1188,8 +1227,11 @@
         }
 
         function renderTargetRow(item, num) {
-            // ✅ 보유 농약 확인
-            var isOwned = myPesticides.includes(item.pestiBrandName || item.name || '');
+            // ✅ 보유 농약 확인 (포함 검색)
+            var brandName = item.pestiBrandName || item.name || '';
+            var isOwned = myPesticides.some(function(pesticide) {
+                return brandName.includes(pesticide) || pesticide.includes(brandName);
+            });
             var rowClass = isOwned ? " class='row-owned'" : "";
             var marker = isOwned ? "⭐ " : "";
             
