@@ -402,7 +402,75 @@
             color: #1b5e20;
             font-weight: bold;
         }
-    </style>
+        
+        /* ✅ 카테고리 탭 스타일 */
+        .category-tabs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 20px;
+            margin-top: 10px;
+        }
+        .category-tab {
+            padding: 10px 12px;
+            font-size: 13px;
+            font-weight: bold;
+            border: 2px solid #e0e0e0;
+            background-color: white;
+            color: #666;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .category-tab:hover {
+            border-color: #2196F3;
+            color: #2196F3;
+            background-color: #f0f7ff;
+        }
+        .category-tab.active {
+            background-color: #2196F3;
+            color: white;
+            border-color: #2196F3;
+        }
+        
+        /* ✅ 진행도 바 스타일 */
+        .progress-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: none;
+        }
+        .progress-container.show {
+            display: block;
+        }
+        .progress-message {
+            font-size: 13px;
+            font-weight: bold;
+            color: #0d47a1;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-bottom: 8px;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196F3, #1976D2);
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.5);
+        }
+        .progress-status {
+            font-size: 12px;
+            color: #666;
+        }
     
     <!-- ✅ Firebase 라이브러리 (index6과 동일 - 10.5.0 compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
@@ -509,6 +577,23 @@
             </div>
         </div>
 
+        <!-- ✅ 진행도 바 (검색 중 표시) -->
+        <div id="progressContainer" class="progress-container">
+            <div class="progress-message">검색 진행 중...</div>
+            <div class="progress-bar">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="progress-status"><span id="progressCount">0</span>개 / <span id="progressTotal">0</span>개</div>
+        </div>
+
+        <!-- ✅ 카테고리 탭 (검색 결과 후 표시) -->
+        <div id="categoryTabs" class="category-tabs" style="display: none;">
+            <button class="category-tab active" data-category="all" onclick="switchCategory('all')">전체</button>
+            <button class="category-tab" data-category="살균" onclick="switchCategory('살균')">살균</button>
+            <button class="category-tab" data-category="살충" onclick="switchCategory('살충')">살충</button>
+            <button class="category-tab" data-category="제초" onclick="switchCategory('제초')">제초</button>
+        </div>
+
         <div id="resultContainer">
             <div class="empty-msg">검색어를 입력하고 검색해 주세요.</div>
         </div>
@@ -522,6 +607,8 @@
         // ===== 설정 =====
         var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
         var currentTab = 'detail';
+        var currentCategory = 'all';  // ✅ 카테고리 필터 추가
+        var originalData = [];  // ✅ 원본 데이터 저장
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
@@ -744,12 +831,24 @@
             }
         }
 
+        // ✅ 카테고리 탭 전환 함수
+        function switchCategory(category) {
+            currentCategory = category;
+            currentPage = 1;
+            document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTable();
+        }
+
         // ===== 탭 전환 =====
         function switchTab(tab) {
             currentTab = tab;
             currentPage = 1;
+            currentCategory = 'all';  // ✅ 탭 변경 시 카테고리 리셋
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
+            document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
+            document.querySelector('[data-category="all"]').classList.add('active');
             renderTable();
         }
 
@@ -977,6 +1076,22 @@
             
             // 탭별 데이터 전처리 (중복 제거)
             var displayData = preprocessData(currentData, currentTab);
+            
+            // ✅ 카테고리별 필터링 (용도로 구분: 살균, 살충, 제초 등)
+            if (currentCategory !== 'all') {
+                displayData = displayData.filter(function(item) {
+                    var itemUse = item.useName || '';  // pestiUse → useName으로 변경!
+                    return itemUse.includes(currentCategory);
+                });
+            }
+            
+            // ✅ 카테고리 탭 표시
+            var categoryTabs = document.getElementById('categoryTabs');
+            if (displayData.length > 0) {
+                categoryTabs.style.display = 'grid';
+            } else {
+                categoryTabs.style.display = 'none';
+            }
             
             // 페이지네이션 계산
             var totalPages = Math.ceil(displayData.length / pageSize);
