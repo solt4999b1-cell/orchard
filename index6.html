@@ -658,21 +658,59 @@ const GAS = {
     const qs = new URLSearchParams({ ...params }).toString();
     const url = CONFIG.GAS_URL + '?' + qs;
     
+    console.log('🌐 GAS.call() 실행');
+    console.log('  전체 URL:', url);
+    
     try {
+      console.log('⏳ fetch 호출 중...');
       const res = await fetch(url);
+      console.log('✅ fetch 응답:', res.status, res.statusText);
+      
       const jr = await res.json();
-      if (!jr.ok) throw new Error(jr.error || 'GAS 호출 실패');
-      return jr.data || jr;
+      console.log('✅ JSON 파싱 완료:', jr);
+      
+      // ✅ 형식 1: {ok: true, data: {...}}
+      if (jr.ok !== undefined) {
+        console.log('📋 형식 1 감지 (ok 필드 있음)');
+        if (!jr.ok) {
+          console.error('❌ GAS 응답 오류:', jr.error);
+          throw new Error(jr.error || 'GAS 호출 실패');
+        }
+        console.log('✅ GAS 호출 성공, 데이터 반환');
+        return jr.data || jr;
+      }
+      
+      // ✅ 형식 2: 직접 데이터 반환 (ok 필드 없음)
+      if (jr.service !== undefined || jr.name !== undefined) {
+        console.log('📋 형식 2 감지 (ok 필드 없음, 직접 데이터)');
+        console.log('✅ GAS 호출 성공, 데이터 반환');
+        return jr;
+      }
+      
+      // ✅ 형식 3: 에러
+      if (jr.error) {
+        console.error('❌ GAS 응답 오류:', jr.error);
+        throw new Error(jr.error);
+      }
+      
+      console.log('✅ GAS 호출 성공');
+      return jr;
     } catch (err) {
-      console.error('❌ GAS 호출 실패:', err);
+      console.error('❌ GAS.call() 에러:', err);
+      console.error('  메시지:', err.message);
       throw err;
     }
   },
 
   rows(data) {
+    console.log('🔎 GAS.rows() 시작');
+    console.log('  입력 데이터:', data);
+    console.log('  입력 타입:', typeof data);
+    
     let best = [];
     (function dig(n) {
       if (Array.isArray(n)) {
+        console.log('  배열 발견 (길이:', n.length + ')');
         if (n.length > best.length && typeof n[0] === 'object') best = n;
         n.forEach(dig);
         return;
@@ -680,10 +718,16 @@ const GAS = {
       if (n && typeof n === 'object') Object.values(n).forEach(dig);
     })(data);
     
+    console.log('  best 배열 길이:', best.length);
+    console.log('  best 배열:', best);
+    
     if (best.length === 0) {
       const one = this.pick(data, ['sickNameKor', 'insectKorName', 'cropName']);
+      console.log('  one 값:', one);
       if (one) best = [data.service || data];
     }
+    
+    console.log('  최종 반환값:', best);
     return best;
   },
 
@@ -696,7 +740,33 @@ const GAS = {
   },
 
   name(row) {
-    return this.pick(row, ['sickNameKor', 'insectKorName', 'koreanName', 'name']);
+    // ✅ PSIS 데이터 필드명들 (우선순위 조정)
+    const result = this.pick(row, [
+      'pestiBrandName',       // 상표명 ← 최우선
+      'pestiKorName',         // 농약 한글명
+      'sickNameKor',          // 질병명
+      'insectKorName',        // 해충명
+      'koreanName',           // 한글명
+      'name',                 // 이름
+      'diseaseWeedName'       // 병해충명 ← 최후순 (공백이 많아서)
+    ]);
+    console.log('📛 GAS.name() - 행:', row, '→ 이름:', result);
+    return result;
+  },
+  
+  // ✅ type을 "살충" → "살충제"로 변환
+  type(typeStr) {
+    if (!typeStr) return '';
+    
+    const typeMap = {
+      '살충': '살충제',
+      '살균': '살균제',
+      '제초': '제초제',
+      '생장': '생장조절제',
+      '기타': '기타'
+    };
+    
+    return typeMap[typeStr] || typeStr + '제';  // 매핑 없으면 "제" 추가
   }
 };
 
@@ -707,6 +777,9 @@ const GAS = {
 async function searchPesticides() {
   const keyword = document.getElementById('search-input').value.trim();
   
+  console.log('🔍 searchPesticides 시작');
+  console.log('  입력값:', keyword);
+  
   if (!keyword) {
     showToast('❌ 검색어를 입력해주세요');
     return;
@@ -715,18 +788,38 @@ async function searchPesticides() {
   try {
     showLoading('검색 중...');
     
+    console.log('📤 GAS 호출 시작');
+    console.log('  URL:', CONFIG.GAS_URL);
+    console.log('  파라미터:', { target: 'psis', keyword: keyword, searchType: 'brand', displayCount: CONFIG.displayCount, startPoint: 1 });
+    
     const data = await GAS.call({
       target: 'psis',
       keyword: keyword,
+      searchType: 'brand',
       displayCount: CONFIG.displayCount,
       startPoint: 1
     });
 
-    searchResults = [];
-    const rows = GAS.rows(data);
+    console.log('📥 GAS 응답 수신');
+    console.log('  전체 응답:', data);
     
-    rows.forEach(row => {
+    // ✅ service 배열 구조 분석
+    console.log('📊 service 배열 분석');
+    console.log('  배열 길이:', (data.service || []).length);
+    console.log('  첫 번째 항목:', (data.service || [])[0]);
+    console.log('  두 번째 항목:', (data.service || [])[1]);
+    
+    // ✅ 현재는 필터링 없이 전체 사용
+    const allService = data.service || [];
+    console.log('  사용할 배열 길이:', allService.length);
+    
+    searchResults = [];
+    
+    allService.forEach((row, idx) => {
       const name = GAS.name(row);
+      const mfg = row.compName || row.manufacturer || row.companyName || '';
+      console.log('  [행' + idx + '] 이름: "' + name + '", 회사: ' + mfg);
+      
       if (name) {
         searchResults.push({
           id: 'search_' + Math.random().toString(36).substr(2, 9),
@@ -738,12 +831,17 @@ async function searchPesticides() {
       }
     });
 
+    console.log('✅ 최종 결과 (필터링 없음)');
+    console.log('  총 결과 개수:', searchResults.length);
+    
     displaySearchResults(searchResults);
     updateStats();
     showLoading(null);
 
   } catch (err) {
-    console.error('❌ 검색 실패:', err);
+    console.error('❌ 검색 실패');
+    console.error('  에러:', err);
+    console.error('  스택:', err.stack);
     showToast('❌ 검색 중 오류가 발생했습니다');
     showLoading(null);
   }
@@ -881,6 +979,9 @@ function editLocal(id) {
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   
+  console.log('🔍 searchPsisFromModal 시작');
+  console.log('  입력값:', keyword);
+  
   if (!keyword) {
     showToast('❌ 농약명을 먼저 입력해주세요');
     return;
@@ -892,15 +993,50 @@ async function searchPsisFromModal() {
     const data = await GAS.call({
       target: 'psis',
       keyword: keyword,
+      searchType: 'brand',
       displayCount: 50,
       startPoint: 1
     });
 
-    const rows = GAS.rows(data);
+    console.log('📥 GAS 응답 수신');
+    console.log('  전체 응답:', data);
+    
+    // ✅ GAS 응답의 모든 최상위 필드 확인
+    console.log('📋 GAS 응답의 모든 필드:');
+    if (data && typeof data === 'object') {
+      Object.keys(data).forEach(key => {
+        if (key === 'service') {
+          console.log('  ' + key + ': Array(' + (data[key] || []).length + ')');
+        } else if (typeof data[key] === 'object') {
+          console.log('  ' + key + ':', JSON.stringify(data[key]).substring(0, 100) + '...');
+        } else {
+          console.log('  ' + key + ':', data[key]);
+        }
+      });
+    }
+    
+    // ✅ _detail 필드 확인
+    console.log('📋 _detail 필드:');
+    console.log('  data._detail:', data._detail);
+    
+    // ✅ service 배열 구조 분석
+    console.log('📊 service 배열 분석');
+    console.log('  배열 길이:', (data.service || []).length);
+    console.log('  첫 번째 항목:', (data.service || [])[0]);
+    console.log('  두 번째 항목:', (data.service || [])[1]);
+    console.log('  세 번째 항목:', (data.service || [])[2]);
+    
+    // ✅ 현재는 필터링 없이 전체 사용
+    const allService = data.service || [];
+    console.log('  사용할 배열 길이:', allService.length);
+    
     const psisResults = [];
     
-    rows.forEach(row => {
+    allService.forEach((row, idx) => {
       const name = GAS.name(row);
+      const mfg = row.compName || row.manufacturer || row.comapnyName || '';
+      console.log('  [행' + idx + '] 이름: "' + name + '", 회사: ' + mfg);
+      
       if (name) {
         psisResults.push({
           id: Math.random().toString(36).substr(2, 9),
@@ -910,46 +1046,238 @@ async function searchPsisFromModal() {
       }
     });
 
-    displayPsisResultsInModal(psisResults);
+    console.log('✅ 최종 결과');
+    console.log('  수집된 데이터:', data);
+    
+    // ✅ GAS 응답 객체 자체를 전달 (service 배열 포함)
+    displayPsisResultsInModal(data);
     showLoading(null);
 
   } catch (err) {
-    console.error('❌ PSIS 검색 실패:', err);
+    console.error('❌ PSIS 검색 실패');
+    console.error('  에러:', err);
+    console.error('  스택:', err.stack);
     showToast('❌ 검색 중 오류가 발생했습니다');
     showLoading(null);
   }
 }
 
-// PSIS 검색 결과를 모달에 표시
-function displayPsisResultsInModal(results) {
+// PSIS 검색 결과를 모달에 표시 (회사명(품목명) 형식)
+// ✅ PSIS 검색 결과를 전역으로 저장 (selectPsisCompany에서 사용)
+let psisResultsCache = null;
+
+function displayPsisResultsInModal(gasData) {
   const container = document.getElementById('psis-results-container');
   const resultsList = document.getElementById('psis-results');
 
-  if (results.length === 0) {
+  if (!gasData || !gasData.service || gasData.service.length === 0) {
     container.style.display = 'block';
     resultsList.innerHTML = '<div style="padding: 12px; text-align: center; color: var(--gray-600); font-size: 11px;">검색 결과가 없습니다</div>';
     return;
   }
 
+  console.log('📋 displayPsisResultsInModal 실행');
+  console.log('  입력 데이터:', gasData);
+  
   container.style.display = 'block';
   
-  // 회사명 기준으로 그룹화하여 중복 제거
-  const companyMap = new Map();
-  results.forEach(r => {
-    const companyName = r.data.companyName || '미분류';
-    if (!companyMap.has(companyName)) {
-      companyMap.set(companyName, r);
+  // ✅ gasData._detail의 실제 필드명 확인
+  console.log('📋 GAS._detail 전체 객체:');
+  console.log(gasData._detail);
+  
+  console.log('📛 GAS._detail의 모든 필드명과 값:');
+  if (gasData._detail && typeof gasData._detail === 'object') {
+    Object.keys(gasData._detail).forEach(key => {
+      console.log('  ' + key + ': ' + gasData._detail[key]);
+    });
+  } else {
+    console.log('  ⚠️ _detail이 없거나 객체가 아님');
+  }
+  
+  // ✅ 구분 + 용도 + 회사명 + 품목명 조합으로 그룹화
+  const combinationMap = new Map();
+  
+  // ✅ 구분 + 용도 + 회사명 + 품목명 조합으로 그룹화
+  // (독성 정보는 GAS 응답에 포함되지 않아 제거)
+  
+  // ✅ forEach로 변경 (await 불필요)
+  gasData.service.forEach(item => {
+    const gubun = item.cmpaItmNm || '미분류';
+    const usage = item.useName || gasData.type || '기타';
+    const compName = item.compName || item.manufacturer || '미분류';
+    const ingredient = item.pestiKorName || gasData.ingredient || '품목명 없음';
+    
+    const key = gubun + '|' + usage + '|' + compName + '|' + ingredient;
+    
+    if (!combinationMap.has(key)) {
+      combinationMap.set(key, {
+        gubun: gubun,
+        usage: usage,
+        company: compName,
+        ingredient: ingredient,
+        cropDetails: [],
+        item: item
+      });
+    }
+    
+    // ✅ 같은 조합의 모든 작물 상세 정보 수집
+    const data = combinationMap.get(key);
+    
+    const cropDetail = {
+      cropName: item.cropName || '-',
+      diseaseWeedName: item.diseaseWeedName || '-',
+      pestiUse: item.pestiUse || '-',
+      dilutUnit: item.dilutUnit || '-',
+      useSuittime: item.useSuittime || '-',
+      useNum: item.useNum || '-'
+    };
+    
+    console.log('📊 cropDetail 생성:');
+    console.log('  cropName:', cropDetail.cropName);
+    console.log('  diseaseWeedName:', cropDetail.diseaseWeedName);
+    console.log('  pestiUse:', cropDetail.pestiUse);
+    console.log('  dilutUnit:', cropDetail.dilutUnit);
+    console.log('  useSuittime:', cropDetail.useSuittime);
+    console.log('  useNum:', cropDetail.useNum);
+    
+    if (!data.cropDetails.find(c => c.cropName === cropDetail.cropName)) {
+      data.cropDetails.push(cropDetail);
     }
   });
 
-  // 회사별로 표시
-  resultsList.innerHTML = Array.from(companyMap.entries()).map(([company, r]) => `
-    <div style="padding: 10px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" 
-         onclick="selectPsisResultFromModal(${JSON.stringify(r).replace(/"/g, '&quot;')}, '${company}')">
-      <div style="font-weight: 600; color: var(--green-dark); font-size: 13px;">🏢 ${company || '-'}</div>
-      <div style="font-size: 11px; color: var(--gray-600); margin-top: 2px;">농약: ${r.name}</div>
-    </div>
-  `).join('');
+  console.log('  구분|용도|회사명|품목명 조합 그룹화 결과 (' + combinationMap.size + '개):');
+  combinationMap.forEach((data, key) => {
+    const cropSummary = data.cropDetails.map(c => c.cropName).join(', ');
+    console.log('    - ' + key + ' (작물: ' + cropSummary + ')');
+  });
+  
+  // ✅ 메모용 작물 상세 정보 생성
+  function buildCropMemo(cropDetails, gasData) {
+    console.log('🔨 buildCropMemo 실행');
+    console.log('  입력 cropDetails:', cropDetails);
+    console.log('  입력 길이:', cropDetails.length);
+    console.log('  gasData.toxicGubun:', gasData?.toxicGubun);
+    console.log('  gasData.toxicName:', gasData?.toxicName);
+    console.log('  gasData.fishToxic:', gasData?.fishToxic);
+    
+    const toxicGubun = gasData?.toxicGubun || '-';
+    const toxicName = gasData?.toxicName || '-';
+    const fishToxic = gasData?.fishToxic || '-';
+    
+    const result = cropDetails.map(crop => {
+      // ✅ 독성 정보 포함: cropName(diseaseWeedName,pestiUse,dilutUnit,useSuittime,useNum,toxicGubun(toxicName),fishToxicGubun)
+      const line = `${crop.cropName}(${crop.diseaseWeedName},${crop.pestiUse},${crop.dilutUnit},${crop.useSuittime},${crop.useNum},${toxicGubun}(${toxicName}),${fishToxic})`;
+      console.log('  생성된 라인:', line);
+      return line;
+    }).join(' / ');
+    
+    console.log('  최종 결과:', result);
+    return result;
+  }
+  
+  // ✅ 결과를 전역 캐시에 저장
+  psisResultsCache = Array.from(combinationMap.entries()).map(([key, data]) => {
+    const cropMemo = buildCropMemo(data.cropDetails, gasData);
+    console.log('💾 캐시 아이템 생성:');
+    console.log('  key:', key);
+    console.log('  company:', data.company);
+    console.log('  ingredient:', data.ingredient);
+    console.log('  cropMemo:', cropMemo);
+    
+    return {
+      key: key,
+      company: data.company,
+      ingredient: data.ingredient,
+      gubun: data.gubun,
+      usage: data.usage,
+      cropDetails: data.cropDetails,
+      cropMemo: cropMemo
+    };
+  });
+  
+  console.log('✅ 캐시 저장됨:', psisResultsCache);
+  
+  // ✅ 회사명(품목명) 형식으로 표시
+  resultsList.innerHTML = psisResultsCache.map((item, idx) => {
+    const displayName = item.company + '(' + item.ingredient + ')';
+    const typeDisplay = GAS.type(item.usage || '');
+    const cropDisplay = item.cropDetails.map(c => c.cropName).join(', ');
+    
+    console.log('  [' + idx + '] 표시: ' + item.key);
+    
+    return `
+      <div style="padding: 10px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" 
+           onclick="selectPsisCompany(${idx})">
+        <div style="font-weight: 600; color: var(--green-dark); font-size: 13px;">🏢 ${displayName}</div>
+        <div style="font-size: 11px; color: var(--gray-600); margin-top: 2px;">상품명: ${gasData.name || '-'}, 분류: ${typeDisplay || '-'}, 구분: ${item.gubun || '-'}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 4px;">✅ 메모: ${item.cropMemo}</div>
+      </div>
+    `;
+  }).join('');
+  
+  console.log('✅ 결과 표시 완료');
+}
+
+// ✅ 회사명 선택 시 자동 채우기 (idx로 캐시 접근)
+function selectPsisCompany(idx) {
+  if (!psisResultsCache || !psisResultsCache[idx]) {
+    console.error('❌ 캐시 데이터 없음:', idx);
+    showToast('❌ 데이터를 찾을 수 없습니다');
+    return;
+  }
+  
+  const item = psisResultsCache[idx];
+  console.log('✅ 회사 선택 [' + idx + ']');
+  console.log('  캐시 아이템:', item);
+  console.log('  회사명:', item.company);
+  console.log('  품목명:', item.ingredient);
+  console.log('  용도:', item.usage);
+  console.log('  cropMemo:', item.cropMemo);
+  console.log('  cropDetails:', item.cropDetails);
+  
+  // ✅ 모달 입력창에 자동 채우기
+  const manufacturerField = document.getElementById('form-manufacturer');
+  const ingredientField = document.getElementById('form-ingredient');
+  const typeField = document.getElementById('form-type');
+  const memoField = document.getElementById('form-memo');
+  
+  console.log('📋 필드 확인:');
+  console.log('  form-manufacturer:', manufacturerField);
+  console.log('  form-ingredient:', ingredientField);
+  console.log('  form-type:', typeField);
+  console.log('  form-memo:', memoField);
+  
+  if (manufacturerField) {
+    manufacturerField.value = item.company || '';
+    console.log('  ✅ 회사명 입력:', item.company);
+  }
+  
+  if (ingredientField) {
+    ingredientField.value = item.ingredient || '';
+    console.log('  ✅ 품목명 입력:', item.ingredient);
+  }
+  
+  if (typeField) {
+    typeField.value = GAS.type(item.usage || '') || '';
+    console.log('  ✅ 분류 입력:', GAS.type(item.usage || ''));
+  }
+  
+  // ✅ 메모칸에 작물명 및 상세 정보 입력
+  if (memoField) {
+    memoField.value = item.cropMemo || '';
+    console.log('  ✅ 메모 입력됨:', item.cropMemo);
+    console.log('  ✅ 메모 필드 값:', memoField.value);
+  } else {
+    console.error('❌ 메모 필드를 찾을 수 없음 (ID: form-memo)');
+  }
+  
+  // ✅ 결과 컨테이너 숨기기
+  const container = document.getElementById('psis-results-container');
+  if (container) {
+    container.style.display = 'none';
+  }
+  
+  showToast('✅ 정보가 자동으로 채워졌습니다');
 }
 
 // 모달에서 PSIS 결과 선택
@@ -1215,16 +1543,37 @@ async function savePesticide() {
         showToast('✅ 농약이 수정되었습니다');
       }
     } else {
-      // 새로운 로컬 농약 등록
-      const pest = {
-        id: 'local_' + Date.now(),
-        ...pestData,
-        registeredAt: new Date().toISOString()
-      };
-
-      localData.push(pest);
-      CONFIG.storage.set('myPesticides_index6', localData);
-      showToast('✅ 농약이 등록되었습니다');
+      // ✅ 새로운 농약을 Firestore에 등록 (로컬이 아님!)
+      try {
+        const newPest = {
+          ...pestData,
+          registeredAt: new Date().toISOString(),
+          source: 'firestore'
+        };
+        
+        const docRef = await db.collection('myPesticides').add(newPest);
+        console.log('✅ Firestore에 농약 등록됨:', docRef.id);
+        
+        // 메모리의 firestoreData에도 추가
+        firestoreData.push({
+          id: docRef.id,
+          ...newPest
+        });
+        
+        showToast('✅ 농약이 Firestore에 등록되었습니다');
+      } catch (firestoreErr) {
+        console.error('❌ Firestore 저장 실패:', firestoreErr);
+        // Firestore 실패 시 로컬에 임시 저장
+        console.log('⚠️ 로컬에 임시 저장합니다');
+        const pest = {
+          id: 'local_' + Date.now(),
+          ...pestData,
+          registeredAt: new Date().toISOString()
+        };
+        localData.push(pest);
+        CONFIG.storage.set('myPesticides_index6', localData);
+        showToast('⚠️ Firestore 연결 실패. 로컬에 저장되었습니다.');
+      }
     }
 
     displayAllData();
