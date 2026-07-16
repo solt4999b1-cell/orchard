@@ -406,12 +406,11 @@
         /* ✅ 카테고리 탭 스타일 */
         .category-tabs {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;  /* 4개씩 2줄 */
+            grid-template-columns: 1fr 1fr 1fr 1fr;
             gap: 8px;
             margin-bottom: 20px;
-            margin-top: 10px;
             background: white;
-            padding: 10px;
+            padding: 15px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
@@ -475,6 +474,7 @@
             font-size: 12px;
             color: #666;
         }
+    </style>
     
     <!-- ✅ Firebase 라이브러리 (index6과 동일 - 10.5.0 compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
@@ -616,7 +616,6 @@
         var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
         var currentTab = 'detail';
         var currentCategory = 'all';  // ✅ 카테고리 필터 추가
-        var originalData = [];  // ✅ 원본 데이터 저장
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
@@ -1088,7 +1087,7 @@
             // ✅ 카테고리별 필터링 (용도로 구분: 살균, 살충, 제초 등)
             if (currentCategory !== 'all') {
                 displayData = displayData.filter(function(item) {
-                    var itemUse = item.useName || '';  // pestiUse → useName으로 변경!
+                    var itemUse = item.useName || '';
                     return itemUse.includes(currentCategory);
                 });
             }
