@@ -406,10 +406,14 @@
         /* ✅ 카테고리 탭 스타일 */
         .category-tabs {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-template-columns: 1fr 1fr 1fr 1fr;  /* 4개씩 2줄 */
             gap: 8px;
             margin-bottom: 20px;
             margin-top: 10px;
+            background: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
         }
         .category-tab {
             padding: 10px 12px;
@@ -577,21 +581,25 @@
             </div>
         </div>
 
-        <!-- ✅ 진행도 바 (검색 중 표시) -->
+        <!-- ✅ 카테고리 탭 (탭 밑에 배치 - 항상 보임) -->
+        <div class="category-tabs">
+            <button class="category-tab active" data-category="all" onclick="switchCategory('all')">전체</button>
+            <button class="category-tab" data-category="살균" onclick="switchCategory('살균')">살균</button>
+            <button class="category-tab" data-category="살충" onclick="switchCategory('살충')">살충</button>
+            <button class="category-tab" data-category="균충" onclick="switchCategory('균충')">균충</button>
+            <button class="category-tab" data-category="충초" onclick="switchCategory('충초')">충초</button>
+            <button class="category-tab" data-category="제초" onclick="switchCategory('제초')">제초</button>
+            <button class="category-tab" data-category="생조" onclick="switchCategory('생조')">생조</button>
+            <button class="category-tab" data-category="기타" onclick="switchCategory('기타')">기타</button>
+        </div>
+
+        <!-- ✅ 진행도 바 (탭 밑에 배치 - 검색 중 표시) -->
         <div id="progressContainer" class="progress-container">
             <div class="progress-message">검색 진행 중...</div>
             <div class="progress-bar">
                 <div id="progressFill" class="progress-fill"></div>
             </div>
             <div class="progress-status"><span id="progressCount">0</span>개 / <span id="progressTotal">0</span>개</div>
-        </div>
-
-        <!-- ✅ 카테고리 탭 (검색 결과 후 표시) -->
-        <div id="categoryTabs" class="category-tabs" style="display: none;">
-            <button class="category-tab active" data-category="all" onclick="switchCategory('all')">전체</button>
-            <button class="category-tab" data-category="살균" onclick="switchCategory('살균')">살균</button>
-            <button class="category-tab" data-category="살충" onclick="switchCategory('살충')">살충</button>
-            <button class="category-tab" data-category="제초" onclick="switchCategory('제초')">제초</button>
         </div>
 
         <div id="resultContainer">
@@ -1083,14 +1091,6 @@
                     var itemUse = item.useName || '';  // pestiUse → useName으로 변경!
                     return itemUse.includes(currentCategory);
                 });
-            }
-            
-            // ✅ 카테고리 탭 표시
-            var categoryTabs = document.getElementById('categoryTabs');
-            if (displayData.length > 0) {
-                categoryTabs.style.display = 'grid';
-            } else {
-                categoryTabs.style.display = 'none';
             }
             
             // 페이지네이션 계산
