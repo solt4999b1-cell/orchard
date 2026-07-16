@@ -78,8 +78,46 @@
         .pagination-control select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         .pagination-control button { padding: 8px 15px; font-size: 13px; }
         
-        .table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; }
+        .table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; -webkit-overflow-scrolling: touch; }
+        table { width: 100%; border-collapse: collapse; min-width: 1200px; }
+        
+        /* ✅ 상단 스크롤 표시 */
+        .table-scroll-indicator {
+            background: white;
+            border-radius: 8px 8px 0 0;
+            overflow-x: auto;
+            overflow-y: hidden;
+            -webkit-overflow-scrolling: touch;
+            margin-bottom: -8px;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .table-scroll-indicator::-webkit-scrollbar {
+            height: 6px;
+        }
+        .table-scroll-indicator::-webkit-scrollbar-track {
+            background: #f0f0f0;
+        }
+        .table-scroll-indicator::-webkit-scrollbar-thumb {
+            background: #2196F3;
+            border-radius: 3px;
+        }
+        .table-scroll-content {
+            width: 1200px;
+            height: 1px;
+        }
+        .table-wrapper::-webkit-scrollbar {
+            height: 8px;
+        }
+        .table-wrapper::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 0 0 8px 0;
+        }
+        .table-wrapper::-webkit-scrollbar-thumb {
+            background: #2196F3;
+            border-radius: 4px;
+        }
         thead { background-color: #f5f5f5; }
         th { padding: 12px; text-align: left; font-size: 12px; font-weight: bold; color: #333; border-bottom: 2px solid #ddd; white-space: nowrap; }
         td { padding: 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #eee; }
@@ -508,18 +546,31 @@
         
         /* ✅ 카테고리 탭 */
         .category-tabs {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
+            display: flex;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             background: white;
-            padding: 15px;
+            padding: 10px 15px;
             border-radius: 8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            flex-wrap: nowrap;
+        }
+        .category-tabs::-webkit-scrollbar {
+            height: 6px;
+        }
+        .category-tabs::-webkit-scrollbar-track {
+            background: #f0f0f0;
+            border-radius: 3px;
+        }
+        .category-tabs::-webkit-scrollbar-thumb {
+            background: #2196F3;
+            border-radius: 3px;
         }
         .category-tab {
-            padding: 10px 12px;
-            font-size: 13px;
+            padding: 8px 12px;
+            font-size: 12px;
             font-weight: bold;
             border: 2px solid #e0e0e0;
             background-color: white;
@@ -527,6 +578,9 @@
             border-radius: 6px;
             cursor: pointer;
             transition: all 0.3s;
+            white-space: nowrap;
+            flex-shrink: 0;
+            min-width: auto;
         }
         .category-tab:hover {
             border-color: #2196F3;
@@ -560,15 +614,29 @@
                 margin-bottom: 8px;
             }
             .category-tabs {
-                grid-template-columns: 1fr 1fr;
+                display: flex;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
                 gap: 6px;
-                padding: 10px;
-                margin-bottom: 15px;
+                padding: 8px 10px;
+                margin-bottom: 12px;
+                flex-wrap: nowrap;
             }
             .category-tab {
-                padding: 8px 10px;
-                font-size: 12px;
-                min-height: 40px;
+                padding: 7px 10px;
+                font-size: 11px;
+                min-height: auto;
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+            
+            /* ✅ 모바일 상단 스크롤 표시 */
+            .table-scroll-indicator {
+                height: 5px;
+                margin-bottom: -4px;
+            }
+            .table-scroll-content {
+                width: 1200px;
             }
         }
     </style>
@@ -1225,8 +1293,13 @@
             html += "</div>";
             html += "</div>";
             
+            // ✅ 상단 스크롤 표시
+            html += "<div class='table-scroll-indicator' id='topScrollIndicator'>";
+            html += "<div class='table-scroll-content'></div>";
+            html += "</div>";
+            
             // 테이블
-            html += "<div class='table-wrapper'>";
+            html += "<div class='table-wrapper' id='mainTableWrapper'>";
             html += "<table>";
             
             // 탭별 헤더
@@ -1258,6 +1331,29 @@
             html += renderPagination(currentPage, totalPages, displayData.length);
             
             resultDiv.innerHTML = html;
+            
+            // ✅ 테이블 스크롤 동기화
+            setTimeout(function() {
+                syncTableScroll();
+            }, 100);
+        }
+        
+        // ✅ 테이블 스크롤 동기화 함수
+        function syncTableScroll() {
+            var topScroll = document.getElementById('topScrollIndicator');
+            var tableWrapper = document.getElementById('mainTableWrapper');
+            
+            if (!topScroll || !tableWrapper) return;
+            
+            // 테이블 스크롤 → 상단 표시 동기화
+            tableWrapper.addEventListener('scroll', function() {
+                topScroll.scrollLeft = tableWrapper.scrollLeft;
+            });
+            
+            // 상단 표시 스크롤 → 테이블 동기화
+            topScroll.addEventListener('scroll', function() {
+                tableWrapper.scrollLeft = topScroll.scrollLeft;
+            });
         }
 
         // ===== 페이지네이션 렌더링 =====
