@@ -78,19 +78,8 @@
         .pagination-control select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 13px; }
         .pagination-control button { padding: 8px 15px; font-size: 13px; }
         
-        .table-wrapper { 
-            background: white; 
-            border-radius: 8px; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05); 
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch;  /* iOS 부드러운 스크롤 */
-            margin-bottom: 20px; 
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1200px;  /* 최소 너비 */
-        }
+        .table-wrapper { background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); overflow-x: auto; margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; }
         thead { background-color: #f5f5f5; }
         th { padding: 12px; text-align: left; font-size: 12px; font-weight: bold; color: #333; border-bottom: 2px solid #ddd; white-space: nowrap; }
         td { padding: 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #eee; }
@@ -299,29 +288,6 @@
                 font-size: 11px;
             }
             
-            /* ✅ 태블릿 카테고리 탭 스타일 */
-            .category-tabs {
-                grid-template-columns: 1fr 1fr 1fr 1fr;  /* 4개씩 2줄 */
-                gap: 8px;
-                padding: 12px;
-                margin-bottom: 15px;
-            }
-            .category-tab {
-                padding: 10px 12px;
-                font-size: 12px;
-                min-height: 42px;
-            }
-            
-            /* ✅ 태블릿 진행도 바 스타일 */
-            .progress-container {
-                padding: 15px;
-                margin-bottom: 20px;
-            }
-            .progress-message {
-                font-size: 13px;
-                margin-bottom: 10px;
-            }
-            
             /* 결과 컨테이너 */
             #resultContainer { 
                 margin: 10px auto; 
@@ -341,33 +307,6 @@
             .header-image { width: 50px; height: 50px; }
             
             .search-container { padding: 12px 8px; }
-            
-            /* ✅ 모바일 펼치기/접기 버튼 */
-            .search-toggle-btn {
-                padding: 12px 16px;
-                font-size: 15px;
-                margin-bottom: 8px;
-            }
-            
-            /* ✅ 모바일 진행도 바 */
-            .progress-container {
-                padding: 12px;
-                margin-bottom: 15px;
-                border: 2px solid #2196F3;
-            }
-            .progress-message {
-                font-size: 13px;
-                margin-bottom: 10px;
-            }
-            .progress-bar {
-                height: 8px;
-                margin-bottom: 8px;
-            }
-            .progress-status {
-                font-size: 12px;
-                font-weight: bold;
-                color: #0d47a1;
-            }
             
             /* 첫 줄: 용도, 상표명, 회사명 - 1줄에 2개 */
             .search-row { 
@@ -452,36 +391,6 @@
                 bottom: 15px;
                 right: 10px;
             }
-            
-            /* ✅ 모바일 카테고리 탭 스타일 */
-            .category-tabs {
-                grid-template-columns: 1fr 1fr;  /* 2개씩 4줄 */
-                gap: 6px;
-                padding: 10px;
-                margin-bottom: 15px;
-            }
-            .category-tab {
-                padding: 8px 10px;
-                font-size: 12px;
-                min-height: 40px;  /* 터치하기 좋은 크기 */
-            }
-            
-            /* ✅ 모바일 진행도 바 스타일 */
-            .progress-container {
-                padding: 12px;
-                margin-bottom: 15px;
-            }
-            .progress-message {
-                font-size: 12px;
-                margin-bottom: 8px;
-            }
-            .progress-bar {
-                height: 6px;
-                margin-bottom: 6px;
-            }
-            .progress-status {
-                font-size: 11px;
-            }
         }
         
         /* ✅ 보유 농약 행 스타일 */
@@ -494,7 +403,110 @@
             font-weight: bold;
         }
         
-        /* ✅ 카테고리 탭 스타일 */
+        /* ✅ 펼치기/접기 버튼 */
+        .search-toggle-btn {
+            width: 100%;
+            padding: 14px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .search-toggle-btn:hover {
+            background-color: #1976D2;
+        }
+        
+        .search-section {
+            max-height: 1000px;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+        .search-section.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+        
+        /* ✅ 진행도 바 강화 */
+        .progress-container {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            display: none;
+            border: 2px solid #2196F3;
+        }
+        .progress-container.show {
+            display: block;
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .progress-message {
+            font-size: 13px;
+            font-weight: bold;
+            color: #0d47a1;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .progress-message::before {
+            content: "⏳";
+            font-size: 16px;
+            animation: spin 1.5s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+            border: 1px solid #2196F3;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #2196F3, #1976D2, #2196F3);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.2s ease;
+            box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .progress-status {
+            font-size: 13px;
+            color: #0d47a1;
+            font-weight: bold;
+        }
+        
+        /* ✅ 테이블 스크롤 */
+        .table-wrapper {
+            -webkit-overflow-scrolling: touch;
+        }
+        table {
+            min-width: 1200px;
+        }
+        
+        /* ✅ 카테고리 탭 */
         .category-tabs {
             display: grid;
             grid-template-columns: 1fr 1fr 1fr 1fr;
@@ -527,130 +539,39 @@
             border-color: #2196F3;
         }
         
-        /* ✅ 진행도 바 스타일 */
-        .progress-container {
-            background: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            display: none;
-            border: 2px solid #2196F3;  /* 눈에 띄는 테두리 */
-        }
-        .progress-container.show {
-            display: block;
-            animation: slideIn 0.3s ease;  /* 애니메이션 */
-        }
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
+        /* ✅ 모바일 */
+        @media (max-width: 480px) {
+            .search-toggle-btn {
+                padding: 12px 16px;
+                font-size: 15px;
+                margin-bottom: 8px;
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            .progress-container {
+                padding: 12px;
+                margin-bottom: 15px;
+                border: 2px solid #2196F3;
+            }
+            .progress-message {
+                font-size: 13px;
+                margin-bottom: 10px;
+            }
+            .progress-bar {
+                height: 8px;
+                margin-bottom: 8px;
+            }
+            .category-tabs {
+                grid-template-columns: 1fr 1fr;
+                gap: 6px;
+                padding: 10px;
+                margin-bottom: 15px;
+            }
+            .category-tab {
+                padding: 8px 10px;
+                font-size: 12px;
+                min-height: 40px;
             }
         }
-        .progress-message {
-            font-size: 13px;
-            font-weight: bold;
-            color: #0d47a1;
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .progress-message::before {
-            content: "⏳";
-            font-size: 16px;
-            animation: spin 1.5s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        .progress-bar {
-            width: 100%;
-            height: 8px;  /* 더 굵게 */
-            background-color: #e0e0e0;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
-            border: 1px solid #2196F3;
-        }
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #2196F3, #1976D2, #2196F3);
-            border-radius: 4px;
-            width: 0%;
-            transition: width 0.2s ease;
-            box-shadow: 0 0 8px rgba(33, 150, 243, 0.8);
-            animation: pulse 1.5s infinite;  /* 펄스 애니메이션 */
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.8; }
-        }
-        .progress-status {
-            font-size: 13px;
-            color: #0d47a1;
-            font-weight: bold;
-        }
-        
-        /* ✅ 펼치기/접기 버튼 스타일 */
-        .search-toggle-btn {
-            width: 100%;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            background-color: #2196F3;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 10px;
-            transition: all 0.3s;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .search-toggle-btn:hover {
-            background-color: #1976D2;
-        }
-        .search-toggle-btn.collapsed {
-            background-color: #f0f7ff;
-            color: #2196F3;
-            border: 2px solid #2196F3;
-        }
-        .search-toggle-btn.collapsed:hover {
-            background-color: #e3f2fd;
-        }
-        
-        /* 검색 입력 섹션 애니메이션 */
-        .search-section {
-            max-height: 1000px;
-            overflow: hidden;
-            transition: max-height 0.3s ease;
-        }
-        .search-section.collapsed {
-            max-height: 0;
-            overflow: hidden;
-            padding: 0;
-            margin: 0;
-        }
-        
-        /* ✅ 테이블 스크롤 최적화 */
-        .table-wrapper {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;  /* iOS 부드러운 스크롤 */
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 1200px;  /* 최소 너비 지정 */
-        }
+    </style>
     
     <!-- ✅ Firebase 라이브러리 (index6과 동일 - 10.5.0 compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
@@ -763,7 +684,7 @@
             </div>
         </div>
 
-        <!-- ✅ 카테고리 탭 (탭 밑에 배치 - 항상 보임) -->
+        <!-- ✅ 카테고리 탭 -->
         <div class="category-tabs">
             <button class="category-tab active" data-category="all" onclick="switchCategory('all')">전체</button>
             <button class="category-tab" data-category="살균" onclick="switchCategory('살균')">살균</button>
@@ -775,7 +696,7 @@
             <button class="category-tab" data-category="기타" onclick="switchCategory('기타')">기타</button>
         </div>
 
-        <!-- ✅ 진행도 바 (탭 밑에 배치 - 검색 중 표시) -->
+        <!-- ✅ 진행도 바 -->
         <div id="progressContainer" class="progress-container">
             <div class="progress-message">검색 진행 중...</div>
             <div class="progress-bar">
@@ -797,7 +718,7 @@
         // ===== 설정 =====
         var GAS_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";
         var currentTab = 'detail';
-        var currentCategory = 'all';  // ✅ 카테고리 필터 추가
+        var currentCategory = 'all';  // ✅ 카테고리 필터
         var currentData = [];
         var currentPage = 1;
         var pageSize = 250;
@@ -863,25 +784,6 @@
             document.addEventListener('DOMContentLoaded', initializeFirebase);
         } else {
             initializeFirebase();
-        }
-        
-        // ✅ 검색 입력 섹션 펼치기/접기 함수
-        function toggleSearchSection() {
-            var searchSection = document.getElementById('searchSection');
-            var searchToggleBtn = document.getElementById('searchToggleBtn');
-            var toggleIcon = document.getElementById('toggleIcon');
-            
-            if (searchSection.classList.contains('collapsed')) {
-                // 펼치기
-                searchSection.classList.remove('collapsed');
-                searchToggleBtn.classList.remove('collapsed');
-                toggleIcon.textContent = '▼';
-            } else {
-                // 접기
-                searchSection.classList.add('collapsed');
-                searchToggleBtn.classList.add('collapsed');
-                toggleIcon.textContent = '▶';
-            }
         }
 
         // ✅ 정렬 함수 (재사용 가능)
@@ -1039,7 +941,22 @@
             }
         }
 
-        // ✅ 카테고리 탭 전환 함수
+        // ✅ 펼치기/접기 함수
+        function toggleSearchSection() {
+            var searchSection = document.getElementById('searchSection');
+            var toggleBtn = document.getElementById('searchToggleBtn');
+            var toggleIcon = document.getElementById('toggleIcon');
+            
+            if (searchSection.classList.contains('collapsed')) {
+                searchSection.classList.remove('collapsed');
+                toggleIcon.textContent = '▼';
+            } else {
+                searchSection.classList.add('collapsed');
+                toggleIcon.textContent = '▶';
+            }
+        }
+
+        // ✅ 카테고리 필터 함수
         function switchCategory(category) {
             currentCategory = category;
             currentPage = 1;
@@ -1052,7 +969,7 @@
         function switchTab(tab) {
             currentTab = tab;
             currentPage = 1;
-            currentCategory = 'all';  // ✅ 탭 변경 시 카테고리 리셋
+            currentCategory = 'all';  // 탭 변경 시 카테고리 리셋
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
             document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
@@ -1285,7 +1202,7 @@
             // 탭별 데이터 전처리 (중복 제거)
             var displayData = preprocessData(currentData, currentTab);
             
-            // ✅ 카테고리별 필터링 (용도로 구분: 살균, 살충, 제초 등)
+            // ✅ 카테고리별 필터링
             if (currentCategory !== 'all') {
                 displayData = displayData.filter(function(item) {
                     var itemUse = item.useName || '';
