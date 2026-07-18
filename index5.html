@@ -276,6 +276,43 @@
       background: var(--gray-300);
     }
 
+    /* ✅ 카테고리 탭 스타일 */
+    .category-tabs {
+      display: flex;
+      gap: 4px;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      padding: 6px 0;
+      margin-bottom: 8px;
+      flex-wrap: nowrap;
+    }
+
+    .category-tab {
+      padding: 6px 10px;
+      border: 1.5px solid #ddd;
+      background: white;
+      color: #666;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.3s;
+    }
+
+    .category-tab:hover {
+      border-color: var(--green-dark);
+      color: var(--green-dark);
+      background: var(--green-light);
+    }
+
+    .category-tab.active {
+      background: var(--green-dark);
+      color: white;
+      border-color: var(--green-dark);
+    }
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -499,6 +536,19 @@
         width: 60px !important;
         height: 60px !important;
       }
+      
+      /* ✅ 모바일 카테고리 탭 */
+      .category-tabs {
+        gap: 2px;
+        padding: 4px 0;
+        margin-bottom: 6px;
+      }
+      
+      .category-tab {
+        padding: 4px 8px;
+        font-size: 9px;
+        border-radius: 3px;
+      }
     }
   </style>
 </head>
@@ -570,7 +620,20 @@
 
   <!-- Firestore 농약 섹션 -->
   <div class="results-section" id="firestore-section" style="display: none;">
-    <div class="section-title">🟦 Firestore 농약 (<span id="firestore-count">0</span>개)</div>
+    <div class="section-title">🟦 내 보유 농약 (<span id="firestore-count">0</span>개)</div>
+    
+    <!-- ✅ 카테고리 탭 -->
+    <div class="category-tabs" id="category-tabs">
+      <button class="category-tab active" data-category="all" onclick="filterByCategory('all')">전체</button>
+      <button class="category-tab" data-category="살균" onclick="filterByCategory('살균')">살균</button>
+      <button class="category-tab" data-category="살충" onclick="filterByCategory('살충')">살충</button>
+      <button class="category-tab" data-category="제초" onclick="filterByCategory('제초')">제초</button>
+      <button class="category-tab" data-category="균충" onclick="filterByCategory('균충')">균충</button>
+      <button class="category-tab" data-category="충초" onclick="filterByCategory('충초')">충초</button>
+      <button class="category-tab" data-category="생조" onclick="filterByCategory('생조')">생조</button>
+      <button class="category-tab" data-category="기타" onclick="filterByCategory('기타')">기타</button>
+    </div>
+    
     <div id="firestore-list"></div>
   </div>
 
@@ -699,6 +762,7 @@ let firestoreData = [];
 let localData = CONFIG.storage.get('myPesticides_index6', []);
 let searchResults = [];
 let editingId = null; // 수정할 항목 ID (null이면 새로 등록)
+let currentCategory = 'all'; // ✅ 현재 선택된 카테고리
 
 // ════════════════════════════════════════════════════════════════
 // Firebase 초기화
@@ -996,6 +1060,41 @@ function displayAllData() {
   displayLocalData();
 }
 
+// ✅ 카테고리 필터링 함수
+function filterByCategory(category) {
+  currentCategory = category;
+  
+  // 탭 활성화 상태 업데이트
+  document.querySelectorAll('.category-tab').forEach(btn => {
+    btn.classList.remove('active');
+  });
+  document.querySelector(`[data-category="${category}"]`).classList.add('active');
+  
+  // 데이터 다시 표시
+  displayFirestoreData();
+}
+
+// ✅ 한글 정렬 함수 (가나다순)
+function sortByKorean(data) {
+  return [...data].sort((a, b) => {
+    const nameA = (a.name || '').trim();
+    const nameB = (b.name || '').trim();
+    return nameA.localeCompare(nameB, 'ko-KR');
+  });
+}
+
+// ✅ 카테고리별 필터링 함수
+function filterByCurrentCategory(data) {
+  if (currentCategory === 'all') {
+    return data;
+  }
+  
+  return data.filter(p => {
+    const useType = p.useType || p.type || '';
+    return useType.includes(currentCategory);
+  });
+}
+
 function displayFirestoreData() {
   const section = document.getElementById('firestore-section');
   const list = document.getElementById('firestore-list');
@@ -1007,14 +1106,19 @@ function displayFirestoreData() {
   }
 
   section.style.display = 'block';
+  
+  // ✅ 필터링 및 정렬 적용
+  let filteredData = filterByCurrentCategory(firestoreData);
+  let sortedData = sortByKorean(filteredData);
+  
   count.textContent = firestoreData.length;
 
-  list.innerHTML = firestoreData.map(p => `
+  list.innerHTML = sortedData.map(p => `
     <div class="pesticide-card">
       <div class="pesticide-info">
         <div class="pesticide-name">💊 ${p.name || '-'}</div>
         <div class="pesticide-meta">
-          분류: ${p.type || '미분류'} | 수량: ${p.quantity || 0}${p.unit || '개'}
+          분류: ${p.type || p.useType || '미분류'} | 수량: ${p.quantity || 0}${p.unit || '개'}
           ${p.ingredient ? '<br/>성분: ' + p.ingredient : ''}
           <div class="source-badge firestore">🟦 Firestore</div>
         </div>
