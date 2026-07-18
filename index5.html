@@ -807,34 +807,50 @@ async function initializeFirebase() {
 async function loadFirestoreData() {
   if (!db) {
     console.log('⚠️ db가 없습니다. Firebase 초기화를 기다리세요.');
+    showToast('⚠️ Firebase 데이터베이스 로드 중...');
     return;
   }
 
   try {
     console.log('🔄 Firestore에서 데이터 로드 중...');
+    console.log('📍 Collection 이름: myPesticides');
     
     // myPesticides collection에서 모든 문서 가져오기
     const snapshot = await db.collection('myPesticides').get();
     
+    console.log(`✅ Firestore 쿼리 성공, 문서 개수: ${snapshot.size}`);
+    
     firestoreData = [];
     
     snapshot.forEach(doc => {
-      firestoreData.push({
+      const data = {
         id: doc.id,
         ...doc.data(),
         source: 'firestore'
-      });
+      };
+      firestoreData.push(data);
+      console.log(`  📄 문서 로드됨:`, data.name, '-', data.type);
     });
     
     console.log(`✅ Firestore에서 ${firestoreData.length}개의 농약 로드됨`);
-    console.log('로드된 데이터:', firestoreData);
+    
+    if (firestoreData.length === 0) {
+      console.warn('⚠️ Firestore에 데이터가 없습니다!');
+      console.warn('📍 myPesticides collection에 문서를 추가해주세요');
+    }
+    
+    console.log('로드된 전체 데이터:', firestoreData);
     
     updateStats();
-    displayFirestoreData(); // ✅ 데이터 표시 추가
+    displayFirestoreData();
     
   } catch (err) {
-    console.warn('⚠️ Firestore 데이터 로드 실패:', err.message);
-    console.error('상세 에러:', err);
+    console.warn('⚠️ Firestore 데이터 로드 실패!');
+    console.error('에러 메시지:', err.message);
+    console.error('에러 코드:', err.code);
+    console.error('전체 에러:', err);
+    
+    showToast('❌ Firestore 로드 실패: ' + err.message);
   }
 }
 
