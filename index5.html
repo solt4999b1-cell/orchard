@@ -665,10 +665,12 @@
         <label class="form-label">분류 *</label>
         <select id="form-type" class="form-select">
           <option value="">선택</option>
-          <option value="살균제">살균제</option>
-          <option value="살충제">살충제</option>
-          <option value="살균살충제">살균살충제</option>
-          <option value="제초제">제초제</option>
+          <option value="살균">살균</option>
+          <option value="살충">살충</option>
+          <option value="제초">제초</option>
+          <option value="균충">균충</option>
+          <option value="충초">충초</option>
+          <option value="생조">생조</option>
           <option value="기타">기타</option>
         </select>
       </div>
@@ -772,9 +774,14 @@ async function initializeFirebase() {
   try {
     console.log('🔧 Firebase 초기화 중...');
     
-    firebase.initializeApp(FIREBASE_CONFIG);
+    if (!firebase.apps.length) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      console.log('✅ Firebase 앱 초기화됨');
+    }
+    
     auth = firebase.auth();
     db = firebase.firestore();
+    console.log('✅ Firebase 라이브러리 로드됨');
 
     try {
       await auth.signInAnonymously();
@@ -784,18 +791,24 @@ async function initializeFirebase() {
       console.warn('⚠️ Firebase 익명 인증 실패 (계속 진행):', err.message);
     }
 
+    console.log('🔄 Firestore 데이터 로드 시작...');
     await loadFirestoreData();
     updateSyncStatus(true);
+    console.log('✅ Firebase 초기화 완료');
     
   } catch (err) {
     console.error('❌ Firebase 초기화 실패:', err);
+    console.error('에러 상세:', err.message, err.code);
     updateSyncStatus(false);
     showToast('⚠️ Firebase 연결 불가 (로컬 데이터만 사용)');
   }
 }
 
 async function loadFirestoreData() {
-  if (!db) return;
+  if (!db) {
+    console.log('⚠️ db가 없습니다. Firebase 초기화를 기다리세요.');
+    return;
+  }
 
   try {
     console.log('🔄 Firestore에서 데이터 로드 중...');
@@ -814,10 +827,14 @@ async function loadFirestoreData() {
     });
     
     console.log(`✅ Firestore에서 ${firestoreData.length}개의 농약 로드됨`);
+    console.log('로드된 데이터:', firestoreData);
+    
     updateStats();
+    displayFirestoreData(); // ✅ 데이터 표시 추가
     
   } catch (err) {
     console.warn('⚠️ Firestore 데이터 로드 실패:', err.message);
+    console.error('상세 에러:', err);
   }
 }
 
@@ -1101,7 +1118,14 @@ function displayFirestoreData() {
   const count = document.getElementById('firestore-count');
 
   if (firestoreData.length === 0) {
-    section.style.display = 'none';
+    section.style.display = 'block';
+    count.textContent = '0';
+    list.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>📦 보유 중인 농약이 없습니다</p>
+        <p style="font-size: 12px; margin-top: 10px;">새 농약을 등록해주세요</p>
+      </div>
+    `;
     return;
   }
 
@@ -1112,6 +1136,17 @@ function displayFirestoreData() {
   let sortedData = sortByKorean(filteredData);
   
   count.textContent = firestoreData.length;
+  
+  console.log(`📊 카테고리 ${currentCategory}: ${filteredData.length}개 표시`);
+
+  if (filteredData.length === 0) {
+    list.innerHTML = `
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>🔍 해당 분류의 농약이 없습니다</p>
+      </div>
+    `;
+    return;
+  }
 
   list.innerHTML = sortedData.map(p => `
     <div class="pesticide-card">
