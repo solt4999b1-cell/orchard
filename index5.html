@@ -638,9 +638,22 @@
               "
               onmouseover="this.style.background='#1565C0'"
               onmouseout="this.style.background='#1976D2'"
-              title="Firebase 데이터 재연결">
+              title="Firebase 재연결 (WiFi 신호 확인 후 사용)">
         🔄 재연결
       </button>
+    </div>
+    
+    <!-- ✅ WiFi 연결 안내 -->
+    <div style="
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: #f5f5f5;
+      border-radius: 4px;
+      display: none;
+      " id="wifi-help">
+      💡 <strong>데이터가 없으면:</strong> WiFi 신호 강도 확인 → 재연결 버튼 클릭 → 30초 기다리세요
     </div>
 
     <div class="stat-grid">
@@ -864,7 +877,7 @@ async function initializeFirebaseAsync() {
     try {
       const authPromise = auth.signInAnonymously();
       const authTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('인증 타임아웃')), 5000)
+        setTimeout(() => reject(new Error('인증 타임아웃')), 15000)
       );
       
       await Promise.race([authPromise, authTimeout]);
@@ -876,14 +889,14 @@ async function initializeFirebaseAsync() {
       updateSyncText('⚠️ 인증 실패 (계속 진행)');
     }
 
-    // Firestore 데이터 로드 (타임아웃: 10초)
+    // Firestore 데이터 로드 (타임아웃: 30초)
     console.log('🔄 Firestore 데이터 로드 시작...');
     updateSyncText('📥 Firestore 데이터 로드 중...');
     
     try {
       const queryPromise = db.collection('myPesticides').get();
       const queryTimeout = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('쿼리 타임아웃')), 10000)
+        setTimeout(() => reject(new Error('쿼리 타임아웃')), 30000)
       );
       
       const snapshot = await Promise.race([queryPromise, queryTimeout]);
@@ -903,8 +916,18 @@ async function initializeFirebaseAsync() {
       updateSyncText('✅ Firestore 로드 완료');
     } catch (queryErr) {
       console.warn('⚠️ Firestore 로드 실패:', queryErr.message);
-      updateSyncText('⚠️ Firestore 로드 실패');
+      
+      // 타임아웃 시 특별 처리
+      if (queryErr.message.includes('타임아웃')) {
+        console.warn('⏱️ 30초 이상 대기해도 응답 없음. 로컬 모드 전환...');
+        updateSyncText('❌ Firebase 타임아웃 (로컬 모드)');
+        firebaseConnectionFailed = true;
+      } else {
+        updateSyncText('⚠️ Firestore 로드 실패');
+      }
+      
       firestoreData = [];
+      console.log('✅ 로컬 데이터 모드로 전환됨');
     }
 
     // 화면 업데이트
@@ -973,6 +996,78 @@ async function manualReconnectFirebase() {
   console.log('    마지막 성공 개수: ' + lastSuccessfulLoadCount);
   console.log('    재시도 횟수: ' + firebaseRetryCount);
   
+  // 네트워크 연결 상태 확인
+  if (!navigator.onLine) {
+    console.warn('⚠️ 인터넷 연결이 없습니다!');
+    showToast('❌ 인터넷이 연결되지 않았습니다. WiFi를 확인하세요.');
+    updateSyncText('❌ 인터넷 연결 없음');
+    return;
+  }
+  
+  console.log('✅ 인터넷 연결 상태 양호');
+  
+  updateSyncText('🔄 Firebase 재연결 중...');
+  
+  // 재시도 횟수 초기화
+  firebaseRetryCount = 0;
+  
+  // 데이터 초기화
+  firestoreData = [];
+  lastSuccessfulLoadCount = 0;
+  firebaseConnectionFailed = false;
+  
+  console.log('✅ 상태 초기화 완료');
+  console.log('  재시도 횟수: ' + firebaseRetryCount);
+  console.log('  데이터 개수: ' + firestoreData.length);
+  
+  // Firebase 재초기화
+  console.log('🔄 Firebase 데이터 로드 재시작...');
+  await loadFirestoreData();
+  
+  console.log('✅ Firebase 수동 재연결 완료');
+  
+  if (firestoreData.length > 0) {
+    showToast('✅ Firebase 재연결 성공: ' + firestoreData.length + '개 로드');
+  } else {
+    console.warn('⚠️ Firebase에서 데이터를 읽지 못했습니다.');
+    console.warn('📍 확인 사항:');
+    console.warn('   1. WiFi 신호 강도 확인 (최소 2개 막대 이상)');
+    console.warn('   2. 다른 앱에서 인터넷 연결 테스트');
+    console.warn('   3. WiFi 재시작 후 다시 시도');
+    console.warn('   4. 모바일 데이터로 전환 시도');
+    
+    showToast('⚠️ Firebase 데이터를 읽지 못했습니다. WiFi를 확인하세요.');
+    updateSyncText('❌ Firebase 읽기 실패 (로컬 모드)');
+  }
+}
+
+// ✅ 네트워크 상태 감지
+window.addEventListener('online', () => {
+  console.log('✅ 인터넷 연결됨!');
+  updateSyncText('✅ 인터넷 연결됨');
+  showToast('✅ 인터넷이 연결되었습니다.');
+  
+  // 자동으로 Firebase 재연결 시도
+  console.log('🔄 Firebase 자동 재연결 시도...');
+  manualReconnectFirebase();
+});
+
+window.addEventListener('offline', () => {
+  console.warn('❌ 인터넷 연결 끊김!');
+  updateSyncText('❌ 인터넷 연결 끊김');
+  showToast('❌ 인터넷이 끊어졌습니다.');
+  firebaseConnectionFailed = true;
+});
+
+// ✅ 수동 재연결 함수
+async function manualReconnectFirebase() {
+  console.log('🔄 사용자 요청: Firebase 수동 재연결 시작...');
+  console.log('  현재 상태:');
+  console.log('    Firebase 연결 실패: ' + firebaseConnectionFailed);
+  console.log('    현재 데이터 개수: ' + firestoreData.length);
+  console.log('    마지막 성공 개수: ' + lastSuccessfulLoadCount);
+  console.log('    재시도 횟수: ' + firebaseRetryCount);
+  
   updateSyncText('🔄 Firebase 재연결 중...');
   
   // 재시도 횟수 초기화
@@ -1026,7 +1121,7 @@ async function loadFirestoreData() {
     
     // ✅ 타임아웃 설정 (10초)
     const timeoutPromise = new Promise((_, reject) =>
-      setTimeout(() => reject(new Error('Firestore 쿼리 타임아웃 (10초)')), 10000)
+      setTimeout(() => reject(new Error('Firestore 쿼리 타임아웃 (30초)')), 30000)
     );
     
     const queryPromise = db.collection('myPesticides').get();
@@ -1037,9 +1132,21 @@ async function loadFirestoreData() {
       snapshot = await Promise.race([queryPromise, timeoutPromise]);
     } catch (timeoutErr) {
       console.error('⏱️ Firestore 쿼리 타임아웃:', timeoutErr.message);
-      showToast('⚠️ Firestore 응답이 없습니다. 로컬 데이터만 사용됩니다.');
-      updateSyncText('⚠️ Firestore 타임아웃');
-      displayFirestoreData();
+      console.warn('⚠️ 30초 이상 대기해도 응답 없음. 로컬 데이터 사용 중...');
+      
+      firebaseConnectionFailed = true;
+      firestoreData = [];  // Firestore 데이터 초기화
+      
+      showToast('⚠️ Firebase 응답 없음. 로컬 데이터만 사용됩니다.');
+      updateSyncText('❌ Firebase 타임아웃 (로컬 모드)');
+      
+      // 로컬 데이터만 표시
+      displayAllData();
+      updateStats();
+      
+      console.log('✅ 로컬 데이터 모드로 전환됨');
+      console.log('  로컬 데이터:', localData.length + '개');
+      
       return;
     }
     
