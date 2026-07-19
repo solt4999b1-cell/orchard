@@ -624,7 +624,7 @@
       <span class="sync-indicator" id="sync-indicator"></span>
       <span id="sync-text">🔄 로드중...</span>
       <!-- ✅ Firebase 재연결 버튼 -->
-      <button onclick="manualReconnectFirebase()" 
+      <button onclick="manualReconnectGAS()" 
               style="
                 background: #1976D2; 
                 color: white; 
@@ -638,7 +638,7 @@
               "
               onmouseover="this.style.background='#1565C0'"
               onmouseout="this.style.background='#1976D2'"
-              title="Firebase 재연결 (WiFi 신호 확인 후 사용)">
+              title="GAS 데이터 재연결">
         🔄 재연결
       </button>
     </div>
@@ -654,6 +654,22 @@
       display: none;
       " id="wifi-help">
       💡 <strong>데이터가 없으면:</strong> WiFi 신호 강도 확인 → 재연결 버튼 클릭 → 30초 기다리세요
+    </div>
+    
+    <!-- ✅ 홈화면 앱 디버깅 안내 -->
+    <div style="
+      font-size: 10px;
+      color: #999;
+      margin-top: 8px;
+      padding: 6px 8px;
+      background: #f9f9f9;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+      " id="debug-info">
+      📱 <strong>홈화면 앱 문제 해결:</strong><br/>
+      1. Safari에서 다시 열기<br/>
+      2. 설정 → Safari → 웹사이트 데이터 삭제<br/>
+      3. 홈화면 앱 삭제 후 다시 추가
     </div>
 
     <div class="stat-grid">
@@ -849,15 +865,197 @@ let firebaseConnectionFailed = false;  // Firebase 연결 실패 여부
 let firebaseRetryCount = 0;        // 재시도 횟수
 let firebaseRetryMaxCount = 3;     // 최대 재시도 횟수
 
-// ════════════════════════════════════════════════════════════════
-// Firebase 초기화
-// ════════════════════════════════════════════════════════════════
+// ✅ GAS URL (저장된 값 사용)
+let GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
+              'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
 
-// ✅ 백그라운드 Firebase 초기화 (비동기, 화면 표시를 막지 않음)
+// ✅ GAS에서 보유 농약 데이터 로드
+async function loadPesticidesFromGAS() {
+  try {
+    console.log('🔄 GAS에서 보유 농약 데이터 로드 중...');
+    console.log('  GAS_URL:', GAS_URL);
+    
+    // GAS API 호출: keyword 파라미터 없이 기본 호출
+    // index4/index6과 동일한 방식으로 호출
+    const url = GAS_URL + '?action=getMyPesticides';
+    console.log('  요청 URL:', url);
+    
+    const response = await fetch(url, { 
+      method: 'GET', 
+      redirect: 'follow' 
+    });
+    
+    if (!response.ok) {
+      console.error('❌ GAS 응답 오류:', response.status);
+      throw new Error('GAS 응답 실패: ' + response.status);
+    }
+    
+    const data = await response.json();
+    console.log('✅ GAS에서 데이터 수신:', data);
+    
+    if (!data || (Array.isArray(data) && data.length === 0)) {
+      console.warn('⚠️ GAS에서 받은 데이터가 없습니다');
+      console.warn('  data:', data);
+      console.log('🔄 다른 action으로 재시도...');
+      return false;
+    }
+    
+    // ✅ 데이터 처리
+    if (Array.isArray(data)) {
+      firestoreData = data.map(item => ({
+        ...item,
+        source: 'gas'
+      }));
+    } else if (data.data && Array.isArray(data.data)) {
+      firestoreData = data.data.map(item => ({
+        ...item,
+        source: 'gas'
+      }));
+    } else if (data.pesticides && Array.isArray(data.pesticides)) {
+      firestoreData = data.pesticides.map(item => ({
+        ...item,
+        source: 'gas'
+      }));
+    } else {
+      console.warn('⚠️ 예상치 못한 데이터 구조:', data);
+      return false;
+    }
+    
+    console.log(`✅ GAS에서 ${firestoreData.length}개의 농약 로드 완료`);
+    updateSyncText('✅ 데이터 로드 완료 (GAS)');
+    
+    // 화면 갱신
+    displayAllData();
+    updateStats();
+    
+    return true;
+    
+  } catch (err) {
+    console.error('❌ GAS 데이터 로드 실패:', err.message);
+    console.error('  전체 에러:', err);
+    updateSyncText('❌ GAS 로드 실패');
+    return false;
+  }
+}
+
+// ✅ Firebase 초기화 완전 제거, GAS만 사용
+async function initializeApp() {
+  try {
+    console.log('🔧 앱 초기화 중...');
+    
+    // localStorage에서 GAS_URL 확인
+    const savedGasUrl = localStorage.getItem('_runtimeGasUrl');
+    if (savedGasUrl) {
+      GAS_URL = savedGasUrl;
+      console.log('✅ 저장된 GAS_URL 사용:', GAS_URL);
+    }
+    
+    // GAS에서 데이터 로드
+    const success = await loadPesticidesFromGAS();
+    
+    if (!success) {
+      console.warn('⚠️ getMyPesticides 호출 실패, 다른 방식 시도...');
+      // 필요시 추가 시도 로직
+    }
+    
+    console.log('✅ 앱 초기화 완료');
+    
+  } catch (err) {
+    console.error('❌ 앱 초기화 실패:', err.message);
+    updateSyncText('❌ 초기화 실패');
+  }
+}
+
+// ✅ 페이지 로드 시 (firebase 제거, GAS 사용)
+document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ 페이지 로드 완료');
+  
+  // 로컬 데이터 즉시 표시
+  try {
+    displayAllData();
+    updateStats();
+  } catch (err) {
+    console.error('❌ 화면 표시 실패:', err.message);
+  }
+  
+  updateSyncText('🔄 로드중...');
+  
+  // GAS 데이터 로드 (1초 후 백그라운드)
+  console.log('⏰ 1초 후 GAS 데이터 로드 예약...');
+  
+  setTimeout(() => {
+    console.log('⏱️ GAS 데이터 로드 시작...');
+    initializeApp().catch(err => {
+      console.error('❌ GAS 초기화 실패:', err);
+      updateSyncText('❌ GAS 연결 실패');
+    });
+  }, 1000);
+});
+
+// ✅ 네트워크 상태 감지 (GAS 재연결)
+window.addEventListener('online', () => {
+  console.log('✅ 인터넷 연결됨!');
+  updateSyncText('✅ 인터넷 연결됨');
+  showToast('✅ 인터넷이 연결되었습니다.');
+  
+  // 자동으로 GAS 재연결
+  console.log('🔄 GAS 자동 재연결 시도...');
+  loadPesticidesFromGAS();
+});
+
+window.addEventListener('offline', () => {
+  console.warn('❌ 인터넷 연결 끊김!');
+  updateSyncText('❌ 인터넷 연결 끊김');
+  showToast('❌ 인터넷이 끊어졌습니다.');
+});
+
+// ✅ 수동 재연결 함수 (GAS 버전)
+async function manualReconnectGAS() {
+  console.log('🔄 사용자 요청: GAS 수동 재연결 시작...');
+  
+  if (!navigator.onLine) {
+    console.warn('⚠️ 인터넷 연결이 없습니다!');
+    showToast('❌ 인터넷이 연결되지 않았습니다.');
+    return;
+  }
+  
+  updateSyncText('🔄 GAS 재연결 중...');
+  const success = await loadPesticidesFromGAS();
+  
+  if (success) {
+    showToast('✅ GAS 재연결 성공: ' + firestoreData.length + '개 로드');
+  } else {
+    showToast('⚠️ GAS 데이터를 읽지 못했습니다.');
+  }
+}
 async function initializeFirebaseAsync() {
   try {
     console.log('🔧 Firebase 초기화 중...');
+    console.log('  현재 URL:', window.location.href);
+    console.log('  앱 모드:', window.navigator.standalone ? 'PWA/홈화면' : 'Safari 브라우저');
+    console.log('  온라인 상태:', navigator.onLine ? '온라인' : '오프라인');
+    
     updateSyncText('🔧 Firebase 초기화 중...');
+    
+    // Firebase 라이브러리 로드 확인
+    if (typeof firebase === 'undefined') {
+      console.error('❌ Firebase 라이브러리가 로드되지 않았습니다!');
+      console.error('  원인: CDN 로드 실패 또는 네트워크 문제');
+      console.error('  해결: 페이지 새로고침 시도');
+      
+      updateSyncText('❌ Firebase 라이브러리 오류');
+      showToast('❌ Firebase가 로드되지 않았습니다. 페이지를 새로고침하세요.');
+      
+      // 3초 후 자동 재시도
+      setTimeout(() => {
+        console.log('🔄 Firebase 라이브러리 재로드 시도...');
+        location.reload();
+      }, 3000);
+      
+      return;
+    }
+    
+    console.log('✅ Firebase 라이브러리 로드됨');
     
     // 이미 초기화되었는지 확인
     if (!firebase.apps.length) {
@@ -891,6 +1089,11 @@ async function initializeFirebaseAsync() {
 
     // Firestore 데이터 로드 (타임아웃: 30초)
     console.log('🔄 Firestore 데이터 로드 시작...');
+    console.log('  db 객체:', db ? '✅ 존재' : '❌ 없음');
+    console.log('  auth 객체:', auth ? '✅ 존재' : '❌ 없음');
+    console.log('  currentUser:', currentUser ? '✅ 존재' : '❌ 없음');
+    console.log('  네트워크 상태:', navigator.onLine ? '✅ 온라인' : '❌ 오프라인');
+    
     updateSyncText('📥 Firestore 데이터 로드 중...');
     
     try {
@@ -1152,6 +1355,19 @@ async function loadFirestoreData() {
     
     console.log(`✅ Firestore 쿼리 성공`);
     console.log(`📊 반환된 문서 개수: ${snapshot.size}`);
+    console.log('  snapshot 객체:', snapshot ? '✅ 존재' : '❌ 없음');
+    console.log('  snapshot.size:', snapshot.size);
+    
+    // 문서가 없는 경우 상세 로깅
+    if (snapshot.size === 0) {
+      console.warn('⚠️ Firestore에 문서가 없습니다!');
+      console.warn('📍 확인해야 할 사항:');
+      console.warn('   1. Firebase Console에서 orchardapp-b81ca 프로젝트 확인');
+      console.warn('   2. myPesticides collection에 문서 있는지 확인');
+      console.warn('   3. 문서의 필드: name, type, quantity, unit 등 확인');
+      console.warn('   4. Firestore Rules에서 읽기 권한 확인');
+      console.warn('   URL: https://console.firebase.google.com/project/orchardapp-b81ca/firestore/');
+    }
     
     firestoreData = [];
     
