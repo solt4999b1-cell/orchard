@@ -608,7 +608,7 @@
       </div>
   
       <div class="header-image" style="flex-shrink: 0;">
-          <a href="https://solt4999b1-cell.github.io/orchard/index4.html" target="_blank" style="display: block;">
+          <a href="https://solt4999b1-cell.github.io/orchard/index5.html" target="_blank" style="display: block;">
               <img src="./2cp8g.png" alt="QR코드" style="width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 4px; display: block;">
           </a>
       </div>
@@ -623,6 +623,24 @@
     <div class="sync-status" id="sync-status">
       <span class="sync-indicator" id="sync-indicator"></span>
       <span id="sync-text">🔄 로드중...</span>
+      <!-- ✅ Firebase 재연결 버튼 -->
+      <button onclick="manualReconnectFirebase()" 
+              style="
+                background: #1976D2; 
+                color: white; 
+                border: none; 
+                padding: 4px 8px; 
+                border-radius: 4px; 
+                font-size: 9px; 
+                cursor: pointer; 
+                margin-left: 6px;
+                transition: background 0.2s;
+              "
+              onmouseover="this.style.background='#1565C0'"
+              onmouseout="this.style.background='#1976D2'"
+              title="Firebase 데이터 재연결">
+        🔄 재연결
+      </button>
     </div>
 
     <div class="stat-grid">
@@ -811,6 +829,13 @@ let editingId = null; // 수정할 항목 ID (null이면 새로 등록)
 let currentCategory = 'all'; // ✅ 현재 선택된 카테고리
 let isViewMode = false; // ✅ 조회 모드 여부 (true: 조회, false: 편집)
 
+// ✅ Firebase 연결 검증 변수
+let lastSuccessfulLoadCount = 0;  // 마지막 성공한 로드 개수
+let expectedMinCount = 20;         // 예상 최소 개수 (조정 가능)
+let firebaseConnectionFailed = false;  // Firebase 연결 실패 여부
+let firebaseRetryCount = 0;        // 재시도 횟수
+let firebaseRetryMaxCount = 3;     // 최대 재시도 횟수
+
 // ════════════════════════════════════════════════════════════════
 // Firebase 초기화
 // ════════════════════════════════════════════════════════════════
@@ -939,6 +964,42 @@ function normalizeAllTypes(data) {
   };
 }
 
+// ✅ 수동 재연결 함수
+async function manualReconnectFirebase() {
+  console.log('🔄 사용자 요청: Firebase 수동 재연결 시작...');
+  console.log('  현재 상태:');
+  console.log('    Firebase 연결 실패: ' + firebaseConnectionFailed);
+  console.log('    현재 데이터 개수: ' + firestoreData.length);
+  console.log('    마지막 성공 개수: ' + lastSuccessfulLoadCount);
+  console.log('    재시도 횟수: ' + firebaseRetryCount);
+  
+  updateSyncText('🔄 Firebase 재연결 중...');
+  
+  // 재시도 횟수 초기화
+  firebaseRetryCount = 0;
+  
+  // 데이터 초기화
+  firestoreData = [];
+  lastSuccessfulLoadCount = 0;
+  firebaseConnectionFailed = false;
+  
+  console.log('✅ 상태 초기화 완료');
+  console.log('  재시도 횟수: ' + firebaseRetryCount);
+  console.log('  데이터 개수: ' + firestoreData.length);
+  
+  // Firebase 재초기화
+  console.log('🔄 Firebase 데이터 로드 재시작...');
+  await loadFirestoreData();
+  
+  console.log('✅ Firebase 수동 재연결 완료');
+  
+  if (firestoreData.length > 0) {
+    showToast('✅ Firebase 재연결 성공: ' + firestoreData.length + '개 로드');
+  } else {
+    showToast('⚠️ 데이터를 불러올 수 없습니다. WiFi 연결을 확인하세요.');
+  }
+}
+
 function updateSyncText(message) {
   try {
     const syncText = document.getElementById('sync-text');
@@ -1003,6 +1064,56 @@ async function loadFirestoreData() {
     
     console.log(`✅ Firestore에서 ${firestoreData.length}개의 농약 로드 완료`);
     
+    // ✅ 데이터 개수 검증
+    console.log('🔍 데이터 검증 시작...');
+    console.log(`   마지막 성공 개수: ${lastSuccessfulLoadCount}`);
+    console.log(`   현재 로드 개수: ${firestoreData.length}`);
+    console.log(`   예상 최소 개수: ${expectedMinCount}`);
+    
+    // 마지막 성공 개수 저장
+    if (lastSuccessfulLoadCount === 0 && firestoreData.length > 0) {
+      lastSuccessfulLoadCount = firestoreData.length;
+      console.log(`✅ 마지막 성공 개수 저장: ${lastSuccessfulLoadCount}`);
+    }
+    
+    // 데이터 검증 조건
+    const isDataValid = firestoreData.length > 0 && 
+                       (lastSuccessfulLoadCount === 0 || firestoreData.length >= lastSuccessfulLoadCount * 0.8);
+    
+    if (!isDataValid) {
+      console.warn('⚠️ 데이터 검증 실패!');
+      console.warn(`   로드된 데이터: ${firestoreData.length}개`);
+      console.warn(`   기대값: 최소 ${lastSuccessfulLoadCount > 0 ? lastSuccessfulLoadCount * 0.8 : expectedMinCount}개`);
+      
+      firebaseConnectionFailed = true;
+      
+      // 재연결 시도
+      if (firebaseRetryCount < firebaseRetryMaxCount) {
+        firebaseRetryCount++;
+        console.warn(`⏳ Firebase 재연결 시도 ${firebaseRetryCount}/${firebaseRetryMaxCount}...`);
+        updateSyncText(`⏳ Firebase 재연결 중... (${firebaseRetryCount}/${firebaseRetryMaxCount})`);
+        
+        // 2초 후 재시도
+        setTimeout(async () => {
+          console.log('🔄 Firestore 데이터 재로드 시작...');
+          await loadFirestoreData();
+        }, 2000);
+        
+        return;
+      } else {
+        console.error('❌ Firebase 재연결 최대 횟수 초과');
+        showToast('❌ Firebase 데이터 로드 실패. 로컬 데이터만 사용됩니다.');
+        updateSyncText('❌ Firebase 연결 실패 (재시도 완료)');
+        firebaseRetryCount = 0;  // 초기화
+      }
+    } else {
+      // ✅ 데이터 검증 성공
+      console.log('✅ 데이터 검증 성공!');
+      firebaseConnectionFailed = false;
+      firebaseRetryCount = 0;  // 재시도 횟수 초기화
+      updateSyncText('✅ 데이터 로드 완료');
+    }
+    
     if (firestoreData.length === 0) {
       console.warn('⚠️ Firestore에 데이터가 없습니다!');
       console.warn('📍 확인 사항:');
@@ -1014,7 +1125,6 @@ async function loadFirestoreData() {
     } else {
       console.log('📊 로드된 전체 데이터:');
       console.table(firestoreData);
-      updateSyncText('✅ 데이터 로드 완료');
     }
     
     updateStats();
@@ -1026,6 +1136,8 @@ async function loadFirestoreData() {
     console.error('에러 코드:', err.code);
     console.error('전체 에러 객체:', err);
     
+    firebaseConnectionFailed = true;
+    
     // 구체적인 에러 타입별 메시지
     if (err.code === 'permission-denied') {
       console.error('🔐 권한 오류: Firestore Rules를 확인하세요');
@@ -1036,6 +1148,28 @@ async function loadFirestoreData() {
     } else if (err.code === 'unavailable') {
       console.error('📡 네트워크 오류: 인터넷 연결을 확인하세요');
       updateSyncText('❌ 네트워크 오류');
+      
+      // 네트워크 오류 시 재연결 시도
+      if (firebaseRetryCount < firebaseRetryMaxCount) {
+        firebaseRetryCount++;
+        console.warn(`⏳ 네트워크 재연결 시도 ${firebaseRetryCount}/${firebaseRetryMaxCount}...`);
+        updateSyncText(`⏳ 네트워크 재연결 중... (${firebaseRetryCount}/${firebaseRetryMaxCount})`);
+        
+        // 3초 후 재시도
+        setTimeout(async () => {
+          console.log('🔄 Firestore 데이터 재로드 시작...');
+          await loadFirestoreData();
+        }, 3000);
+        
+        // 데이터 로드 실패해도 화면은 표시
+        updateStats();
+        displayFirestoreData();
+        return;
+      } else {
+        console.error('❌ 네트워크 재연결 최대 횟수 초과');
+        updateSyncText('❌ 네트워크 연결 실패 (재시도 완료)');
+        firebaseRetryCount = 0;  // 초기화
+      }
     } else {
       updateSyncText('❌ Firestore 로드 실패');
     }
