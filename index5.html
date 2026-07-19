@@ -1037,9 +1037,9 @@ window.addEventListener('offline', () => {
   showToast('❌ 인터넷이 끊어졌습니다.');
 });
 
-// ✅ 수동 재연결 함수 (Firebase 버전)
+// ✅ 수동 재연결 함수 (페이지 새로고침)
 async function manualReconnectGAS() {
-  console.log('🔄 사용자 요청: Firebase 수동 재연결 시작...');
+  console.log('🔄 사용자 요청: 페이지 새로고침 시작...');
   
   if (!navigator.onLine) {
     alert('❌ 인터넷이 연결되지 않았습니다.');
@@ -1047,51 +1047,21 @@ async function manualReconnectGAS() {
     return;
   }
   
-  updateSyncText('🔄 Firebase 재연결 중... (최대 10초)');
+  updateSyncText('🔄 페이지 새로고침 중...');
   
   try {
-    console.log('📡 Firebase Firestore에서 농약 데이터 로드 시작...');
+    console.log('🔄 페이지를 새로고침하여 Firebase에서 최신 데이터를 로드합니다.');
     
-    if (!db) {
-      throw new Error('Firebase db 객체가 없습니다. 페이지를 새로고침하세요.');
-    }
-    
-    // Firebase에서 직접 로드
-    const snapshot = await db.collection('myPesticides').get();
-    
-    if (!snapshot) {
-      throw new Error('Firestore 응답이 없습니다.');
-    }
-    
-    const loadedData = [];
-    snapshot.forEach((doc) => {
-      loadedData.push({
-        id: doc.id,
-        ...doc.data(),
-        source: 'firestore'
-      });
-    });
-    
-    console.log('✅ Firebase에서 ' + loadedData.length + '개 농약 로드됨');
-    
-    if (loadedData && loadedData.length > 0) {
-      firestoreData = loadedData;
-      displayAllData();
-      updateStats();
-      updateSyncText('✅ Firebase 로드 완료');
-      alert('✅ Firebase 재연결 성공!\n' + loadedData.length + '개 농약 로드됨');
-      console.log('✅ 화면 업데이트 완료');
-    } else {
-      updateSyncText('⚠️ Firebase에 데이터가 없습니다');
-      alert('⚠️ Firestore에 데이터가 없습니다.');
-      console.log('⚠️ loadedData:', loadedData);
-    }
+    // 1초 후 페이지 새로고침 (사용자가 메시지를 볼 수 있도록)
+    setTimeout(() => {
+      console.log('📄 페이지 새로고침...');
+      location.reload();
+    }, 1000);
     
   } catch (err) {
-    console.error('❌ Firebase 재연결 에러:', err.message);
-    console.error('  전체 에러:', err);
-    updateSyncText('❌ Firebase 재연결 실패');
-    alert('❌ Firebase 재연결 실패\n\n에러: ' + err.message);
+    console.error('❌ 새로고침 에러:', err.message);
+    updateSyncText('❌ 새로고침 실패');
+    alert('❌ 새로고침 실패\n\n에러: ' + err.message);
   }
 }
 async function initializeFirebaseAsync() {
