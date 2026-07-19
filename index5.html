@@ -1235,7 +1235,9 @@ async function loadFirestoreData() {
     }
     
     updateStats();
-    displayFirestoreData();
+    displayAllData();  // ← displayFirestoreData() 대신 displayAllData() 호출
+    
+    console.log('✅ 화면 재갱신 완료');
     
   } catch (err) {
     console.warn('❌ Firestore 데이터 로드 실패!');
@@ -1270,7 +1272,7 @@ async function loadFirestoreData() {
         
         // 데이터 로드 실패해도 화면은 표시
         updateStats();
-        displayFirestoreData();
+        displayAllData();
         return;
       } else {
         console.error('❌ 네트워크 재연결 최대 횟수 초과');
@@ -1285,7 +1287,7 @@ async function loadFirestoreData() {
     
     // 데이터 로드 실패해도 화면은 표시
     updateStats();
-    displayFirestoreData();
+    displayAllData();
   }
 }
 
