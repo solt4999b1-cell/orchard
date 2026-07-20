@@ -957,6 +957,14 @@ async function initializeApp() {
       console.log('📊 firestoreData 업데이트:', loadedData.length + '개');
       console.log('   첫 번째 항목:', loadedData[0].name);
       
+      // ✅ localStorage에 저장 (성공했을 때만!)
+      try {
+        localStorage.setItem('_cachedFirestoreData', JSON.stringify(loadedData));
+        console.log('💾 localStorage에 저장 완료:', loadedData.length + '개');
+      } catch (err) {
+        console.warn('⚠️ localStorage 저장 실패:', err.message);
+      }
+      
       // ✅ 섹션 표시
       const firestoreSection = document.getElementById('firestore-section');
       if (firestoreSection) {
@@ -1015,16 +1023,29 @@ async function initializeFirebaseAsync() {
     
     // 데이터 로드
     console.log('📋 Firestore에서 데이터 로드 중...');
-    await initializeApp();
+    updateSyncText('🔄 데이터 로드 중...');
+    
+    const success = await initializeApp();
+    
+    if (success) {
+      console.log('✅ Firestore에서 데이터 로드 성공!');
+      console.log('   → localStorage에 자동 저장됨');
+    } else {
+      console.warn('⚠️ Firestore에서 데이터를 로드하지 못함');
+      console.log('   → 캐시된 데이터 사용');
+    }
     
   } catch (err) {
     console.error('❌ Firebase 초기화 오류:', err);
+    console.error('   에러:', err.message);
+    console.log('');
+    console.log('💾 캐시된 데이터 확인 중...');
     
     // 캐시된 데이터 사용
     try {
       const cachedData = localStorage.getItem('_cachedFirestoreData');
       if (cachedData) {
-        console.log('✅ 캐시된 데이터 사용');
+        console.log('✅ 캐시된 데이터 발견!');
         firestoreData = JSON.parse(cachedData);
         
         const firestoreSection = document.getElementById('firestore-section');
@@ -1034,10 +1055,14 @@ async function initializeFirebaseAsync() {
         
         displayAllData();
         updateStats();
-        updateSyncText('⚠️ 캐시된 데이터');
+        updateSyncText('⚠️ 캐시된 데이터 사용 중');
+        console.log('✅ 캐시된 데이터 표시 완료:', firestoreData.length + '개');
+      } else {
+        console.error('❌ 캐시된 데이터도 없음');
+        updateSyncText('❌ 데이터 로드 실패');
       }
-    } catch (e) {
-      console.error('❌ 캐시 로드 실패:', e);
+    } catch (cacheErr) {
+      console.error('❌ 캐시 로드 실패:', cacheErr);
       updateSyncText('❌ 데이터 로드 실패');
     }
   }
@@ -2837,12 +2862,15 @@ function showLoading(msg) {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     console.log('✅ 페이지 로드 완료');
+    console.log('');
+    console.log('📱 초기화 전략: 캐시 우선 → Firestore 데이터 로드');
+    console.log('');
     
     // 캐시된 데이터 먼저 표시
     try {
       const cachedData = localStorage.getItem('_cachedFirestoreData');
       if (cachedData) {
-        console.log('💾 캐시된 데이터로 즉시 표시');
+        console.log('💾 [1단계] localStorage 캐시 데이터 발견!');
         firestoreData = JSON.parse(cachedData);
         
         const firestoreSection = document.getElementById('firestore-section');
@@ -2852,23 +2880,32 @@ if (document.readyState === 'loading') {
         
         displayAllData();
         updateStats();
-        updateSyncText('🔄 최신 데이터 로드 중...');
+        console.log('✅ 캐시 데이터 표시 완료:', firestoreData.length + '개');
+        updateSyncText('💾 캐시 데이터 표시 중...');
+      } else {
+        console.log('⚠️ [1단계] localStorage 캐시 없음');
+        updateSyncText('🔄 로드중...');
       }
     } catch (e) {
-      console.warn('⚠️ 캐시 확인 실패');
+      console.warn('⚠️ [1단계] 캐시 확인 실패:', e.message);
     }
     
-    updateSyncText('🔄 로드중...');
+    console.log('');
+    console.log('📡 [2단계] Firestore에서 최신 데이터 로드 시작...');
+    updateSyncText('🔄 최신 데이터 로드 중...');
     initializeFirebaseAsync();
   });
 } else {
   console.log('✅ 페이지 이미 로드됨');
+  console.log('');
+  console.log('📱 초기화 전략: 캐시 우선 → Firestore 데이터 로드');
+  console.log('');
   
   // 캐시된 데이터 먼저 표시
   try {
     const cachedData = localStorage.getItem('_cachedFirestoreData');
     if (cachedData) {
-      console.log('💾 캐시된 데이터로 즉시 표시');
+      console.log('💾 [1단계] localStorage 캐시 데이터 발견!');
       firestoreData = JSON.parse(cachedData);
       
       const firestoreSection = document.getElementById('firestore-section');
@@ -2878,13 +2915,19 @@ if (document.readyState === 'loading') {
       
       displayAllData();
       updateStats();
-      updateSyncText('🔄 최신 데이터 로드 중...');
+      console.log('✅ 캐시 데이터 표시 완료:', firestoreData.length + '개');
+      updateSyncText('💾 캐시 데이터 표시 중...');
+    } else {
+      console.log('⚠️ [1단계] localStorage 캐시 없음');
+      updateSyncText('🔄 로드중...');
     }
   } catch (e) {
-    console.warn('⚠️ 캐시 확인 실패');
+    console.warn('⚠️ [1단계] 캐시 확인 실패:', e.message);
   }
   
-  updateSyncText('🔄 로드중...');
+  console.log('');
+  console.log('📡 [2단계] Firestore에서 최신 데이터 로드 시작...');
+  updateSyncText('🔄 최신 데이터 로드 중...');
   initializeFirebaseAsync();
 }
 </script>
