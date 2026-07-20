@@ -877,7 +877,7 @@ async function loadPesticidesFromGAS() {
     
     // GAS API 호출: keyword 파라미터 없이 기본 호출
     // index4/index6과 동일한 방식으로 호출
-    const url = GAS_URL + '?action=getMyPesticides';
+    const url = GAS_URL + '?action=getMyPesticides&t=' + new Date().getTime();
     console.log('  요청 URL:', url);
     
     const response = await fetch(url, { 
