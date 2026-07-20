@@ -2842,35 +2842,18 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('✅ 페이지 로드 완료');
   
   try {
-    // ✅ 동기적으로 즉시 화면 표시 (await 없음!)
-    console.log('📱 화면 즉시 표시...');
-    displayAllData();
-    console.log('  ✅ displayAllData() 완료');
-    
-    updateStats();
-    console.log('  ✅ updateStats() 완료');
-    
-    console.log('✅ 화면 표시 완료');
-  } catch (err) {
-    console.error('❌ 화면 표시 실패:', err.message);
-    console.error('  스택:', err.stack);
-  }
-  
-  try {
+    // ✅ 로딩 상태만 표시
     updateSyncText('🔄 로드중...');
+    console.log('⏰ 1초 후 Firebase 초기화 예약...');
   } catch (err) {
-    console.error('❌ updateSyncText 실패:', err.message);
+    console.error('❌ 초기화 실패:', err.message);
   }
   
-  // ✅ Firebase 초기화는 1초 후에 백그라운드에서 시작 (완전히 분리!)
-  console.log('⏰ 1초 후 Firebase 초기화 예약...');
-  
+  // ✅ Firebase 초기화는 1초 후에 시작
   setTimeout(() => {
     console.log('⏱️ Firebase 초기화 시작...');
     initializeFirebaseAsync();
   }, 1000);
-  
-  console.log('✅ 페이지 준비 완료 (사용자가 즉시 사용 가능)');
 });
 </script>
 
