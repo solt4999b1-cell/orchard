@@ -854,7 +854,7 @@ let firebaseRetryCount = 0;        // 재시도 횟수
 let firebaseRetryMaxCount = 3;     // 최대 재시도 횟수
 
 // ✅ GAS URL (저장된 값 사용)
-const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
+let GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
               'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
 let firestoreData = []; // 서버에서 받아온 데이터 저장용
 // ✅ GAS에서 보유 농약 데이터 로드
@@ -2757,15 +2757,11 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('⏰ 1초 후 Firebase 초기화 예약...');
   
   setTimeout(() => {
-    console.log('⏱️ Firebase 초기화 시작 (백그라운드)...');
-    try {
-      initializeFirebaseAsync().catch(err => {
-        console.error('❌ Firebase 초기화 실패:', err.message);
-        updateSyncText('⚠️ Firestore 연결 불가');
-      });
-    } catch (err) {
-      console.error('❌ Firebase 초기화 예외:', err.message);
-    }
+    console.log('⏱️ GAS 데이터 로드 시작...');
+    initializeApp().catch(err => {
+      console.error('❌ GAS 초기화 실패:', err);
+      updateSyncText('❌ GAS 연결 실패');
+    });
   }, 1000);
   
   console.log('✅ 페이지 준비 완료 (사용자가 즉시 사용 가능)');
