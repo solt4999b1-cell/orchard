@@ -851,6 +851,8 @@ async function loadFirebaseConfigFromGAS() {
       'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
     
     console.log('📡 GAS에서 Firebase config 로드 중...');
+    console.log('   GAS_URL:', GAS_URL);
+    console.log('   저장된 _runtimeGasUrl:', localStorage.getItem('_runtimeGasUrl') ? '있음' : '없음');
     
     const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
       method: 'GET',
@@ -858,11 +860,19 @@ async function loadFirebaseConfigFromGAS() {
     });
     
     const result = await response.json();
+    console.log('📦 GAS 응답:', result.success ? '성공' : '실패');
     
     if (result.success && result.config) {
       FIREBASE_CONFIG = result.config;
       console.log('✅ GAS에서 config 로드 완료');
       console.log('   projectId:', FIREBASE_CONFIG.projectId);
+      
+      // ✅ 저장된 것이 없으면 저장
+      if (!localStorage.getItem('_runtimeGasUrl')) {
+        localStorage.setItem('_runtimeGasUrl', GAS_URL);
+        console.log('✅ GAS_URL을 localStorage에 저장');
+      }
+      
       return true;
     } else {
       console.error('❌ GAS에서 config를 못 받음:', result.error);
