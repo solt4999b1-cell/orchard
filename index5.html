@@ -845,26 +845,34 @@ let db = null;
 let auth = null;
 let currentUser = null;
 
-// ✅ Firebase 설정 (GAS에서 동적으로 로드)
-let FIREBASE_CONFIG = null;
+// ✅ Firebase 설정 (기본값)
+let FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+  authDomain: "orchardapp-b81ca.firebaseapp.com",
+  projectId: "orchardapp-b81ca"
+};
 
-// ✅ GAS에서 Firebase config 로드
+// ✅ GAS에서 Firebase config 로드 (타임아웃 + 폴백)
 async function loadFirebaseConfigFromGAS() {
   try {
     const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
       'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
     
-    console.log('📡 GAS에서 Firebase config 로드 중...');
-    console.log('   GAS_URL:', GAS_URL);
-    console.log('   저장된 _runtimeGasUrl:', localStorage.getItem('_runtimeGasUrl') ? '있음' : '없음');
+    console.log('📡 GAS에서 Firebase config 로드 시도...');
+    
+    // ✅ 3초 타임아웃 설정
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
     
     const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
       method: 'GET',
-      redirect: 'follow'
+      redirect: 'follow',
+      signal: controller.signal
     });
     
+    clearTimeout(timeout);
+    
     const result = await response.json();
-    console.log('📦 GAS 응답:', result.success ? '성공' : '실패');
     
     if (result.success && result.config) {
       FIREBASE_CONFIG = result.config;
@@ -879,13 +887,15 @@ async function loadFirebaseConfigFromGAS() {
       
       return true;
     } else {
-      console.error('❌ GAS에서 config를 못 받음:', result.error);
-      alert('❌ Firebase 설정을 GAS에서 읽을 수 없습니다.\n\nGAS setupFirebaseConfig()가 실행되었는지 확인하세요.');
+      console.warn('⚠️ GAS에서 config를 못 받음 (로컬 config 사용)');
       return false;
     }
   } catch (err) {
-    console.error('❌ GAS에서 config 로드 실패:', err.message);
-    alert('❌ GAS 연결 실패: ' + err.message + '\n\nGAS가 정상적으로 배포되었는지 확인하세요.');
+    if (err.name === 'AbortError') {
+      console.warn('⚠️ GAS 요청 타임아웃 (로컬 config 사용)');
+    } else {
+      console.warn('⚠️ GAS 연결 실패 (로컬 config 사용):', err.message);
+    }
     return false;
   }
 }
@@ -1027,7 +1037,7 @@ async function initializeApp() {
   }
 }
 
-// ✅ Firebase 비동기 초기화
+// ✅ Firebase 비동기 초기화 (2단계 로딩)
 async function initializeFirebaseAsync() {
   try {
     console.log('🔧 Firebase 비동기 초기화 중...');
@@ -1036,30 +1046,10 @@ async function initializeFirebaseAsync() {
     db = null;
     console.log('✅ db 객체 초기화됨');
     
-    // 1️⃣ GAS에서 config 로드 (최대 3회 시도)
-    let configLoaded = false;
-    let retryCount = 0;
-    const maxRetries = 3;
-    
-    while (!configLoaded && retryCount < maxRetries) {
-      console.log(`📡 GAS에서 config 로드 시도... (${retryCount + 1}/${maxRetries})`);
-      configLoaded = await loadFirebaseConfigFromGAS();
-      
-      if (!configLoaded) {
-        retryCount++;
-        if (retryCount < maxRetries) {
-          console.log(`⏳ ${retryCount}초 대기 후 재시도...`);
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
-      }
-    }
-    
-    if (!FIREBASE_CONFIG) {
-      console.error('❌ Firebase config를 로드할 수 없습니다.');
-      updateSyncText('❌ Firebase config 로드 실패');
-      alert('❌ Firebase 설정을 읽을 수 없습니다. 인터넷 연결을 확인하세요.');
-      return;
-    }
+    // 1️⃣ GAS에서 config 로드 시도 (타임아웃 3초)
+    console.log('📡 GAS에서 config 로드 시도 (최대 3초)...');
+    await loadFirebaseConfigFromGAS();
+    console.log('✅ Firebase config 준비 완료');
     
     // 2️⃣ Firebase 라이브러리 확인
     if (typeof firebase === 'undefined') {
@@ -1074,16 +1064,30 @@ async function initializeFirebaseAsync() {
     if (!firebase.apps || firebase.apps.length === 0) {
       firebase.initializeApp(FIREBASE_CONFIG);
       console.log('✅ Firebase 앱 초기화됨');
+      console.log('   projectId:', FIREBASE_CONFIG.projectId);
     } else {
-      console.log('✅ Firebase 앱 이미 초기화됨 (' + firebase.apps.length + '개)');
+      console.log('✅ Firebase 앱 이미 초기화됨');
     }
     
     // 4️⃣ Firestore 초기화
     db = firebase.firestore();
     console.log('✅ Firestore 초기화됨');
-    console.log('   db:', db ? '있음' : '없음');
     
-    // 5️⃣ 데이터 로드
+    // 5️⃣ 1단계: 개수만 먼저 로드 (빠름!)
+    console.log('📊 1단계: 문서 개수 로드 중...');
+    const countSnapshot = await db.collection('myPesticides').get();
+    const count = countSnapshot.size;
+    console.log('✅ 문서 개수:', count + '개');
+    
+    // 개수만 표시
+    const countElement = document.getElementById('firestore-count');
+    if (countElement) {
+      countElement.textContent = count;
+      console.log('✅ firestore-count 업데이트됨');
+    }
+    
+    // 6️⃣ 2단계: 상세 데이터 로드 (시간 걸릴 수 있음)
+    console.log('📋 2단계: 상세 데이터 로드 중...');
     await initializeApp();
     
     console.log('✅ Firebase 초기화 완료');
