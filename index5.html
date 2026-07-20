@@ -2757,10 +2757,10 @@ document.addEventListener('DOMContentLoaded', () => {
   console.log('⏰ 1초 후 Firebase 초기화 예약...');
   
   setTimeout(() => {
-    console.log('⏱️ GAS 데이터 로드 시작...');
+    console.log('⏱️ 앱 초기화 시작...');
     initializeApp().catch(err => {
-      console.error('❌ GAS 초기화 실패:', err);
-      updateSyncText('❌ GAS 연결 실패');
+      console.error('❌ 앱 초기화 실패:', err);
+      updateSyncText('❌ 연결 실패');
     });
   }, 1000);
   
