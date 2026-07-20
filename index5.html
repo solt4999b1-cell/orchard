@@ -840,6 +840,42 @@ const CONFIG = {
 let db = null;
 let auth = null;
 let currentUser = null;
+
+// ✅ Firebase 설정 (GAS에서 동적으로 로드)
+let FIREBASE_CONFIG = null;
+
+// ✅ GAS에서 Firebase config 로드
+async function loadFirebaseConfigFromGAS() {
+  try {
+    const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
+      'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+    
+    console.log('📡 GAS에서 Firebase config 로드 중...');
+    
+    const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
+      method: 'GET',
+      redirect: 'follow'
+    });
+    
+    const result = await response.json();
+    
+    if (result.success && result.config) {
+      FIREBASE_CONFIG = result.config;
+      console.log('✅ GAS에서 config 로드 완료');
+      console.log('   projectId:', FIREBASE_CONFIG.projectId);
+      return true;
+    } else {
+      console.error('❌ GAS에서 config를 못 받음:', result.error);
+      alert('❌ Firebase 설정을 GAS에서 읽을 수 없습니다.\n\nGAS setupFirebaseConfig()가 실행되었는지 확인하세요.');
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ GAS에서 config 로드 실패:', err.message);
+    alert('❌ GAS 연결 실패: ' + err.message + '\n\nGAS가 정상적으로 배포되었는지 확인하세요.');
+    return false;
+  }
+}
+
 let localData = CONFIG.storage.get('myPesticides_index6', []);
 let searchResults = [];
 let editingId = null; // 수정할 항목 ID (null이면 새로 등록)
@@ -895,34 +931,104 @@ function renderList() {
 function updateSyncText(msg) { document.getElementById('sync-text').textContent = msg; }
 
 // 페이지 초기화
-document.addEventListener('DOMContentLoaded', () => {
-  loadPesticidesFromGAS();
-});
-// ✅ Firebase 초기화 완전 제거, GAS만 사용
+// ✅ Firebase 초기화를 사용하므로 GAS 호출 제거
+// document.addEventListener('DOMContentLoaded', () => {
+//   loadPesticidesFromGAS();
+// });
+// ✅ Firebase에서 데이터 로드 (GAS는 사용하지 않음)
 async function initializeApp() {
   try {
-    console.log('🔧 앱 초기화 중...');
+    console.log('🔧 Firebase에서 데이터 로드 중...');
     
-    // localStorage에서 GAS_URL 확인
-    const savedGasUrl = localStorage.getItem('_runtimeGasUrl');
-    if (savedGasUrl) {
-      GAS_URL = savedGasUrl;
-      console.log('✅ 저장된 GAS_URL 사용:', GAS_URL);
+    // Firebase가 초기화되어야 함
+    if (!db) {
+      console.warn('⚠️ Firebase db 객체가 없습니다');
+      return false;
     }
     
-    // GAS에서 데이터 로드
-    const success = await loadPesticidesFromGAS();
+    console.log('📡 Firestore에서 myPesticides collection 조회 중...');
     
-    if (!success) {
-      console.warn('⚠️ getMyPesticides 호출 실패, 다른 방식 시도...');
-      // 필요시 추가 시도 로직
+    // Firebase Firestore에서 데이터 로드
+    const snapshot = await db.collection('myPesticides').get();
+    
+    const loadedData = [];
+    snapshot.forEach((doc) => {
+      loadedData.push({
+        id: doc.id,
+        ...doc.data(),
+        source: 'firestore'
+      });
+    });
+    
+    console.log('✅ Firestore에서 ' + loadedData.length + '개 농약 로드됨');
+    
+    if (loadedData && loadedData.length > 0) {
+      firestoreData = loadedData;
+      console.log('📊 firestoreData 업데이트:', loadedData.length + '개');
+      
+      // ✅ 화면 업데이트
+      displayAllData();
+      updateStats();
+      updateSyncText('✅ 데이터 로드 완료');
+      
+      console.log('✅ 앱 초기화 완료');
+      return true;
+    } else {
+      console.warn('⚠️ Firestore에 데이터가 없습니다');
+      updateSyncText('⚠️ 데이터 없음');
+      return false;
     }
-    
-    console.log('✅ 앱 초기화 완료');
     
   } catch (err) {
-    console.error('❌ 앱 초기화 실패:', err.message);
-    updateSyncText('❌ 초기화 실패');
+    console.error('❌ Firebase 데이터 로드 실패:', err.message);
+    updateSyncText('❌ 로드 실패');
+    return false;
+  }
+}
+
+// ✅ Firebase 비동기 초기화
+async function initializeFirebaseAsync() {
+  try {
+    console.log('🔧 Firebase 비동기 초기화 중...');
+    
+    // 1️⃣ GAS에서 config 로드
+    console.log('📡 GAS에서 config 로드 중...');
+    const configLoaded = await loadFirebaseConfigFromGAS();
+    
+    if (!FIREBASE_CONFIG) {
+      console.warn('⚠️ Firebase config가 없습니다');
+      return;
+    }
+    
+    // 2️⃣ Firebase 라이브러리 확인
+    if (typeof firebase === 'undefined') {
+      console.warn('⚠️ Firebase 라이브러리가 로드되지 않음');
+      setTimeout(() => location.reload(), 3000);
+      return;
+    }
+    
+    console.log('✅ Firebase 라이브러리 확인 완료');
+    
+    // 3️⃣ Firebase 앱 초기화 (이미 되어 있을 수 있음)
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      console.log('✅ Firebase 앱 초기화됨');
+    } else {
+      console.log('✅ Firebase 앱 이미 초기화됨');
+    }
+    
+    // 4️⃣ Firestore 초기화
+    db = firebase.firestore();
+    console.log('✅ Firestore 초기화됨');
+    
+    // 5️⃣ 데이터 로드
+    await initializeApp();
+    
+    console.log('✅ Firebase 초기화 완료');
+    
+  } catch (err) {
+    console.error('❌ Firebase 초기화 실패:', err.message);
+    updateSyncText('❌ Firebase 초기화 실패');
   }
 }
 
@@ -2759,11 +2865,19 @@ document.addEventListener('DOMContentLoaded', () => {
   // ✅ Firebase 초기화는 1초 후에 백그라운드에서 시작 (완전히 분리!)
   console.log('⏰ 1초 후 Firebase 초기화 예약...');
   
- 
+  setTimeout(() => {
+    console.log('⏱️ Firebase 초기화 시작...');
+    initializeFirebaseAsync();
+  }, 1000);
   
   console.log('✅ 페이지 준비 완료 (사용자가 즉시 사용 가능)');
 });
 </script>
+
+
+  <!-- ✅ Firebase CDN (10.5.0 compat 버전) -->
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 
 </body>
 </html>
