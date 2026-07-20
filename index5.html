@@ -845,57 +845,41 @@ let db = null;
 let auth = null;
 let currentUser = null;
 
-// ✅ Firebase 설정 (기본값)
-let FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
-  authDomain: "orchardapp-b81ca.firebaseapp.com",
-  projectId: "orchardapp-b81ca"
-};
+// ✅ Firebase 설정 (GAS에서 로드됨)
+let FIREBASE_CONFIG = null;
 
-// ✅ GAS에서 Firebase config 로드 (타임아웃 + 폴백)
+// ✅ GAS에서 Firebase config 로드
 async function loadFirebaseConfigFromGAS() {
   try {
     const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
       'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
     
-    console.log('📡 GAS에서 Firebase config 로드 시도...');
-    
-    // ✅ 3초 타임아웃 설정
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 3000);
+    console.log('📡 GAS에서 Firebase config 로드 중...');
     
     const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
       method: 'GET',
-      redirect: 'follow',
-      signal: controller.signal
+      redirect: 'follow'
     });
     
-    clearTimeout(timeout);
-    
     const result = await response.json();
+    console.log('📦 GAS 응답:', result.success ? '성공' : '실패');
     
     if (result.success && result.config) {
       FIREBASE_CONFIG = result.config;
       console.log('✅ GAS에서 config 로드 완료');
       console.log('   projectId:', FIREBASE_CONFIG.projectId);
       
-      // ✅ 저장된 것이 없으면 저장
       if (!localStorage.getItem('_runtimeGasUrl')) {
         localStorage.setItem('_runtimeGasUrl', GAS_URL);
-        console.log('✅ GAS_URL을 localStorage에 저장');
       }
       
       return true;
     } else {
-      console.warn('⚠️ GAS에서 config를 못 받음 (로컬 config 사용)');
+      console.error('❌ GAS에서 config를 못 받음:', result.error);
       return false;
     }
   } catch (err) {
-    if (err.name === 'AbortError') {
-      console.warn('⚠️ GAS 요청 타임아웃 (로컬 config 사용)');
-    } else {
-      console.warn('⚠️ GAS 연결 실패 (로컬 config 사용):', err.message);
-    }
+    console.error('❌ GAS 연결 실패:', err.message);
     return false;
   }
 }
@@ -1037,19 +1021,20 @@ async function initializeApp() {
   }
 }
 
-// ✅ Firebase 비동기 초기화 (2단계 로딩)
+// ✅ Firebase 비동기 초기화
 async function initializeFirebaseAsync() {
   try {
     console.log('🔧 Firebase 비동기 초기화 중...');
     
-    // ✅ db 객체 초기화
-    db = null;
-    console.log('✅ db 객체 초기화됨');
+    // 1️⃣ GAS에서 config 로드
+    console.log('📡 GAS에서 Firebase config 로드 중...');
+    const configLoaded = await loadFirebaseConfigFromGAS();
     
-    // 1️⃣ GAS에서 config 로드 시도 (타임아웃 3초)
-    console.log('📡 GAS에서 config 로드 시도 (최대 3초)...');
-    await loadFirebaseConfigFromGAS();
-    console.log('✅ Firebase config 준비 완료');
+    if (!configLoaded || !FIREBASE_CONFIG) {
+      console.error('❌ Firebase config를 로드할 수 없습니다');
+      updateSyncText('❌ GAS 연결 실패');
+      return;
+    }
     
     // 2️⃣ Firebase 라이브러리 확인
     if (typeof firebase === 'undefined') {
@@ -1064,7 +1049,6 @@ async function initializeFirebaseAsync() {
     if (!firebase.apps || firebase.apps.length === 0) {
       firebase.initializeApp(FIREBASE_CONFIG);
       console.log('✅ Firebase 앱 초기화됨');
-      console.log('   projectId:', FIREBASE_CONFIG.projectId);
     } else {
       console.log('✅ Firebase 앱 이미 초기화됨');
     }
@@ -1073,21 +1057,8 @@ async function initializeFirebaseAsync() {
     db = firebase.firestore();
     console.log('✅ Firestore 초기화됨');
     
-    // 5️⃣ 1단계: 개수만 먼저 로드 (빠름!)
-    console.log('📊 1단계: 문서 개수 로드 중...');
-    const countSnapshot = await db.collection('myPesticides').get();
-    const count = countSnapshot.size;
-    console.log('✅ 문서 개수:', count + '개');
-    
-    // 개수만 표시
-    const countElement = document.getElementById('firestore-count');
-    if (countElement) {
-      countElement.textContent = count;
-      console.log('✅ firestore-count 업데이트됨');
-    }
-    
-    // 6️⃣ 2단계: 상세 데이터 로드 (시간 걸릴 수 있음)
-    console.log('📋 2단계: 상세 데이터 로드 중...');
+    // 5️⃣ 데이터 로드
+    console.log('📋 Firestore에서 데이터 로드 중...');
     await initializeApp();
     
     console.log('✅ Firebase 초기화 완료');
@@ -1110,9 +1081,11 @@ window.addEventListener('online', () => {
   updateSyncText('✅ 인터넷 연결됨');
   showToast('✅ 인터넷이 연결되었습니다.');
   
-  // 자동으로 GAS 재연결
-  console.log('🔄 GAS 자동 재연결 시도...');
-  loadPesticidesFromGAS();
+  // 재연결 버튼 역할
+  console.log('🔄 GAS 재연결 시도...');
+  setTimeout(() => {
+    location.reload();
+  }, 1000);
 });
 
 window.addEventListener('offline', () => {
