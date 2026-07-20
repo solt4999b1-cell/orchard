@@ -1090,29 +1090,11 @@ async function initializeFirebaseAsync() {
   }
 }
 
-// ✅ 페이지 로드 시 (firebase 제거, GAS 사용)
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ 페이지 로드 완료');
-  
-  // 로컬 데이터 즉시 표시
-  try {
-    displayAllData();
-    updateStats();
-  } catch (err) {
-    console.error('❌ 화면 표시 실패:', err.message);
-  }
-  
-  updateSyncText('🔄 로드중...');
-  
-  // GAS 데이터 로드 (1초 후 백그라운드)
-  console.log('⏰ 1초 후 GAS 데이터 로드 예약...');
-  
-  // 2. 1초 후 단 한 번만 데이터 로드
-  setTimeout(() => {
-    console.log('⏱️ 앱 초기화 시작...');
-    initializeApp(); 
-  }, 1000);
-});
+// ✅ 중복된 DOMContentLoaded 제거 (2899번 DOMContentLoaded에서 처리)
+// document.addEventListener('DOMContentLoaded', () => {
+//   displayAllData();
+//   updateStats();
+// });
 
 // ✅ 네트워크 상태 감지 (GAS 재연결)
 window.addEventListener('online', () => {
