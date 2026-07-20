@@ -1000,77 +1000,31 @@ async function initializeApp() {
   }
 }
 
-// ✅ Firebase 비동기 초기화 (상세 로그)
+// ✅ Firebase 초기화 (index4와 동일한 간단한 방식)
 async function initializeFirebaseAsync() {
   try {
-    console.log('🔧 [1/5] Firebase 비동기 초기화 시작...');
-    console.log('   현재 시간:', new Date().toLocaleTimeString());
+    console.log('🔧 Firebase 초기화 중...');
     
-    // 1️⃣ Firebase 라이브러리 확인
-    console.log('🔧 [2/5] Firebase 라이브러리 확인 중...');
-    if (typeof firebase === 'undefined') {
-      console.error('❌ Firebase 라이브러리가 로드되지 않았습니다!');
-      console.log('   window.firebase:', typeof window.firebase);
-      updateSyncText('❌ Firebase 라이브러리 로드 실패');
-      setTimeout(() => location.reload(), 3000);
-      return;
-    }
-    console.log('✅ Firebase 라이브러리 확인 완료');
-    console.log('   firebase.initializeApp:', typeof firebase.initializeApp);
-    console.log('   firebase.firestore:', typeof firebase.firestore);
-    
-    // 2️⃣ Firebase 앱 초기화
-    console.log('🔧 [3/5] Firebase 앱 초기화 중...');
-    console.log('   firebase.apps.length:', firebase.apps ? firebase.apps.length : '없음');
-    
-    if (!firebase.apps || firebase.apps.length === 0) {
-      console.log('   → 새 앱 초기화...');
+    if (!firebase.apps.length) {
       firebase.initializeApp(FIREBASE_CONFIG);
       console.log('✅ Firebase 앱 초기화됨');
-      console.log('   firebase.apps.length:', firebase.apps.length);
-    } else {
-      console.log('✅ Firebase 앱 이미 초기화됨');
     }
     
-    // 3️⃣ Firestore 초기화
-    console.log('🔧 [4/5] Firestore 초기화 중...');
     db = firebase.firestore();
     console.log('✅ Firestore 초기화됨');
-    console.log('   db:', db ? 'OK' : 'NULL');
     
-    // 4️⃣ 데이터 로드
-    console.log('🔧 [5/5] Firestore에서 데이터 로드 중...');
-    updateSyncText('🔄 데이터 로드 중...');
-    
-    console.log('   → initializeApp() 호출...');
+    // 데이터 로드
+    console.log('📋 Firestore에서 데이터 로드 중...');
     await initializeApp();
-    console.log('   → initializeApp() 완료');
-    
-    // 5️⃣ 캐싱
-    if (firestoreData && firestoreData.length > 0) {
-      try {
-        localStorage.setItem('_cachedFirestoreData', JSON.stringify(firestoreData));
-        console.log('💾 데이터 캐싱 완료:', firestoreData.length + '개');
-      } catch (err) {
-        console.warn('⚠️ 캐싱 실패:', err.message);
-      }
-    }
-    
-    console.log('✅ Firebase 초기화 완료!');
-    console.log('   firestoreData.length:', firestoreData ? firestoreData.length : '없음');
     
   } catch (err) {
-    console.error('❌ Firebase 초기화 중 에러 발생!');
-    console.error('   에러 메시지:', err.message);
-    console.error('   에러 스택:', err.stack);
-    console.log('');
-    console.log('💾 캐시된 데이터 확인 중...');
+    console.error('❌ Firebase 초기화 오류:', err);
     
-    // ✅ 캐시된 데이터가 있으면 사용
+    // 캐시된 데이터 사용
     try {
       const cachedData = localStorage.getItem('_cachedFirestoreData');
       if (cachedData) {
-        console.log('✅ 캐시된 데이터 발견! (' + cachedData.length + ' bytes)');
+        console.log('✅ 캐시된 데이터 사용');
         firestoreData = JSON.parse(cachedData);
         
         const firestoreSection = document.getElementById('firestore-section');
@@ -1080,15 +1034,10 @@ async function initializeFirebaseAsync() {
         
         displayAllData();
         updateStats();
-        updateSyncText('⚠️ 캐시된 데이터 (최신 아님)');
-        console.log('✅ 캐시된 데이터 표시 완료:', firestoreData.length + '개');
-      } else {
-        console.error('❌ 캐시된 데이터 없음');
-        updateSyncText('❌ 데이터 로드 실패');
+        updateSyncText('⚠️ 캐시된 데이터');
       }
-    } catch (cacheErr) {
-      console.error('❌ 캐시 로드 실패:', cacheErr.message);
-      console.error('   에러 스택:', cacheErr.stack);
+    } catch (e) {
+      console.error('❌ 캐시 로드 실패:', e);
       updateSyncText('❌ 데이터 로드 실패');
     }
   }
@@ -2884,46 +2833,60 @@ function showLoading(msg) {
 // 초기화
 // ════════════════════════════════════════════════════════════════
 
-document.addEventListener('DOMContentLoaded', () => {
-  console.log('✅ 페이지 로드 완료');
-  
-  try {
-    // ✅ 로딩 상태 표시
-    updateSyncText('🔄 로드중...');
+// ✅ 페이지 로드 시 Firebase 초기화 (index4 방식)
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('✅ 페이지 로드 완료');
     
-    // ✅ 섹션을 표시
-    const firestoreSection = document.getElementById('firestore-section');
-    if (firestoreSection) {
-      firestoreSection.style.display = 'block';
-      console.log('✅ firestore-section 표시');
-    }
-    
-    // ✅ 캐시된 데이터가 있으면 먼저 표시 (빠른 응답)
+    // 캐시된 데이터 먼저 표시
     try {
       const cachedData = localStorage.getItem('_cachedFirestoreData');
       if (cachedData) {
-        console.log('💾 캐시된 데이터 발견! 즉시 표시합니다.');
+        console.log('💾 캐시된 데이터로 즉시 표시');
         firestoreData = JSON.parse(cachedData);
+        
+        const firestoreSection = document.getElementById('firestore-section');
+        if (firestoreSection) {
+          firestoreSection.style.display = 'block';
+        }
+        
         displayAllData();
         updateStats();
         updateSyncText('🔄 최신 데이터 로드 중...');
-        console.log('✅ 캐시된 데이터 표시 완료:', firestoreData.length + '개');
       }
-    } catch (err) {
-      console.warn('⚠️ 캐시 확인 실패:', err.message);
+    } catch (e) {
+      console.warn('⚠️ 캐시 확인 실패');
     }
     
-    console.log('⏰ 1초 후 Firebase 초기화 예약...');
-  } catch (err) {
-    console.error('❌ 초기화 실패:', err.message);
+    updateSyncText('🔄 로드중...');
+    initializeFirebaseAsync();
+  });
+} else {
+  console.log('✅ 페이지 이미 로드됨');
+  
+  // 캐시된 데이터 먼저 표시
+  try {
+    const cachedData = localStorage.getItem('_cachedFirestoreData');
+    if (cachedData) {
+      console.log('💾 캐시된 데이터로 즉시 표시');
+      firestoreData = JSON.parse(cachedData);
+      
+      const firestoreSection = document.getElementById('firestore-section');
+      if (firestoreSection) {
+        firestoreSection.style.display = 'block';
+      }
+      
+      displayAllData();
+      updateStats();
+      updateSyncText('🔄 최신 데이터 로드 중...');
+    }
+  } catch (e) {
+    console.warn('⚠️ 캐시 확인 실패');
   }
   
-  // ✅ Firebase 초기화는 1초 후에 시작
-  setTimeout(() => {
-    console.log('⏱️ Firebase 초기화 시작...');
-    initializeFirebaseAsync();
-  }, 1000);
-});
+  updateSyncText('🔄 로드중...');
+  initializeFirebaseAsync();
+}
 </script>
 
 
