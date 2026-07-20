@@ -845,70 +845,15 @@ let db = null;
 let auth = null;
 let currentUser = null;
 
-// ✅ Firebase 설정 (로컬 폴백용)
+// ✅ Firebase 설정 (로컬 config만 사용)
 let FIREBASE_CONFIG = {
   apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
   authDomain: "orchardapp-b81ca.firebaseapp.com",
   projectId: "orchardapp-b81ca"
 };
 
-// ✅ GAS에서 Firebase config 로드 (타임아웃 + 폴백)
-async function loadFirebaseConfigFromGAS() {
-  const maxRetries = 2;  // 재시도 횟수 줄임 (2회)
-  const timeout = 5000;  // 5초 타임아웃
-  
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
-        'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-      
-      console.log(`📡 GAS에서 config 로드 시도... (${i + 1}/${maxRetries}, 타임아웃: ${timeout}ms)`);
-      
-      // ✅ 타임아웃 설정
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), timeout);
-      
-      const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
-        method: 'GET',
-        redirect: 'follow',
-        signal: controller.signal
-      });
-      
-      clearTimeout(timeoutId);
-      
-      const result = await response.json();
-      
-      if (result.success && result.config) {
-        FIREBASE_CONFIG = result.config;
-        console.log('✅ GAS에서 config 로드 완료');
-        console.log('   projectId:', FIREBASE_CONFIG.projectId);
-        
-        if (!localStorage.getItem('_runtimeGasUrl')) {
-          localStorage.setItem('_runtimeGasUrl', GAS_URL);
-        }
-        
-        return true;
-      } else {
-        console.warn(`⚠️ GAS 응답 ${i + 1} 실패:`, result.error);
-      }
-    } catch (err) {
-      if (err.name === 'AbortError') {
-        console.warn(`⚠️ GAS 요청 ${i + 1} 타임아웃 (5초)`);
-      } else {
-        console.warn(`⚠️ GAS 요청 ${i + 1} 실패:`, err.message);
-      }
-    }
-    
-    // 마지막이 아니면 대기 후 재시도
-    if (i < maxRetries - 1) {
-      console.log('⏳ 1초 대기 후 재시도...');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-    }
-  }
-  
-  console.warn('⚠️ GAS 연결 실패, 로컬 config 사용');
-  return false;  // ← 실패해도 로컬 config 사용
-}
+console.log('✅ Firebase config 로드됨');
+console.log('   projectId:', FIREBASE_CONFIG.projectId);
 
 let localData = CONFIG.storage.get('myPesticides_index6', []);
 let searchResults = [];
@@ -972,22 +917,29 @@ function updateSyncText(msg) { document.getElementById('sync-text').textContent 
 // ✅ Firebase에서 데이터 로드 (GAS는 사용하지 않음)
 async function initializeApp() {
   try {
-    console.log('🔧 Firebase에서 데이터 로드 중...');
-    console.log('   db 객체 확인:', db ? '있음' : '없음');
+    console.log('📊 [initializeApp] 시작...');
+    console.log('   db 객체 확인:', db ? 'OK' : 'NULL');
+    console.log('   현재 시간:', new Date().toLocaleTimeString());
     
     // Firebase가 초기화되어야 함
     if (!db) {
       console.error('❌ Firebase db 객체가 없습니다');
+      console.log('   typeof db:', typeof db);
+      console.log('   db:', db);
       updateSyncText('❌ Firebase 미초기화');
       return false;
     }
     
-    console.log('📡 Firestore에서 myPesticides collection 조회 중...');
+    console.log('📡 Firestore collection 조회 중...');
+    console.log('   collection: myPesticides');
     
     // Firebase Firestore에서 데이터 로드
     const snapshot = await db.collection('myPesticides').get();
     
-    console.log('📋 Firestore snapshot 확인:', snapshot ? '있음' : '없음');
+    console.log('📋 Firestore snapshot 확인:');
+    console.log('   snapshot:', snapshot ? 'OK' : 'NULL');
+    console.log('   snapshot.size:', snapshot.size);
+    console.log('   snapshot.empty:', snapshot.empty);
     
     const loadedData = [];
     snapshot.forEach((doc) => {
@@ -1040,6 +992,7 @@ async function initializeApp() {
   } catch (err) {
     console.error('❌ Firebase 데이터 로드 실패:', err.message);
     console.error('   에러 코드:', err.code);
+    console.error('   에러 name:', err.name);
     console.error('   전체 에러:', err);
     
     updateSyncText('❌ 로드 실패: ' + err.message);
@@ -1047,53 +1000,53 @@ async function initializeApp() {
   }
 }
 
-// ✅ Firebase 비동기 초기화
+// ✅ Firebase 비동기 초기화 (상세 로그)
 async function initializeFirebaseAsync() {
   try {
-    console.log('🔧 Firebase 비동기 초기화 중...');
+    console.log('🔧 [1/5] Firebase 비동기 초기화 시작...');
+    console.log('   현재 시간:', new Date().toLocaleTimeString());
     
-    // 1️⃣ GAS에서 config 로드 시도 (타임아웃 5초)
-    updateSyncText('🔄 GAS 연결 중...');
-    console.log('📡 GAS 연결 시도 (최대 5초)...');
-    const gasSuccess = await loadFirebaseConfigFromGAS();
-    
-    if (gasSuccess) {
-      console.log('✅ GAS 연결 성공');
-    } else {
-      console.warn('⚠️ GAS 연결 실패, 로컬 config 사용');
-      // ← GAS 실패해도 로컬 config로 계속 진행!
-    }
-    
-    console.log('✅ Firebase config 준비 완료');
-    updateSyncText('🔄 Firebase 초기화 중...');
-    
-    // 2️⃣ Firebase 라이브러리 확인
+    // 1️⃣ Firebase 라이브러리 확인
+    console.log('🔧 [2/5] Firebase 라이브러리 확인 중...');
     if (typeof firebase === 'undefined') {
-      console.warn('⚠️ Firebase 라이브러리가 로드되지 않음');
+      console.error('❌ Firebase 라이브러리가 로드되지 않았습니다!');
+      console.log('   window.firebase:', typeof window.firebase);
+      updateSyncText('❌ Firebase 라이브러리 로드 실패');
       setTimeout(() => location.reload(), 3000);
       return;
     }
-    
     console.log('✅ Firebase 라이브러리 확인 완료');
+    console.log('   firebase.initializeApp:', typeof firebase.initializeApp);
+    console.log('   firebase.firestore:', typeof firebase.firestore);
     
-    // 3️⃣ Firebase 앱 초기화
+    // 2️⃣ Firebase 앱 초기화
+    console.log('🔧 [3/5] Firebase 앱 초기화 중...');
+    console.log('   firebase.apps.length:', firebase.apps ? firebase.apps.length : '없음');
+    
     if (!firebase.apps || firebase.apps.length === 0) {
+      console.log('   → 새 앱 초기화...');
       firebase.initializeApp(FIREBASE_CONFIG);
       console.log('✅ Firebase 앱 초기화됨');
+      console.log('   firebase.apps.length:', firebase.apps.length);
     } else {
       console.log('✅ Firebase 앱 이미 초기화됨');
     }
     
-    // 4️⃣ Firestore 초기화
+    // 3️⃣ Firestore 초기화
+    console.log('🔧 [4/5] Firestore 초기화 중...');
     db = firebase.firestore();
     console.log('✅ Firestore 초기화됨');
+    console.log('   db:', db ? 'OK' : 'NULL');
     
-    // 5️⃣ 데이터 로드
-    console.log('📋 Firestore에서 데이터 로드 중...');
+    // 4️⃣ 데이터 로드
+    console.log('🔧 [5/5] Firestore에서 데이터 로드 중...');
     updateSyncText('🔄 데이터 로드 중...');
-    await initializeApp();
     
-    // 6️⃣ 캐싱 (성공한 데이터 저장)
+    console.log('   → initializeApp() 호출...');
+    await initializeApp();
+    console.log('   → initializeApp() 완료');
+    
+    // 5️⃣ 캐싱
     if (firestoreData && firestoreData.length > 0) {
       try {
         localStorage.setItem('_cachedFirestoreData', JSON.stringify(firestoreData));
@@ -1103,17 +1056,21 @@ async function initializeFirebaseAsync() {
       }
     }
     
-    console.log('✅ Firebase 초기화 완료');
+    console.log('✅ Firebase 초기화 완료!');
+    console.log('   firestoreData.length:', firestoreData ? firestoreData.length : '없음');
     
   } catch (err) {
-    console.error('❌ Firebase 초기화 실패:', err.message);
+    console.error('❌ Firebase 초기화 중 에러 발생!');
+    console.error('   에러 메시지:', err.message);
+    console.error('   에러 스택:', err.stack);
+    console.log('');
     console.log('💾 캐시된 데이터 확인 중...');
     
     // ✅ 캐시된 데이터가 있으면 사용
     try {
       const cachedData = localStorage.getItem('_cachedFirestoreData');
       if (cachedData) {
-        console.log('✅ 캐시된 데이터 발견!');
+        console.log('✅ 캐시된 데이터 발견! (' + cachedData.length + ' bytes)');
         firestoreData = JSON.parse(cachedData);
         
         const firestoreSection = document.getElementById('firestore-section');
@@ -1124,13 +1081,14 @@ async function initializeFirebaseAsync() {
         displayAllData();
         updateStats();
         updateSyncText('⚠️ 캐시된 데이터 (최신 아님)');
-        console.log('✅ 캐시된 데이터 표시 완료');
+        console.log('✅ 캐시된 데이터 표시 완료:', firestoreData.length + '개');
       } else {
         console.error('❌ 캐시된 데이터 없음');
         updateSyncText('❌ 데이터 로드 실패');
       }
     } catch (cacheErr) {
       console.error('❌ 캐시 로드 실패:', cacheErr.message);
+      console.error('   에러 스택:', cacheErr.stack);
       updateSyncText('❌ 데이터 로드 실패');
     }
   }
