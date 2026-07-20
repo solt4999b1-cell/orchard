@@ -720,7 +720,11 @@
       <button class="category-tab" data-category="기타" onclick="filterByCategory('기타')">기타</button>
     </div>
     
-    <div id="firestore-list"></div>
+    <div id="firestore-list">
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>⏳ 데이터를 불러오는 중입니다...</p>
+      </div>
+    </div>
   </div>
 
   <!-- 로컬 농약 섹션 -->
@@ -2885,11 +2889,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ 로딩 상태 표시
     updateSyncText('🔄 로드중...');
     
-    // ✅ 섹션을 숨김 (로딩 중)
+    // ✅ 섹션을 표시 (로딩 메시지가 보임)
     const firestoreSection = document.getElementById('firestore-section');
     if (firestoreSection) {
-      firestoreSection.style.display = 'none';
-      console.log('✅ firestore-section 숨김 (로딩 중)');
+      firestoreSection.style.display = 'block';
+      console.log('✅ firestore-section 표시 (로딩 중)');
     }
     
     console.log('⏰ 1초 후 Firebase 초기화 예약...');
