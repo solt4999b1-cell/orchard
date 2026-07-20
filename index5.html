@@ -848,40 +848,51 @@ let currentUser = null;
 // ✅ Firebase 설정 (GAS에서 로드됨)
 let FIREBASE_CONFIG = null;
 
-// ✅ GAS에서 Firebase config 로드
+// ✅ GAS에서 Firebase config 로드 (재시도 로직 포함)
 async function loadFirebaseConfigFromGAS() {
-  try {
-    const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
-      'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-    
-    console.log('📡 GAS에서 Firebase config 로드 중...');
-    
-    const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
-      method: 'GET',
-      redirect: 'follow'
-    });
-    
-    const result = await response.json();
-    console.log('📦 GAS 응답:', result.success ? '성공' : '실패');
-    
-    if (result.success && result.config) {
-      FIREBASE_CONFIG = result.config;
-      console.log('✅ GAS에서 config 로드 완료');
-      console.log('   projectId:', FIREBASE_CONFIG.projectId);
+  const maxRetries = 3;
+  const retryDelay = 2000; // 2초
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
+        'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
       
-      if (!localStorage.getItem('_runtimeGasUrl')) {
-        localStorage.setItem('_runtimeGasUrl', GAS_URL);
+      console.log(`📡 GAS에서 config 로드 시도... (${i + 1}/${maxRetries})`);
+      
+      const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
+        method: 'GET',
+        redirect: 'follow'
+      });
+      
+      const result = await response.json();
+      
+      if (result.success && result.config) {
+        FIREBASE_CONFIG = result.config;
+        console.log('✅ GAS에서 config 로드 완료');
+        console.log('   projectId:', FIREBASE_CONFIG.projectId);
+        
+        if (!localStorage.getItem('_runtimeGasUrl')) {
+          localStorage.setItem('_runtimeGasUrl', GAS_URL);
+        }
+        
+        return true;
+      } else {
+        console.warn(`⚠️ GAS 응답 ${i + 1} 실패:`, result.error);
       }
-      
-      return true;
-    } else {
-      console.error('❌ GAS에서 config를 못 받음:', result.error);
-      return false;
+    } catch (err) {
+      console.warn(`⚠️ GAS 요청 ${i + 1} 실패:`, err.message);
     }
-  } catch (err) {
-    console.error('❌ GAS 연결 실패:', err.message);
-    return false;
+    
+    // 마지막이 아니면 대기 후 재시도
+    if (i < maxRetries - 1) {
+      console.log(`⏳ ${retryDelay / 1000}초 대기 후 재시도...`);
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
+    }
   }
+  
+  console.error('❌ GAS에서 config를 받을 수 없습니다 (3회 시도 완료)');
+  return false;
 }
 
 let localData = CONFIG.storage.get('myPesticides_index6', []);
@@ -1026,15 +1037,18 @@ async function initializeFirebaseAsync() {
   try {
     console.log('🔧 Firebase 비동기 초기화 중...');
     
-    // 1️⃣ GAS에서 config 로드
-    console.log('📡 GAS에서 Firebase config 로드 중...');
+    // 1️⃣ GAS에서 config 로드 (재시도 포함)
+    updateSyncText('🔄 GAS 연결 중...');
     const configLoaded = await loadFirebaseConfigFromGAS();
     
     if (!configLoaded || !FIREBASE_CONFIG) {
       console.error('❌ Firebase config를 로드할 수 없습니다');
-      updateSyncText('❌ GAS 연결 실패');
+      updateSyncText('❌ GAS 연결 실패 (재연결 버튼을 눌러주세요)');
       return;
     }
+    
+    console.log('✅ GAS 연결 성공');
+    updateSyncText('🔄 Firebase 초기화 중...');
     
     // 2️⃣ Firebase 라이브러리 확인
     if (typeof firebase === 'undefined') {
@@ -1059,6 +1073,7 @@ async function initializeFirebaseAsync() {
     
     // 5️⃣ 데이터 로드
     console.log('📋 Firestore에서 데이터 로드 중...');
+    updateSyncText('🔄 데이터 로드 중...');
     await initializeApp();
     
     console.log('✅ Firebase 초기화 완료');
