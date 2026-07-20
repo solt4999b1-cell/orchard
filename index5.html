@@ -845,25 +845,36 @@ let db = null;
 let auth = null;
 let currentUser = null;
 
-// ✅ Firebase 설정 (GAS에서 로드됨)
-let FIREBASE_CONFIG = null;
+// ✅ Firebase 설정 (로컬 폴백용)
+let FIREBASE_CONFIG = {
+  apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
+  authDomain: "orchardapp-b81ca.firebaseapp.com",
+  projectId: "orchardapp-b81ca"
+};
 
-// ✅ GAS에서 Firebase config 로드 (재시도 로직 포함)
+// ✅ GAS에서 Firebase config 로드 (타임아웃 + 폴백)
 async function loadFirebaseConfigFromGAS() {
-  const maxRetries = 3;
-  const retryDelay = 2000; // 2초
+  const maxRetries = 2;  // 재시도 횟수 줄임 (2회)
+  const timeout = 5000;  // 5초 타임아웃
   
   for (let i = 0; i < maxRetries; i++) {
     try {
       const GAS_URL = localStorage.getItem('_runtimeGasUrl') || 
         'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
       
-      console.log(`📡 GAS에서 config 로드 시도... (${i + 1}/${maxRetries})`);
+      console.log(`📡 GAS에서 config 로드 시도... (${i + 1}/${maxRetries}, 타임아웃: ${timeout}ms)`);
+      
+      // ✅ 타임아웃 설정
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
       
       const response = await fetch(GAS_URL + '?action=getFirebaseConfig', {
         method: 'GET',
-        redirect: 'follow'
+        redirect: 'follow',
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
       
       const result = await response.json();
       
@@ -881,18 +892,22 @@ async function loadFirebaseConfigFromGAS() {
         console.warn(`⚠️ GAS 응답 ${i + 1} 실패:`, result.error);
       }
     } catch (err) {
-      console.warn(`⚠️ GAS 요청 ${i + 1} 실패:`, err.message);
+      if (err.name === 'AbortError') {
+        console.warn(`⚠️ GAS 요청 ${i + 1} 타임아웃 (5초)`);
+      } else {
+        console.warn(`⚠️ GAS 요청 ${i + 1} 실패:`, err.message);
+      }
     }
     
     // 마지막이 아니면 대기 후 재시도
     if (i < maxRetries - 1) {
-      console.log(`⏳ ${retryDelay / 1000}초 대기 후 재시도...`);
-      await new Promise(resolve => setTimeout(resolve, retryDelay));
+      console.log('⏳ 1초 대기 후 재시도...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
   }
   
-  console.error('❌ GAS에서 config를 받을 수 없습니다 (3회 시도 완료)');
-  return false;
+  console.warn('⚠️ GAS 연결 실패, 로컬 config 사용');
+  return false;  // ← 실패해도 로컬 config 사용
 }
 
 let localData = CONFIG.storage.get('myPesticides_index6', []);
@@ -1037,17 +1052,19 @@ async function initializeFirebaseAsync() {
   try {
     console.log('🔧 Firebase 비동기 초기화 중...');
     
-    // 1️⃣ GAS에서 config 로드 (재시도 포함)
+    // 1️⃣ GAS에서 config 로드 시도 (타임아웃 5초)
     updateSyncText('🔄 GAS 연결 중...');
-    const configLoaded = await loadFirebaseConfigFromGAS();
+    console.log('📡 GAS 연결 시도 (최대 5초)...');
+    const gasSuccess = await loadFirebaseConfigFromGAS();
     
-    if (!configLoaded || !FIREBASE_CONFIG) {
-      console.error('❌ Firebase config를 로드할 수 없습니다');
-      updateSyncText('❌ GAS 연결 실패 (재연결 버튼을 눌러주세요)');
-      return;
+    if (gasSuccess) {
+      console.log('✅ GAS 연결 성공');
+    } else {
+      console.warn('⚠️ GAS 연결 실패, 로컬 config 사용');
+      // ← GAS 실패해도 로컬 config로 계속 진행!
     }
     
-    console.log('✅ GAS 연결 성공');
+    console.log('✅ Firebase config 준비 완료');
     updateSyncText('🔄 Firebase 초기화 중...');
     
     // 2️⃣ Firebase 라이브러리 확인
@@ -1076,11 +1093,46 @@ async function initializeFirebaseAsync() {
     updateSyncText('🔄 데이터 로드 중...');
     await initializeApp();
     
+    // 6️⃣ 캐싱 (성공한 데이터 저장)
+    if (firestoreData && firestoreData.length > 0) {
+      try {
+        localStorage.setItem('_cachedFirestoreData', JSON.stringify(firestoreData));
+        console.log('💾 데이터 캐싱 완료:', firestoreData.length + '개');
+      } catch (err) {
+        console.warn('⚠️ 캐싱 실패:', err.message);
+      }
+    }
+    
     console.log('✅ Firebase 초기화 완료');
     
   } catch (err) {
     console.error('❌ Firebase 초기화 실패:', err.message);
-    updateSyncText('❌ Firebase 초기화 실패');
+    console.log('💾 캐시된 데이터 확인 중...');
+    
+    // ✅ 캐시된 데이터가 있으면 사용
+    try {
+      const cachedData = localStorage.getItem('_cachedFirestoreData');
+      if (cachedData) {
+        console.log('✅ 캐시된 데이터 발견!');
+        firestoreData = JSON.parse(cachedData);
+        
+        const firestoreSection = document.getElementById('firestore-section');
+        if (firestoreSection) {
+          firestoreSection.style.display = 'block';
+        }
+        
+        displayAllData();
+        updateStats();
+        updateSyncText('⚠️ 캐시된 데이터 (최신 아님)');
+        console.log('✅ 캐시된 데이터 표시 완료');
+      } else {
+        console.error('❌ 캐시된 데이터 없음');
+        updateSyncText('❌ 데이터 로드 실패');
+      }
+    } catch (cacheErr) {
+      console.error('❌ 캐시 로드 실패:', cacheErr.message);
+      updateSyncText('❌ 데이터 로드 실패');
+    }
   }
 }
 
@@ -2881,11 +2933,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // ✅ 로딩 상태 표시
     updateSyncText('🔄 로드중...');
     
-    // ✅ 섹션을 표시 (로딩 메시지가 보임)
+    // ✅ 섹션을 표시
     const firestoreSection = document.getElementById('firestore-section');
     if (firestoreSection) {
       firestoreSection.style.display = 'block';
-      console.log('✅ firestore-section 표시 (로딩 중)');
+      console.log('✅ firestore-section 표시');
+    }
+    
+    // ✅ 캐시된 데이터가 있으면 먼저 표시 (빠른 응답)
+    try {
+      const cachedData = localStorage.getItem('_cachedFirestoreData');
+      if (cachedData) {
+        console.log('💾 캐시된 데이터 발견! 즉시 표시합니다.');
+        firestoreData = JSON.parse(cachedData);
+        displayAllData();
+        updateStats();
+        updateSyncText('🔄 최신 데이터 로드 중...');
+        console.log('✅ 캐시된 데이터 표시 완료:', firestoreData.length + '개');
+      }
+    } catch (err) {
+      console.warn('⚠️ 캐시 확인 실패:', err.message);
     }
     
     console.log('⏰ 1초 후 Firebase 초기화 예약...');
