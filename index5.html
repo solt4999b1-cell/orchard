@@ -103,13 +103,13 @@
     </div>
   </div>
 
-  <!-- 1. 내 농약장 섹션 (새 농약 등록 버튼)이 데이터 목록보다 위로 이동 -->
+  <!-- 새 농약 등록 버튼 -->
   <div class="results-section">
     <div class="section-title">➕ 새 농약 등록</div>
     <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
   </div>
 
-  <!-- 2. 데이터 목록 섹션 -->
+  <!-- 데이터 목록 섹션 -->
   <div class="results-section" id="sheets-section">
     <div class="section-title">🟩 내 보유 농약 (<span id="sheets-count">0</span>개)</div>
     
@@ -132,7 +132,7 @@
   </div>
 </div>
 
-<!-- 3. 농약 등록 모달 -->
+<!-- 농약 등록 모달 -->
 <div class="modal-bg" id="register-modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">🧪 새 농약 등록</div>
@@ -190,7 +190,7 @@
 
     <div class="form-btns">
       <button class="btn" id="save-btn" onclick="savePesticide()">저장</button>
-      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검색</button>
+      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검습</button>
       <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
     </div>
 
@@ -213,7 +213,7 @@
 
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
 const CURRENT_SHEET_NAME = 'myPesticides';
-const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec'; // PSIS 검색용 외부 GAS URL
 
 let sheetsData = [];
 let editingId = null;
@@ -347,7 +347,7 @@ async function deletePesticide(id) {
   }
 }
 
-// 4. PSIS 모달 검색 기능 연동
+// 4. PSIS 모달 검색 기능 (개선됨)
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   if (!keyword) {
@@ -369,18 +369,28 @@ async function searchPsisFromModal() {
 
     loadingEl.style.display = 'none';
 
-    if (!gasData || !gasData.service || gasData.service.length === 0) {
+    // 응답 데이터에서 service 배열 추출 (다양한 구조 대응)
+    let serviceList = [];
+    if (gasData.service) {
+      serviceList = gasData.service;
+    } else if (gasData.data && gasData.data.service) {
+      serviceList = gasData.data.service;
+    } else if (Array.isArray(gasData)) {
+      serviceList = gasData;
+    }
+
+    if (serviceList.length === 0) {
       container.style.display = 'block';
       resultsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #666; font-size: 11px;">검색 결과가 없습니다.</div>';
       return;
     }
 
     const combinationMap = new Map();
-    gasData.service.forEach(item => {
+    serviceList.forEach(item => {
       const gubun = item.cmpaItmNm || '미분류';
       const usage = item.useName || '기타';
       const compName = item.compName || item.manufacturer || '미분류';
-      const ingredient = item.pestiKorName || '품목명 없음';
+      const ingredient = item.pestiKorName || item.ingredientName || '품목명 없음';
       const key = `${gubun}|${usage}|${compName}|${ingredient}`;
 
       if (!combinationMap.has(key)) {
@@ -450,7 +460,7 @@ function selectPsisCompany(idx) {
   showToast('✅ PSIS 정보가 채워졌습니다.');
 }
 
-// 5. UI 및 모달 제어 (상세 조회 및 분류 표시)
+// 5. UI 및 모달 제어
 function renderSheetsList() {
   const listEl = document.getElementById('sheets-list');
   const countEl = document.getElementById('sheets-count');
