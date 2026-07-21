@@ -5,10 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>🌱 내 농약장 관리</title>
+  <title>🌱 내 농약장 관리 (Google Sheets)</title>
   <link rel="apple-touch-icon" sizes="180x180" href="icon4-180.png">
   <link rel="shortcut icon" href="icon4-192.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon4-192.png">
+  <link rel="icon" type="image/jpeg" sizes="512x512" href="icon4-512.jpg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -28,599 +29,432 @@
       --gray-900: #212121;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: var(--gray-50);
-      color: var(--gray-900);
-      line-height: 1.5;
-    }
-
-    .app-container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 4px;
-      padding-bottom: 40px;
-    }
-
-    .app-header {
-      background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%);
-      color: white;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-
-    .app-header strong {
-      font-size: 16px;
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .sync-status {
-      background: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      margin-bottom: 8px;
-      font-size: 12px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .sync-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #4CAF50;
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
-
-    .sync-status button {
-      background: #1976D2;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 3px;
-      font-size: 9px;
-      cursor: pointer;
-      margin-left: 6px;
-      transition: background 0.2s;
-    }
-
-    .sync-status button:hover {
-      background: #1565C0;
-    }
-
-    .migrate-button {
-      background: #D32F2F;
-      color: white;
-      border: none;
-      padding: 4px 8px;
-      border-radius: 3px;
-      font-size: 9px;
-      cursor: pointer;
-      margin-left: 6px;
-      transition: background 0.2s;
-    }
-
-    .migrate-button:hover {
-      background: #B71C1C;
-    }
-
-    .data-container {
-      background: white;
-      padding: 12px;
-      border-radius: 8px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .data-item {
-      padding: 12px;
-      background: var(--gray-50);
-      border-left: 4px solid var(--green-mid);
-      border-radius: 4px;
-      margin-bottom: 8px;
-      font-size: 13px;
-    }
-
-    .data-item strong {
-      color: var(--green-dark);
-      display: block;
-      margin-bottom: 4px;
-    }
-
-    .data-item small {
-      color: var(--gray-600);
-      display: block;
-      margin-top: 4px;
-    }
-
-    @media (max-width: 480px) {
-      .app-container {
-        padding: 2px;
-      }
-      
-      .app-header {
-        padding: 12px;
-      }
-      
-      .sync-status {
-        flex-wrap: wrap;
-        font-size: 11px;
-      }
-      
-      .sync-status button {
-        padding: 3px 6px;
-        font-size: 8px;
-      }
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
+    .app-container { max-width: 900px; margin: 0 auto; padding: 4px; padding-bottom: 40px; }
+    .app-header { background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%); color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+    .app-header h1 { font-size: 18px; margin-bottom: 2px; }
+    .sync-status { display: flex; align-items: center; gap: 6px; font-size: 10px; margin-top: 4px; padding: 6px 10px; background: rgba(255, 255, 255, 0.3); border-radius: 6px; width: fit-content; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sync-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #90EE90; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 4px; margin-top: 4px; }
+    .stat-box { background: rgba(255, 255, 255, 0.2); padding: 4px; border-radius: 4px; text-align: center; }
+    .stat-number { font-size: 14px; font-weight: 700; }
+    .stat-label { font-size: 8px; opacity: 0.8; margin-top: 1px; }
+    .search-section { background: #fff; padding: 8px; border-radius: 8px; margin-bottom: 2px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
+    .search-bar { display: flex; gap: 4px; }
+    .search-input { flex: 1; padding: 6px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 11px; font-family: inherit; }
+    .btn { padding: 6px 12px; background: var(--green-dark); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
+    .btn:hover { background: #1B5E20; }
+    .results-section { margin-bottom: 4px; }
+    .section-title { font-size: 12px; font-weight: 600; padding: 4px 0 4px 8px; color: var(--gray-600); border-left: 2px solid var(--green-dark); margin-bottom: 4px; }
+    .pesticide-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .pesticide-card:hover { background: var(--green-light); border-color: var(--green-dark); }
+    .pesticide-info { flex: 1; }
+    .pesticide-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .pesticide-meta { font-size: 11px; color: var(--gray-600); }
+    .source-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-top: 4px; font-weight: 600; background: #E8F5E9; color: #2E7D32; }
+    .pesticide-actions { display: flex; gap: 6px; }
+    .btn-small { padding: 6px 10px; font-size: 11px; background: var(--gray-200); color: var(--gray-700); border: none; border-radius: 4px; cursor: pointer; }
+    .category-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 6px 0; margin-bottom: 8px; }
+    .category-tab { padding: 6px 10px; border: 1.5px solid #ddd; background: white; color: #666; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .category-tab.active { background: var(--green-dark); color: white; border-color: var(--green-dark); }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; padding-top: 80px; }
+    .modal-bg.active { display: flex; }
+    .modal { background: #fff; width: 100%; max-width: 500px; max-height: 80vh; overflow-y: auto; border-radius: 12px; padding: 24px; box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 6px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--gray-600); display: block; margin-bottom: 2px; }
+    .form-input, .form-select { width: 100%; padding: 6px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 11px; font-family: inherit; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .form-btns { display: flex; gap: 4px; margin-top: 8px; }
+    .form-btns .btn { flex: 1; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; z-index: 2000; }
+    .loading { text-align: center; padding: 20px; color: var(--gray-600); font-size: 12px; }
   </style>
-
-  <!-- ✅ Firebase (마이그레이션용) -->
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
 </head>
-
 <body>
 
 <div class="app-container">
-  
+  <!-- 헤더 -->
+  <div class="header-wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;">
+    <div class="header-text" style="flex: 1;">
+        <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리 (Google Sheets)</h1>
+        <h5 style="margin: 0; color: #666; font-size: 11px;">제작: 이용호 &nbsp; Copyright 2026. All Right Reserved</h5>
+    </div>
+  </div>  
+
   <div class="app-header">
-    📱 Google Sheets + GAS 농약 관리
-    <br>
-    <strong>✅ Google Sheets 모드</strong>
-  </div>
+    <strong>✅ Google Sheets (OrchardData) 모드</strong>
+    <div class="sync-status" id="sync-status">
+      <span class="sync-indicator" id="sync-indicator"></span>
+      <span id="sync-text">🔄 로드중...</span>
+      <button onclick="loadDataFromGoogleSheets()" style="background: #1976D2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 6px;">🔄 새로고침</button>
+    </div>
 
-  <div class="sync-status" id="sync-status">
-    <span class="sync-indicator" id="sync-indicator"></span>
-    <span id="sync-text">🔄 로드중...</span>
-    
-    <button onclick="loadDataFromGoogleSheets()" title="Google Sheets에서 데이터 다시 로드">
-      🔄 새로고침
-    </button>
-    
-    <button class="migrate-button" onclick="migrateFromFirebase()" title="Firebase에서 Google Sheets로 데이터 마이그레이션">
-      📥 Firebase → Sheets
-    </button>
-    
-    <button class="migrate-button" onclick="migrateAllCollections()" title="Firebase의 모든 컬렉션을 Google Sheets로 마이그레이션">
-      🔄 모든 컬렉션
-    </button>
-  </div>
-
-  <div class="data-container">
-    <div id="data-list">
-      <div class="data-item">🔄 데이터를 로드하는 중입니다...</div>
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-number" id="stat-sheets">0</div>
+        <div class="stat-label">보유농약</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number" id="stat-total">0</div>
+        <div class="stat-label">전체</div>
+      </div>
     </div>
   </div>
 
+  <!-- 검색 섹션 -->
+  <div class="search-section">
+    <div class="search-bar">
+      <input type="text" class="search-input" id="search-input" placeholder="등록된 농약 검색..." oninput="filterLocalList()">
+      <button class="btn" onclick="loadDataFromGoogleSheets()">🔄 동기화</button>
+    </div>
+  </div>
+
+  <!-- 구글 시트 농약 목록 섹션 -->
+  <div class="results-section" id="sheets-section">
+    <div class="section-title">🟩 구글 시트 보유 농약 (<span id="sheets-count">0</span>개)</div>
+    
+    <div class="category-tabs" id="category-tabs">
+      <button class="category-tab active" data-category="all" onclick="filterByCategory('all')">전체</button>
+      <button class="category-tab" data-category="살균" onclick="filterByCategory('살균')">살균</button>
+      <button class="category-tab" data-category="살충" onclick="filterByCategory('살충')">살충</button>
+      <button class="category-tab" data-category="제초" onclick="filterByCategory('제초')">제초</button>
+      <button class="category-tab" data-category="균충" onclick="filterByCategory('균충')">균충</button>
+      <button class="category-tab" data-category="충초" onclick="filterByCategory('충초')">충초</button>
+      <button class="category-tab" data-category="생조" onclick="filterByCategory('생조')">생조</button>
+      <button class="category-tab" data-category="기타" onclick="filterByCategory('기타')">기타</button>
+    </div>
+    
+    <div id="sheets-list">
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>⏳ 데이터를 불러오는 중입니다...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 농약 등록 섹션 -->
+  <div class="results-section">
+    <div class="section-title">➕ 새 농약 등록</div>
+    <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
+  </div>
+</div>
+
+<!-- 농약 등록 및 수정 모달 -->
+<div class="modal-bg" id="register-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">🧪 새 농약 등록</div>
+    
+    <div class="form-group">
+      <label class="form-label">제품명 *</label>
+      <input type="text" id="form-name" class="form-input" placeholder="농약명 입력...">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">분류 *</label>
+        <select id="form-type" class="form-select">
+          <option value="">선택</option>
+          <option value="살균">살균</option>
+          <option value="살충">살충</option>
+          <option value="제초">제초</option>
+          <option value="균충">균충</option>
+          <option value="충초">충초</option>
+          <option value="생조">생조</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">수량 *</label>
+        <input type="number" id="form-quantity" class="form-input" placeholder="수량" value="1" min="1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">단위</label>
+      <select id="form-unit" class="form-select">
+        <option value="개">개</option>
+        <option value="병">병</option>
+        <option value="통">통</option>
+        <option value="봉">봉</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">성분</label>
+      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">제조사</label>
+      <input type="text" id="form-manufacturer" class="form-input" placeholder="제조사명">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea id="form-memo" class="form-input" placeholder="구매 날짜, 보관 위치 등..." style="min-height: 80px;"></textarea>
+    </div>
+
+    <div class="form-btns">
+      <button class="btn" onclick="savePesticide()">저장</button>
+      <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
+    </div>
+  </div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// Google Sheets + GAS 설정 (2개 URL 분리)
+// 설정 및 전역 변수
 // ════════════════════════════════════════════════════════════════
 
-// ✅ Firebase 마이그레이션용 (기존 URL)
-const GAS_URL_FIREBASE = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-
-// ✅ Google Sheets 데이터 로드용 (새로운 GAS_NEW.gs 배포 URL)
-// ⚠️ GAS_NEW.gs를 배포한 후 새 URL로 변경해주세요!
+// 방금 새로 배포한 GAS 웹 앱 URL 입력
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
+const CURRENT_SHEET_NAME = 'myPesticides';
 
-const SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
-
-// Firebase 설정 (마이그레이션용)
-const FIREBASE_CONFIG = {
-  apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
-  authDomain: "orchardapp-b81ca.firebaseapp.com",
-  projectId: "orchardapp-b81ca"
-};
-
-console.log('✅ 앱 시작됨');
-console.log('📡 GAS_URL_FIREBASE:', GAS_URL_FIREBASE.substring(0, 50) + '...');
-console.log('📡 GAS_URL_SHEETS:', GAS_URL_SHEETS.substring(0, 50) + '...');
+let sheetsData = [];
+let editingId = null;
+let currentCategory = 'all';
 
 // ════════════════════════════════════════════════════════════════
-// Google Sheets에서 데이터 로드
+// READ - 구글 시트에서 데이터 읽기
 // ════════════════════════════════════════════════════════════════
 
 async function loadDataFromGoogleSheets() {
   try {
-    console.log('🔧 Google Sheets에서 데이터 로드 시작...');
-    updateSyncText('🔄 데이터 로드 중...');
-
-    const url = `${GAS_URL_SHEETS}?action=read`;
-    console.log('📡 GAS 호출 (Sheets):', url);
-
+    updateSyncText('🔄 구글 시트 동기화 중...');
+    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
+    
     const response = await fetch(url);
     const result = await response.json();
-
-    console.log('✅ GAS 응답:', result);
 
     if (!result.success) {
       throw new Error(result.message || '데이터 로드 실패');
     }
 
-    const data = result.data || [];
-    console.log('✅ ' + data.length + '개 농약 로드됨');
-
-    displayData(data);
-    updateSyncText('✅ 데이터 로드 완료');
-
-    return true;
-
+    sheetsData = result.data || [];
+    renderSheetsList();
+    updateStats();
+    updateSyncText('✅ 동기화 완료');
   } catch (err) {
-    console.error('❌ 데이터 로드 실패:', err.message);
-    updateSyncText('❌ 로드 실패: ' + err.message);
-    displayData([]);
-    return false;
+    console.error('❌ 로드 에러:', err);
+    updateSyncText('❌ 동기화 실패');
   }
 }
 
 // ════════════════════════════════════════════════════════════════
-// 데이터 표시
+// CREATE & UPDATE - 데이터 저장 (추가 및 수정)
 // ════════════════════════════════════════════════════════════════
 
-function displayData(data) {
-  const listDiv = document.getElementById('data-list');
-  
-  if (!data || data.length === 0) {
-    listDiv.innerHTML = '<div class="data-item">⚠️ 데이터가 없습니다</div>';
+async function savePesticide() {
+  const name = document.getElementById('form-name').value.trim();
+  const type = document.getElementById('form-type').value.trim();
+  const quantity = document.getElementById('form-quantity').value;
+  const unit = document.getElementById('form-unit').value;
+  const ingredient = document.getElementById('form-ingredient').value.trim();
+  const manufacturer = document.getElementById('form-manufacturer').value.trim();
+  const memo = document.getElementById('form-memo').value.trim();
+
+  if (!name || !type) {
+    alert('제품명과 분류는 필수 입력 항목입니다.');
     return;
   }
 
-  let html = '';
-  for (const item of data) {
-    html += `
-      <div class="data-item">
-        <strong>🧴 ${item.name || '(이름 없음)'}</strong>
-        종류: ${item.type || '-'} | 수량: ${item.quantity || 0}${item.unit || ''}<br>
-        성분: ${item.ingredient || '-'} | 제조사: ${item.manufacturer || '-'}<br>
-        <small>등록: ${new Date(item.registeredAt).toLocaleDateString('ko-KR')}</small>
-      </div>
-    `;
-  }
-  
-  listDiv.innerHTML = html;
-}
-
-// ════════════════════════════════════════════════════════════════
-// Firebase → Google Sheets 마이그레이션
-// ════════════════════════════════════════════════════════════════
-
-async function migrateFromFirebase() {
-  const confirmed = confirm(
-    '⚠️ 주의!\n\n' +
-    'Firebase의 농약 데이터를 Google Sheets로 옮기겠습니다.\n' +
-    'Google Sheets의 기존 데이터는 덮어씌워집니다.\n\n' +
-    '계속하시겠습니까?'
-  );
-
-  if (!confirmed) {
-    console.log('🚫 마이그레이션 취소');
-    return;
-  }
+  const payload = {
+    action: editingId ? 'update' : 'create',
+    sheetName: CURRENT_SHEET_NAME,
+    id: editingId || '',
+    name: name,
+    type: type,
+    quantity: quantity,
+    unit: unit,
+    ingredient: ingredient,
+    manufacturer: manufacturer,
+    memo: memo,
+    registeredAt: new Date().toISOString()
+  };
 
   try {
-    console.log('🔄 Firebase → Google Sheets 마이그레이션 시작...');
-    updateSyncText('⏳ Firebase 데이터 로드 중...');
-
-    // Firebase 초기화
-    if (!firebase.apps || firebase.apps.length === 0) {
-      firebase.initializeApp(FIREBASE_CONFIG);
+    updateSyncText('⏳ 저장 중...');
+    
+    // URLSearchParams 사용하여 POST 전송 (CORS 프리플라이트 문제 방지)
+    const params = new URLSearchParams();
+    for (const key in payload) {
+      params.append(key, payload[key]);
     }
-    const db = firebase.firestore();
 
-    // Firestore에서 myPesticides 컬렉션 조회
-    console.log('📖 Firestore에서 데이터 조회 중...');
-    const snapshot = await db.collection('myPesticides').get();
-    const firebaseData = [];
-
-    snapshot.forEach(doc => {
-      firebaseData.push(doc.data());
+    const response = await fetch(GAS_URL_SHEETS, {
+      method: 'POST',
+      body: params
     });
+    
+    const result = await response.json();
 
-    console.log('✅ ' + firebaseData.length + '개 농약 발견');
-
-    if (firebaseData.length === 0) {
-      alert('Firebase에 데이터가 없습니다.');
-      updateSyncText('⚠️ Firebase 데이터 없음');
-      return;
+    if (result.success) {
+      showToast(editingId ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
+      closeRegisterModal();
+      loadDataFromGoogleSheets(); // 목록 새로고침
+    } else {
+      throw new Error(result.message || '저장 실패');
     }
-
-    // Google Sheets로 전송
-    console.log('📡 Google Sheets로 전송 중...');
-    updateSyncText(`⏳ 마이그레이션: 0%`);
-
-    let successCount = 0;
-    const total = firebaseData.length;
-
-    for (let i = 0; i < firebaseData.length; i++) {
-      const item = firebaseData[i];
-      
-      try {
-        // ✅ URLSearchParams 사용 (CORS preflight 없이 POST 가능)
-        const params = new URLSearchParams();
-        
-        // 모든 필드 추가 (encodeURIComponent 제거 - URLSearchParams가 자동 인코딩)
-        for (const key in item) {
-          if (key) {
-            let value = item[key] || '';
-            
-            // memo 필드는 500자 단위로 분할
-            if (key === 'memo' && value) {
-              // memo 필드는 건너뛰고 별도로 처리
-              continue;
-            }
-            
-            params.append(key, value);
-          }
-        }
-        
-        // memo를 500자 단위로 분할하여 memo1, memo2, memo3... 추가
-        if (item.memo) {
-          const memoChunkSize = 500;
-          const memoText = item.memo;
-          let chunkIndex = 1;
-          
-          for (let j = 0; j < memoText.length; j += memoChunkSize) {
-            const chunk = memoText.substring(j, j + memoChunkSize);
-            const memoField = `memo${chunkIndex}`;
-            params.append(memoField, chunk);
-            chunkIndex++;
-          }
-        }
-        
-        // POST로 전송 (Content-Type 헤더 없음 = CORS preflight 불필요)
-        const response = await fetch(`${GAS_URL_SHEETS}?action=create`, {
-          method: 'POST',
-          body: params
-        });
-        const result = await response.json();
-
-        if (result.success) {
-          successCount++;
-          console.log(`✅ [${i + 1}/${total}] ${item.name} 추가됨`);
-        } else {
-          console.warn(`⚠️ [${i + 1}/${total}] 실패:`, result.message);
-        }
-
-        const progress = Math.round((successCount / total) * 100);
-        updateSyncText(`⏳ 마이그레이션: ${progress}% (${successCount}/${total})`);
-
-        await new Promise(resolve => setTimeout(resolve, 100));
-
-      } catch (err) {
-        console.error(`❌ [${i + 1}/${total}] 오류:`, err.message);
-      }
-    }
-
-    console.log('');
-    console.log('✅ 마이그레이션 완료!');
-    console.log('   - 전송: ' + successCount + '/' + total + '개');
-    console.log('');
-
-    updateSyncText(`✅ 마이그레이션 완료 (${successCount}/${total})`);
-    alert(`✅ 완료!\n\n${successCount}개 농약을 Google Sheets로 옮겼습니다.`);
-
-    // 데이터 새로고침
-    setTimeout(() => {
-      loadDataFromGoogleSheets();
-    }, 1000);
-
   } catch (err) {
-    console.error('❌ 마이그레이션 실패:', err.message);
-    updateSyncText('❌ 마이그레이션 실패');
-    alert('❌ 마이그레이션 실패:\n\n' + err.message);
+    console.error('❌ 저장 에러:', err);
+    alert('저장 중 오류가 발생했습니다: ' + err.message);
+    updateSyncText('❌ 저장 실패');
   }
 }
 
 // ════════════════════════════════════════════════════════════════
-// 모든 Firebase 컬렉션 자동 마이그레이션
+// DELETE - 데이터 삭제
 // ════════════════════════════════════════════════════════════════
 
-async function migrateAllCollections() {
-  // 마이그레이션할 컬렉션 목록 (실제 Firebase 컬렉션들)
-  const collectionNames = [
-    'myPesticides',
-    'OrchardData',
-    'appSettings',
-    'checkedTasks',
-    'cropNameOverrides',
-    'diagnoses',
-    'farm1DB',
-    'growPlants',
-    'growRecords',
-    'plants',
-    'sprayPlan',
-    'supplies',
-    'tasks',
-    'userDb_fert',
-    'userDb_nutr',
-    'userDb_pest',
-    'workLog',
-    '농약DB',
-    '비료_퇴비DB'
-  ];
+async function deletePesticide(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
 
-  const confirmed = confirm(
-    `Firebase의 모든 컬렉션을 Google Sheets로 옮기겠습니다.\n\n` +
-    `대상 컬렉션: ${collectionNames.join(', ')}\n\n` +
-    `계속하시겠습니까?`
-  );
+  try {
+    updateSyncText('🗑️ 삭제 중...');
+    
+    const params = new URLSearchParams();
+    params.append('action', 'delete');
+    params.append('sheetName', CURRENT_SHEET_NAME);
+    params.append('id', id);
 
-  if (!confirmed) {
-    console.log('🚫 마이그레이션 취소');
+    const response = await fetch(GAS_URL_SHEETS, {
+      method: 'POST',
+      body: params
+    });
+    
+    const result = await response.json();
+
+    if (result.success) {
+      showToast('✅ 삭제되었습니다.');
+      loadDataFromGoogleSheets();
+    } else {
+      throw new Error(result.message || '삭제 실패');
+    }
+  } catch (err) {
+    console.error('❌ 삭제 에러:', err);
+    alert('삭제 실패: ' + err.message);
+    updateSyncText('❌ 삭제 실패');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// UI 렌더링 및 모달 제어
+// ════════════════════════════════════════════════════════════════
+
+function renderSheetsList() {
+  const listEl = document.getElementById('sheets-list');
+  const countEl = document.getElementById('sheets-count');
+  
+  let filtered = sheetsData;
+  if (currentCategory !== 'all') {
+    filtered = sheetsData.filter(item => (item.type || '').includes(currentCategory));
+  }
+
+  // 검색어 필터링 적용
+  const keyword = document.getElementById('search-input').value.trim().toLowerCase();
+  if (keyword) {
+    filtered = filtered.filter(item => 
+      (item.name && item.name.toLowerCase().includes(keyword)) ||
+      (item.ingredient && item.ingredient.toLowerCase().includes(keyword))
+    );
+  }
+
+  countEl.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><p>📦 등록된 농약이 없습니다</p></div>';
     return;
   }
 
-  try {
-    console.log('🔄 모든 컬렉션 마이그레이션 시작...');
-    updateSyncText('⏳ 모든 컬렉션 준비 중...');
-
-    // Firebase 초기화
-    if (!firebase.apps || firebase.apps.length === 0) {
-      firebase.initializeApp(FIREBASE_CONFIG);
-    }
-    const db = firebase.firestore();
-
-    // 각 컬렉션별로 마이그레이션
-    let totalMigrated = 0;
-    
-    for (const collectionName of collectionNames) {
-      try {
-        console.log(`📋 컬렉션 조회: ${collectionName}`);
-        updateSyncText(`⏳ 컬렉션 마이그레이션: ${collectionName}`);
-
-        // Firestore에서 컬렉션 조회
-        const snapshot = await db.collection(collectionName).get();
-        const collectionData = [];
-
-        snapshot.forEach(doc => {
-          collectionData.push(doc.data());
-        });
-
-        console.log(`✅ ${collectionName}: ${collectionData.length}개 항목 발견`);
-
-        if (collectionData.length === 0) {
-          console.log(`⚠️ ${collectionName}: 데이터 없음`);
-          continue;
-        }
-
-        // Google Sheets로 전송
-        console.log(`📡 ${collectionName} Google Sheets로 전송 중...`);
-        
-        let successCount = 0;
-        const total = collectionData.length;
-
-        for (let i = 0; i < collectionData.length; i++) {
-          const item = collectionData[i];
-          
-          try {
-            // URLSearchParams 사용 (CORS preflight 없이 POST)
-            const params = new URLSearchParams();
-            params.append('action', 'migrateCollection');
-            params.append('collectionName', collectionName);
-            params.append('itemIndex', i);
-            
-            // 모든 필드 추가
-            for (const key in item) {
-              if (key) {
-                let value = item[key] || '';
-                
-                // memo 필드는 500자 단위로 분할
-                if (key === 'memo' && value) {
-                  continue;
-                }
-                
-                params.append(key, value);
-              }
-            }
-            
-            // memo를 500자 단위로 분할
-            if (item.memo) {
-              const memoChunkSize = 500;
-              const memoText = item.memo;
-              let chunkIndex = 1;
-              
-              for (let j = 0; j < memoText.length; j += memoChunkSize) {
-                const chunk = memoText.substring(j, j + memoChunkSize);
-                params.append(`memo${chunkIndex}`, chunk);
-                chunkIndex++;
-              }
-            }
-
-            // POST로 전송
-            const response = await fetch(`${GAS_URL_SHEETS}?action=migrateCollection`, {
-              method: 'POST',
-              body: params
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-              successCount++;
-              console.log(`✅ [${i + 1}/${total}] ${item.name || '항목'} 추가됨`);
-            } else {
-              console.warn(`⚠️ [${i + 1}/${total}] 실패:`, result.message);
-            }
-
-            // 진행률 표시
-            const progress = Math.round((successCount / total) * 100);
-            updateSyncText(`⏳ ${collectionName}: ${progress}% (${successCount}/${total})`);
-
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-          } catch (err) {
-            console.error(`❌ [${i + 1}/${total}] 오류:`, err.message);
-          }
-        }
-
-        totalMigrated += successCount;
-        console.log(`✅ ${collectionName} 완료: ${successCount}/${total}개`);
-
-      } catch (err) {
-        console.error(`❌ 컬렉션 '${collectionName}' 마이그레이션 실패:`, err.message);
-      }
-    }
-
-    console.log(`\n✅ 모든 컬렉션 마이그레이션 완료!`);
-    console.log(`   - 총 마이그레이션: ${totalMigrated}개 항목`);
-    
-    updateSyncText(`✅ 모든 컬렉션 마이그레이션 완료! (${totalMigrated}개 항목)`);
-    alert(`✅ 완료!\n\n${totalMigrated}개 항목을 모든 컬렉션에서 Google Sheets로 옮겼습니다.`);
-
-    // 데이터 새로고침
-    setTimeout(() => {
-      loadDataFromGoogleSheets();
-    }, 1000);
-
-  } catch (err) {
-    console.error('❌ 모든 컬렉션 마이그레이션 실패:', err.message);
-    updateSyncText('❌ 마이그레이션 실패');
-    alert('❌ 마이그레이션 실패:\n\n' + err.message);
-  }
+  listEl.innerHTML = filtered.map(item => `
+    <div class="pesticide-card">
+      <div class="pesticide-info">
+        <div class="pesticide-name">💊 ${item.name || '-'}</div>
+        <div class="pesticide-meta">
+          분류: ${item.type || '미분류'} | 수량: ${item.quantity || 0}${item.unit || '개'}
+          ${item.ingredient ? '<br/>성분: ' + item.ingredient : ''}
+          ${item.manufacturer ? ' | 제조사: ' + item.manufacturer : ''}
+          <div class="source-badge">🟩 Google Sheets</div>
+        </div>
+      </div>
+      <div class="pesticide-actions">
+        <button class="btn-small" onclick="openEditModal('${item.id}')">수정</button>
+        <button class="btn-small" onclick="deletePesticide('${item.id}')" style="background: #FFCDD2; color: #C62828;">삭제</button>
+      </div>
+    </div>
+  `).join('');
 }
 
-function updateSyncText(text) {
+function filterByCategory(category) {
+  currentCategory = category;
+  document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-category="${category}"]`).classList.add('active');
+  renderSheetsList();
+}
+
+function filterLocalList() {
+  renderSheetsList();
+}
+
+function openRegisterModal() {
+  editingId = null;
+  document.getElementById('modal-title').textContent = '🧪 새 농약 등록';
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-type').value = '';
+  document.getElementById('form-quantity').value = '1';
+  document.getElementById('form-unit').value = '개';
+  document.getElementById('form-ingredient').value = '';
+  document.getElementById('form-manufacturer').value = '';
+  document.getElementById('form-memo').value = '';
+  document.getElementById('register-modal').classList.add('active');
+}
+
+function openEditModal(id) {
+  const item = sheetsData.find(p => String(p.id) === String(id));
+  if (!item) return;
+
+  editingId = item.id;
+  document.getElementById('modal-title').textContent = '✏️ 농약 수정';
+  document.getElementById('form-name').value = item.name || '';
+  document.getElementById('form-type').value = item.type || '';
+  document.getElementById('form-quantity').value = item.quantity || 1;
+  document.getElementById('form-unit').value = item.unit || '개';
+  document.getElementById('form-ingredient').value = item.ingredient || '';
+  document.getElementById('form-manufacturer').value = item.manufacturer || '';
+  document.getElementById('form-memo').value = item.memo || '';
+  
+  document.getElementById('register-modal').classList.add('active');
+}
+
+function closeRegisterModal() {
+  document.getElementById('register-modal').classList.remove('active');
+}
+
+function updateStats() {
+  document.getElementById('stat-sheets').textContent = sheetsData.length;
+  document.getElementById('stat-total').textContent = sheetsData.length;
+}
+
+function updateSyncText(msg) {
   const syncText = document.getElementById('sync-text');
-  if (syncText) {
-    syncText.textContent = text;
-  }
-  console.log('💬 상태:', text);
+  if (syncText) syncText.textContent = msg;
 }
 
-// ════════════════════════════════════════════════════════════════
-// 페이지 로드 시 데이터 로드
-// ════════════════════════════════════════════════════════════════
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    console.log('📄 DOMContentLoaded 이벤트 발생');
-    loadDataFromGoogleSheets();
-  });
-} else {
-  console.log('📄 DOM 이미 로드됨');
+// 페이지 로드 시 구글 시트 데이터 불러오기
+document.addEventListener('DOMContentLoaded', () => {
   loadDataFromGoogleSheets();
-}
-
-console.log('✅ 스크립트 로드 완료');
+});
 </script>
 
 </body>
