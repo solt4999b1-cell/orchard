@@ -41,9 +41,6 @@
     .stat-box { background: rgba(255, 255, 255, 0.2); padding: 4px; border-radius: 4px; text-align: center; }
     .stat-number { font-size: 14px; font-weight: 700; }
     .stat-label { font-size: 8px; opacity: 0.8; margin-top: 1px; }
-    .search-section { background: #fff; padding: 8px; border-radius: 8px; margin-bottom: 2px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05); }
-    .search-bar { display: flex; gap: 4px; }
-    .search-input { flex: 1; padding: 6px 8px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 11px; font-family: inherit; }
     .btn { padding: 6px 12px; background: var(--green-dark); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
     .btn:hover { background: #1B5E20; }
     .results-section { margin-bottom: 4px; }
@@ -106,14 +103,6 @@
     </div>
   </div>
 
-  <!-- 검색 섹션 -->
-  <div class="search-section">
-    <div class="search-bar">
-      <input type="text" class="search-input" id="search-input" placeholder="등록된 농약명 또는 성분 검색..." oninput="renderSheetsList()">
-      <button class="btn" onclick="loadDataFromGoogleSheets()">🔍 동기화</button>
-    </div>
-  </div>
-
   <!-- 데이터 목록 섹션 -->
   <div class="results-section" id="sheets-section">
     <div class="section-title">🟩 내 보유 농약 (<span id="sheets-count">0</span>개)</div>
@@ -136,14 +125,14 @@
     </div>
   </div>
 
-  <!-- 등록 버튼 섹션 -->
+  <!-- 내 농약장 섹션 (새 농약 등록 버튼) -->
   <div class="results-section">
     <div class="section-title">➕ 새 농약 등록</div>
     <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
   </div>
 </div>
 
-<!-- 농약 등록 / 수정 / 조회 모달 -->
+<!-- 농약 등록 모달 -->
 <div class="modal-bg" id="register-modal">
   <div class="modal">
     <div class="modal-title" id="modal-title">🧪 새 농약 등록</div>
@@ -224,13 +213,23 @@
 
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
 const CURRENT_SHEET_NAME = 'myPesticides';
-const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec'; // PSIS 외부 검색용
+const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
 
 let sheetsData = [];
 let editingId = null;
 let currentCategory = 'all';
 let isViewMode = false;
 let psisResultsCache = null;
+
+function normalizeType(typeValue) {
+  if (!typeValue) return '';
+  const normalized = typeValue.trim();
+  const mapping = {
+    '살균제': '살균', '살충제': '살충', '제초제': '제초', '균충제': '균충', '충초제': '충초', '생조제': '생조',
+    '살균': '살균', '살충': '살충', '제초': '제초', '균충': '균충', '충초': '충초', '생조': '생조', '기타': '기타'
+  };
+  return mapping[normalized] || normalized;
+}
 
 // 1. 구글 시트 데이터 로드 (Read)
 async function loadDataFromGoogleSheets() {
@@ -451,7 +450,7 @@ function selectPsisCompany(idx) {
   showToast('✅ PSIS 정보가 채워졌습니다.');
 }
 
-// 5. UI 및 모달 제어 (상세 조회 & 수정 기능 포함)
+// 5. UI 및 모달 제어 (상세 조회 및 분류 표시)
 function renderSheetsList() {
   const listEl = document.getElementById('sheets-list');
   const countEl = document.getElementById('sheets-count');
@@ -459,14 +458,6 @@ function renderSheetsList() {
   let filtered = sheetsData;
   if (currentCategory !== 'all') {
     filtered = sheetsData.filter(item => (item.type || '').includes(currentCategory));
-  }
-
-  const keyword = document.getElementById('search-input').value.trim().toLowerCase();
-  if (keyword) {
-    filtered = filtered.filter(item => 
-      (item.name && item.name.toLowerCase().includes(keyword)) ||
-      (item.ingredient && item.ingredient.toLowerCase().includes(keyword))
-    );
   }
 
   countEl.textContent = filtered.length;
@@ -504,7 +495,7 @@ function viewPesticide(id) {
   
   document.getElementById('modal-title').textContent = '👁️ 농약 상세 조회';
   document.getElementById('form-name').value = item.name || '';
-  document.getElementById('form-type').value = item.type || '';
+  document.getElementById('form-type').value = normalizeType(item.type || '');
   document.getElementById('form-quantity').value = item.quantity || 1;
   document.getElementById('form-unit').value = item.unit || '개';
   document.getElementById('form-ingredient').value = item.ingredient || '';
@@ -528,7 +519,7 @@ function openEditModal(id) {
 
   document.getElementById('modal-title').textContent = '✏️ 농약 수정';
   document.getElementById('form-name').value = item.name || '';
-  document.getElementById('form-type').value = item.type || '';
+  document.getElementById('form-type').value = normalizeType(item.type || '');
   document.getElementById('form-quantity').value = item.quantity || 1;
   document.getElementById('form-unit').value = item.unit || '개';
   document.getElementById('form-ingredient').value = item.ingredient || '';
