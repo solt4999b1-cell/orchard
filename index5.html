@@ -351,8 +351,8 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        // ✅ POST 방식으로 변경 (URL 길이 제한 없음)
-        const createData = {};
+        // ✅ URLSearchParams 사용 (CORS preflight 없이 POST 가능)
+        const params = new URLSearchParams();
         
         // 모든 필드 추가
         for (const key in item) {
@@ -365,7 +365,7 @@ async function migrateFromFirebase() {
               continue;
             }
             
-            createData[key] = value;
+            params.append(encodeURIComponent(key), encodeURIComponent(value));
           }
         }
         
@@ -378,19 +378,15 @@ async function migrateFromFirebase() {
           for (let j = 0; j < memoText.length; j += memoChunkSize) {
             const chunk = memoText.substring(j, j + memoChunkSize);
             const memoField = `memo${chunkIndex}`;
-            createData[memoField] = chunk;
+            params.append(encodeURIComponent(memoField), encodeURIComponent(chunk));
             chunkIndex++;
           }
         }
         
-        // POST로 전송
+        // POST로 전송 (Content-Type 헤더 없음 = CORS preflight 불필요)
         const response = await fetch(`${GAS_URL_SHEETS}?action=create`, {
           method: 'POST',
-          mode: 'cors',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(createData)
+          body: params
         });
         const result = await response.json();
 
