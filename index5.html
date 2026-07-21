@@ -175,7 +175,7 @@
 
     <div class="form-group">
       <label class="form-label">성분</label>
-      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등...">
+      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등..." >
     </div>
 
     <div class="form-group">
@@ -347,11 +347,9 @@ async function deletePesticide(id) {
   }
 }
 
-// 6. 작물 메모 상세 조합 함수 (buildCropMemo 복원 완료)
+// 6. 희석배수 20L 기준 환산 및 메모 생성 함수
 function buildCropMemo(cropDetails, toxicInfo) {
-  console.log('🔨 buildCropMemo 실행');
-  console.log('  입력 cropDetails:', cropDetails);
-  console.log('  입력 toxicInfo:', toxicInfo);
+  console.log('🔨 buildCropMemo 실행 (20L 기준 환산 적용)');
   
   const toxicGubun = toxicInfo?.toxicGubun || toxicInfo?.toxicGrade || '-';
   const toxicName = toxicInfo?.toxicName || toxicInfo?.toxicClassName || '-';
@@ -361,9 +359,31 @@ function buildCropMemo(cropDetails, toxicInfo) {
     const cName = crop.cropName || '-';
     const dName = crop.diseaseWeedName || '-';
     const pUse = crop.pestiUse || '-';
-    const dUnit = crop.dilutUnit || '-';
+    let dUnit = crop.dilutUnit || '-';
     const uSuit = crop.useSuittime || crop.harvestGracePeriod || crop.safetyLine || '-';
     const uNum = crop.useNum || crop.maxUseCount || '-';
+    
+    // ✅ 희석배수 계산 로직 (10a 기준 배수/ml 등을 20L 물 한 통 기준 내용으로 변환)
+    if (dUnit.includes('배')) {
+      // "2000배" 형태인 경우 20L 기준 환산 안내 추가 또는 그대로 유지하되 명시
+      // 예: 원래 값이 "2000배"라면 20L당 약 10ml 계산 식 적용 가능
+      const match = dUnit.match(/(\d+)배/);
+      if (match) {
+        const times = parseInt(match[1]);
+        const mlFor20L = (20000 / times).toFixed(1).replace(/\.0$/, '');
+        dUnit = `${dUnit} (20L당 ${mlFor20L}ml)`;
+      }
+    } else if (dUnit.includes('g') || dUnit.includes('ml') || dUnit.includes('L')) {
+      // 10a(1000㎡) 기준 사용량인 경우 20L(물 한 통) 기준으로 대략 환산 (10a = 물 160L 기준 8말, 혹은 농가 표준 대조)
+      // 보통 10a당 소요되는 물량은 160L(8말)이므로 20L 기준은 1/8 수준으로 환산
+      const numMatch = dUnit.match(/([\d\.]+)/);
+      if (numMatch && (dUnit.includes('g') || dUnit.includes('ml'))) {
+        const val = parseFloat(numMatch[1]);
+        const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
+        const unitStr = dUnit.includes('g') ? 'g' : 'ml';
+        dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
+      }
+    }
     
     const line = `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
     console.log('  생성된 라인:', line);
@@ -464,7 +484,7 @@ async function searchPsisFromModal() {
       <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
         <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
         <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
-        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모 (20L 기준 환산): ${item.cropMemo}</div>
       </div>
     `).join('');
 
@@ -493,7 +513,7 @@ function selectPsisCompany(idx) {
   document.getElementById('form-type').value = matchedType;
   document.getElementById('form-memo').value = item.cropMemo || '';
   document.getElementById('psis-results-container').style.display = 'none';
-  showToast('✅ PSIS 및 독성 정보가 자동으로 채워졌습니다.');
+  showToast('✅ 20L 기준 환산 정보가 자동으로 채워졌습니다.');
 }
 
 // 5. UI 및 모달 제어
