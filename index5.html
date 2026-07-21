@@ -190,11 +190,11 @@
 
     <div class="form-btns">
       <button class="btn" id="save-btn" onclick="savePesticide()">저장</button>
-      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검습</button>
+      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검색</button>
       <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
     </div>
 
-    <div class="loading" id="modal-loading">⏳ PSIS 검색 중...</div>
+    <div class="loading" id="modal-loading">⏳ PSIS 및 독성 정보(svc02) 검색 중...</div>
 
     <!-- PSIS 검색 결과 컨테이너 -->
     <div id="psis-results-container" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-300);">
@@ -213,7 +213,7 @@
 
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
 const CURRENT_SHEET_NAME = 'myPesticides';
-const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec'; // PSIS 검색용 외부 GAS URL
+const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
 
 let sheetsData = [];
 let editingId = null;
@@ -347,7 +347,7 @@ async function deletePesticide(id) {
   }
 }
 
-// 4. PSIS 모달 검색 기능 (개선됨)
+// 4. PSIS 및 svc02(독성 정보) 통합 검색 기능
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   if (!keyword) {
@@ -363,27 +363,44 @@ async function searchPsisFromModal() {
   container.style.display = 'none';
 
   try {
-    const url = `${CONFIG_GAS_URL}?target=psis&keyword=${encodeURIComponent(keyword)}&searchType=brand&displayCount=50&startPoint=1`;
-    const res = await fetch(url);
-    const gasData = await res.json();
+    // 1. 품목 정보 조회 (svc01)
+    const urlSvc01 = `${CONFIG_GAS_URL}?target=psis&keyword=${encodeURIComponent(keyword)}&searchType=brand&displayCount=50&startPoint=1`;
+    const resSvc01 = await fetch(urlSvc01);
+    const gasData = await resSvc01.json();
 
-    loadingEl.style.display = 'none';
-
-    // 응답 데이터에서 service 배열 추출 (다양한 구조 대응)
     let serviceList = [];
-    if (gasData.service) {
-      serviceList = gasData.service;
-    } else if (gasData.data && gasData.data.service) {
-      serviceList = gasData.data.service;
-    } else if (Array.isArray(gasData)) {
-      serviceList = gasData;
-    }
+    if (gasData.service) serviceList = gasData.service;
+    else if (gasData.data && gasData.data.service) serviceList = gasData.data.service;
+    else if (Array.isArray(gasData)) serviceList = gasData;
 
     if (serviceList.length === 0) {
+      loadingEl.style.display = 'none';
       container.style.display = 'block';
       resultsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #666; font-size: 11px;">검색 결과가 없습니다.</div>';
       return;
     }
+
+    // 2. 독성 정보 조회 (svc02) 병렬 요청 준비
+    let toxicInfo = { toxicGubun: '-', toxicName: '-', fishToxic: '-' };
+    const firstItem = serviceList[0];
+    const pestiCode = firstItem.pestiCode || firstItem.code || '';
+
+    if (pestiCode) {
+      try {
+        const urlSvc02 = `${CONFIG_GAS_URL}?target=psis_toxic&pestiCode=${pestiCode}`;
+        const resSvc02 = await fetch(urlSvc02);
+        const toxicData = await resSvc02.json();
+        if (toxicData && toxicData.success && toxicData.data) {
+          toxicInfo = toxicData.data;
+        } else if (toxicData && (toxicData.toxicGubun || toxicData.fishToxic)) {
+          toxicInfo = toxicData;
+        }
+      } catch (toxicErr) {
+        console.warn('⚠️ svc02 독성 정보 로드 실패 (기본값 사용):', toxicErr);
+      }
+    }
+
+    loadingEl.style.display = 'none';
 
     const combinationMap = new Map();
     serviceList.forEach(item => {
@@ -412,13 +429,13 @@ async function searchPsisFromModal() {
       }
     });
 
-    const toxicGubun = gasData.toxicGubun || '-';
-    const toxicName = gasData.toxicName || '-';
-    const fishToxic = gasData.fishToxic || '-';
+    const tGubun = toxicInfo.toxicGubun || '-';
+    const tName = toxicInfo.toxicName || '-';
+    const fToxic = toxicInfo.fishToxic || '-';
 
     psisResultsCache = Array.from(combinationMap.values()).map(item => {
       const cropMemo = item.cropDetails.map(c => 
-        `${c.cropName}(${c.diseaseWeedName},${c.pestiUse},${c.dilutUnit},${c.useSuittime},${c.useNum},${toxicGubun}(${toxicName}),${fishToxic})`
+        `${c.cropName}(${c.diseaseWeedName},${c.pestiUse},${c.dilutUnit},${c.useSuittime},${c.useNum},${tGubun}(${tName}),${fToxic})`
       ).join(' / ');
       return { ...item, cropMemo };
     });
@@ -428,13 +445,13 @@ async function searchPsisFromModal() {
       <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
         <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
         <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
-        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모 (독성포함): ${item.cropMemo}</div>
       </div>
     `).join('');
 
   } catch (err) {
     loadingEl.style.display = 'none';
-    console.error('PSIS 검색 실패:', err);
+    console.error('PSIS 및 독성 검색 실패:', err);
     alert('PSIS 검색 중 오류가 발생했습니다.');
   }
 }
@@ -457,7 +474,7 @@ function selectPsisCompany(idx) {
   document.getElementById('form-type').value = matchedType;
   document.getElementById('form-memo').value = item.cropMemo || '';
   document.getElementById('psis-results-container').style.display = 'none';
-  showToast('✅ PSIS 정보가 채워졌습니다.');
+  showToast('✅ PSIS 및 독성 정보가 자동으로 채워졌습니다.');
 }
 
 // 5. UI 및 모달 제어
