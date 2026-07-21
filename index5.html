@@ -347,7 +347,31 @@ async function deletePesticide(id) {
   }
 }
 
-// 4. PSIS 및 svc02(독성 정보) 통합 검색 기능
+// 6. 요청하신 buildCropMemo 함수 복원 및 통합
+function buildCropMemo(cropDetails, gasData) {
+  console.log('🔨 buildCropMemo 실행');
+  console.log('  입력 cropDetails:', cropDetails);
+  console.log('  입력 길이:', cropDetails.length);
+  console.log('  gasData.toxicGubun:', gasData?.toxicGubun);
+  console.log('  gasData.toxicName:', gasData?.toxicName);
+  console.log('  gasData.fishToxic:', gasData?.fishToxic);
+  
+  const toxicGubun = gasData?.toxicGubun || '-';
+  const toxicName = gasData?.toxicName || '-';
+  const fishToxic = gasData?.fishToxic || '-';
+  
+  const result = cropDetails.map(crop => {
+    // ✅ 독성 정보 포함 포맷: cropName(diseaseWeedName,pestiUse,dilutUnit,useSuittime,useNum,toxicGubun(toxicName),fishToxic)
+    const line = `${crop.cropName}(${crop.diseaseWeedName},${crop.pestiUse},${crop.dilutUnit},${crop.useSuittime},${crop.useNum},${toxicGubun}(${toxicName}),${fishToxic})`;
+    console.log('  생성된 라인:', line);
+    return line;
+  }).join(' / ');
+  
+  console.log('  최종 결과:', result);
+  return result;
+}
+
+// 4. PSIS 및 svc02(독성 정보) 통합 검색 및 메모 생성 함수
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   if (!keyword) {
@@ -429,14 +453,9 @@ async function searchPsisFromModal() {
       }
     });
 
-    const tGubun = toxicInfo.toxicGubun || '-';
-    const tName = toxicInfo.toxicName || '-';
-    const fToxic = toxicInfo.fishToxic || '-';
-
+    // 3. 복원된 buildCropMemo 함수를 통해 메모 생성
     psisResultsCache = Array.from(combinationMap.values()).map(item => {
-      const cropMemo = item.cropDetails.map(c => 
-        `${c.cropName}(${c.diseaseWeedName},${c.pestiUse},${c.dilutUnit},${c.useSuittime},${c.useNum},${tGubun}(${tName}),${fToxic})`
-      ).join(' / ');
+      const cropMemo = buildCropMemo(item.cropDetails, toxicInfo);
       return { ...item, cropMemo };
     });
 
