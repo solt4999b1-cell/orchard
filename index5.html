@@ -351,13 +351,15 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        // ✅ 모든 필드를 동적으로 처리
+        // ✅ 필요한 필드만 추출 (memo, status 등 불필요한 필드 제외)
         let url = `${GAS_URL_SHEETS}?action=create`;
         
-        for (const key in item) {
-          if (key) {
-            url += `&${encodeURIComponent(key)}=${encodeURIComponent(item[key] || '')}`;
-          }
+        // 필요한 필드만 명시적으로 추가
+        const fields = ['name', 'type', 'quantity', 'unit', 'ingredient', 'manufacturer'];
+        
+        for (const field of fields) {
+          const value = item[field] || '';
+          url += `&${field}=${encodeURIComponent(value)}`;
         }
 
         const response = await fetch(url);
