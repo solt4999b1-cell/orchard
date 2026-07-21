@@ -70,22 +70,21 @@
     .form-btns { display: flex; gap: 4px; margin-top: 8px; }
     .form-btns .btn { flex: 1; }
     .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; z-index: 2000; }
-    .loading { text-align: center; padding: 20px; color: var(--gray-600); font-size: 12px; }
   </style>
 </head>
 <body>
 
 <div class="app-container">
-  <!-- 헤더 -->
+  <!-- 헤더 영역 -->
   <div class="header-wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;">
     <div class="header-text" style="flex: 1;">
-        <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리 (Google Sheets)</h1>
+        <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리</h1>
         <h5 style="margin: 0; color: #666; font-size: 11px;">제작: 이용호 &nbsp; Copyright 2026. All Right Reserved</h5>
     </div>
   </div>  
 
   <div class="app-header">
-    <strong>✅ Google Sheets (OrchardData) 모드</strong>
+    🟩 Google Sheets (OrchardData) 공동 저장소 모드
     <div class="sync-status" id="sync-status">
       <span class="sync-indicator" id="sync-indicator"></span>
       <span id="sync-text">🔄 로드중...</span>
@@ -107,14 +106,14 @@
   <!-- 검색 섹션 -->
   <div class="search-section">
     <div class="search-bar">
-      <input type="text" class="search-input" id="search-input" placeholder="등록된 농약 검색..." oninput="filterLocalList()">
-      <button class="btn" onclick="loadDataFromGoogleSheets()">🔄 동기화</button>
+      <input type="text" class="search-input" id="search-input" placeholder="등록된 농약명 또는 성분 검색..." oninput="renderSheetsList()">
+      <button class="btn" onclick="loadDataFromGoogleSheets()">🔍 동기화</button>
     </div>
   </div>
 
-  <!-- 구글 시트 농약 목록 섹션 -->
+  <!-- 구글 시트 데이터 목록 섹션 -->
   <div class="results-section" id="sheets-section">
-    <div class="section-title">🟩 구글 시트 보유 농약 (<span id="sheets-count">0</span>개)</div>
+    <div class="section-title">🟩 내 보유 농약 (<span id="sheets-count">0</span>개)</div>
     
     <div class="category-tabs" id="category-tabs">
       <button class="category-tab active" data-category="all" onclick="filterByCategory('all')">전체</button>
@@ -134,7 +133,7 @@
     </div>
   </div>
 
-  <!-- 새 농약 등록 섹션 -->
+  <!-- 등록 버튼 섹션 -->
   <div class="results-section">
     <div class="section-title">➕ 새 농약 등록</div>
     <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
@@ -206,10 +205,9 @@
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// 설정 및 전역 변수
+// 설정 및 구글 시트 연동 로직
 // ════════════════════════════════════════════════════════════════
 
-// 방금 새로 배포한 GAS 웹 앱 URL 입력
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
 const CURRENT_SHEET_NAME = 'myPesticides';
 
@@ -217,10 +215,7 @@ let sheetsData = [];
 let editingId = null;
 let currentCategory = 'all';
 
-// ════════════════════════════════════════════════════════════════
-// READ - 구글 시트에서 데이터 읽기
-// ════════════════════════════════════════════════════════════════
-
+// 1. 데이터 읽기 (Read)
 async function loadDataFromGoogleSheets() {
   try {
     updateSyncText('🔄 구글 시트 동기화 중...');
@@ -243,10 +238,7 @@ async function loadDataFromGoogleSheets() {
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-// CREATE & UPDATE - 데이터 저장 (추가 및 수정)
-// ════════════════════════════════════════════════════════════════
-
+// 2. 데이터 저장 및 수정 (Create & Update)
 async function savePesticide() {
   const name = document.getElementById('form-name').value.trim();
   const type = document.getElementById('form-type').value.trim();
@@ -277,8 +269,6 @@ async function savePesticide() {
 
   try {
     updateSyncText('⏳ 저장 중...');
-    
-    // URLSearchParams 사용하여 POST 전송 (CORS 프리플라이트 문제 방지)
     const params = new URLSearchParams();
     for (const key in payload) {
       params.append(key, payload[key]);
@@ -294,7 +284,7 @@ async function savePesticide() {
     if (result.success) {
       showToast(editingId ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
       closeRegisterModal();
-      loadDataFromGoogleSheets(); // 목록 새로고침
+      loadDataFromGoogleSheets();
     } else {
       throw new Error(result.message || '저장 실패');
     }
@@ -305,16 +295,12 @@ async function savePesticide() {
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-// DELETE - 데이터 삭제
-// ════════════════════════════════════════════════════════════════
-
+// 3. 데이터 삭제 (Delete)
 async function deletePesticide(id) {
   if (!confirm('정말 삭제하시겠습니까?')) return;
 
   try {
     updateSyncText('🗑️ 삭제 중...');
-    
     const params = new URLSearchParams();
     params.append('action', 'delete');
     params.append('sheetName', CURRENT_SHEET_NAME);
@@ -340,10 +326,7 @@ async function deletePesticide(id) {
   }
 }
 
-// ════════════════════════════════════════════════════════════════
-// UI 렌더링 및 모달 제어
-// ════════════════════════════════════════════════════════════════
-
+// 4. UI 렌더링 및 필터링
 function renderSheetsList() {
   const listEl = document.getElementById('sheets-list');
   const countEl = document.getElementById('sheets-count');
@@ -353,7 +336,6 @@ function renderSheetsList() {
     filtered = sheetsData.filter(item => (item.type || '').includes(currentCategory));
   }
 
-  // 검색어 필터링 적용
   const keyword = document.getElementById('search-input').value.trim().toLowerCase();
   if (keyword) {
     filtered = filtered.filter(item => 
@@ -365,7 +347,7 @@ function renderSheetsList() {
   countEl.textContent = filtered.length;
 
   if (filtered.length === 0) {
-    listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><p>📦 등록된 농약이 없습니다</p></div>';
+    listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><p>📦 등록된 데이터가 없습니다</p></div>';
     return;
   }
 
@@ -392,10 +374,6 @@ function filterByCategory(category) {
   currentCategory = category;
   document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
   document.querySelector(`[data-category="${category}"]`).classList.add('active');
-  renderSheetsList();
-}
-
-function filterLocalList() {
   renderSheetsList();
 }
 
@@ -451,7 +429,7 @@ function showToast(msg) {
   setTimeout(() => toast.remove(), 2000);
 }
 
-// 페이지 로드 시 구글 시트 데이터 불러오기
+// 최초 실행
 document.addEventListener('DOMContentLoaded', () => {
   loadDataFromGoogleSheets();
 });
