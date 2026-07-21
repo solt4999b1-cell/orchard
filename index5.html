@@ -351,8 +351,8 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        // ✅ 모든 필드를 포함하되, memo는 500자 단위로 분할
-        let url = `${GAS_URL_SHEETS}?action=create`;
+        // ✅ POST 방식으로 변경 (URL 길이 제한 없음)
+        const createData = {};
         
         // 모든 필드 추가
         for (const key in item) {
@@ -365,7 +365,7 @@ async function migrateFromFirebase() {
               continue;
             }
             
-            url += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+            createData[key] = value;
           }
         }
         
@@ -378,12 +378,16 @@ async function migrateFromFirebase() {
           for (let j = 0; j < memoText.length; j += memoChunkSize) {
             const chunk = memoText.substring(j, j + memoChunkSize);
             const memoField = `memo${chunkIndex}`;
-            url += `&${memoField}=${encodeURIComponent(chunk)}`;
+            createData[memoField] = chunk;
             chunkIndex++;
           }
         }
-
-        const response = await fetch(url);
+        
+        // POST로 전송
+        const response = await fetch(`${GAS_URL_SHEETS}?action=create`, {
+          method: 'POST',
+          payload: JSON.stringify(createData)
+        });
         const result = await response.json();
 
         if (result.success) {
