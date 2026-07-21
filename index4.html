@@ -654,9 +654,7 @@
     </style>
     
     <!-- ✅ Firebase 라이브러리 (index6과 동일 - 10.5.0 compat) -->
-    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.5.0/firebase-auth-compat.js"></script>
+    <!-- ✅ Firebase CDN 제거됨 (Google Sheets 사용) -->
 </head>
 <body>
 
@@ -688,10 +686,10 @@
                             <option value="">전체</option>
                             <option value="살균">살균</option>
                             <option value="살충">살충</option>
-                            <option value="균충">균충</option>
-                            <option value="충초">충초</option>
+                            <option value="균충">균충(살균살충)</option>
+                            <option value="충초">충초(살충제초)</option>
                             <option value="제초">제초</option>
-                            <option value="생조">생조</option>
+                            <option value="생조">생조(생장조절)</option>
                             <option value="기타">기타</option>
                         </select>
                     </div>
@@ -804,53 +802,46 @@
         var pageSize = 250;
 
         // ✅ Firebase 설정 (index6과 동일)
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA",
-            authDomain: "orchardapp-b81ca.firebaseapp.com",
-            projectId: "orchardapp-b81ca"
-        };
+        // ✅ Google Sheets 설정 (Firebase 제거)
+        const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
+        const SHEET_COLLECTION_PESTICIDES = 'myPesticides';
 
-        // ✅ Firebase 전역 변수
-        let db = null;
+        // ✅ Google Sheets 전역 변수
         let myPesticides = [];  // 보유 농약 목록
 
-        // ✅ Firebase 초기화 (index6과 동일)
-        async function initializeFirebase() {
+        // ✅ Google Sheets 초기화
+        async function initializeGoogleSheets() {
             try {
-                console.log('🔧 Firebase 초기화 중...');
-                
-                if (!firebase.apps.length) {
-                    firebase.initializeApp(FIREBASE_CONFIG);
-                    console.log('✅ Firebase 초기화 완료');
-                }
-                
-                db = firebase.firestore();
+                console.log('🔧 Google Sheets 초기화 중...');
                 
                 // 보유 농약 로드
                 await loadMyPesticides();
+                
+                console.log('✅ Google Sheets 초기화 완료');
             } catch (err) {
-                console.error('❌ Firebase 초기화 오류:', err);
+                console.error('❌ Google Sheets 초기화 오류:', err);
             }
         }
 
-        // ✅ Firestore에서 보유 농약 로드 (index6과 동일)
+        // ✅ Google Sheets에서 보유 농약 로드
         async function loadMyPesticides() {
             try {
-                if (!db) return;
+                console.log('🔄 Google Sheets에서 보유 농약 로드 중...');
                 
-                console.log('🔄 Firestore에서 보유 농약 로드 중...');
+                const response = await fetch(`${GAS_URL_SHEETS}?action=readCollection&collectionName=${SHEET_COLLECTION_PESTICIDES}`);
+                const result = await response.json();
                 
-                const snapshot = await db.collection('myPesticides').get();
                 myPesticides = [];
                 
-                snapshot.forEach(doc => {
-                    const data = doc.data();
-                    const name = data.name || data.상품명 || '';
-                    if (name) {
-                        myPesticides.push(name);
-                        console.log('📄 로드됨:', name);
-                    }
-                });
+                if (result.success && result.data) {
+                    result.data.forEach(item => {
+                        const name = item.name || '';
+                        if (name) {
+                            myPesticides.push(name);
+                            console.log('📄 로드됨:', name);
+                        }
+                    });
+                }
                 
                 console.log('✅ 보유 농약 로드 완료:', myPesticides.length + '개');
                 console.log('   목록:', myPesticides);
@@ -859,11 +850,11 @@
             }
         }
 
-        // 페이지 로드 시 Firebase 초기화
+        // 페이지 로드 시 Google Sheets 초기화
         if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeFirebase);
+            document.addEventListener('DOMContentLoaded', initializeGoogleSheets);
         } else {
-            initializeFirebase();
+            initializeGoogleSheets();
         }
 
         // ✅ 정렬 함수 (재사용 가능)
