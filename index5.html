@@ -351,13 +351,14 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        const url = `${GAS_URL_SHEETS}?action=create` +
-          `&name=${encodeURIComponent(item.name || '')}` +
-          `&type=${encodeURIComponent(item.type || '')}` +
-          `&quantity=${item.quantity || 0}` +
-          `&unit=${encodeURIComponent(item.unit || '')}` +
-          `&ingredient=${encodeURIComponent(item.ingredient || '')}` +
-          `&manufacturer=${encodeURIComponent(item.manufacturer || '')}`;
+        // ✅ 모든 필드를 동적으로 처리
+        let url = `${GAS_URL_SHEETS}?action=create`;
+        
+        for (const key in item) {
+          if (key) {
+            url += `&${encodeURIComponent(key)}=${encodeURIComponent(item[key] || '')}`;
+          }
+        }
 
         const response = await fetch(url);
         const result = await response.json();
