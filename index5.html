@@ -209,11 +209,16 @@
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// Google Sheets + GAS 설정 (단일 선언)
+// Google Sheets + GAS 설정 (2개 URL 분리)
 // ════════════════════════════════════════════════════════════════
 
-//const GAS_URL = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
+// ✅ Firebase 마이그레이션용 (기존 URL)
+const GAS_URL_FIREBASE = 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+
+// ✅ Google Sheets 데이터 로드용 (새로운 GAS_NEW.gs 배포 URL)
+// ⚠️ GAS_NEW.gs를 배포한 후 새 URL로 변경해주세요!
+const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbxLWtcnlzdBXphlHlvKcm6Hsu5aOnnthVz_CeyzdV0cHWLP9NAIjicUB9h3Rp9E6Zvt/exec';
+
 const SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
 
 // Firebase 설정 (마이그레이션용)
@@ -235,8 +240,8 @@ async function loadDataFromGoogleSheets() {
     console.log('🔧 Google Sheets에서 데이터 로드 시작...');
     updateSyncText('🔄 데이터 로드 중...');
 
-    const url = `${GAS_URL}?action=read`;
-    console.log('📡 GAS 호출:', url);
+    const url = `${GAS_URL_SHEETS}?action=read`;
+    console.log('📡 GAS 호출 (Sheets):', url);
 
     const response = await fetch(url);
     const result = await response.json();
@@ -345,7 +350,7 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        const url = `${GAS_URL}?action=create` +
+        const url = `${GAS_URL_SHEETS}?action=create` +
           `&name=${encodeURIComponent(item.name || '')}` +
           `&type=${encodeURIComponent(item.type || '')}` +
           `&quantity=${item.quantity || 0}` +
