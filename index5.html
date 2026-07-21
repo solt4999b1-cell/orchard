@@ -351,15 +351,36 @@ async function migrateFromFirebase() {
       const item = firebaseData[i];
       
       try {
-        // ✅ 필요한 필드만 추출 (memo, status 등 불필요한 필드 제외)
+        // ✅ 모든 필드를 포함하되, memo는 500자 단위로 분할
         let url = `${GAS_URL_SHEETS}?action=create`;
         
-        // 필요한 필드만 명시적으로 추가
-        const fields = ['name', 'type', 'quantity', 'unit', 'ingredient', 'manufacturer'];
+        // 모든 필드 추가
+        for (const key in item) {
+          if (key) {
+            let value = item[key] || '';
+            
+            // memo 필드는 500자 단위로 분할
+            if (key === 'memo' && value) {
+              // memo 필드는 건너뛰고 별도로 처리
+              continue;
+            }
+            
+            url += `&${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+          }
+        }
         
-        for (const field of fields) {
-          const value = item[field] || '';
-          url += `&${field}=${encodeURIComponent(value)}`;
+        // memo를 500자 단위로 분할하여 memo1, memo2, memo3... 추가
+        if (item.memo) {
+          const memoChunkSize = 500;
+          const memoText = item.memo;
+          let chunkIndex = 1;
+          
+          for (let j = 0; j < memoText.length; j += memoChunkSize) {
+            const chunk = memoText.substring(j, j + memoChunkSize);
+            const memoField = `memo${chunkIndex}`;
+            url += `&${memoField}=${encodeURIComponent(chunk)}`;
+            chunkIndex++;
+          }
         }
 
         const response = await fetch(url);
