@@ -347,25 +347,24 @@ async function deletePesticide(id) {
   }
 }
 
-// 6. 요청하신 buildCropMemo 함수 복원 및 통합
-function buildCropMemo(cropDetails, gasData) {
+// 6. 작물 메모 상세 조합 함수 (buildCropMemo 복원 완료)
+function buildCropMemo(cropDetails, toxicInfo) {
   console.log('🔨 buildCropMemo 실행');
   console.log('  입력 cropDetails:', cropDetails);
+  console.log('  입력 toxicInfo:', toxicInfo);
   
-  const toxicGubun = gasData?.toxicGubun || '-';
-  const toxicName = gasData?.toxicName || '-';
-  const fishToxic = gasData?.fishToxic || '-';
+  const toxicGubun = toxicInfo?.toxicGubun || toxicInfo?.toxicGrade || '-';
+  const toxicName = toxicInfo?.toxicName || toxicInfo?.toxicClassName || '-';
+  const fishToxic = toxicInfo?.fishToxic || toxicInfo?.fishToxicGubun || toxicInfo?.fishGrade || '-';
   
   const result = cropDetails.map(crop => {
-    // 각 필드값이 누락되었을 경우 안전하게 '-' 처리 또는 원본 데이터 속성 확인
     const cName = crop.cropName || '-';
     const dName = crop.diseaseWeedName || '-';
     const pUse = crop.pestiUse || '-';
     const dUnit = crop.dilutUnit || '-';
-    const uSuit = crop.useSuittime || '-';
-    const uNum = crop.useNum || '-';
+    const uSuit = crop.useSuittime || crop.harvestGracePeriod || crop.safetyLine || '-';
+    const uNum = crop.useNum || crop.maxUseCount || '-';
     
-    // 포맷에 맞게 조합
     const line = `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
     console.log('  생성된 라인:', line);
     return line;
@@ -375,7 +374,7 @@ function buildCropMemo(cropDetails, gasData) {
   return result;
 }
 
-// 4. PSIS 및 svc02(독성 정보) 통합 검색 및 메모 생성 함수
+// 4. PSIS 및 svc02(독성 정보) 통합 검색 기능
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   if (!keyword) {
@@ -391,7 +390,6 @@ async function searchPsisFromModal() {
   container.style.display = 'none';
 
   try {
-    // 1. 품목 정보 조회 (svc01)
     const urlSvc01 = `${CONFIG_GAS_URL}?target=psis&keyword=${encodeURIComponent(keyword)}&searchType=brand&displayCount=50&startPoint=1`;
     const resSvc01 = await fetch(urlSvc01);
     const gasData = await resSvc01.json();
@@ -408,7 +406,6 @@ async function searchPsisFromModal() {
       return;
     }
 
-    // 2. 독성 정보 조회 (svc02) 병렬 요청 준비
     let toxicInfo = { toxicGubun: '-', toxicName: '-', fishToxic: '-' };
     const firstItem = serviceList[0];
     const pestiCode = firstItem.pestiCode || firstItem.code || '';
@@ -420,11 +417,11 @@ async function searchPsisFromModal() {
         const toxicData = await resSvc02.json();
         if (toxicData && toxicData.success && toxicData.data) {
           toxicInfo = toxicData.data;
-        } else if (toxicData && (toxicData.toxicGubun || toxicData.fishToxic)) {
+        } else if (toxicData) {
           toxicInfo = toxicData;
         }
       } catch (toxicErr) {
-        console.warn('⚠️ svc02 독성 정보 로드 실패 (기본값 사용):', toxicErr);
+        console.warn('⚠️ svc02 독성 정보 로드 실패:', toxicErr);
       }
     }
 
@@ -448,16 +445,15 @@ async function searchPsisFromModal() {
         diseaseWeedName: item.diseaseWeedName || '-',
         pestiUse: item.pestiUse || '-',
         dilutUnit: item.dilutUnit || '-',
-        useSuittime: item.useSuittime || '-',
-        useNum: item.useNum || '-'
+        useSuittime: item.useSuittime || item.harvestGracePeriod || item.safetyLine || '-',
+        useNum: item.useNum || item.maxUseCount || '-'
       };
 
-      if (!data.cropDetails.find(c => c.cropName === cropDetail.cropName)) {
+      if (!data.cropDetails.find(c => c.cropName === cropDetail.cropName && c.diseaseWeedName === cropDetail.diseaseWeedName)) {
         data.cropDetails.push(cropDetail);
       }
     });
 
-    // 3. 복원된 buildCropMemo 함수를 통해 메모 생성
     psisResultsCache = Array.from(combinationMap.values()).map(item => {
       const cropMemo = buildCropMemo(item.cropDetails, toxicInfo);
       return { ...item, cropMemo };
@@ -468,7 +464,7 @@ async function searchPsisFromModal() {
       <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
         <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
         <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
-        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모 (독성포함): ${item.cropMemo}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
       </div>
     `).join('');
 
