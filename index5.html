@@ -351,18 +351,22 @@ async function deletePesticide(id) {
 function buildCropMemo(cropDetails, gasData) {
   console.log('🔨 buildCropMemo 실행');
   console.log('  입력 cropDetails:', cropDetails);
-  console.log('  입력 길이:', cropDetails.length);
-  console.log('  gasData.toxicGubun:', gasData?.toxicGubun);
-  console.log('  gasData.toxicName:', gasData?.toxicName);
-  console.log('  gasData.fishToxic:', gasData?.fishToxic);
   
   const toxicGubun = gasData?.toxicGubun || '-';
   const toxicName = gasData?.toxicName || '-';
   const fishToxic = gasData?.fishToxic || '-';
   
   const result = cropDetails.map(crop => {
-    // ✅ 독성 정보 포함 포맷: cropName(diseaseWeedName,pestiUse,dilutUnit,useSuittime,useNum,toxicGubun(toxicName),fishToxic)
-    const line = `${crop.cropName}(${crop.diseaseWeedName},${crop.pestiUse},${crop.dilutUnit},${crop.useSuittime},${crop.useNum},${toxicGubun}(${toxicName}),${fishToxic})`;
+    // 각 필드값이 누락되었을 경우 안전하게 '-' 처리 또는 원본 데이터 속성 확인
+    const cName = crop.cropName || '-';
+    const dName = crop.diseaseWeedName || '-';
+    const pUse = crop.pestiUse || '-';
+    const dUnit = crop.dilutUnit || '-';
+    const uSuit = crop.useSuittime || '-';
+    const uNum = crop.useNum || '-';
+    
+    // 포맷에 맞게 조합
+    const line = `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
     console.log('  생성된 라인:', line);
     return line;
   }).join(' / ');
