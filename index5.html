@@ -386,7 +386,10 @@ async function migrateFromFirebase() {
         // POST로 전송
         const response = await fetch(`${GAS_URL_SHEETS}?action=create`, {
           method: 'POST',
-          payload: JSON.stringify(createData)
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(createData)
         });
         const result = await response.json();
 
