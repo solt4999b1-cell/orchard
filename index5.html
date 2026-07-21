@@ -354,7 +354,7 @@ async function migrateFromFirebase() {
         // ✅ URLSearchParams 사용 (CORS preflight 없이 POST 가능)
         const params = new URLSearchParams();
         
-        // 모든 필드 추가
+        // 모든 필드 추가 (encodeURIComponent 제거 - URLSearchParams가 자동 인코딩)
         for (const key in item) {
           if (key) {
             let value = item[key] || '';
@@ -365,7 +365,7 @@ async function migrateFromFirebase() {
               continue;
             }
             
-            params.append(encodeURIComponent(key), encodeURIComponent(value));
+            params.append(key, value);
           }
         }
         
@@ -378,7 +378,7 @@ async function migrateFromFirebase() {
           for (let j = 0; j < memoText.length; j += memoChunkSize) {
             const chunk = memoText.substring(j, j + memoChunkSize);
             const memoField = `memo${chunkIndex}`;
-            params.append(encodeURIComponent(memoField), encodeURIComponent(chunk));
+            params.append(memoField, chunk);
             chunkIndex++;
           }
         }
