@@ -37,10 +37,17 @@
     .sync-status { display: flex; align-items: center; gap: 6px; font-size: 10px; margin-top: 4px; padding: 6px 10px; background: rgba(255, 255, 255, 0.3); border-radius: 6px; width: fit-content; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.2); }
     .sync-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #90EE90; animation: pulse 1.5s ease-in-out infinite; }
     @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 4px; margin-top: 4px; }
-    .stat-box { background: rgba(255, 255, 255, 0.2); padding: 4px; border-radius: 4px; text-align: center; }
-    .stat-number { font-size: 14px; font-weight: 700; }
-    .stat-label { font-size: 8px; opacity: 0.8; margin-top: 1px; }
+    
+    /* 통계 그리드 스타일 조정 (보유농약 칸과 분류별 요약 칸 배치) */
+    .stat-grid { display: grid; grid-template-columns: 90px 1fr; gap: 6px; margin-top: 6px; }
+    .stat-box { background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .stat-number { font-size: 16px; font-weight: 700; }
+    .stat-label { font-size: 8px; opacity: 0.9; margin-top: 1px; }
+    
+    /* 분류별 상세 개수 표시 박스 스타일 */
+    .stat-detail-box { background: rgba(255, 255, 255, 0.2); padding: 6px 10px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; }
+    .stat-detail-item { background: rgba(0, 0, 0, 0.15); padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+
     .btn { padding: 6px 12px; background: var(--green-dark); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
     .btn:hover { background: #1B5E20; }
     .results-section { margin-bottom: 4px; }
@@ -91,14 +98,14 @@
       <button onclick="loadDataFromGoogleSheets()" style="background: #1976D2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 6px;">🔄 새로고침</button>
     </div>
 
+    <!-- 수정된 통계 패널: 보유농약 칸 유지 + 전체 칸 대신 분류별 갯수 요약 칸 배치 -->
     <div class="stat-grid">
       <div class="stat-box">
         <div class="stat-number" id="stat-sheets">0</div>
         <div class="stat-label">보유농약</div>
       </div>
-      <div class="stat-box">
-        <div class="stat-number" id="stat-total">0</div>
-        <div class="stat-label">전체</div>
+      <div class="stat-detail-box" id="stat-category-details">
+        <span>분류별 갯수 집계 중...</span>
       </div>
     </div>
   </div>
@@ -175,7 +182,7 @@
 
     <div class="form-group">
       <label class="form-label">성분</label>
-      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등..." >
+      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등...">
     </div>
 
     <div class="form-group">
@@ -347,10 +354,8 @@ async function deletePesticide(id) {
   }
 }
 
-// 6. 희석배수 및 10a 기준 용량을 20L 기준으로 완벽 환산하는 메모 생성 함수
+// 6. 희석배수 20L 기준 환산 및 메모 생성 함수
 function buildCropMemo(cropDetails, toxicInfo) {
-  console.log('🔨 buildCropMemo 실행 (20L 기준 환산 보완)');
-  
   const toxicGubun = toxicInfo?.toxicGubun || toxicInfo?.toxicGrade || '-';
   const toxicName = toxicInfo?.toxicName || toxicInfo?.toxicClassName || '-';
   const fishToxic = toxicInfo?.fishToxic || toxicInfo?.fishToxicGubun || toxicInfo?.fishGrade || '-';
@@ -363,32 +368,23 @@ function buildCropMemo(cropDetails, toxicInfo) {
     const uSuit = crop.useSuittime || crop.harvestGracePeriod || crop.safetyLine || '-';
     const uNum = crop.useNum || crop.maxUseCount || '-';
     
-    // ✅ 10a 기준 용량을 20L(물 한 통) 기준으로 환산하는 로직 보완
     if (dUnit) {
-      // 1) "10a당 XXX g( 또는 ml)" 형태인 경우 환산 (10a = 160L 기준 물 사용 시 20L당 1/8)
       const aMatch = dUnit.match(/(?:10a|1,000㎡|1000㎡)당\s*([\d\.]+)\s*(g|kg|ml|L)/i);
       if (aMatch) {
         let val = parseFloat(aMatch[1]);
         let unitStr = aMatch[2].toLowerCase();
-        
-        // kg이나 L인 경우 g이나 ml로 환산
         if (unitStr === 'kg') { val *= 1000; unitStr = 'g'; }
         if (unitStr === 'l') { val *= 1000; unitStr = 'ml'; }
-        
         const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
         dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
-      } 
-      // 2) 일반 배수 형태인 경우 (예: "2000배")
-      else if (dUnit.includes('배')) {
+      } else if (dUnit.includes('배')) {
         const match = dUnit.match(/(\d+)배/);
         if (match) {
           const times = parseInt(match[1]);
           const mlFor20L = (20000 / times).toFixed(1).replace(/\.0$/, '');
           dUnit = `${dUnit} (20L당 ${mlFor20L}ml)`;
         }
-      } 
-      // 3) 기타 숫자와 g/ml 단위만 있는 경우
-      else {
+      } else {
         const numMatch = dUnit.match(/([\d\.]+)\s*(g|ml)/i);
         if (numMatch && !dUnit.includes('20L')) {
           const val = parseFloat(numMatch[1]);
@@ -399,15 +395,13 @@ function buildCropMemo(cropDetails, toxicInfo) {
       }
     }
     
-    const line = `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
-    console.log('  생성된 라인:', line);
-    return line;
+    return `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
   }).join(' / ');
   
-  console.log('  최종 결과:', result);
   return result;
 }
-// 4. PSIS 및 svc02(독성 정보) 통합 검색 기능
+
+// 4. PSIS 및 svc02 통합 검색 기능
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
   if (!keyword) {
@@ -497,7 +491,7 @@ async function searchPsisFromModal() {
       <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
         <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
         <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
-        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모 (20L 기준 환산): ${item.cropMemo}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
       </div>
     `).join('');
 
@@ -554,7 +548,7 @@ function renderSheetsList() {
           분류: ${item.type || '미분류'} | 수량: ${item.quantity || 0}${item.unit || '개'}
           ${item.ingredient ? '<br/>성분: ' + item.ingredient : ''}
           ${item.manufacturer ? ' | 제조사: ' + item.manufacturer : ''}
-          <!--<div class="source-badge">🟩 Google Sheets</div> -->
+          <div class="source-badge">🟩 Google Sheets</div>
         </div>
       </div>
       <div class="pesticide-actions">
@@ -660,9 +654,50 @@ function filterByCategory(category) {
   renderSheetsList();
 }
 
+// 상단 통계 업데이트 함수 (보유농약 27개 유지 + 분류별 개수 집계 표시)
 function updateStats() {
-  document.getElementById('stat-sheets').textContent = sheetsData.length;
-  document.getElementById('stat-total').textContent = sheetsData.length;
+  try {
+    const statSheets = document.getElementById('stat-sheets');
+    const statDetailBox = document.getElementById('stat-category-details');
+    
+    const totalCount = sheetsData ? sheetsData.length : 0;
+    if (statSheets) statSheets.textContent = totalCount;
+    
+    if (statDetailBox) {
+      // 분류별 갯수 카운트 객체 생성
+      const counts = {};
+      const categories = ['살균', '살충', '제초', '균충', '충초', '생조', '기타'];
+      
+      categories.forEach(cat => counts[cat] = 0);
+      
+      if (sheetsData && sheetsData.length > 0) {
+        sheetsData.forEach(item => {
+          const t = normalizeType(item.type || '');
+          let matched = false;
+          categories.forEach(cat => {
+            if (t.includes(cat)) {
+              counts[cat]++;
+              matched = true;
+            }
+          });
+          if (!matched) {
+            counts['기타']++;
+          }
+        });
+      }
+      
+      // HTML 태그로 조합하여 출력 (0개인 항목도 포함하거나 0 초과인 것만 깔끔하게 표시)
+      let html = '';
+      categories.forEach(cat => {
+        html += `<div class="stat-detail-item"><strong>${cat}</strong>: ${counts[cat]}개</div>`;
+      });
+      statDetailBox.innerHTML = html;
+    }
+    
+    console.log('✅ updateStats() 완료 (분류별 요약 반영)');
+  } catch (err) {
+    console.error('❌ updateStats() 오류:', err.message);
+  }
 }
 
 function updateSyncText(msg) {
