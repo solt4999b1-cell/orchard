@@ -197,6 +197,10 @@
     <button class="migrate-button" onclick="migrateFromFirebase()" title="Firebase에서 Google Sheets로 데이터 마이그레이션">
       📥 Firebase → Sheets
     </button>
+    
+    <button class="migrate-button" onclick="migrateAllCollections()" title="Firebase의 모든 컬렉션을 Google Sheets로 마이그레이션">
+      🔄 모든 컬렉션
+    </button>
   </div>
 
   <div class="data-container">
@@ -428,8 +432,158 @@ async function migrateFromFirebase() {
 }
 
 // ════════════════════════════════════════════════════════════════
-// 상태 업데이트
+// 모든 Firebase 컬렉션 자동 마이그레이션
 // ════════════════════════════════════════════════════════════════
+
+async function migrateAllCollections() {
+  // 마이그레이션할 컬렉션 목록 (자동 감지)
+  // 실제 Firebase에 있는 컬렉션들을 여기 추가하세요
+  const collectionNames = [
+    'myPesticides',
+    'myFertilizers',
+    'myPestsAndDiseases', 
+    'myCrops',
+    'mySprayRecords'
+  ];
+
+  const confirmed = confirm(
+    `Firebase의 모든 컬렉션을 Google Sheets로 옮기겠습니다.\n\n` +
+    `대상 컬렉션: ${collectionNames.join(', ')}\n\n` +
+    `계속하시겠습니까?`
+  );
+
+  if (!confirmed) {
+    console.log('🚫 마이그레이션 취소');
+    return;
+  }
+
+  try {
+    console.log('🔄 모든 컬렉션 마이그레이션 시작...');
+    updateSyncText('⏳ 모든 컬렉션 준비 중...');
+
+    // Firebase 초기화
+    if (!firebase.apps || firebase.apps.length === 0) {
+      firebase.initializeApp(FIREBASE_CONFIG);
+    }
+    const db = firebase.firestore();
+
+    // 각 컬렉션별로 마이그레이션
+    let totalMigrated = 0;
+    
+    for (const collectionName of collectionNames) {
+      try {
+        console.log(`📋 컬렉션 조회: ${collectionName}`);
+        updateSyncText(`⏳ 컬렉션 마이그레이션: ${collectionName}`);
+
+        // Firestore에서 컬렉션 조회
+        const snapshot = await db.collection(collectionName).get();
+        const collectionData = [];
+
+        snapshot.forEach(doc => {
+          collectionData.push(doc.data());
+        });
+
+        console.log(`✅ ${collectionName}: ${collectionData.length}개 항목 발견`);
+
+        if (collectionData.length === 0) {
+          console.log(`⚠️ ${collectionName}: 데이터 없음`);
+          continue;
+        }
+
+        // Google Sheets로 전송
+        console.log(`📡 ${collectionName} Google Sheets로 전송 중...`);
+        
+        let successCount = 0;
+        const total = collectionData.length;
+
+        for (let i = 0; i < collectionData.length; i++) {
+          const item = collectionData[i];
+          
+          try {
+            // URLSearchParams 사용 (CORS preflight 없이 POST)
+            const params = new URLSearchParams();
+            params.append('action', 'migrateCollection');
+            params.append('collectionName', collectionName);
+            params.append('itemIndex', i);
+            
+            // 모든 필드 추가
+            for (const key in item) {
+              if (key) {
+                let value = item[key] || '';
+                
+                // memo 필드는 500자 단위로 분할
+                if (key === 'memo' && value) {
+                  continue;
+                }
+                
+                params.append(key, value);
+              }
+            }
+            
+            // memo를 500자 단위로 분할
+            if (item.memo) {
+              const memoChunkSize = 500;
+              const memoText = item.memo;
+              let chunkIndex = 1;
+              
+              for (let j = 0; j < memoText.length; j += memoChunkSize) {
+                const chunk = memoText.substring(j, j + memoChunkSize);
+                params.append(`memo${chunkIndex}`, chunk);
+                chunkIndex++;
+              }
+            }
+
+            // POST로 전송
+            const response = await fetch(`${GAS_URL_SHEETS}?action=migrateCollection`, {
+              method: 'POST',
+              body: params
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+              successCount++;
+              console.log(`✅ [${i + 1}/${total}] ${item.name || '항목'} 추가됨`);
+            } else {
+              console.warn(`⚠️ [${i + 1}/${total}] 실패:`, result.message);
+            }
+
+            // 진행률 표시
+            const progress = Math.round((successCount / total) * 100);
+            updateSyncText(`⏳ ${collectionName}: ${progress}% (${successCount}/${total})`);
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+          } catch (err) {
+            console.error(`❌ [${i + 1}/${total}] 오류:`, err.message);
+          }
+        }
+
+        totalMigrated += successCount;
+        console.log(`✅ ${collectionName} 완료: ${successCount}/${total}개`);
+
+      } catch (err) {
+        console.error(`❌ 컬렉션 '${collectionName}' 마이그레이션 실패:`, err.message);
+      }
+    }
+
+    console.log(`\n✅ 모든 컬렉션 마이그레이션 완료!`);
+    console.log(`   - 총 마이그레이션: ${totalMigrated}개 항목`);
+    
+    updateSyncText(`✅ 모든 컬렉션 마이그레이션 완료! (${totalMigrated}개 항목)`);
+    alert(`✅ 완료!\n\n${totalMigrated}개 항목을 모든 컬렉션에서 Google Sheets로 옮겼습니다.`);
+
+    // 데이터 새로고침
+    setTimeout(() => {
+      loadDataFromGoogleSheets();
+    }, 1000);
+
+  } catch (err) {
+    console.error('❌ 모든 컬렉션 마이그레이션 실패:', err.message);
+    updateSyncText('❌ 마이그레이션 실패');
+    alert('❌ 마이그레이션 실패:\n\n' + err.message);
+  }
+}
 
 function updateSyncText(text) {
   const syncText = document.getElementById('sync-text');
