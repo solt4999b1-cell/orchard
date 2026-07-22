@@ -218,6 +218,13 @@
 // 설정 및 전역 변수
 // ════════════════════════════════════════════════════════════════
 
+// ⭐ Google Sheets API 설정 (CORS 완벽 지원 - 읽기용)
+const SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
+const SHEET_API_NAME = 'myPesticides';
+const API_KEY = 'AIzaSyDsF0H-GbI_LYmXOSMGP5vxfvpZpLt5dQ4';  // ← API 키는 필요시 교체
+const SHEETS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_API_NAME}!A:Z?key=${API_KEY}`;
+
+// 쓰기/수정/삭제용 GAS URL
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
 const CURRENT_SHEET_NAME = 'myPesticides';
 const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
@@ -238,26 +245,54 @@ function normalizeType(typeValue) {
   return mapping[normalized] || normalized;
 }
 
-// 1. 구글 시트 데이터 로드 (Read)
+// 1. 구글 시트 데이터 로드 (Read) - Google Sheets API 사용
 async function loadDataFromGoogleSheets() {
   try {
     updateSyncText('🔄 구글 시트 동기화 중...');
-    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
+    console.log('📊 Google Sheets API에서 데이터 로드 시작:', SHEETS_API_URL);
     
-    const response = await fetch(url);
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || '데이터 로드 실패');
+    const response = await fetch(SHEETS_API_URL);
+    
+    if (!response.ok) {
+      throw new Error(`API 응답 오류: ${response.status}`);
     }
-
-    sheetsData = result.data || [];
+    
+    const data = await response.json();
+    console.log('✅ API 응답:', data);
+    
+    if (!data.values || data.values.length === 0) {
+      console.log('⚠️ 데이터 없음');
+      sheetsData = [];
+      renderSheetsList();
+      updateStats();
+      updateSyncText('✅ 동기화 완료 (데이터 없음)');
+      return;
+    }
+    
+    // 헤더와 데이터 분리
+    const headers = data.values[0];
+    const rows = data.values.slice(1);
+    
+    // 데이터를 객체로 변환
+    sheetsData = rows
+      .filter(row => row[0]) // id가 있는 행만
+      .map(row => {
+        const obj = {};
+        headers.forEach((header, index) => {
+          obj[header] = row[index] || '';
+        });
+        return obj;
+      });
+    
+    console.log(`✅ ${sheetsData.length}개 농약 로드됨:`, sheetsData);
     renderSheetsList();
     updateStats();
     updateSyncText('✅ 동기화 완료');
   } catch (err) {
     console.error('❌ 로드 에러:', err);
     updateSyncText('❌ 동기화 실패');
+    sheetsData = [];
+    renderSheetsList();
   }
 }
 
