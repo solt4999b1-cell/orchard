@@ -4,15 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="병해충 진단">
 <link rel="manifest" href="manifest3.webmanifest">
-<!-- <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%231E2B22'/><text y='0.75em' x='0.1em' font-size='60'>💊</text><text y='0.9em' x='0.5em' font-size='30'>🌿</text></svg>"> -->
-	<!-- 파비콘 설정 -->
+
+<!-- 파비콘 설정 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon5-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icon5-180.png">
 <link rel="shortcut icon" href="icon5-192.png">
-	
+
 <title>병해충 진단 · 사진대조  제작:이용호 Copyright 2026-07-09</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -242,9 +243,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
 	  </div>
 	</div>
 
-  <!-- 💡 1순위: 헤더 하단선 바로 아래에 위치한 '작물 추가' 입력란 영역 -->
+  <!-- 1순위: 헤더 하단선 바로 아래에 위치한 '작물 추가' 입력란 영역 -->
   <div id="cropPick">
-    <div class="crops" id="crops"></div>
     <div id="cropManualWrap">
       <div class="crop-manual">
         <input id="cropInput" list="stdCrops" placeholder="새 작물 추가 (목록 선택/입력)"
@@ -255,12 +255,15 @@ body{margin:0;background:var(--bg);color:var(--ink);
         표준 작물명을 선택하여 내 밭에 새로 추가하세요.
       </div>
     </div>
-  </div>
+    
+    <!-- 2순위: 그 바로 아래에 위치한 '작물상태 관리' 및 '방제계획' 버튼 영역 -->
+    <div id="reviewBar">
+      <button class="crop-edit" onclick="CropManager.open()">🌱 작물상태 관리</button>
+      <button class="crop-edit" onclick="Plan.review()">📋 방제계획·실행체크</button>
+    </div>
 
-  <!-- 💡 2순위: 그 바로 아래에 위치한 '작물상태 관리' 및 '방제계획' 버튼 영역 -->
-  <div id="reviewBar">
-    <button class="crop-edit" onclick="CropManager.open()">🌱 작물상태 관리</button>
-    <button class="crop-edit" onclick="Plan.review()">📋 방제계획·실행체크</button>
+    <!-- 3순위: 🌳 유실수 및 채소 목록 영역 (작물 추가 및 버튼들보다 아래에 위치) -->
+    <div class="crops" id="crops"></div>
   </div>
 
   <div id="embedCrop"></div>
