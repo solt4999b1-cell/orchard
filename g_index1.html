@@ -117,8 +117,12 @@
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
 const CURRENT_SHEET_NAME = 'OrchardData';
 
-// 📌 로컬 개발 모드 (file:// URL 실행 시)
+// 📌 데모 모드 설정
+// - 로컬 파일 (file://) : 항상 데모 모드
+// - GitHub Pages (https://): GAS 연동 시도 후 실패하면 자동 폴백
+// - 다른 환경 (http://): GAS 연동 시도 후 실패하면 자동 폴백
 const USE_DEMO_MODE = location.protocol === 'file:';
+const FORCE_DEMO_MODE = false;  // true로 설정하면 모든 환경에서 데모 데이터만 사용
 
 let appData = {
   plants: [],
@@ -155,13 +159,24 @@ async function fetchSheetData() {
   try {
     updateSyncText('🔄 동기화 중...');
     
-    // 📌 로컬 개발 모드: 데모 데이터 사용
+    // 📌 강제 데모 모드 (개발/테스트용)
+    if (FORCE_DEMO_MODE) {
+      console.log('✅ 강제 데모 모드 활성화');
+      appData.plants = DEMO_DATA.plants;
+      appData.workLogs = DEMO_DATA.workLogs;
+      appData.myPesticides = DEMO_DATA.myPesticides;
+      renderAllPanels();
+      updateSyncText('✅ 데모 데이터 (강제 모드)');
+      showToast('💡 데모 데이터만 사용 중');
+      return;
+    }
+    
+    // 📌 로컬 파일 모드: 즉시 데모 데이터 사용
     if (USE_DEMO_MODE) {
       console.warn('⚠️ 로컬 파일 모드: 데모 데이터를 사용합니다.');
       console.warn('💡 GitHub Pages에 업로드하면 실제 데이터를 로드합니다.');
       console.warn('🔗 배포 주소: https://solt4999b1-cell.github.io/orchard/');
       
-      // 데모 데이터 로드
       appData.plants = DEMO_DATA.plants;
       appData.workLogs = DEMO_DATA.workLogs;
       appData.myPesticides = DEMO_DATA.myPesticides;
@@ -172,7 +187,8 @@ async function fetchSheetData() {
       return;
     }
     
-    // ✅ 수정됨: 캐시 방지용 timestamp 추가
+    // ✅ GAS URL로 실제 데이터 로드 시도
+    console.log('🔄 GAS에서 실제 데이터 로드 시도...');
     const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
     
     const response = await fetch(url, {
@@ -182,36 +198,48 @@ async function fetchSheetData() {
 
     const result = await response.json();
 
-    // ✅ 수정됨: 명확한 에러 처리
+    // ✅ GAS 응답 처리
     if (!result.success) {
-      throw new Error(result.message || '데이터 로드 실패');
+      throw new Error(result.message || result.code || '데이터 로드 실패');
     }
 
-    if (result.data) {
+    if (result.data && result.data.length > 0) {
       // 데이터 분류 (각 탭별로)
       appData.myPesticides = result.data.filter(x => x.tab === 'pest' || x.source === 'pesticide') || [];
       appData.plants = result.data.filter(x => x.category || x.plantDate) || [];
       appData.workLogs = result.data.filter(x => x.task) || [];
+      
+      console.log('✅ GAS 데이터 로드 성공:', {
+        plants: appData.plants.length,
+        workLogs: appData.workLogs.length,
+        pesticides: appData.myPesticides.length
+      });
     }
 
     renderAllPanels();
     updateSyncText('✅ 동기화 완료');
   } catch(e) {
-    console.error('❌ 데이터 로드 실패:', e.message);
+    console.error('❌ GAS 데이터 로드 실패:', e.message);
     
-    // 로컬 파일 모드에서 에러 발생 시 데모 데이터 로드
-    if (USE_DEMO_MODE) {
-      console.log('📌 데모 데이터로 폴백');
-      appData.plants = DEMO_DATA.plants;
-      appData.workLogs = DEMO_DATA.workLogs;
-      appData.myPesticides = DEMO_DATA.myPesticides;
-      renderAllPanels();
+    // 📌 모든 실패 상황에서 데모 데이터로 자동 폴백
+    console.warn('📌 자동 폴백: 데모 데이터를 사용합니다.');
+    
+    appData.plants = DEMO_DATA.plants;
+    appData.workLogs = DEMO_DATA.workLogs;
+    appData.myPesticides = DEMO_DATA.myPesticides;
+    
+    renderAllPanels();
+    
+    // 에러 상황을 사용자에게 친절하게 안내
+    if (e.message.includes('403')) {
+      console.warn('⚠️ GAS 403 Forbidden: GAS 배포 문제');
+      console.warn('💡 해결책: GAS_배포가이드.md를 참고하여 새 배포를 생성하세요.');
+      updateSyncText('✅ 데모 데이터 (GAS 연동 대기 중)');
+      showToast('💡 GAS 연동 대기 중 (데모 데이터)');
+    } else {
       updateSyncText('✅ 데모 데이터 (오프라인)');
-      return;
+      showToast('⚠️ 오프라인 모드 (데모 데이터)');
     }
-    
-    updateSyncText('❌ 연결 실패: ' + e.message);
-    showToast('⚠️ 데이터 로드 실패');
   }
 }
 
