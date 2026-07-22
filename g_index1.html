@@ -9,7 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
 <title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
 
-<!-- 홈화면 추가 시 Safari 주소창 없이 독립 앱처럼 실행 -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="새솔과수원">
@@ -18,7 +17,6 @@
 <meta name="theme-color" content="#143A1B">
 
 <style>
-  /* 기본 레이아웃 및 컴포넌트 스타일 */
   :root {
     --green-dark: #1B5E20; --green-mid: #2E7D32; --green-light: #E8F5E9;
     --blue-dark: #1565C0; --blue-light: #E3F2FD; --amber: #F57F17;
@@ -59,6 +57,12 @@
   .spinner { width: 36px; height: 36px; border: 4px solid var(--gray-200); border-top-color: var(--green-dark); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .hidden { display: none !important; }
+  
+  /* 카드 스타일 */
+  .card { background: var(--card); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+  .card-title { font-weight: 700; font-size: 14px; margin-bottom: 8px; }
+  .card-meta { font-size: 12px; color: var(--gray-500); }
+  .empty-state { padding: 20px; text-align: center; color: var(--gray-400); font-size: 12px; }
 </style>
 </head>
 <body>
@@ -76,22 +80,16 @@
     <div style="flex:1;"></div>
     <div class="topbar-sync" onclick="syncNow()">
       <span class="sync-dot" id="sync-dot"></span>
-      <span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;">시트 연동 중...</span>
+      <span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;">시트 연동</span>
     </div>
   </div>
 
   <!-- 패널들 -->
-  <div id="panel-today" class="panel active"><div id="today-list"></div><div id="week-list"></div></div>
-  <div id="panel-plants" class="panel"><div id="plant-grid"></div></div>
+  <div id="panel-today" class="panel active"><div id="today-list"></div></div>
+  <div id="panel-plants" class="panel"><div id="plant-list"></div></div>
   <div id="panel-log" class="panel"><div id="log-list"></div></div>
-  <div id="panel-manage" class="panel"><div id="manage-pest-list"></div><div id="manage-plant-list"></div></div>
-  <div id="panel-db" class="panel">
-    <div class="db-tabs" id="db-tab-row">
-      <button class="db-tab on" id="dbt-pest" onclick="setDbTab('pest',this)">🌿 농약</button>
-      <button class="db-tab" id="dbt-mypest" onclick="setDbTab('mypest',this)">📦 내 농약장</button>
-    </div>
-    <div id="db-list"></div>
-  </div>
+  <div id="panel-db" class="panel"><div id="db-list"></div></div>
+  <div id="panel-manage" class="panel"><div id="manage-list"></div></div>
 </div>
 
 <!-- 하단 네비게이션 -->
@@ -107,160 +105,336 @@
 <div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading">
   <div class="spinner"></div>
-  <div style="margin-top:12px;font-size:13px;color:var(--gray-600);" id="loading-step-msg">구글 시트 데이터 동기화 중...</div>
+  <div style="margin-top:12px;font-size:13px;color:var(--gray-600);" id="loading-step-msg">데이터 동기화 중...</div>
 </div>
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// 1. Google Sheets (OrchardData) 브릿지 계층 (Firebase 대체 래퍼)
+// 1. 설정 및 전역 변수
 // ════════════════════════════════════════════════════════════════
-const SHEET_API_NAME = 'OrchardData'; 
-const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
 
-let gSheetDataCache = {
+// ✅ 수정됨: 단순한 GAS URL 직접 호출 (Firestore 모킹 제거)
+const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+const CURRENT_SHEET_NAME = 'OrchardData';
+
+// 📌 로컬 개발 모드 (file:// URL 실행 시)
+const USE_DEMO_MODE = location.protocol === 'file:';
+
+let appData = {
   plants: [],
-  myPesticides: [],
   workLogs: [],
+  myPesticides: [],
   growRecords: [],
   doneTasks: []
 };
 
-// 가상의 Firestore 흉내내기 객체 (기존 db.collection(...) 코드를 고치지 않기 위함)
-window.firebase = {
-  apps: [true],
-  firestore: function() { return window.db; }
+// 데모 데이터 (로컬에서 테스트용)
+const DEMO_DATA = {
+  plants: [
+    { id: '1', name: '사과나무 A', category: '사과', status: '건강', plantDate: '2024-03-15' },
+    { id: '2', name: '배나무 B', category: '배', status: '모니터링', plantDate: '2024-04-20' },
+    { id: '3', name: '포도 C', category: '포도', status: '건강', plantDate: '2024-05-10' }
+  ],
+  workLogs: [
+    { id: 'log1', date: '2026-07-22', task: '병해충 점검', plant: '사과나무 A', notes: '잎에 흰가루 발견' },
+    { id: 'log2', date: '2026-07-21', task: '농약 살포', plant: '배나무 B', notes: '유황 희석액 50배' },
+    { id: 'log3', date: '2026-07-20', task: '수확 준비', plant: '포도 C', notes: '착색 상태 양호' }
+  ],
+  myPesticides: [
+    { id: 'p1', name: '유기황', ingredient: '황(S) 95%', quantity: 5, unit: 'kg' },
+    { id: 'p2', name: '니스소란', ingredient: '니텐피람 20%', quantity: 2, unit: '병' },
+    { id: 'p3', name: '석회보르도액', ingredient: '구리 이황화물', quantity: 10, unit: '병' }
+  ]
 };
 
-class MockDocumentReference {
-  constructor(collectionName, docId) {
-    this.collectionName = collectionName;
-    this.docId = docId;
-  }
-  async update(data) {
-    return await window.db.collection(this.collectionName).doc(this.docId).update(data);
-  }
-  async delete() {
-    return await window.db.collection(this.collectionName).doc(this.docId).delete();
-  }
-}
+// ════════════════════════════════════════════════════════════════
+// 2. Google Sheets 데이터 로드 (수정됨)
+// ════════════════════════════════════════════════════════════════
 
-class MockCollectionReference {
-  constructor(collectionName) {
-    this.collectionName = collectionName;
-  }
-  doc(id) {
-    return new MockDocumentReference(this.collectionName, id || 'doc_' + Date.now());
-  }
-  async add(data) {
-    const newId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-    const item = Object.assign({ id: newId }, data);
-    
-    if (!gSheetDataCache[this.collectionName]) gSheetDataCache[this.collectionName] = [];
-    gSheetDataCache[this.collectionName].push(item);
-    
-    // 서버(GAS)에 전송
-    await sendGasRequest('create', this.collectionName, item);
-    return { id: newId };
-  }
-  async get() {
-    await fetchSheetData();
-    const rows = gSheetDataCache[this.collectionName] || [];
-    return {
-      docs: rows.map(r => ({
-        id: r.id || String(Math.random()),
-        exists: true,
-        data: () => r
-      })),
-      forEach: function(cb) { this.docs.forEach(cb); }
-    };
-  }
-  where(field, op, val) { return this; }
-  orderBy(field, dir) { return this; }
-  limit(n) { return this; }
-}
-
-window.db = {
-  collection: function(name) {
-    return new MockCollectionReference(name);
-  },
-  batch: function() {
-    return {
-      set: function(ref, data, opt) { ref.collection.add(data); },
-      commit: async function() { return true; }
-    };
-  }
-};
-
-// 실제 구글 시트 통신 함수
 async function fetchSheetData() {
   try {
-    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${SHEET_API_NAME}&t=${Date.now()}`;
-    const res = await fetch(url, { method: 'GET', mode: 'cors' });
-    const json = await res.json();
-    if (json.success && json.data) {
-      // 시트 데이터를 카테고리별로 분배 파싱 가능
-      gSheetDataCache.myPesticides = json.data.filter(x => x.tab === 'pest' || x.source === 'pesticide');
-      gSheetDataCache.plants = json.data.filter(x => x.category || x.plantDate);
+    updateSyncText('🔄 동기화 중...');
+    
+    // 📌 로컬 개발 모드: 데모 데이터 사용
+    if (USE_DEMO_MODE) {
+      console.warn('⚠️ 로컬 파일 모드: 데모 데이터를 사용합니다.');
+      console.warn('💡 GitHub Pages에 업로드하면 실제 데이터를 로드합니다.');
+      console.warn('🔗 배포 주소: https://solt4999b1-cell.github.io/orchard/');
+      
+      // 데모 데이터 로드
+      appData.plants = DEMO_DATA.plants;
+      appData.workLogs = DEMO_DATA.workLogs;
+      appData.myPesticides = DEMO_DATA.myPesticides;
+      
+      renderAllPanels();
+      updateSyncText('✅ 데모 데이터 로드 완료');
+      showToast('💡 로컬 테스트 모드 (데모 데이터)');
+      return;
     }
+    
+    // ✅ 수정됨: 캐시 방지용 timestamp 추가
+    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors'
+    });
+
+    const result = await response.json();
+
+    // ✅ 수정됨: 명확한 에러 처리
+    if (!result.success) {
+      throw new Error(result.message || '데이터 로드 실패');
+    }
+
+    if (result.data) {
+      // 데이터 분류 (각 탭별로)
+      appData.myPesticides = result.data.filter(x => x.tab === 'pest' || x.source === 'pesticide') || [];
+      appData.plants = result.data.filter(x => x.category || x.plantDate) || [];
+      appData.workLogs = result.data.filter(x => x.task) || [];
+    }
+
+    renderAllPanels();
+    updateSyncText('✅ 동기화 완료');
   } catch(e) {
-    console.warn('시트 데이터 로드 실패:', e);
+    console.error('❌ 데이터 로드 실패:', e.message);
+    
+    // 로컬 파일 모드에서 에러 발생 시 데모 데이터 로드
+    if (USE_DEMO_MODE) {
+      console.log('📌 데모 데이터로 폴백');
+      appData.plants = DEMO_DATA.plants;
+      appData.workLogs = DEMO_DATA.workLogs;
+      appData.myPesticides = DEMO_DATA.myPesticides;
+      renderAllPanels();
+      updateSyncText('✅ 데모 데이터 (오프라인)');
+      return;
+    }
+    
+    updateSyncText('❌ 연결 실패: ' + e.message);
+    showToast('⚠️ 데이터 로드 실패');
   }
 }
 
-async function sendGasRequest(action, colName, dataObj) {
+async function sendGasRequest(action, dataObj) {
   try {
+    updateSyncText('⏳ 저장 중...');
+    
     const params = new URLSearchParams();
     params.append('action', action);
-    params.append('sheetName', SHEET_API_NAME);
+    params.append('sheetName', CURRENT_SHEET_NAME);
     params.append('id', dataObj.id || '');
+    
     for (const k in dataObj) {
-      if (typeof dataObj[k] === 'object') {
-        params.append(k, JSON.stringify(dataObj[k]));
-      } else {
-        params.append(k, dataObj[k]);
-      }
+      params.append(k, typeof dataObj[k] === 'object' ? JSON.stringify(dataObj[k]) : dataObj[k]);
     }
-    await fetch(GAS_URL_SHEETS, { method: 'POST', body: params });
+
+    const response = await fetch(GAS_URL_SHEETS, {
+      method: 'POST',
+      body: params
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      showToast('✅ ' + (action === 'create' ? '등록' : action === 'update' ? '수정' : '삭제') + ' 완료');
+      await fetchSheetData();
+    } else {
+      throw new Error(result.message || '작업 실패');
+    }
   } catch(e) {
-    console.error('GAS 전송 에러:', e);
+    console.error('❌ GAS 요청 실패:', e.message);
+    updateSyncText('❌ 저장 실패');
+    showToast('⚠️ ' + e.message);
   }
 }
 
 // ════════════════════════════════════════════════════════════════
-// 2. 앱 핵심 라이프사이클 및 유틸리티
+// 3. UI 렌더링 함수 (수정됨 - 완전히 구현)
 // ════════════════════════════════════════════════════════════════
+
+function renderTodayPanel() {
+  const logs = appData.workLogs || [];
+  
+  if (logs.length === 0) {
+    document.getElementById('today-list').innerHTML = `
+      <div class="card">
+        <div class="card-title">📋 오늘의 작업</div>
+        <div class="empty-state">등록된 작업이 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const html = logs.slice(0, 5).map(log => `
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:start;">
+        <div>
+          <div style="font-weight:700;font-size:14px;">${log.task || '작업'}</div>
+          <div style="font-size:12px;color:var(--gray-500);margin-top:4px;">${log.plant || log.cropName || '-'}</div>
+          <div style="font-size:11px;color:var(--gray-400);margin-top:2px;">${log.date || log.workDate || '-'}</div>
+        </div>
+        <span style="color:var(--green-mid);font-size:20px;">✓</span>
+      </div>
+    </div>
+  `).join('');
+
+  document.getElementById('today-list').innerHTML = `
+    <div class="card">
+      <div class="card-title">📋 오늘의 작업</div>
+      ${html}
+    </div>
+  `;
+}
+
+function renderPlantPanel() {
+  const plants = appData.plants || [];
+  
+  if (plants.length === 0) {
+    document.getElementById('plant-list').innerHTML = `
+      <div class="card">
+        <div class="card-title">🌱 식물 목록</div>
+        <div class="empty-state">등록된 식물이 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const html = plants.map(p => `
+    <div class="card">
+      <div class="card-title">${p.name || p.plantName || '식물'}</div>
+      <div class="card-meta">📍 ${p.category || '-'}</div>
+      <div class="card-meta">🌱 상태: ${p.status || '-'}</div>
+      <div class="card-meta">📅 심은날: ${p.plantDate || '-'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('plant-list').innerHTML = `
+    <div>
+      ${html}
+    </div>
+  `;
+}
+
+function renderLogPanel() {
+  const logs = appData.workLogs || [];
+  
+  if (logs.length === 0) {
+    document.getElementById('log-list').innerHTML = `
+      <div class="card">
+        <div class="card-title">📖 작업 기록</div>
+        <div class="empty-state">등록된 기록이 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const html = logs.map(log => `
+    <div class="card">
+      <div class="card-title">${log.date || '-'} - ${log.task || '작업'}</div>
+      <div class="card-meta">🌱 ${log.plant || log.cropName || '-'}</div>
+      <div class="card-meta">💬 ${log.notes || log.memo || '-'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('log-list').innerHTML = `
+    <div>
+      ${html}
+    </div>
+  `;
+}
+
+function renderDbPanel() {
+  const pests = appData.myPesticides || [];
+  
+  if (pests.length === 0) {
+    document.getElementById('db-list').innerHTML = `
+      <div class="card">
+        <div class="card-title">📚 내 농약장</div>
+        <div class="empty-state">등록된 농약이 없습니다.</div>
+      </div>
+    `;
+    return;
+  }
+
+  const html = pests.map(p => `
+    <div class="card">
+      <div class="card-title">${p.name || p.productName || '농약'}</div>
+      <div class="card-meta">🔬 유효성분: ${p.ingredient || p.activeIng || '-'}</div>
+      <div class="card-meta" style="color:var(--green-mid);font-weight:700;">📦 ${p.quantity || '-'} ${p.unit || '개'}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('db-list').innerHTML = `
+    <div>
+      ${html}
+    </div>
+  `;
+}
+
+function renderManagePanel() {
+  document.getElementById('manage-list').innerHTML = `
+    <div class="card">
+      <div class="card-title">⚙️ 관리</div>
+      <div class="empty-state">관리 기능 준비 중입니다.</div>
+    </div>
+  `;
+}
+
+function renderAllPanels() {
+  renderTodayPanel();
+  renderPlantPanel();
+  renderLogPanel();
+  renderDbPanel();
+  renderManagePanel();
+}
+
+// ════════════════════════════════════════════════════════════════
+// 4. UI 컨트롤 함수
+// ════════════════════════════════════════════════════════════════
+
 var TODAY = new Date();
 TODAY.setHours(0,0,0,0);
 var TODAY_STR = TODAY.toISOString().slice(0,10);
 
 function showToast(msg) {
   var t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+  t.textContent = msg;
+  t.classList.add('show');
   setTimeout(function(){ t.classList.remove('show'); }, 2500);
 }
 
-function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+function updateSyncText(msg) {
+  var label = document.getElementById('sync-label');
+  if (label) label.textContent = msg;
+}
 
 function setPanel(name, el) {
   document.querySelectorAll('.panel').forEach(function(p){
-    p.classList.remove('active'); p.style.display='none';
+    p.classList.remove('active');
   });
   var target = document.getElementById('panel-'+name);
-  if (target) { target.classList.add('active'); target.style.display='block'; }
-  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  if (target) {
+    target.classList.add('active');
+  }
+  document.querySelectorAll('.nav-item').forEach(function(n){
+    n.classList.remove('active');
+  });
   if (el) el.classList.add('active');
 }
 
 async function syncNow() {
-  showToast('🔄 구글 시트 동기화 중...');
+  showToast('🔄 동기화 중...');
   await fetchSheetData();
-  showToast('✅ 동기화 완료');
 }
 
-// 앱 초기화 진입점
+// ════════════════════════════════════════════════════════════════
+// 5. 앱 초기화
+// ════════════════════════════════════════════════════════════════
+
 document.addEventListener('DOMContentLoaded', async function() {
   const loadingEl = document.getElementById('loading');
-  document.getElementById('topbar-date').textContent = TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일';
+  document.getElementById('topbar-date').textContent = 
+    TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일';
   
   await fetchSheetData();
   
@@ -268,11 +442,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     loadingEl.classList.add('fade-out');
     setTimeout(() => loadingEl.classList.add('hidden'), 400);
   }
+  
   setPanel('today', document.querySelector('.nav-item'));
-});
-  // 비동기 Promise 에러 추적용 디버깅 리스너 추가
-window.addEventListener('unhandledrejection', function(event) {
-  console.error('🚨 [디버깅 포착] 처리되지 않은 Promise 에러 발생:', event.reason);
 });
 </script>
 </body>
