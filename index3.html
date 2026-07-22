@@ -196,12 +196,15 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .pesti.rec { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset, var(--shadow); }
 .tox-badge { font-size: 11px; font-weight: 700; color: var(--ink-soft); background: #eef1ec; border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; }
 .tox-badge.low { color: var(--leaf-d); background: var(--leaf-l); border-color: #c3ddc0; }
+
+/* 웹 이미지 검색 스타일 복원 */
 .webbox h4 span.unoff { font-size: 11px; font-weight: 700; color: #7a2f22; background: #F7E2DE; padding: 2px 8px; border-radius: 6px; margin-left: 2px; }
 .webbtn { border: 1.5px solid var(--leaf); background: var(--panel); color: var(--leaf-d); border-radius: 10px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer; }
 .webbtn:hover { background: var(--leaf-l); }
 .webstrip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .webstrip img { height: 104px; width: 104px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; background: var(--leaf-l); }
 .webstrip .src { width: 100%; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
 #embedCrop { align-items: center; gap: 8px; margin: 2px 2px 10px; font-weight: 700; font-size: 16px; display: none; }
 #embedCrop .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--leaf-l); color: var(--leaf-d); }
 #embedCrop .chg-btn { margin-left: auto; font: inherit; font-size: 12px; font-weight: 700; color: var(--leaf-d); background: var(--leaf-l); border: 1px solid #c3ddc0; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
@@ -278,7 +281,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 <script>
 const CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
-  GAS_URL_SHEETS: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec', // 통합 GAS 시트 URL
+  GAS_URL_SHEETS: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
   cropMapToPsis: { '단감':'감', '참다래':'참다래(키위)', '키위':'참다래(키위)' },
   plantsCollection: 'plants',
   pesticidesCollection: 'myPesticides',
@@ -300,7 +303,6 @@ const AppBus = {
   emit(evt, data){ (this._h[evt]||[]).forEach(fn=>{ try{fn(data)}catch(e){console.error(e)} }); }
 };
 
-/* ═══ DB 모듈: Google Sheets 통합 GAS 통신 체계 ═══ */
 const DB = {
   async list(collName){
     try{
@@ -356,12 +358,8 @@ const DB = {
       localStorage.setItem('orchard.'+collName, JSON.stringify(arr));
     }catch(e){}
   },
-  async rawPlants(){
-    return await this.list(CONFIG.plantsCollection);
-  },
-  async rawPesticides(){
-    return await this.list(CONFIG.pesticidesCollection);
-  }
+  async rawPlants(){ return await this.list(CONFIG.plantsCollection); },
+  async rawPesticides(){ return await this.list(CONFIG.pesticidesCollection); }
 };
 
 const Owned = {
@@ -613,21 +611,33 @@ const App = {
   },
 
   debugView(data){
-    let raw; try{ raw = JSON.stringify(data, null, 2); }catch(e){ raw = String(data); }
     return `<div class="hint" style="background:#F7E2DE;border-color:#e6b3a8;color:#7a2f22"><b>‘${this.crop}’ 항목을 찾지 못했습니다.</b></div>`;
   },
 
+  /* 💡 복원된 웹 이미지 검색 함수 */
   async webImages(query, btn){
     const strip=document.getElementById('webstrip');
     if(btn){ btn.disabled=true; btn.textContent='검색 중…'; }
+    strip.innerHTML=`<div class="empty"><span class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle"></span> 웹 이미지 검색 중…</div>`;
     try{
       const qs=new URLSearchParams({ target:'imgsearch', q:query, display:'12' }).toString();
       const r=await fetch(CONFIG.GAS_URL+'?'+qs); const jr=await r.json();
+      if(!jr.ok) throw new Error(jr.error||'검색 실패');
       const items=jr.items||[];
-      strip.innerHTML = items.map(it=>`<img loading="lazy" src="${it.thumb}" onclick="App.zoom('${it.thumb}')" onerror="this.remove()">`).join('');
+      if(!items.length){ strip.innerHTML=`<div class="empty">검색 결과가 없습니다.</div>`; }
+      else{
+        strip.innerHTML = items.map(it=>
+          `<img loading="lazy" src="${it.thumb}" title="${(it.title||'').replace(/"/g,'')} — 클릭하면 크게"
+             onclick="App.zoom('${it.thumb}')" onerror="this.remove()">`).join('')
+          + `<div class="src">이미지 출처: 웹 검색(네이버) · 참고용이며 저작권은 각 출처에 있습니다.</div>`;
+      }
       if(btn){ btn.textContent='🔄 다시 검색'; btn.disabled=false; }
-    }catch(e){ if(btn){ btn.textContent='🔍 웹 이미지 검색'; btn.disabled=false; } }
+    }catch(e){
+      strip.innerHTML=`<div class="empty" style="color:#C24A3A">${e.message}</div>`;
+      if(btn){ btn.textContent='🔍 웹 이미지 검색'; btn.disabled=false; }
+    }
   },
+
   imgFallback(img, encUrl){
     if(img.dataset.tried) { img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; return; }
     img.dataset.tried='1';
@@ -673,6 +683,18 @@ const App = {
           <div class="refmain">${ imgs.length ? `<img loading="lazy" src="${imgs[0]}" onclick="App.zoom(this.src)">` : `<div class="ph2">참조사진 없음</div>` }</div>
         </div>
       </div>
+
+      <!-- 💡 상세 모달 창 내 웹 이미지 검색 섹션 복원 -->
+      <div class="info webbox">
+        <h4>웹에서 증상 사진 더 찾기 <span class="unoff">비공식 · 참고용</span></h4>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">
+          NCPMS 사진이 없거나 부족할 때만 참고하세요. 웹 이미지는 출처가 검증되지 않아
+          <b>실제 병해충과 다를 수 있습니다.</b></p>
+        <button class="webbtn" onclick="App.webImages('${(this.crop+' '+(nm||'')).replace(/'/g,'')}', this)">
+          🔍 ‘${this.crop} ${nm}’ 웹 이미지 검색</button>
+        <div class="webstrip" id="webstrip"></div>
+      </div>
+
       ${symptoms?`<div class="info"><h4>증상</h4><p>${symptoms}</p></div>`:''}
       ${environ?`<div class="info"><h4>발생 환경</h4><p>${environ}</p></div>`:''}
       ${prevent?`<div class="info"><h4>방제 요령</h4><p>${prevent}</p></div>`:''}
