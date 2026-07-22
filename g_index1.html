@@ -129,7 +129,7 @@
 // ════════════════════════════════════════════════════════════════
 
 // GAS URL (index5.html과 동일)
-const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
+const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
 
 // 3개 시트 이름 정의
 const SHEET_NAMES = {
@@ -156,7 +156,7 @@ async function loadDataFromGoogleSheets() {
   try {
     updateSyncText('🔄 모든 시트 동기화 중...');
     
-    // ✅ 모든 시트를 자동으로 읽음
+    // ✅ 모든 시트를 자동으로 읽음 (read_all 방식)
     console.log('📊 모든 시트에서 데이터 로드 시작...');
     const url = `${GAS_URL_SHEETS}?action=read_all&t=${new Date().getTime()}`;
     
@@ -173,12 +173,22 @@ async function loadDataFromGoogleSheets() {
 
     // ✅ 모든 시트 데이터를 appData에 매핑
     if (result.data) {
-      // 알려진 시트 이름들
+      // Firebase에서 옮긴 시트들 (실제 이름 기준)
       appData.myPesticides = result.data['myPesticides'] || [];
       appData.plants = result.data['plants'] || [];
-      appData.workLogs = result.data['workLogs'] || [];
+      appData.workLog = result.data['workLog'] || [];  // ✨ workLogs → workLog
       appData.growRecords = result.data['growRecords'] || [];
-      appData.doneTasks = result.data['doneTasks'] || [];
+      appData.tasks = result.data['tasks'] || [];
+      appData.checkedTasks = result.data['checkedTasks'] || [];
+      
+      // 호환성: workLogs도 workLog와 동일하게
+      appData.workLogs = appData.workLog;
+      
+      // 기타 추가 시트들
+      appData.growPlants = result.data['growPlants'] || [];
+      appData.userDb_pest = result.data['userDb_pest'] || [];
+      appData.userDb_nutr = result.data['userDb_nutr'] || [];
+      appData.userDb_fert = result.data['userDb_fert'] || [];
       
       // 추가 데이터가 있으면 appData에 그대로 저장
       for (const sheetName in result.data) {
