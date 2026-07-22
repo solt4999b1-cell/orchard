@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
+<title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
+
+<!-- 홈화면 추가 시 Safari 주소창 없이 독립 앱처럼 실행 -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="새솔과수원">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="새솔과수원">
+<meta name="theme-color" content="#143A1B">
+
+<style>
+  /* 기본 레이아웃 및 컴포넌트 스타일 */
+  :root {
+    --green-dark: #1B5E20; --green-mid: #2E7D32; --green-light: #E8F5E9;
+    --blue-dark: #1565C0; --blue-light: #E3F2FD; --amber: #F57F17;
+    --gray-50: #FAFAFA; --gray-100: #F5F5F5; --gray-200: #EEEEEE;
+    --gray-300: #E0E0E0; --gray-400: #BDBDBD; --gray-500: #9E9E9E;
+    --gray-600: #757575; --gray-700: #616161; --gray-900: #212121;
+    --red-dark: #C62828; --card: #FFFFFF; --radius: 12px; --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif; background: var(--gray-50); color: var(--gray-900); padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
+  #app { max-width: 600px; margin: 0 auto; padding: 12px; }
+  .topbar { display: flex; align-items: center; background: linear-gradient(135deg, var(--green-dark), var(--green-mid)); color: #fff; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  .topbar-icon { font-size: 24px; }
+  .topbar-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
+  .topbar-date { font-size: 11px; opacity: 0.85; margin-top: 1px; }
+  .topbar-sync { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #66BB6A; display: inline-block; }
+  .sync-dot.offline { background: #EF5350; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .bottomnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--gray-200); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
+  .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gray-400); font-size: 11px; cursor: pointer; flex: 1; padding: 4px 0; }
+  .nav-item.active { color: var(--green-dark); font-weight: 700; }
+  .nav-icon { font-size: 20px; }
+  .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 2000; display: flex; justify-content: center; align-items: flex-end; }
+  .modal-bg.hidden { display: none; }
+  .modal { background: var(--card); width: 100%; max-width: 600px; border-radius: 20px 20px 0 0; padding: 20px 16px calc(20px + env(safe-area-inset-bottom)); max-height: 85vh; overflow-y: auto; box-sizing: border-box; }
+  .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 12px; }
+  .modal-btns { display: flex; gap: 8px; margin-top: 14px; }
+  .btn-primary { background: var(--green-dark); color: #fff; border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; font-weight: 700; cursor: pointer; flex: 1; }
+  .btn-secondary { background: var(--gray-200); color: var(--gray-700); border: none; border-radius: 8px; padding: 10px 16px; font-size: 13px; cursor: pointer; }
+  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(33,33,33,0.9); color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 12px; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+  .toast.show { opacity: 1; }
+  .loading-overlay { position: fixed; inset: 0; background: var(--gray-50); z-index: 4000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: opacity 0.4s; }
+  .loading-overlay.fade-out { opacity: 0; pointer-events: none; }
+  .loading-overlay.hidden { display: none; }
+  .spinner { width: 36px; height: 36px; border: 4px solid var(--gray-200); border-top-color: var(--green-dark); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- 메인 앱 영역 -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <span class="topbar-icon">🌿️</span>
+      <div>
+        <div class="topbar-title">새솔동 과수원</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+    </div>
+    <div style="flex:1;"></div>
+    <div class="topbar-sync" onclick="syncNow()">
+      <span class="sync-dot" id="sync-dot"></span>
+      <span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;">시트 연동 중...</span>
+    </div>
+  </div>
+
+  <!-- 패널들 -->
+  <div id="panel-today" class="panel active"><div id="today-list"></div><div id="week-list"></div></div>
+  <div id="panel-plants" class="panel"><div id="plant-grid"></div></div>
+  <div id="panel-log" class="panel"><div id="log-list"></div></div>
+  <div id="panel-manage" class="panel"><div id="manage-pest-list"></div><div id="manage-plant-list"></div></div>
+  <div id="panel-db" class="panel">
+    <div class="db-tabs" id="db-tab-row">
+      <button class="db-tab on" id="dbt-pest" onclick="setDbTab('pest',this)">🌿 농약</button>
+      <button class="db-tab" id="dbt-mypest" onclick="setDbTab('mypest',this)">📦 내 농약장</button>
+    </div>
+    <div id="db-list"></div>
+  </div>
+</div>
+
+<!-- 하단 네비게이션 -->
+<nav class="bottomnav" id="main-bottomnav">
+  <button class="nav-item active" onclick="setPanel('today',this)"><span>📋 오늘</span></button>
+  <button class="nav-item" onclick="setPanel('plants',this)"><span>🌱 식물</span></button>
+  <button class="nav-item" onclick="setPanel('log',this)"><span>📖 기록</span></button>
+  <button class="nav-item" onclick="setPanel('db',this)"><span>📚 DB</span></button>
+  <button class="nav-item" onclick="setPanel('manage',this)"><span>⚙️ 관리</span></button>
+</nav>
+
+<!-- 토스트 및 로딩 -->
+<div class="toast" id="toast"></div>
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div style="margin-top:12px;font-size:13px;color:var(--gray-600);" id="loading-step-msg">구글 시트 데이터 동기화 중...</div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// 1. Google Sheets (OrchardData) 브릿지 계층 (Firebase 대체 래퍼)
+// ════════════════════════════════════════════════════════════════
+const SHEET_API_NAME = 'OrchardData'; 
+const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+
+let gSheetDataCache = {
+  plants: [],
+  myPesticides: [],
+  workLogs: [],
+  growRecords: [],
+  doneTasks: []
+};
+
+// 가상의 Firestore 흉내내기 객체 (기존 db.collection(...) 코드를 고치지 않기 위함)
+window.firebase = {
+  apps: [true],
+  firestore: function() { return window.db; }
+};
+
+class MockDocumentReference {
+  constructor(collectionName, docId) {
+    this.collectionName = collectionName;
+    this.docId = docId;
+  }
+  async update(data) {
+    return await window.db.collection(this.collectionName).doc(this.docId).update(data);
+  }
+  async delete() {
+    return await window.db.collection(this.collectionName).doc(this.docId).delete();
+  }
+}
+
+class MockCollectionReference {
+  constructor(collectionName) {
+    this.collectionName = collectionName;
+  }
+  doc(id) {
+    return new MockDocumentReference(this.collectionName, id || 'doc_' + Date.now());
+  }
+  async add(data) {
+    const newId = 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+    const item = Object.assign({ id: newId }, data);
+    
+    if (!gSheetDataCache[this.collectionName]) gSheetDataCache[this.collectionName] = [];
+    gSheetDataCache[this.collectionName].push(item);
+    
+    // 서버(GAS)에 전송
+    await sendGasRequest('create', this.collectionName, item);
+    return { id: newId };
+  }
+  async get() {
+    await fetchSheetData();
+    const rows = gSheetDataCache[this.collectionName] || [];
+    return {
+      docs: rows.map(r => ({
+        id: r.id || String(Math.random()),
+        exists: true,
+        data: () => r
+      })),
+      forEach: function(cb) { this.docs.forEach(cb); }
+    };
+  }
+  where(field, op, val) { return this; }
+  orderBy(field, dir) { return this; }
+  limit(n) { return this; }
+}
+
+window.db = {
+  collection: function(name) {
+    return new MockCollectionReference(name);
+  },
+  batch: function() {
+    return {
+      set: function(ref, data, opt) { ref.collection.add(data); },
+      commit: async function() { return true; }
+    };
+  }
+};
+
+// 실제 구글 시트 통신 함수
+async function fetchSheetData() {
+  try {
+    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${SHEET_API_NAME}&t=${Date.now()}`;
+    const res = await fetch(url, { method: 'GET', mode: 'cors' });
+    const json = await res.json();
+    if (json.success && json.data) {
+      // 시트 데이터를 카테고리별로 분배 파싱 가능
+      gSheetDataCache.myPesticides = json.data.filter(x => x.tab === 'pest' || x.source === 'pesticide');
+      gSheetDataCache.plants = json.data.filter(x => x.category || x.plantDate);
+    }
+  } catch(e) {
+    console.warn('시트 데이터 로드 실패:', e);
+  }
+}
+
+async function sendGasRequest(action, colName, dataObj) {
+  try {
+    const params = new URLSearchParams();
+    params.append('action', action);
+    params.append('sheetName', SHEET_API_NAME);
+    params.append('id', dataObj.id || '');
+    for (const k in dataObj) {
+      if (typeof dataObj[k] === 'object') {
+        params.append(k, JSON.stringify(dataObj[k]));
+      } else {
+        params.append(k, dataObj[k]);
+      }
+    }
+    await fetch(GAS_URL_SHEETS, { method: 'POST', body: params });
+  } catch(e) {
+    console.error('GAS 전송 에러:', e);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// 2. 앱 핵심 라이프사이클 및 유틸리티
+// ════════════════════════════════════════════════════════════════
+var TODAY = new Date();
+TODAY.setHours(0,0,0,0);
+var TODAY_STR = TODAY.toISOString().slice(0,10);
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(function(){ t.classList.remove('show'); }, 2500);
+}
+
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+function setPanel(name, el) {
+  document.querySelectorAll('.panel').forEach(function(p){
+    p.classList.remove('active'); p.style.display='none';
+  });
+  var target = document.getElementById('panel-'+name);
+  if (target) { target.classList.add('active'); target.style.display='block'; }
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  if (el) el.classList.add('active');
+}
+
+async function syncNow() {
+  showToast('🔄 구글 시트 동기화 중...');
+  await fetchSheetData();
+  showToast('✅ 동기화 완료');
+}
+
+// 앱 초기화 진입점
+document.addEventListener('DOMContentLoaded', async function() {
+  const loadingEl = document.getElementById('loading');
+  document.getElementById('topbar-date').textContent = TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일';
+  
+  await fetchSheetData();
+  
+  if (loadingEl) {
+    loadingEl.classList.add('fade-out');
+    setTimeout(() => loadingEl.classList.add('hidden'), 400);
+  }
+  setPanel('today', document.querySelector('.nav-item'));
+});
+</script>
+</body>
+</html>
