@@ -149,65 +149,48 @@ let appData = {
 };
 
 // ════════════════════════════════════════════════════════════════
-// 1. 데이터 로드 함수 (모든 시트 자동으로 읽기)
+// 1. 데이터 로드 함수 (기존 방식: 각 시트별 호출)
 // ════════════════════════════════════════════════════════════════
 
 async function loadDataFromGoogleSheets() {
   try {
     updateSyncText('🔄 모든 시트 동기화 중...');
     
-    // ✅ 모든 시트를 자동으로 읽음 (read_all 방식)
-    console.log('📊 모든 시트에서 데이터 로드 시작...');
-    const url = `${GAS_URL_SHEETS}?action=read_all&t=${new Date().getTime()}`;
+    console.log('📊 각 시트에서 데이터 로드 시작...');
     
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors'
-    });
+    // 1. 농약 데이터
+    console.log('📦 myPesticides 읽는 중...');
+    appData.myPesticides = await fetchSheetData('myPesticides') || [];
+    console.log(`✅ 농약: ${appData.myPesticides.length}개`);
     
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || '데이터 로드 실패');
-    }
-
-    // ✅ 모든 시트 데이터를 appData에 매핑
-    if (result.data) {
-      // Firebase에서 옮긴 시트들 (실제 이름 기준)
-      appData.myPesticides = result.data['myPesticides'] || [];
-      appData.plants = result.data['plants'] || [];
-      appData.workLog = result.data['workLog'] || [];  // ✨ workLogs → workLog
-      appData.growRecords = result.data['growRecords'] || [];
-      appData.tasks = result.data['tasks'] || [];
-      appData.checkedTasks = result.data['checkedTasks'] || [];
-      
-      // 호환성: workLogs도 workLog와 동일하게
-      appData.workLogs = appData.workLog;
-      
-      // 기타 추가 시트들
-      appData.growPlants = result.data['growPlants'] || [];
-      appData.userDb_pest = result.data['userDb_pest'] || [];
-      appData.userDb_nutr = result.data['userDb_nutr'] || [];
-      appData.userDb_fert = result.data['userDb_fert'] || [];
-      
-      // 추가 데이터가 있으면 appData에 그대로 저장
-      for (const sheetName in result.data) {
-        if (!appData[sheetName]) {
-          appData[sheetName] = result.data[sheetName];
-        }
-      }
-      
-      // 콘솔에 로드된 모든 시트 출력
-      console.log('✅ 로드된 시트들:');
-      for (const sheetName in result.data) {
-        const count = result.data[sheetName].length;
-        console.log(`  📋 ${sheetName}: ${count}개`);
-      }
-    }
+    // 2. 식물 데이터
+    console.log('🌱 plants 읽는 중...');
+    appData.plants = await fetchSheetData('plants') || [];
+    console.log(`✅ 식물: ${appData.plants.length}개`);
     
-    const totalCount = Object.keys(appData).reduce((sum, key) => {
-      return sum + (Array.isArray(appData[key]) ? appData[key].length : 0);
-    }, 0);
+    // 3. 작업 기록 (workLog)
+    console.log('📋 workLog 읽는 중...');
+    appData.workLog = await fetchSheetData('workLog') || [];
+    appData.workLogs = appData.workLog;  // 호환성
+    console.log(`✅ 기록: ${appData.workLog.length}개`);
+    
+    // 4. 재배 기록
+    console.log('📈 growRecords 읽는 중...');
+    appData.growRecords = await fetchSheetData('growRecords') || [];
+    console.log(`✅ 재배기록: ${appData.growRecords.length}개`);
+    
+    // 5. 완료된 작업
+    console.log('✔️ checkedTasks 읽는 중...');
+    appData.checkedTasks = await fetchSheetData('checkedTasks') || [];
+    appData.doneTasks = appData.checkedTasks;  // 호환성
+    console.log(`✅ 완료작업: ${appData.checkedTasks.length}개`);
+    
+    const totalCount = 
+      appData.myPesticides.length + 
+      appData.plants.length + 
+      appData.workLog.length + 
+      appData.growRecords.length + 
+      appData.checkedTasks.length;
     
     console.log(`📊 총 데이터: ${totalCount}개`);
     
@@ -219,6 +202,31 @@ async function loadDataFromGoogleSheets() {
     console.error('❌ 로드 에러:', err.message);
     updateSyncText('❌ 동기화 실패: ' + err.message);
     showToast('⚠️ 데이터 로드 실패');
+  }
+}
+
+// 개별 시트 데이터 로드 헬퍼 함수
+async function fetchSheetData(sheetName) {
+  try {
+    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${sheetName}&t=${new Date().getTime()}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    const result = await response.json();
+
+    if (!result.success) {
+      console.warn(`⚠️ ${sheetName} 로드 실패:`, result.message);
+      return [];
+    }
+
+    return result.data || [];
+    
+  } catch (err) {
+    console.warn(`⚠️ ${sheetName} 로드 에러:`, err.message);
+    return [];
   }
 }
 
@@ -235,124 +243,183 @@ function classifyData() {
 // ════════════════════════════════════════════════════════════════
 
 function renderTodayPanel() {
-  const logs = appData.workLogs.slice(0, 5);
+  const logs = appData.workLog || appData.workLogs || [];
   
   if (logs.length === 0) {
     document.getElementById('today-list').innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📭</div>
-        <p>오늘의 작업이 없습니다</p>
+        <p>오늘의 작업이 없습니다 (${logs.length}개)</p>
       </div>
     `;
     return;
   }
   
-  const html = logs.map(log => `
-    <div class="card">
-      <div class="card-title">${log.task || log.title || '작업'}</div>
-      <div class="card-meta">📅 ${log.date || log.workDate || log.createdAt || '-'}</div>
-      <div class="card-meta">🌱 ${log.plant || log.cropName || '-'}</div>
-      <div class="card-meta">💬 ${log.notes || log.memo || log.description || ''}</div>
-      ${log.completed ? '<span class="card-badge">✓ 완료</span>' : ''}
-    </div>
-  `).join('');
+  const html = logs.slice(0, 10).map(log => {
+    // 다양한 필드명 지원
+    const task = log.task || log.title || log.name || log.content || '작업';
+    const date = log.date || log.workDate || log.createdAt || log.created_at || '-';
+    const plant = log.plant || log.cropName || log.plantName || log.crop || '-';
+    const notes = log.notes || log.memo || log.description || log.content || '';
+    const completed = log.completed || log.done || log.status === '완료';
+    
+    return `
+      <div class="card">
+        <div class="card-title">${task}</div>
+        <div class="card-meta">📅 ${date}</div>
+        <div class="card-meta">🌱 ${plant}</div>
+        ${notes ? `<div class="card-meta">💬 ${notes}</div>` : ''}
+        ${completed ? '<span class="card-badge">✓ 완료</span>' : ''}
+      </div>
+    `;
+  }).join('');
   
   document.getElementById('today-list').innerHTML = html;
+  console.log(`✅ 오늘 탭: ${logs.length}개 항목 렌더링`);
 }
 
 function renderPlantPanel() {
-  const plants = appData.plants;
+  const plants = appData.plants || [];
   
   if (plants.length === 0) {
     document.getElementById('plant-list').innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">🌱</div>
-        <p>등록된 식물이 없습니다</p>
+        <p>등록된 식물이 없습니다 (${plants.length}개)</p>
       </div>
     `;
     return;
   }
   
-  const html = plants.map(p => `
-    <div class="card">
-      <div class="card-title">${p.name || p.plantName || p.title || '식물'}</div>
-      <div class="card-meta">📍 카테고리: ${p.category || p.type || '-'}</div>
-      <div class="card-meta">🌱 상태: ${p.status || p.health || '-'}</div>
-      <div class="card-meta">📅 심은날: ${p.plantDate || p.createdAt || '-'}</div>
-      ${p.notes ? `<div class="card-meta">📝 ${p.notes}</div>` : ''}
-    </div>
-  `).join('');
+  const html = plants.slice(0, 20).map(p => {
+    // 다양한 필드명 지원
+    const name = p.name || p.plantName || p.title || p.plantname || p.crop_name || '식물';
+    const category = p.category || p.type || p.cropType || p.plant_type || '-';
+    const status = p.status || p.health || p.condition || p.state || '-';
+    const plantDate = p.plantDate || p.createdAt || p.created_at || p.plant_date || '-';
+    const notes = p.notes || p.memo || p.description || p.remarks || '';
+    
+    return `
+      <div class="card">
+        <div class="card-title">${name}</div>
+        <div class="card-meta">📍 카테고리: ${category}</div>
+        <div class="card-meta">🌱 상태: ${status}</div>
+        <div class="card-meta">📅 심은날: ${plantDate}</div>
+        ${notes ? `<div class="card-meta">📝 ${notes}</div>` : ''}
+      </div>
+    `;
+  }).join('');
   
   document.getElementById('plant-list').innerHTML = html;
+  console.log(`✅ 식물 탭: ${plants.length}개 항목 렌더링`);
 }
 
 function renderLogPanel() {
-  const logs = appData.workLogs;
+  const logs = appData.workLog || appData.workLogs || [];
   
   if (logs.length === 0) {
     document.getElementById('log-list').innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📖</div>
-        <p>등록된 기록이 없습니다</p>
+        <p>등록된 기록이 없습니다 (${logs.length}개)</p>
       </div>
     `;
     return;
   }
   
-  const html = logs.map(log => `
-    <div class="card">
-      <div class="card-title">${log.date || log.workDate || '-'} | ${log.task || log.title || '기록'}</div>
-      <div class="card-meta">🌱 ${log.plant || log.cropName || '-'}</div>
-      <div class="card-meta">💬 ${log.notes || log.memo || log.description || ''}</div>
-    </div>
-  `).join('');
+  const html = logs.slice(0, 20).map(log => {
+    // 다양한 필드명 지원
+    const date = log.date || log.workDate || log.createdAt || log.created_at || '-';
+    const task = log.task || log.title || log.name || log.content || '기록';
+    const plant = log.plant || log.cropName || log.plantName || log.crop || '-';
+    const notes = log.notes || log.memo || log.description || log.remarks || '';
+    
+    return `
+      <div class="card">
+        <div class="card-title">${date} | ${task}</div>
+        <div class="card-meta">🌱 ${plant}</div>
+        ${notes ? `<div class="card-meta">💬 ${notes}</div>` : ''}
+      </div>
+    `;
+  }).join('');
   
   document.getElementById('log-list').innerHTML = html;
+  console.log(`✅ 기록 탭: ${logs.length}개 항목 렌더링`);
 }
 
 function renderDbPanel() {
-  const pests = appData.myPesticides;
+  const pests = appData.myPesticides || [];
   
   if (pests.length === 0) {
     document.getElementById('db-list').innerHTML = `
       <div class="empty-state">
         <div class="empty-state-icon">📚</div>
-        <p>등록된 농약이 없습니다</p>
+        <p>등록된 농약이 없습니다 (${pests.length}개)</p>
       </div>
     `;
     return;
   }
   
-  const html = pests.map(p => `
-    <div class="card">
-      <div class="card-title">${p.name || p.productName || '농약'}</div>
-      <div class="card-meta">🔬 유효성분: ${p.ingredient || p.activeIng || p.main || '-'}</div>
-      <div class="card-meta">📦 수량: ${p.quantity || '-'} ${p.unit || '개'}</div>
-      <div class="card-meta">분류: <span class="card-badge">${p.type || p.category || '-'}</span></div>
-      ${p.memo ? `<div class="card-meta">📝 ${p.memo}</div>` : ''}
-    </div>
-  `).join('');
+  const html = pests.slice(0, 20).map(p => {
+    // 다양한 필드명 지원
+    const name = p.name || p.productName || p.title || p.pest_name || '농약';
+    const ingredient = p.ingredient || p.activeIng || p.main || p.active_ingredient || p.composition || '-';
+    const quantity = p.quantity || p.amount || p.count || '-';
+    const unit = p.unit || p.unitType || p.unit_name || '개';
+    const type = p.type || p.category || p.classification || p.class || '-';
+    const memo = p.memo || p.notes || p.description || p.remarks || '';
+    
+    return `
+      <div class="card">
+        <div class="card-title">${name}</div>
+        <div class="card-meta">🔬 유효성분: ${ingredient}</div>
+        <div class="card-meta">📦 수량: ${quantity} ${unit}</div>
+        <div class="card-meta">분류: <span class="card-badge">${type}</span></div>
+        ${memo ? `<div class="card-meta">📝 ${memo}</div>` : ''}
+      </div>
+    `;
+  }).join('');
   
   document.getElementById('db-list').innerHTML = html;
+  console.log(`✅ DB 탭: ${pests.length}개 항목 렌더링`);
 }
 
 function renderManagePanel() {
-  document.getElementById('manage-list').innerHTML = `
+  const stats = `
     <div class="card">
       <div class="card-title">📊 통계</div>
-      <div class="card-meta">🌱 식물: ${appData.plants.length}개</div>
-      <div class="card-meta">📋 작업: ${appData.workLogs.length}개</div>
-      <div class="card-meta">📚 농약: ${appData.myPesticides.length}개</div>
+      <div class="card-meta">🌱 식물: ${(appData.plants || []).length}개</div>
+      <div class="card-meta">📋 작업: ${(appData.workLog || appData.workLogs || []).length}개</div>
+      <div class="card-meta">📚 농약: ${(appData.myPesticides || []).length}개</div>
+      <div class="card-meta">📈 재배기록: ${(appData.growRecords || []).length}개</div>
+      <div class="card-meta">✔️ 완료작업: ${(appData.checkedTasks || appData.doneTasks || []).length}개</div>
+      <div class="card-meta" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
+        📊 전체: ${
+          (appData.plants || []).length + 
+          (appData.workLog || appData.workLogs || []).length + 
+          (appData.myPesticides || []).length + 
+          (appData.growRecords || []).length + 
+          (appData.checkedTasks || appData.doneTasks || []).length
+        }개
+      </div>
     </div>
   `;
+  
+  document.getElementById('manage-list').innerHTML = stats;
+  console.log(`✅ 관리 탭: 통계 렌더링`);
 }
 
 function renderAllPanels() {
+  console.log('🎯 모든 패널 렌더링 시작...');
+  console.log('📊 appData 상태:', appData);
+  
   renderTodayPanel();
   renderPlantPanel();
   renderLogPanel();
   renderDbPanel();
   renderManagePanel();
+  
+  console.log('✅ 모든 패널 렌더링 완료!');
 }
 
 // ════════════════════════════════════════════════════════════════
