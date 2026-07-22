@@ -31,7 +31,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  margin: 6px 4px 12px;
+  margin: 6px 4px 8px;
   position: relative;
   border-bottom: 2px solid var(--ink);
   padding-bottom: 8px;
@@ -49,8 +49,8 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .hdr-qrcode { position: absolute; top: 0; right: 2px; flex-shrink: 0; }
 .hdr-qrcode img { width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 6px; display: block; }
 
-/* 💡 버튼 영역을 아래로 이동 (작물 목록 하단 배치용) */
-#reviewBar { display: flex; gap: 6px; margin: 12px 0; flex-wrap: wrap; }
+/* 💡 head 하단선(border-bottom) 바로 아래에 위치하도록 배치 및 마진 조정 */
+#reviewBar { display: flex; gap: 6px; margin: 0 0 14px 0; flex-wrap: wrap; }
 
 .crops{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
 .crop{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);
@@ -66,7 +66,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .crop-pen:hover{background:var(--leaf-l);color:var(--leaf-d)}
 .crop-pen:active{background:#d8e8d5}
 
-/* 💡 아이폰12 등 모바일에서 입력칸과 버튼이 무조건 1줄로 나오도록 flex 및 폰트 크기 최적화 */
+/* 모바일 한 줄 최적화된 작물 추가 입력칸 스타일 */
 .crop-manual{display:flex;gap:6px;margin:10px 0 4px;align-items:center;width:100%;}
 .crop-manual input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;background:var(--panel);height:36px;}
 .crop-manual button{border:none;background:var(--leaf);color:#fff;border-radius:8px;padding:0 12px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;height:36px;white-space:nowrap;}
@@ -216,6 +216,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
 </head>
 <body>
 <div class="wrap">
+  <!-- 헤더 영역 (밑줄 선 포함) -->
   <div class="hdr">
 	  <div class="hdr-content">
 	    <div class="title-area">
@@ -236,7 +237,13 @@ body{margin:0;background:var(--bg);color:var(--ink);
 	  </div>
 	</div>
 
-  <!-- 작물 선택 / 수동 추가 UI -->
+  <!-- 💡 헤더 하단선 바로 아래에 위치한 '작물상태 관리' 및 '방제계획' 버튼 영역 -->
+  <div id="reviewBar">
+    <button class="crop-edit" onclick="CropManager.open()">🌱 작물상태 관리</button>
+    <button class="crop-edit" onclick="Plan.review()">📋 방제계획·실행체크</button>
+  </div>
+
+  <!-- 작물 선택 / 수동 추가 UI (한 줄 입력칸 최적화) -->
   <div id="cropPick">
     <div class="crops" id="crops"></div>
     <div id="cropManualWrap">
@@ -249,12 +256,6 @@ body{margin:0;background:var(--bg);color:var(--ink);
         표준 작물명을 선택하여 내 밭에 새로 추가하세요.
       </div>
     </div>
-  </div>
-
-  <!-- 💡 작물상태 관리 및 방제계획 버튼을 작물 선택 영역 아래로 이동 배치 -->
-  <div id="reviewBar">
-    <button class="crop-edit" onclick="CropManager.open()">🌱 작물상태 관리</button>
-    <button class="crop-edit" onclick="Plan.review()">📋 방제계획·실행체크</button>
   </div>
 
   <div id="embedCrop"></div>
