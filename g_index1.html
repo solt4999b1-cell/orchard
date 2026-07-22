@@ -7,64 +7,384 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Color+Emoji&display=swap" rel="stylesheet">
-<title>새솔동 과수원 제작:이용호 Copyright 2026-07-09</title>
-
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="새솔과수원">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="application-name" content="새솔과수원">
-<meta name="theme-color" content="#143A1B">
+<title>새솔동 과수원 - 제작:이용호 Copyright 2026-07-09</title>
+<meta name="theme-color" content="#1B5E20">
 
 <style>
   :root {
-    --green-dark: #1B5E20; --green-mid: #2E7D32; --green-light: #E8F5E9;
-    --blue-dark: #1565C0; --blue-light: #E3F2FD; --amber: #F57F17;
-    --gray-50: #FAFAFA; --gray-100: #F5F5F5; --gray-200: #EEEEEE;
-    --gray-300: #E0E0E0; --gray-400: #BDBDBD; --gray-500: #9E9E9E;
-    --gray-600: #757575; --gray-700: #616161; --gray-900: #212121;
-    --red-dark: #C62828; --card: #FFFFFF; --radius: 12px; --radius-sm: 8px;
+    /* 색상 팔레트 */
+    --green-dark: #1B5E20;
+    --green-mid: #2E7D32;
+    --green-light: #E8F5E9;
+    --blue-dark: #1565C0;
+    --blue-light: #E3F2FD;
+    --amber: #F57F17;
+    --amber-light: #FFF8E1;
+    --orange: #E65100;
+    --orange-light: #FFE0B2;
+    --red-dark: #C62828;
+    --red-light: #FFEBEE;
+    --teal: #00796B;
+    --teal-light: #E0F2F1;
+    --purple: #6A1B9A;
+    --purple-light: #F3E8FF;
+    --gray-50: #FAFAFA;
+    --gray-100: #F5F5F5;
+    --gray-200: #EEEEEE;
+    --gray-300: #E0E0E0;
+    --gray-400: #BDBDBD;
+    --gray-500: #9E9E9E;
+    --gray-600: #757575;
+    --gray-700: #616161;
+    --gray-900: #212121;
+    
+    /* 기본 설정 */
+    --font: 'Apple SD Gothic Neo', -apple-system, sans-serif;
+    --bg: #FAFAFA;
+    --card: #FFFFFF;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-lg: 0 4px 12px rgba(0,0,0,0.12);
   }
+
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'Apple SD Gothic Neo', -apple-system, sans-serif; background: var(--gray-50); color: var(--gray-900); padding-bottom: calc(70px + env(safe-area-inset-bottom)); }
-  #app { max-width: 600px; margin: 0 auto; padding: 12px; }
-  .topbar { display: flex; align-items: center; background: linear-gradient(135deg, var(--green-dark), var(--green-mid)); color: #fff; padding: 12px 16px; border-radius: var(--radius); margin-bottom: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-  .topbar-left { display: flex; align-items: center; gap: 10px; }
+  
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--gray-700);
+    font-size: 14px;
+    padding-bottom: calc(70px + env(safe-area-inset-bottom));
+  }
+
+  #app { max-width: 600px; margin: 0 auto; }
+
+  /* ─── 상단 바 ─── */
+  .topbar {
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    color: #fff;
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .topbar-icon { font-size: 24px; }
-  .topbar-title { font-size: 16px; font-weight: 800; letter-spacing: -0.3px; }
-  .topbar-date { font-size: 11px; opacity: 0.85; margin-top: 1px; }
-  .topbar-sync { display: flex; align-items: center; gap: 5px; background: rgba(255,255,255,0.2); padding: 4px 10px; border-radius: 20px; font-size: 10px; cursor: pointer; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #66BB6A; display: inline-block; }
-  .panel { display: none; }
+
+  .topbar-title {
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
+  }
+
+  .topbar-date {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+  
+  .topbar-sync {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    background: rgba(255,255,255,0.2);
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .topbar-sync:hover { background: rgba(255,255,255,0.3); }
+
+  .sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #66BB6A;
+    display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  /* ─── 하단 네비게이션 ─── */
+  .bottomnav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--card);
+    border-top: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-around;
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.08);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .nav-item {
+    background: none;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    color: var(--gray-400);
+    font-size: 11px;
+    cursor: pointer;
+    flex: 1;
+    padding: 6px 0;
+    transition: all 0.15s;
+    position: relative;
+  }
+
+  .nav-item.active {
+    color: var(--green-dark);
+    font-weight: 700;
+  }
+
+  .nav-item span { font-size: 20px; line-height: 1; }
+
+  .nav-badge {
+    background: var(--red-dark);
+    color: #fff;
+    font-size: 9px;
+    border-radius: 10px;
+    padding: 1px 5px;
+    position: absolute;
+    top: 2px;
+    right: 25%;
+  }
+
+  /* ─── 패널 ─── */
+  .panel {
+    display: none;
+    padding: 12px;
+    padding-bottom: 90px;
+  }
+
   .panel.active { display: block; }
-  .bottomnav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card); border-top: 1px solid var(--gray-200); display: flex; justify-content: space-around; padding: 8px 0 calc(8px + env(safe-area-inset-bottom)); z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); max-width: 600px; margin: 0 auto; }
-  .nav-item { background: none; border: none; display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--gray-400); font-size: 11px; cursor: pointer; flex: 1; padding: 4px 0; }
-  .nav-item.active { color: var(--green-dark); font-weight: 700; }
-  
-  /* 카드 스타일 */
-  .card { background: var(--card); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--gray-200); }
-  .card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.12); transform: translateY(-1px); transition: all 0.2s; }
-  .card-title { font-weight: 700; font-size: 14px; margin-bottom: 6px; }
-  .card-meta { font-size: 11px; color: var(--gray-500); margin: 2px 0; }
-  .card-badge { display: inline-block; background: var(--green-light); color: var(--green-dark); padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; }
-  
-  .toast { position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%); background: rgba(33,33,33,0.9); color: #fff; padding: 10px 18px; border-radius: 20px; font-size: 12px; z-index: 3000; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+
+  /* ─── 섹션 제목 ─── */
+  .section-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--green-dark);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-bottom: 2px solid var(--green-mid);
+    padding-bottom: 8px;
+  }
+
+  /* ─── 카드 ─── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    border: 1px solid var(--gray-200);
+    transition: all 0.2s;
+  }
+
+  .card:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-2px);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .card-title {
+    font-weight: 700;
+    font-size: 14px;
+    color: var(--gray-700);
+  }
+
+  .card-meta {
+    font-size: 11px;
+    color: var(--gray-500);
+    margin: 4px 0 2px;
+    line-height: 1.4;
+  }
+
+  /* ─── 배지/태그 ─── */
+  .badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-size: 10px;
+    font-weight: 600;
+    margin-right: 4px;
+    margin-bottom: 4px;
+  }
+
+  .badge-pest { background: var(--amber-light); color: var(--amber); }
+  .badge-plant { background: var(--green-light); color: var(--green-dark); }
+  .badge-work { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-log { background: var(--purple-light); color: var(--purple); }
+  .badge-fert { background: var(--blue-light); color: var(--blue-dark); }
+  .badge-done { background: #E8F5E9; color: #2E7D32; }
+  .badge-today { background: var(--red-dark); color: #fff; }
+  .badge-soon { background: var(--orange-light); color: var(--orange); }
+
+  /* ─── 필터 ─── */
+  .filter-row {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .filter-btn {
+    padding: 6px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--gray-300);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    color: var(--gray-600);
+    transition: all 0.15s;
+  }
+
+  .filter-btn:hover {
+    border-color: var(--green-mid);
+    color: var(--green-mid);
+  }
+
+  .filter-btn.on {
+    background: var(--green-dark);
+    color: #fff;
+    border-color: var(--green-dark);
+  }
+
+  /* ─── 빈 상태 ─── */
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--gray-400);
+  }
+
+  .empty-state-icon {
+    font-size: 48px;
+    margin-bottom: 12px;
+    display: block;
+  }
+
+  .empty-state p {
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ─── 토스트 ─── */
+  .toast {
+    position: fixed;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(33,33,33,0.95);
+    color: #fff;
+    padding: 11px 18px;
+    border-radius: 20px;
+    font-size: 12px;
+    z-index: 3000;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
   .toast.show { opacity: 1; }
-  
-  .loading-overlay { position: fixed; inset: 0; background: var(--gray-50); z-index: 4000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+
+  /* ─── 로딩 오버레이 ─── */
+  .loading-overlay {
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(135deg, var(--green-dark), var(--green-mid));
+    z-index: 4000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    color: #fff;
+  }
+
   .loading-overlay.hidden { display: none; }
-  .spinner { width: 36px; height: 36px; border: 4px solid var(--gray-200); border-top-color: var(--green-dark); border-radius: 50%; animation: spin 0.8s linear infinite; }
+
+  .loading-overlay.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+  }
+
+  .loading-spinner-wrap {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 20px;
+  }
+
+  .spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid rgba(255,255,255,0.25);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
   @keyframes spin { to { transform: rotate(360deg); } }
-  
-  .empty-state { padding: 40px 20px; text-align: center; color: var(--gray-400); }
-  .empty-state-icon { font-size: 48px; margin-bottom: 12px; }
-  
-  .section-title { font-size: 12px; font-weight: 700; padding: 8px 0; border-bottom: 2px solid var(--green-dark); margin-bottom: 8px; }
+
+  .loading-step-msg {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.95);
+    text-align: center;
+    margin-bottom: 16px;
+  }
+
+  /* ─── 추가 유틸리티 ─── */
+  .text-center { text-align: center; }
+  .mt-8 { margin-top: 8px; }
+  .mb-8 { margin-bottom: 8px; }
+  .mt-12 { margin-top: 12px; }
+  .mb-12 { margin-bottom: 12px; }
+
+  /* ─── 반응형 ─── */
+  @media (max-width: 480px) {
+    .card { padding: 10px 12px; }
+    .topbar { padding: 10px 12px; }
+  }
 </style>
 </head>
 <body>
 
 <div id="app">
+  <!-- 상단 바 -->
   <div class="topbar">
     <div class="topbar-left">
       <span class="topbar-icon">🌿️</span>
@@ -74,9 +394,9 @@
       </div>
     </div>
     <div style="flex:1;"></div>
-    <div class="topbar-sync" onclick="loadDataFromGoogleSheets()">
+    <div class="topbar-sync" onclick="loadDataFromGoogleSheets()" title="데이터 동기화">
       <span class="sync-dot" id="sync-dot"></span>
-      <span id="sync-label" style="font-size:10px;color:var(--gray-400);margin-left:3px;">동기화</span>
+      <span id="sync-label">동기화</span>
     </div>
   </div>
 
@@ -109,42 +429,49 @@
 
 <!-- 하단 네비게이션 -->
 <nav class="bottomnav">
-  <button class="nav-item active" onclick="setPanel('today',this)"><span>📋 오늘</span></button>
-  <button class="nav-item" onclick="setPanel('plants',this)"><span>🌱 식물</span></button>
-  <button class="nav-item" onclick="setPanel('log',this)"><span>📖 기록</span></button>
-  <button class="nav-item" onclick="setPanel('db',this)"><span>📚 DB</span></button>
-  <button class="nav-item" onclick="setPanel('manage',this)"><span>⚙️ 관리</span></button>
+  <button class="nav-item active" onclick="setPanel('today',this)" title="오늘의 작업">
+    <span>📋</span>
+    <span>오늘</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('plants',this)" title="식물 정보">
+    <span>🌱</span>
+    <span>식물</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('log',this)" title="작업 기록">
+    <span>📖</span>
+    <span>기록</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('db',this)" title="농약 정보">
+    <span>📚</span>
+    <span>DB</span>
+  </button>
+  <button class="nav-item" onclick="setPanel('manage',this)" title="관리">
+    <span>⚙️</span>
+    <span>관리</span>
+  </button>
 </nav>
 
 <!-- 토스트 및 로딩 -->
 <div class="toast" id="toast"></div>
 <div class="loading-overlay" id="loading">
-  <div class="spinner"></div>
-  <div style="margin-top:12px;font-size:13px;color:var(--gray-600);" id="loading-step-msg">데이터 동기화 중...</div>
+  <div class="loading-spinner-wrap">
+    <div class="spinner"></div>
+  </div>
+  <div class="loading-step-msg" id="loading-step-msg">데이터 동기화 중...</div>
 </div>
 
 <script>
-// ════════════════════════════════════════════════════════════════
-// ✅ index5.html의 검증된 구조로 재구성
-// ════════════════════════════════════════════════════════════════
-
-// GAS URL (index5.html과 동일)
+// GAS URL
 const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
 
-// 3개 시트 이름 정의
-const SHEET_NAMES = {
-  pesticides: 'myPesticides',
-  plants: 'plants',
-  workLogs: 'workLogs'
-};
-
 // 데이터 저장소
-let sheetsData = [];
 let appData = {
   plants: [],
+  workLog: [],
   workLogs: [],
   myPesticides: [],
   growRecords: [],
+  checkedTasks: [],
   doneTasks: []
 };
 
@@ -154,7 +481,7 @@ let appData = {
 
 async function loadDataFromGoogleSheets() {
   try {
-    updateSyncText('🔄 모든 시트 동기화 중...');
+    updateSyncText('🔄 동기화 중...');
     
     console.log('📊 각 시트에서 데이터 로드 시작...');
     
@@ -200,7 +527,7 @@ async function loadDataFromGoogleSheets() {
     
   } catch (err) {
     console.error('❌ 로드 에러:', err.message);
-    updateSyncText('❌ 동기화 실패: ' + err.message);
+    updateSyncText('❌ 동기화 실패');
     showToast('⚠️ 데이터 로드 실패');
   }
 }
@@ -230,14 +557,6 @@ async function fetchSheetData(sheetName) {
   }
 }
 
-// 데이터는 이미 각 시트에서 분류됨 (추가 분류 불필요)
-// 하지만 필요시 필터링이나 추가 처리는 여기서 할 수 있음
-function classifyData() {
-  // 이미 appData.plants, appData.workLogs, appData.myPesticides에 저장됨
-  // 추가 처리가 필요하면 여기서 실행
-  console.log('✅ 데이터 분류 완료');
-}
-
 // ════════════════════════════════════════════════════════════════
 // 2. 렌더링 함수들
 // ════════════════════════════════════════════════════════════════
@@ -248,15 +567,14 @@ function renderTodayPanel() {
   if (logs.length === 0) {
     document.getElementById('today-list').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📭</div>
-        <p>오늘의 작업이 없습니다 (${logs.length}개)</p>
+        <span class="empty-state-icon">📭</span>
+        <p>오늘의 작업이 없습니다</p>
       </div>
     `;
     return;
   }
   
   const html = logs.slice(0, 10).map(log => {
-    // 다양한 필드명 지원
     const task = log.task || log.title || log.name || log.content || '작업';
     const date = log.date || log.workDate || log.createdAt || log.created_at || '-';
     const plant = log.plant || log.cropName || log.plantName || log.crop || '-';
@@ -265,11 +583,15 @@ function renderTodayPanel() {
     
     return `
       <div class="card">
-        <div class="card-title">${task}</div>
-        <div class="card-meta">📅 ${date}</div>
-        <div class="card-meta">🌱 ${plant}</div>
-        ${notes ? `<div class="card-meta">💬 ${notes}</div>` : ''}
-        ${completed ? '<span class="card-badge">✓ 완료</span>' : ''}
+        <div class="card-header">
+          <div style="flex:1;">
+            <div class="card-title">${task}</div>
+            <div class="card-meta">📅 ${date}</div>
+            <div class="card-meta">🌱 ${plant}</div>
+            ${notes ? `<div class="card-meta" style="margin-top:6px;">💬 ${notes}</div>` : ''}
+          </div>
+          ${completed ? '<span class="badge badge-done">✓ 완료</span>' : ''}
+        </div>
       </div>
     `;
   }).join('');
@@ -284,15 +606,14 @@ function renderPlantPanel() {
   if (plants.length === 0) {
     document.getElementById('plant-list').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">🌱</div>
-        <p>등록된 식물이 없습니다 (${plants.length}개)</p>
+        <span class="empty-state-icon">🌱</span>
+        <p>등록된 식물이 없습니다</p>
       </div>
     `;
     return;
   }
   
   const html = plants.slice(0, 20).map(p => {
-    // 다양한 필드명 지원
     const name = p.name || p.plantName || p.title || p.plantname || p.crop_name || '식물';
     const category = p.category || p.type || p.cropType || p.plant_type || '-';
     const status = p.status || p.health || p.condition || p.state || '-';
@@ -301,11 +622,11 @@ function renderPlantPanel() {
     
     return `
       <div class="card">
-        <div class="card-title">${name}</div>
-        <div class="card-meta">📍 카테고리: ${category}</div>
-        <div class="card-meta">🌱 상태: ${status}</div>
+        <div class="card-title">🌿 ${name}</div>
+        <div class="card-meta">📍 카테고리: <span class="badge badge-plant">${category}</span></div>
+        <div class="card-meta">🌱 상태: <span class="badge badge-work">${status}</span></div>
         <div class="card-meta">📅 심은날: ${plantDate}</div>
-        ${notes ? `<div class="card-meta">📝 ${notes}</div>` : ''}
+        ${notes ? `<div class="card-meta mt-8">📝 ${notes}</div>` : ''}
       </div>
     `;
   }).join('');
@@ -320,15 +641,14 @@ function renderLogPanel() {
   if (logs.length === 0) {
     document.getElementById('log-list').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📖</div>
-        <p>등록된 기록이 없습니다 (${logs.length}개)</p>
+        <span class="empty-state-icon">📖</span>
+        <p>등록된 기록이 없습니다</p>
       </div>
     `;
     return;
   }
   
   const html = logs.slice(0, 20).map(log => {
-    // 다양한 필드명 지원
     const date = log.date || log.workDate || log.createdAt || log.created_at || '-';
     const task = log.task || log.title || log.name || log.content || '기록';
     const plant = log.plant || log.cropName || log.plantName || log.crop || '-';
@@ -336,7 +656,7 @@ function renderLogPanel() {
     
     return `
       <div class="card">
-        <div class="card-title">${date} | ${task}</div>
+        <div class="card-title">📝 ${date} | ${task}</div>
         <div class="card-meta">🌱 ${plant}</div>
         ${notes ? `<div class="card-meta">💬 ${notes}</div>` : ''}
       </div>
@@ -353,15 +673,14 @@ function renderDbPanel() {
   if (pests.length === 0) {
     document.getElementById('db-list').innerHTML = `
       <div class="empty-state">
-        <div class="empty-state-icon">📚</div>
-        <p>등록된 농약이 없습니다 (${pests.length}개)</p>
+        <span class="empty-state-icon">📚</span>
+        <p>등록된 농약이 없습니다</p>
       </div>
     `;
     return;
   }
   
   const html = pests.slice(0, 20).map(p => {
-    // 다양한 필드명 지원
     const name = p.name || p.productName || p.title || p.pest_name || '농약';
     const ingredient = p.ingredient || p.activeIng || p.main || p.active_ingredient || p.composition || '-';
     const quantity = p.quantity || p.amount || p.count || '-';
@@ -371,10 +690,10 @@ function renderDbPanel() {
     
     return `
       <div class="card">
-        <div class="card-title">${name}</div>
+        <div class="card-title">💊 ${name}</div>
         <div class="card-meta">🔬 유효성분: ${ingredient}</div>
         <div class="card-meta">📦 수량: ${quantity} ${unit}</div>
-        <div class="card-meta">분류: <span class="card-badge">${type}</span></div>
+        <div class="card-meta">분류: <span class="badge badge-pest">${type}</span></div>
         ${memo ? `<div class="card-meta">📝 ${memo}</div>` : ''}
       </div>
     `;
@@ -388,19 +707,19 @@ function renderManagePanel() {
   const stats = `
     <div class="card">
       <div class="card-title">📊 통계</div>
-      <div class="card-meta">🌱 식물: ${(appData.plants || []).length}개</div>
-      <div class="card-meta">📋 작업: ${(appData.workLog || appData.workLogs || []).length}개</div>
-      <div class="card-meta">📚 농약: ${(appData.myPesticides || []).length}개</div>
-      <div class="card-meta">📈 재배기록: ${(appData.growRecords || []).length}개</div>
-      <div class="card-meta">✔️ 완료작업: ${(appData.checkedTasks || appData.doneTasks || []).length}개</div>
-      <div class="card-meta" style="margin-top: 10px; border-top: 1px solid #eee; padding-top: 10px;">
-        📊 전체: ${
+      <div class="card-meta">🌱 식물: <strong>${(appData.plants || []).length}개</strong></div>
+      <div class="card-meta">📋 작업: <strong>${(appData.workLog || appData.workLogs || []).length}개</strong></div>
+      <div class="card-meta">📚 농약: <strong>${(appData.myPesticides || []).length}개</strong></div>
+      <div class="card-meta">📈 재배기록: <strong>${(appData.growRecords || []).length}개</strong></div>
+      <div class="card-meta">✔️ 완료작업: <strong>${(appData.checkedTasks || appData.doneTasks || []).length}개</strong></div>
+      <div class="card-meta mt-12" style="border-top:1px solid var(--gray-200);padding-top:8px;">
+        📊 전체: <strong>${
           (appData.plants || []).length + 
           (appData.workLog || appData.workLogs || []).length + 
           (appData.myPesticides || []).length + 
           (appData.growRecords || []).length + 
           (appData.checkedTasks || appData.doneTasks || []).length
-        }개
+        }개</strong>
       </div>
     </div>
   `;
@@ -411,14 +730,11 @@ function renderManagePanel() {
 
 function renderAllPanels() {
   console.log('🎯 모든 패널 렌더링 시작...');
-  console.log('📊 appData 상태:', appData);
-  
   renderTodayPanel();
   renderPlantPanel();
   renderLogPanel();
   renderDbPanel();
   renderManagePanel();
-  
   console.log('✅ 모든 패널 렌더링 완료!');
 }
 
@@ -461,7 +777,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   
   const loading = document.getElementById('loading');
   if (loading) {
-    loading.classList.add('hidden');
+    setTimeout(() => {
+      loading.classList.add('fade-out');
+      setTimeout(() => loading.classList.add('hidden'), 400);
+    }, 800);
   }
   
   setPanel('today', document.querySelector('.nav-item'));
