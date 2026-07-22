@@ -88,15 +88,20 @@
         <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리</h1>
         <h5 style="margin: 0; color: #666; font-size: 11px;">제작: 이용호 &nbsp; Copyright 2026. All Right Reserved</h5>
     </div>
+    <div class="header-image" style="flex-shrink: 0;">
+         <a href="https://solt4999b1-cell.github.io/orchard/index5.html" target="_blank" style="display: block;">
+             <img src="./2cp8g.png" alt="QR코드" style="width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 4px; display: block;">
+         </a>
+     </div>
   </div>  
 
   <div class="app-header">
-    🟩 Google Sheets (OrchardData) 공동 저장소 모드
+    <!-- 🟩 Google Sheets (OrchardData) 공동 저장소 모드
     <div class="sync-status" id="sync-status">
       <span class="sync-indicator" id="sync-indicator"></span>
       <span id="sync-text">🔄 로드중...</span>
       <button onclick="loadDataFromGoogleSheets()" style="background: #1976D2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 6px;">🔄 새로고침</button>
-    </div>
+    </div>  -->
 
     <!-- 수정된 통계 패널: 보유농약 칸 유지 + 전체 칸 대신 분류별 갯수 요약 칸 배치 -->
     <div class="stat-grid">
@@ -560,7 +565,7 @@ function renderSheetsList() {
           분류: ${item.type || '미분류'} | 수량: ${item.quantity || 0}${item.unit || '개'}
           ${item.ingredient ? '<br/>성분: ' + item.ingredient : ''}
           ${item.manufacturer ? ' | 제조사: ' + item.manufacturer : ''}
-          <div class="source-badge">🟩 Google Sheets</div>
+          <!-- <div class="source-badge">🟩 Google Sheets</div> -->
         </div>
       </div>
       <div class="pesticide-actions">
