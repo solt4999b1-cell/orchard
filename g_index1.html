@@ -270,6 +270,10 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
   setPanel('today', document.querySelector('.nav-item'));
 });
+  // 비동기 Promise 에러 추적용 디버깅 리스너 추가
+window.addEventListener('unhandledrejection', function(event) {
+  console.error('🚨 [디버깅 포착] 처리되지 않은 Promise 에러 발생:', event.reason);
+});
 </script>
 </body>
 </html>
