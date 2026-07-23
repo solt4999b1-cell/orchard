@@ -261,8 +261,10 @@ async function _toggleFbTask(taskId){
 
 /* 최초 로드 */
 // 단순히 남은 UI 초기화 함수(예: renderToday)만 바로 실행되도록 남겨둡니다.
+/*
 try { 
     renderToday(); 
 } catch(e) {
     console.error('초기화 에러:', e);
 }
+*/
