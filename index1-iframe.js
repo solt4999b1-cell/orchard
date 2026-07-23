@@ -260,6 +260,18 @@ async function _toggleFbTask(taskId){
 })();
 
 /* 최초 로드 */
+// 기존 _loadFbTasks()와 renderToday()가 있던 자리에 아래와 같이 작성합니다.
+
+// 예시: SheetDB 객체를 통해 구글 시트의 전체 데이터를 불러오는 로직
+SheetDB.loadAll().then(function(data) {
+    console.log("구글 시트 데이터 로딩 성공!", data);
+    
+    // 데이터를 무사히 가져온 후, 화면에 그려주는 새로운 함수를 여기서 실행합니다.
+    // renderNewUI(data); 
+    
+}).catch(function(error) {
+    console.error("구글 시트 데이터 로딩 실패:", error);
+});
 // 단순히 남은 UI 초기화 함수(예: renderToday)만 바로 실행되도록 남겨둡니다.
 /*
 try { 
