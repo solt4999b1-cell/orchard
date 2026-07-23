@@ -287,22 +287,50 @@ async function _gasGet(action, extra) {
   // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
     ? json.data : json;
-  // 배열 내 모든 필드를 문자열로 정규화 (GAS가 숫자로 반환하는 경우 대비)
+  // 배열 데이터 타입 정규화
   if (Array.isArray(data)) {
+    // 숫자로 저장해야 할 필드
+    var NUM_FIELDS = ['no','totalDays','pinchDays','fruitDays','pollDays',
+                      'qty','quantity','amount','price','count'];
+    // 날짜 문자열로 저장해야 할 필드
+    var DATE_FIELDS = ['plantDate','pollDate','lastSprayDate','lastFertDate',
+                       'registeredAt','updatedAt','createdAt','doneAt'];
     data = data.map(function(row) {
-      var normalized = {};
+      var out = {};
       for (var k in row) {
         var v = row[k];
-        // id는 항상 문자열
+        if (v == null) { out[k] = ''; continue; }
+        // id류는 항상 문자열
         if (k === 'id' || k === '_key' || k === 'key') {
-          normalized[k] = v == null ? '' : String(v);
-        } else if (typeof v === 'number') {
-          normalized[k] = v; // 숫자는 숫자 유지
-        } else {
-          normalized[k] = v == null ? '' : v;
+          out[k] = String(v);
+        }
+        // 숫자 필드
+        else if (NUM_FIELDS.indexOf(k) >= 0) {
+          out[k] = v === '' ? 0 : Number(v) || 0;
+        }
+        // 날짜 필드 — Google Sheets Date 객체가 직렬화되면 이상한 형태로 올 수 있음
+        else if (DATE_FIELDS.indexOf(k) >= 0) {
+          if (typeof v === 'string') {
+            // "026-05-11T15:00:00.000Z" 같은 잘린 날짜 수정
+            if (v.length > 0 && v.charAt(0) !== '2' && v.length < 24) {
+              v = '2' + v; // 앞자리 '2' 누락 보정
+            }
+            // T 뒤 시간 제거, 날짜만 추출
+            out[k] = v.slice(0, 10);
+          } else if (typeof v === 'number') {
+            // Excel 날짜 시리얼 넘버 → ISO 문자열 변환
+            var d = new Date(Math.round((v - 25569) * 86400 * 1000));
+            out[k] = d.toISOString().slice(0, 10);
+          } else {
+            out[k] = String(v).slice(0, 10);
+          }
+        }
+        // 나머지
+        else {
+          out[k] = typeof v === 'number' ? v : (v === '' ? '' : String(v));
         }
       }
-      return normalized;
+      return out;
     });
   }
   return data;
@@ -4230,10 +4258,10 @@ function buildMasterImportList(masterItems,myList){
     grp[type].forEach(function(it){
       var nm=(it.name||'').replace(/\s/g,''),already=mn.indexOf(nm)!==-1;
       if(already){var _even2 = grp[type].indexOf(it) % 2 === 0;
-      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 8px;border-bottom:1px solid #e8e8e8;opacity:0.45;background:'+(_even2?'#F8FBF8':'#EEF4FF')+';border-radius:0;"><div style="width:20px;"></div><div style="flex:1;"><span style="font-size:12px;font-weight:500;">'+esc(it.name||'')+'</span><div style="font-size:10px;color:var(--gray-400);">'+esc((it.ingredient||'').substring(0,35))+'</div></div><span style="font-size:10px;color:var(--green-dark);">✅ 보유중</span></div>';}
+      h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 8px;border-bottom:1px solid #e8e8e8;opacity:0.45;background:'+(_even2?'#F8FBF8':'#EEF4FF')+';border-radius:0;"><div style="width:20px;"></div><div style="flex:1;"><span style="font-size:12px;font-weight:500;">'+esc(it.name||'')+' </span><div style="font-size:10px;color:var(--gray-400);">'+esc(String(it.ingredient||'').substring(0,35))+'</div></div><span style="font-size:10px;color:var(--green-dark);">✅ 보유중</span></div>';}
       else{var _tc2={'살충제':'#1565C0','살균제':'#AD1457','살균살충제':'#6A1B9A','제초제':'#2E7D32','토양살충제':'#4E342E'}[it.type||'']||'#37474F';
       var _even = grp[type].indexOf(it) % 2 === 0;
-      h+='<label style="display:flex;align-items:center;gap:8px;padding:8px 8px;border-bottom:1px solid #e8e8e8;cursor:pointer;background:'+(_even?'#F8FBF8':'#EEF4FF')+';border-radius:0;"><input type="checkbox" class="master-chk" data-name="'+esc(it.name||'')+'" data-type="'+esc(it.type||'')+'" data-ingredient="'+esc(it.ingredient||'')+'" data-emoji="'+esc(it.emoji||'🧪')+'" style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:'+_tc2+';"><div style="flex:1;"><div style="display:flex;align-items:center;gap:5px;"><span style="font-size:13px;font-weight:700;color:#111;">'+esc(it.name||'')+'</span><span style="font-size:9px;padding:1px 6px;border-radius:8px;background:'+_tc2+';color:#fff;font-weight:600;">'+esc(it.type||'')+'</span></div><div style="font-size:10px;color:var(--gray-500);margin-top:2px;">'+esc((it.ingredient||'').substring(0,40))+'</div></div></label>';}
+      h+='<label style="display:flex;align-items:center;gap:8px;padding:8px 8px;border-bottom:1px solid #e8e8e8;cursor:pointer;background:'+(_even?'#F8FBF8':'#EEF4FF')+';border-radius:0;"><input type="checkbox" class="master-chk" data-name="'+esc(it.name||'')+'" data-type="'+esc(it.type||'')+'" data-ingredient="'+esc(it.ingredient||'')+'" data-emoji="'+esc(it.emoji||'🧪')+'" style="width:20px;height:20px;cursor:pointer;flex-shrink:0;accent-color:'+_tc2+';"><div style="flex:1;"><div style="display:flex;align-items:center;gap:5px;"><span style="font-size:13px;font-weight:700;color:#111;">'+esc(it.name||'')+' </span><span style="font-size:9px;padding:1px 6px;border-radius:8px;background:'+_tc2+';color:#fff;font-weight:600;">'+esc(it.type||'')+' </span></div><div style="font-size:10px;color:var(--gray-500);margin-top:2px;">'+esc(String(it.ingredient||'').substring(0,40))+'</div></div></label>';}
     });
   });
   return h||'<div style="padding:10px;color:var(--gray-400);text-align:center;">항목 없음</div>';
@@ -10899,7 +10927,7 @@ function _applyPsisToSchedule(){var _r=window._lastPsisResult||{},pn=_r.pestName
 
 // ── 관리 패널 ────────────────────────────────────────────────
 function renderManagePanel(){renderManagePestList();renderManagePlantList();}
-function renderManagePestList(){var el=document.getElementById('manage-pest-list');if(!el)return;var items=USER_DB['pest']||[];if(!items.length){el.innerHTML='<div style="text-align:center;color:#aaa;padding:20px;">등록된 농약이 없습니다.</div>';return;}var cfg={have:{l:'✅ 보유중',bg:'#E8F5E9',c:'#2E7D32'},need:{l:'🛒 구입필요',bg:'#FFF3E0',c:'#E65100'},empty:{l:'📭 소진',bg:'#F5F5F5',c:'#9E9E9E'},'':{l:'미설정',bg:'#F5F5F5',c:'#bbb'}};var so={need:0,have:1,empty:2,'':3};var h='';items.slice().sort(function(a,b){return(so[a.pest_status||'']||3)-(so[b.pest_status||'']||3);}).forEach(function(p){var st=p.pest_status||'',cf=cfg[st]||cfg[''];h+='<div style="display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid #f0f0f0;"><span style="font-size:18px;">'+(p.emoji||'🧪')+'</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(p.name||'')+'</div><div style="font-size:10px;color:#aaa;">'+esc((p.type||'')+(p.ingredient?' · '+(p.ingredient||'').substring(0,18):''))+'</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;"><span style="font-size:9px;padding:2px 7px;border-radius:8px;background:'+cf.bg+';color:'+cf.c+';font-weight:600;">'+cf.l+'</span><div style="display:flex;gap:3px;">'+(st!=='have'?'<button onclick="quickSetPestStatus(\''+p.id+'\',\'have\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #A5D6A7;background:#E8F5E9;color:#2E7D32;cursor:pointer;">✅</button>':'')+(st!=='empty'?'<button onclick="quickSetPestStatus(\''+p.id+'\',\'empty\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #ddd;background:#f5f5f5;color:#888;cursor:pointer;">📭</button>':'')+'<button onclick="openEditItem(\'pest\',\''+p.id+'\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;">✏️</button></div></div></div>';});el.innerHTML=h;}
+function renderManagePestList(){var el=document.getElementById('manage-pest-list');if(!el)return;var items=USER_DB['pest']||[];if(!items.length){el.innerHTML='<div style="text-align:center;color:#aaa;padding:20px;">등록된 농약이 없습니다.</div>';return;}var cfg={have:{l:'✅ 보유중',bg:'#E8F5E9',c:'#2E7D32'},need:{l:'🛒 구입필요',bg:'#FFF3E0',c:'#E65100'},empty:{l:'📭 소진',bg:'#F5F5F5',c:'#9E9E9E'},'':{l:'미설정',bg:'#F5F5F5',c:'#bbb'}};var so={need:0,have:1,empty:2,'':3};var h='';items.slice().sort(function(a,b){return(so[a.pest_status||'']||3)-(so[b.pest_status||'']||3);}).forEach(function(p){var st=p.pest_status||'',cf=cfg[st]||cfg[''];h+='<div style="display:flex;align-items:center;gap:8px;padding:9px 4px;border-bottom:1px solid #f0f0f0;"><span style="font-size:18px;">'+(p.emoji||'🧪')+'</span><div style="flex:1;min-width:0;"><div style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(p.name||'')+'</div><div style="font-size:10px;color:#aaa;">'+esc((p.type||'')+(p.ingredient?' · '+String(p.ingredient||'').substring(0,18):''))+'</div></div><div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;"><span style="font-size:9px;padding:2px 7px;border-radius:8px;background:'+cf.bg+';color:'+cf.c+';font-weight:600;">'+cf.l+'</span><div style="display:flex;gap:3px;">'+(st!=='have'?'<button onclick="quickSetPestStatus(\''+p.id+'\',\'have\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #A5D6A7;background:#E8F5E9;color:#2E7D32;cursor:pointer;">✅</button>':'')+(st!=='empty'?'<button onclick="quickSetPestStatus(\''+p.id+'\',\'empty\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #ddd;background:#f5f5f5;color:#888;cursor:pointer;">📭</button>':'')+'<button onclick="openEditItem(\'pest\',\''+p.id+'\')" style="font-size:10px;padding:3px 6px;border-radius:5px;border:1px solid #ddd;background:#fff;color:#555;cursor:pointer;">✏️</button></div></div></div>';});el.innerHTML=h;}
 async function quickSetPestStatus(id,ns){var p=(USER_DB['pest']||[]).find(function(x){return x.id===id;});if(!p)return;p.pest_status=ns;try{await _gasPost({ action:'updateMyPesticide', id:id, pest_status:ns, status:ns });showToast(ns==='have'?'✅ 보유중':'📭 소진');renderManagePestList();if(typeof renderMyPestPanel==='function')renderMyPestPanel();}catch(e){showToast('오류:'+e.message);}}
 function renderManagePlantList(){var el=document.getElementById('manage-plant-list');if(!el)return;var plants=(APP.plants||[]).filter(function(p){return p.status!=='deleted';});if(!plants.length){el.innerHTML='<div style="text-align:center;color:#aaa;padding:16px;">등록된 작물이 없습니다.</div>';return;}var seen={},h='';plants.forEach(function(p){var nm=(p.name||'').trim();if(!nm||seen[nm])return;seen[nm]=true;var isA=p.status==='active';h+='<div style="display:flex;align-items:center;gap:8px;padding:8px 4px;border-bottom:1px solid #f0f0f0;"><span style="font-size:20px;">'+_plantEmoji(p)+'</span><div style="flex:1;"><div style="font-size:13px;font-weight:600;">'+esc(p.name||'')+'</div><div style="font-size:10px;color:#aaa;">'+esc((p.species||p.variety||'')+(p.plantDate?' · '+p.plantDate:''))+'</div></div><div style="display:flex;gap:4px;">'+(isA?'<button onclick="togglePlantStatus(\''+p.id+'\',\'dormant\')" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #FFCC80;background:#FFF8E1;color:#E65100;cursor:pointer;">휴면</button>':'<button onclick="togglePlantStatus(\''+p.id+'\',\'active\')" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #A5D6A7;background:#E8F5E9;color:#2E7D32;cursor:pointer;">복구</button>')+'<button onclick="confirmDeletePlant(\''+p.id+'\')" style="font-size:10px;padding:4px 8px;border-radius:6px;border:1px solid #FFCDD2;background:#fff;color:#C62828;cursor:pointer;">🗑</button></div></div>';});el.innerHTML=h;}
 async function togglePlantStatus(id,ns){var p=APP.plants.find(function(x){return x.id===id;});if(!p)return;p.status=ns;try{await _gasPost({ action:'updatePlant', id:id, status:ns, updatedAt:new Date().toISOString() });showToast(ns==='active'?'✅ 활성화':'⏸ 휴면');renderManagePlantList();renderPlants();}catch(e){showToast('오류:'+e.message);}}
