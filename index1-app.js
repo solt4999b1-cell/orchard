@@ -716,6 +716,7 @@ function renderPlants() {
     if (APP.plantFilter==='채소') return !isFruitPlant(p);
     return (p.category||'')===(APP.plantFilter);
   });
+  APP.plants = (APP.plants||[]).filter(function(p){ return p && p.name; });
   var grid = document.getElementById('plant-grid');
   if (!grid) return;
   if (!plants.length) {
@@ -755,15 +756,15 @@ function plantCardHTML(p) {
   if (p.pollDate) { var sinceP2=daysBetween(parseDate(p.pollDate),TODAY); pollBadge='<span class="pi-badge pi-poll">🌸 착과 '+sinceP2+'일째</span>'; }
 
   
-  var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===p.name.toLowerCase()&&(l.type==='농약살포'||l.eventType==='농약살포'); });
+  var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===(p.name||'').toLowerCase()&&(l.type==='농약살포'||l.eventType==='농약살포'); });
   var dSpray=lsl&&lsl.date?daysBetween(parseDate(lsl.date.slice(0,10)),TODAY):-1;
   var spBadge=''; if(dSpray>=0){ var c1=dSpray>=14?'pi-spray-due':''; var s1=dSpray<14?'background:#E8F5E9;color:#2E7D32;':''; spBadge='<span class="pi-badge '+c1+'" style="'+s1+'">🌿 살포 '+dSpray+'일 전</span>'; }
-  var lfl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===p.name.toLowerCase()&&(l.type==='시비'||l.eventType==='시비'); });
+  var lfl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===(p.name||'').toLowerCase()&&(l.type==='시비'||l.eventType==='시비'); });
   var dFert=lfl&&lfl.date?daysBetween(parseDate(lfl.date.slice(0,10)),TODAY):-1;
   var ftBadge=''; if(dFert>=0){ var c2=dFert>=21?'pi-fert-due':''; var s2=dFert<21?'background:#E8EAF6;color:#283593;':''; ftBadge='<span class="pi-badge '+c2+'" style="'+s2+'">🌱 시비 '+dFert+'일 전</span>'; }
 
   
-  var nm=p.name.toLowerCase();
+  var nm=(p.name||'').toLowerCase();
   var pLogs=APP.logs.filter(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm; }).slice(0,3);
   var ICON={'농약살포':'🌿','시비':'🌱','파종':'🌾','수확':'🍎','순치기':'✂️','병해충':'🐛','개화':'🌸','정식':'🌱','착과':'🌸','기타':'📝'};
   var miniLog=pLogs.length>0?'<div class="plant-mini-log">'+pLogs.map(function(l){
@@ -794,7 +795,7 @@ function plantCardHTML(p) {
 
 function getPlantInfo(nm) {
   var n=(nm||'').toLowerCase().trim(); if(!n) return null;
-  return APP.plants.find(function(p){ var pn=p.name.toLowerCase(); return pn===n||pn.includes(n)||n.includes(pn.split(' ')[0]); })||null;
+  return APP.plants.find(function(p){ var pn=(p.name||'').toLowerCase(); return pn===n||pn.includes(n)||n.includes(pn.split(' ')[0]); })||null;
 }
 
 function plantStatusBadges(p) {
@@ -833,7 +834,7 @@ function plantStatusBadges(p) {
   var pollBadge='';
   if(p.pollDate){ var s2=daysBetween(parseDate(p.pollDate),TODAY); pollBadge='<span class="pi-badge pi-poll">🌸 착과 '+s2+'일째</span>'; }
 
-  var nm=p.name.toLowerCase();
+  var nm=(p.name||'').toLowerCase();
   var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm&&(l.type==='농약살포'||l.eventType==='농약살포'); });
   var dSp=lsl&&lsl.date?daysBetween(parseDate(lsl.date.slice(0,10)),TODAY):-1;
   var spB=''; if(dSp>=0){ var spCls=dSp>=14?'pi-spray-due':''; var spSty=dSp<14?'background:#E8F5E9;color:#2E7D32;':''; spB='<span class="pi-badge '+spCls+'" style="'+spSty+'">🌿 살포 '+dSp+'일 전</span>'; }
@@ -8977,7 +8978,7 @@ function renderHarvestSchedule(hs) {
 }
 
 async function saveScheduleToFirebase(sched) {
-  if (!sched||!db) { showToast('저장할 스케줄이 없습니다'); return; }
+  if (!sched) { showToast('저장할 스케줄이 없습니다'); return; }
   try {
     await _gasPost(Object.assign({ action:'addSpraySchedule' },{
       crops:     sched.crops,
@@ -10910,7 +10911,7 @@ function _resetAiUrl(){['ai-url-name','ai-url-input'].forEach(function(id){var e
 
 // ── 식물 이름 일괄 수정 (1회성) ──────────────────────────────
 async function _fixPlantNames() {
-  if (!db || !APP.plants) return;
+  if (!APP.plants) return;
   var renames = [
     { from: '아주까리콩 파종', to: '아주까리콩' },
   ];
@@ -10928,10 +10929,14 @@ async function _fixPlantNames() {
     }
     // workLogs/growRecords의 plantName도 수정
     try {
-      var snap = await _gasGet('getWorkLogs', { plantName: r.from });
-      snap.docs.forEach(function(d){ d.ref.update({ plantName: r.to }); });
-      var snap2 = await _gasGet('getGrowRecords', { plantName: r.from });
-      snap2.docs.forEach(function(d){ d.ref.update({ plantName: r.to }); });
+      var wlArr = await _gasGet('getWorkLogs', { plantName: r.from }).catch(function(){ return []; });
+      (Array.isArray(wlArr) ? wlArr : []).forEach(function(d){
+        _gasPost({ action:'updateWorkLog', id:d.id, plantName:r.to }).catch(function(){});
+      });
+      var grArr = await _gasGet('getGrowRecords', { plantName: r.from }).catch(function(){ return []; });
+      (Array.isArray(grArr) ? grArr : []).forEach(function(d){
+        _gasPost({ action:'updateGrowRecord', id:d.id, plantName:r.to }).catch(function(){});
+      });
     } catch(e) {}
   }
 }
@@ -10941,7 +10946,7 @@ setTimeout(function(){ try{autoFixEmojis();}catch(e){}}, 2000);
 setTimeout(function(){ try{_fixPlantNames().then(function(){ renderPlants(); renderToday(); });}catch(e){}}, 3000);
 
 async function fixPlantCategories() {
-  if (!db) { showToast('Google Sheets 미연결'); return; }
+  
   var fruitKw = ['유실수','과수','사과','배','복숭아','포도','블루베리','블랙베리','감','자두','매실','살구','무화과','다래','키위','앵두','마르멜로','으름','헤이즐럿','복분자'];
   function isFruit(p) {
     var cat=(p.category||'').toLowerCase(), nm=(p.name||'').toLowerCase();
@@ -11068,7 +11073,7 @@ function buildSprayScheduleFromPsis(opts) {
 
 // ── 내 농약장 중복 제거 ──────────────────────────────────────
 async function removeDuplicatePesticides() {
-  if (!db) { showToast('Google Sheets 미연결'); return; }
+  
   var items = USER_DB['pest'] || [];
   var seen = {}, dups = [];
   items.forEach(function(p) {
