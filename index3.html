@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="병해충 진단">
+<link rel="manifest" href="manifest3.webmanifest">
+
+<!-- 파비콘 설정 -->
+<link rel="icon" type="image/png" sizes="192x192" href="icon5-192.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icon5-180.png">
+<link rel="shortcut icon" href="icon5-192.png">
+
+<title>병해충 진단 · 사진대조  제작:이용호 Copyright 2026-07-09</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=Gowun+Batang:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F4F7F1; --panel:#FFFFFF; --ink:#1E2B22; --ink-soft:#4B5A4F;
+  --line:#DCE4D5; --leaf:#2E6B3E; --leaf-d:#245331; --leaf-l:#E7F0E5;
+  --amber:#E39B2E; --amber-l:#FBEFD6;
+  --pest:#C24A3A; --pest-l:#F7E2DE;
+  --shadow:0 1px 2px rgba(30,43,34,.06),0 8px 24px rgba(30,43,34,.06);
+  --r:14px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:'Noto Sans KR',system-ui,sans-serif;line-height:1.55;
+  -webkit-text-size-adjust:100%}
+.wrap{max-width:940px;margin:0 auto;padding:20px 16px 80px}
+
+.hdr {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 6px 4px 8px;
+  position: relative;
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 8px;
+}
+
+.hdr-content { flex: 1; padding-right: 130px; }
+.hdr .title-area { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.leafmark { width: 30px; height: 30px; flex: none; }
+.hdr h1 { font-family: 'Gowun Batang', serif; font-size: 24px; margin: 0; letter-spacing: -.5px; white-space: nowrap; }
+.hdr h5 { font-size: 11px; color: var(--ink-soft); margin: 0 0 6px 0; font-weight: normal; line-height: 1.3; }
+.hdr .sub { color: var(--ink-soft); font-size: 13px; margin: 0 0 4px 0; text-align: left; line-height: 1.4; }
+.hdr .backapp { display: inline-block; font-size: 12px; font-weight: 700; text-decoration: none; color: var(--leaf-d); background: var(--leaf-l); border: 1px solid #c3ddc0; border-radius: 8px; padding: 4px 8px; vertical-align: top; }
+.hdr .backapp:active { background: #d8e8d5; }
+
+.hdr-qrcode { position: absolute; top: 0; right: 2px; flex-shrink: 0; }
+.hdr-qrcode img { width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 6px; display: block; }
+
+/* 작물 추가 입력칸 한 줄 최적화 스타일 */
+.crop-manual{display:flex;gap:6px;margin:10px 0 4px;align-items:center;width:100%;}
+.crop-manual input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;background:var(--panel);height:36px;}
+.crop-manual button{border:none;background:var(--leaf);color:#fff;border-radius:8px;padding:0 12px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0;height:36px;white-space:nowrap;}
+
+/* 작물상태 관리 및 방제계획 버튼 영역 스타일 */
+#reviewBar { display: flex; gap: 6px; margin: 8px 0 14px 0; flex-wrap: wrap; }
+
+.crops{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px}
+.crop{border:1.5px solid var(--line);background:var(--panel);color:var(--ink);
+  padding:6px 12px;border-radius:999px;font-size:14px;font-weight:500;cursor:pointer;
+  transition:.15s;line-height:1.2}
+.crop:hover{border-color:var(--leaf)}
+.crop.on{background:var(--leaf);border-color:var(--leaf);color:#fff}
+.crop-wrap{display:inline-flex;align-items:stretch;gap:0}
+.crop-wrap .crop{border-top-right-radius:0;border-bottom-right-radius:0}
+.crop-pen{border:1.5px solid var(--line);border-left:none;background:var(--panel);
+  border-radius:0 999px 999px 0;padding:0 10px;font-size:12px;cursor:pointer;
+  color:var(--ink-soft);line-height:1;-webkit-tap-highlight-color:transparent}
+.crop-pen:hover{background:var(--leaf-l);color:var(--leaf-d)}
+.crop-pen:active{background:#d8e8d5}
+
+.tabs{display:flex;gap:4px;margin:18px 0 12px;background:var(--leaf-l);
+  padding:4px;border-radius:12px;width:fit-content}
+.tab{border:none;background:transparent;padding:8px 18px;border-radius:9px;
+  font:inherit;font-weight:700;color:var(--leaf-d);cursor:pointer}
+.tab.on{background:var(--panel);box-shadow:var(--shadow)}
+.tab.pest.on{color:var(--pest)}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:.15s;
+  display:flex;flex-direction:column}
+.card:hover{transform:translateY(-2px);border-color:var(--leaf)}
+.card .thumb{aspect-ratio:4/3;background:var(--leaf-l);position:relative;overflow:hidden}
+.card .thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.card .thumb .ph{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  color:var(--leaf);opacity:.4;font-size:12px}
+.card .body{padding:10px 12px}
+.card .nm{font-weight:700;font-size:15px;letter-spacing:-.3px}
+.card .en{font-size:11px;color:var(--ink-soft);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.state{padding:40px 10px;text-align:center;color:var(--ink-soft);font-size:14px}
+.spinner{width:26px;height:26px;border:3px solid var(--line);border-top-color:var(--leaf);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 12px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hint{background:var(--amber-l);border:1px solid #EAD6A6;border-radius:12px;
+  padding:12px 14px;font-size:13px;color:#6b5215;margin:14px 0}
+
+.sheet-bg{position:fixed;inset:0;background:rgba(20,30,24,.5);backdrop-filter:blur(2px);
+  display:none;align-items:flex-end;justify-content:center;z-index:50}
+.sheet-bg.on{display:flex}
+.sheet{background:var(--bg);width:100%;max-width:940px;max-height:94vh;overflow:auto;
+  border-radius:20px 20px 0 0;padding:18px 16px 30px;animation:up .25s ease}
+@keyframes up{from{transform:translateY(30px);opacity:.6}to{transform:none;opacity:1}}
+.sheet-hd{display:flex;align-items:center;gap:10px;position:sticky;top:-18px;
+  background:var(--bg);padding-top:6px;margin:-6px -2px 12px;z-index:2}
+.sheet-hd .tag{font-size:11px;font-weight:700;padding:3px 9px;border-radius:6px;
+  background:var(--leaf-l);color:var(--leaf-d)}
+.sheet-hd .tag.pest{background:var(--pest-l);color:var(--pest)}
+.sheet-hd h2{font-family:'Gowun Batang',serif;font-size:22px;margin:0}
+.sheet-hd .x{margin-left:auto;border:none;background:var(--line);width:34px;height:34px;
+  border-radius:50%;font-size:18px;cursor:pointer;color:var(--ink)}
+
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.col{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);
+  padding:10px;box-shadow:var(--shadow);min-width:0}
+.col h3{margin:0 0 8px;font-size:12px;letter-spacing:.2px;color:var(--ink-soft);
+  display:flex;align-items:center;gap:5px;white-space:nowrap;overflow:hidden}
+.col h3 b{color:var(--leaf-d)}
+.myphoto{aspect-ratio:1/1;border:2px dashed var(--line);border-radius:10px;
+  display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.35;
+  color:var(--ink-soft);font-size:12px;cursor:pointer;overflow:hidden;background:var(--leaf-l)}
+.myphoto img{width:100%;height:100%;object-fit:cover}
+.refmain{aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--leaf-l);
+  border:1px solid var(--line)}
+.refmain img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in}
+.ph2{width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+  color:var(--leaf);opacity:.55;font-size:12px;text-align:center;padding:6px}
+.refthumbs{display:flex;gap:6px;overflow-x:auto;margin:0 0 14px;padding-bottom:2px}
+.refthumbs img{height:56px;width:56px;object-fit:cover;border-radius:8px;flex:none;
+  cursor:zoom-in;border:1px solid var(--line);background:var(--leaf-l)}
+
+.info{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;margin-bottom:14px;box-shadow:var(--shadow)}
+.info h4{margin:0 0 8px;font-size:14px;color:var(--leaf-d);display:flex;align-items:center;gap:7px}
+.info h4::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--amber)}
+.info p{margin:0;font-size:14px;color:var(--ink);white-space:pre-wrap}
+.checks li{list-style:none;display:flex;gap:9px;align-items:flex-start;padding:7px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.checks{margin:0;padding:0}
+.checks li:last-child{border:none}
+.checks input{margin-top:4px;width:17px;height:17px;accent-color:var(--leaf)}
+
+.handoff{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:14px 0 4px;margin-top:6px}
+.btn-rx{width:100%;border:none;background:var(--leaf);color:#fff;font:inherit;font-weight:700;font-size:16px;padding:15px;border-radius:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--shadow)}
+.btn-rx:active{background:var(--leaf-d)}
+
+.rx-bg{position:fixed;inset:0;background:rgba(20,30,24,.5);display:none;align-items:flex-end;justify-content:center;z-index:60}
+.rx-bg.on{display:flex}
+.rx{background:var(--bg);width:100%;max-width:940px;max-height:94vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 16px 30px}
+.rx-hd{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.rx-hd h2{font-family:'Gowun Batang',serif;font-size:20px;margin:0}
+.rx-hd .x{margin-left:auto;border:none;background:var(--line);width:34px;height:34px;border-radius:50%;font-size:18px;cursor:pointer}
+.rx-sub{font-size:13px;color:var(--ink-soft);margin:0 0 14px}
+.rx-sub b{color:var(--leaf-d)}
+
+.foot{text-align:center;color:var(--ink-soft);font-size:11px;margin-top:30px;line-height:1.7}
+.foot a{color:var(--leaf-d)}
+
+.lb{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;z-index:90;align-items:center;justify-content:center;cursor:zoom-out}
+.lb.on{display:flex}
+.lb img{max-width:94vw;max-height:94vh;border-radius:8px}
+
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom));
+  transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:12px 18px;
+  border-radius:12px;font-size:14px;opacity:0;transition:.3s;z-index:100;max-width:90vw;text-align:center;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+.crop-edit {
+  border: 1.5px solid var(--line); background: var(--panel); border-radius: 10px;
+  padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  color: var(--leaf-d); background-color: var(--leaf-l); line-height: 1.4; vertical-align: middle; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center;
+}
+.crop-edit:active { background: #d8e8d5; }
+.back { border: 1px solid var(--line); background: transparent; border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 12px; cursor: pointer; color: var(--leaf-d); }
+.back.prim { background: var(--leaf); border-color: var(--leaf); color: #fff; font-weight: 700; }
+.choice { display: block; width: 100%; text-align: left; border: 1.5px solid var(--line); background: var(--panel); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; font: inherit; }
+.choice b { display: block; font-size: 15px; margin-bottom: 3px; }
+.choice span { font-size: 12px; color: var(--ink-soft); }
+.choice:hover { border-color: var(--leaf); }
+.spray { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px dashed var(--line); font-size: 14px; }
+.spray:last-child { border: none; }
+.spray input { width: 20px; height: 20px; accent-color: var(--leaf); flex: none; }
+.pesti { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; margin-bottom: 10px; box-shadow: var(--shadow); }
+.pesti .top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.pesti .brand { font-weight: 700; font-size: 15px; }
+.pesti .use { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--leaf-l); color: var(--leaf-d); }
+.pesti .use.살충 { background: var(--pest-l); color: var(--pest); }
+.pesti .meta { font-size: 13px; color: var(--ink-soft); margin-top: 4px; }
+.pesti.owned { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset, var(--shadow); }
+.own-badge { font-size: 11px; font-weight: 700; color: #6b5215; background: var(--amber-l); border: 1px solid #EAD6A6; padding: 2px 8px; border-radius: 6px; }
+.own-sep { font-size: 12px; font-weight: 700; color: var(--ink-soft); margin: 14px 2px 8px; padding-bottom: 6px; border-bottom: 1px dashed var(--line); }
+.buy-badge { font-size: 11px; font-weight: 700; color: var(--pest); background: var(--pest-l); border: 1px solid #e6b3a8; padding: 2px 8px; border-radius: 6px; }
+.rec-badge { font-size: 11px; font-weight: 700; color: #6b5215; background: var(--amber-l); border: 1px solid #EAD6A6; padding: 2px 8px; border-radius: 6px; }
+.pesti.rec { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber) inset, var(--shadow); }
+.tox-badge { font-size: 11px; font-weight: 700; color: var(--ink-soft); background: #eef1ec; border: 1px solid var(--line); padding: 2px 8px; border-radius: 6px; }
+.tox-badge.low { color: var(--leaf-d); background: var(--leaf-l); border-color: #c3ddc0; }
+
+.webbox h4 span.unoff { font-size: 11px; font-weight: 700; color: #7a2f22; background: #F7E2DE; padding: 2px 8px; border-radius: 6px; margin-left: 2px; }
+.webbtn { border: 1.5px solid var(--leaf); background: var(--panel); color: var(--leaf-d); border-radius: 10px; padding: 9px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+.webbtn:hover { background: var(--leaf-l); }
+.webstrip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.webstrip img { height: 104px; width: 104px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); cursor: zoom-in; background: var(--leaf-l); }
+.webstrip .src { width: 100%; font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+
+#embedCrop { align-items: center; gap: 8px; margin: 2px 2px 10px; font-weight: 700; font-size: 16px; display: none; }
+#embedCrop .tag { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: var(--leaf-l); color: var(--leaf-d); }
+#embedCrop .chg-btn { margin-left: auto; font: inherit; font-size: 12px; font-weight: 700; color: var(--leaf-d); background: var(--leaf-l); border: 1px solid #c3ddc0; border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+
+.cropcat { font-size: 13px; font-weight: 700; color: var(--leaf-d); margin: 10px 2px 8px; display: flex; align-items: center; gap: 6px; }
+.cropcat .cnt { font-weight: 500; color: var(--ink-soft); font-size: 12px; }
+.crops-row { display: flex; flex-wrap: wrap; gap: 8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <!-- 헤더 영역 (밑줄 선 포함) -->
+  <div class="hdr">
+	  <div class="hdr-content">
+	    <div class="title-area">
+	      <svg class="leafmark" viewBox="0 0 40 40" fill="none">
+	        <path d="M20 4C10 8 6 18 8 30c12 4 22-2 24-14C33 8 27 5 20 4Z" fill="#2E6B3E"/>
+	        <path d="M14 26C18 20 24 16 30 14" stroke="#E7F0E5" stroke-width="2" stroke-linecap="round"/>
+	      </svg>
+	      <h1>병해충 진단 · 방제</h1>
+	    </div>
+	    <h5>제작: 이용호 &nbsp; Copyright 2026.07.10. All Right Reserved</h5>
+	    <div class="sub">내 밭 작물을 골라 진단 → 처방 → 방제</div>
+	    <a class="backapp" href="https://solt4999b1-cell.github.io/orchard/index1.html">← 관리앱으로 가기</a>  
+	  </div>
+	  <div class="hdr-qrcode">
+	    <a href="https://solt4999b1-cell.github.io/orchard/index3.html" target="_blank">
+	      <img src="./2cp8s.png" alt="QR코드">
+	    </a>
+	  </div>
+	</div>
+
+  <!-- 1순위: 헤더 하단선 바로 아래에 위치한 '작물 추가' 입력란 영역 -->
+  <div id="cropPick">
+    <div id="cropManualWrap">
+      <div class="crop-manual">
+        <input id="cropInput" list="stdCrops" placeholder="새 작물 추가 (목록 선택/입력)"
+               onkeydown="if(event.key==='Enter'){CropManager.addCrop();}">
+        <button onclick="CropManager.addCrop()">작물 추가</button>
+      </div>
+      <div style="font-size:11px;color:var(--ink-soft);margin:4px 2px 8px">
+        표준 작물명을 선택하여 내 밭에 새로 추가하세요.
+      </div>
+    </div>
+    
+    <!-- 2순위: 그 바로 아래에 위치한 '작물상태 관리' 및 '방제계획' 버튼 영역 -->
+    <div id="reviewBar">
+      <button class="crop-edit" onclick="CropManager.open()">🌱 작물상태 관리</button>
+      <button class="crop-edit" onclick="Plan.review()">📋 방제계획·실행체크</button>
+    </div>
+
+    <!-- 3순위: 🌳 유실수 및 채소 목록 영역 (작물 추가 및 버튼들보다 아래에 위치) -->
+    <div class="crops" id="crops"></div>
+  </div>
+
+  <div id="embedCrop"></div>
+
+  <div class="tabs" id="tabs" style="display:none">
+    <button class="tab on" data-type="sick" onclick="App.switchTab('sick')">🍂 병</button>
+    <button class="tab pest" data-type="insect" onclick="App.switchTab('insect')">🐛 해충</button>
+  </div>
+
+  <div id="list"><div class="state">위에서 작물을 선택하세요.</div></div>
+
+  <div class="foot">
+    자료 출처: 국가농작물병해충관리시스템(NCPMS)·농촌진흥청 · 농약정보: 농약안전정보시스템(PSIS)<br>
+    ※ 참조사진은 진단 보조용입니다. 최종 판단이 어려우면 전문가 상담을 이용하세요.
+  </div>
+</div>
+
+<div class="sheet-bg" id="sheetBg" onclick="if(event.target===this)App.closeSheet()"><div class="sheet" id="sheet"></div></div>
+<div class="rx-bg" id="rxBg" onclick="if(event.target===this)Rx.close()"><div class="rx" id="rx"></div></div>
+<div class="rx-bg" id="planBg" onclick="if(event.target===this)Plan.close()"><div class="rx" id="planBox"></div></div>
+<div class="lb" id="lb" onclick="this.classList.remove('on')"><img id="lbImg"></div>
+<div id="toast"></div>
+
+<script>
+const CONFIG = {
+  GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
+  GAS_URL_SHEETS: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
+  cropMapToPsis: { '단감':'감', '참다래':'참다래(키위)', '키위':'참다래(키위)' },
+  plantsCollection: 'plants',
+  pesticidesCollection: 'myPesticides',
+  fruitKeywords: ['유실수','과수','사과','배','포도','감귤','복숭아','매실','자두','무화과','살구','블루베리','블랙베리','다래','감','밤','대추','아로니아','체리','망고','용과','모과','앵두','패션푸룻','오미자','복분자','산수유','키위','참다래','헤이즐넛','헤이즐럿','호두','피칸','아몬드'],
+  psisDetail: {
+    build: (svc, item) => {
+      const q = new URLSearchParams();
+      if(item.pestiCode) q.set('pestiCode', item.pestiCode);
+      q.set('diseaseUseSeq', item.diseaseUseSeq || '1');
+      return q.toString();
+    }
+  },
+  displayCount: 100
+};
+
+const AppBus = {
+  _h:{},
+  on(evt, fn){ (this._h[evt] ||= []).push(fn); return this; },
+  emit(evt, data){ (this._h[evt]||[]).forEach(fn=>{ try{fn(data)}catch(e){console.error(e)} }); }
+};
+
+const DB = {
+  async list(collName){
+    try{
+      const res = await fetch(`${CONFIG.GAS_URL_SHEETS}?action=readCollection&collectionName=${encodeURIComponent(collName)}`);
+      const jr = await res.json();
+      if(jr.success && Array.isArray(jr.data)) return jr.data;
+    }catch(e){ console.warn('Google Sheets list 오류:', e); }
+    try{ const v = localStorage.getItem('orchard.'+collName); return v ? JSON.parse(v) : []; }catch(e){ return []; }
+  },
+  async add(collName, obj){
+    const id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
+    const dataToSave = { id, ...obj };
+    try{
+      await fetch(CONFIG.GAS_URL_SHEETS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'create', sheetName: collName, ...dataToSave })
+      });
+    }catch(e){ console.warn('Google Sheets add 오류:', e); }
+    try{
+      let arr = [];
+      try{ arr = JSON.parse(localStorage.getItem('orchard.'+collName)||'[]'); }catch(e){}
+      arr.push(dataToSave);
+      localStorage.setItem('orchard.'+collName, JSON.stringify(arr));
+    }catch(e){}
+    return id;
+  },
+  async update(collName, id, patch){
+    try{
+      await fetch(CONFIG.GAS_URL_SHEETS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'update', sheetName: collName, id, ...patch })
+      });
+    }catch(e){ console.warn('Google Sheets update 오류:', e); }
+    try{
+      let arr = JSON.parse(localStorage.getItem('orchard.'+collName)||'[]');
+      let idx = arr.findIndex(x => x.id === id);
+      if(idx >= 0){ arr[idx] = { ...arr[idx], ...patch }; localStorage.setItem('orchard.'+collName, JSON.stringify(arr)); }
+    }catch(e){}
+  },
+  async remove(collName, id){
+    try{
+      await fetch(CONFIG.GAS_URL_SHEETS, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action: 'delete', sheetName: collName, id })
+      });
+    }catch(e){ console.warn('Google Sheets remove 오류:', e); }
+    try{
+      let arr = JSON.parse(localStorage.getItem('orchard.'+collName)||'[]');
+      arr = arr.filter(x => x.id !== id);
+      localStorage.setItem('orchard.'+collName, JSON.stringify(arr));
+    }catch(e){}
+  },
+  async rawPlants(){ return await this.list(CONFIG.plantsCollection); },
+  async rawPesticides(){ return await this.list(CONFIG.pesticidesCollection); }
+};
+
+const Owned = {
+  _set:new Set(),
+  norm(s){ return String(s||'').replace(/[\s()]/g,'').toLowerCase(); },
+  has(brand){ return this._set.has(this.norm(brand)); },
+  async load(){
+    const ps = await DB.rawPesticides();
+    this._set = new Set((ps||[]).filter(p=>(p.quantity==null||p.quantity>0)).map(p=>this.norm(p.brandName||p.pestiBrandName||p.name)));
+  }
+};
+
+const NCPMS = {
+  async call(params){
+    const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
+    const url = CONFIG.GAS_URL + '?' + qs;
+    const res = await fetch(url);
+    const jr  = await res.json();
+    if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
+    return jr.data;
+  },
+  listSick(cropName){ return this.call({ serviceCode:'SVC01', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
+  listInsect(cropName){ return this.call({ serviceCode:'SVC03', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
+  detailSick(sickKey){ return this.call({ serviceCode:'SVC05', sickKey }); },
+  detailInsect(insectKey){ return this.call({ serviceCode:'SVC07', insectKey }); },
+  rows(data){
+    let best=[]; (function dig(n){
+      if(Array.isArray(n)){ if(n.length>best.length && typeof n[0]==='object') best=n; n.forEach(dig); return; }
+      if(n && typeof n==='object') Object.values(n).forEach(dig);
+    })(data);
+    if(best.length===0){
+      const one = this.pick(data, ['sickNameKor','insectKorName','cropName']);
+      if(one) best=[data.service||data];
+    }
+    return best;
+  },
+  pick(obj, keys){
+    if(!obj||typeof obj!=='object') return '';
+    for(const k of keys){ if(obj[k]!=null && obj[k]!=='' ) return String(obj[k]); }
+    const lk = keys.map(k=>k.toLowerCase());
+    for(const [k,v] of Object.entries(obj)){
+      if(v && typeof v==='string' && lk.some(x=>k.toLowerCase().includes(x))) return v;
+    }
+    return '';
+  },
+  name(row){ return this.pick(row, ['sickNameKor','insectKorName','koreanName','name']); },
+  nameEn(row){ return this.pick(row, ['sickNameEng','insectEngName','scientificName']); },
+  key(row, type){ return this.pick(row, type==='sick' ? ['sickKey','oesTinFern','value'] : ['insectKey','bugKey','value']); },
+  images(node){
+    const out=new Set();
+    (function dig(n){
+      if(!n) return;
+      if(typeof n==='string'){
+        if(/thumbnailViewer2\.mo|\/photo\/|\.(jpe?g|png|gif)(\?|$)/i.test(n) && /^https?:\/\//.test(n)) out.add(n);
+        return;
+      }
+      if(Array.isArray(n)){ n.forEach(dig); return; }
+      if(typeof n==='object') Object.values(n).forEach(dig);
+    })(node);
+    return [...out];
+  },
+  proxyUrl(u){ return CONFIG.GAS_URL + '?target=ncpmsimg&url=' + encodeURIComponent(u); },
+};
+
+const App = {
+  crop:null, cropObj:null, cropPsis:null, type:'sick', cache:{}, _crops:[],
+  STD_CROPS: [
+    "콩","감자","고구마","옥수수","보리","밀","팥","녹두","강낭콩","조","수수","기장","동부","작두콩","귀리","아마란스","퀴노아",
+    "사과","배","포도","감귤","복숭아","매실","자두","무화과","살구","블루베리","다래","감","밤","대추","아로니아","체리","망고","용과","모과","앵두","패션푸룻","헤이즐럿","헤이즐넛","호두","피칸","아몬드",
+    "고추","파","마늘","배추","양파","호박","무","상추","시금치","부추","열무","당근","파프리카","수박","딸기","오이","토마토","참외","멜론","양배추","쑥갓","가지","갓","곤드레","곰취","근대","냉이","더덕","도라지","동아","머위","미나리","브로콜리","비름","산마늘","샐러리","생강","순무","아스파라가스","아욱","애호박","여주","오크라","우엉","울외","쥬키니호박","참나물","청경채","치커리","케일","콜라비","파슬리","피망","흑종호박",
+    "들깨","참깨","땅콩","오미자","복분자","유채","산수유","담배","구기자","하수오","초피","황기","지황","맥문동","천궁","감초","시호","모란","황금","고본","택사","회향","개똥쑥","갯기름","도라지","둥굴레","면화","배초향","백수오","사탕무","삽주","양마","오갈피","당귀","초석잠"
+  ],
+
+  async init(){
+    const dl = document.createElement('datalist');
+    dl.id = 'stdCrops';
+    const sortedStdCrops = [...this.STD_CROPS].sort((a, b) => a.localeCompare(b, 'ko'));
+    dl.innerHTML = sortedStdCrops.map(c => `<option value="${c}"></option>`).join('');
+    document.body.appendChild(dl);
+
+    const q=new URLSearchParams(location.search);
+    this._external = q.get('embed')==='1' || window.self!==window.top || q.has('crop') || q.has('cropId');
+    if(q.get('embed')==='1' || (window.self!==window.top && q.has('crop'))) document.body.classList.add('embed');
+
+    await Owned.load();
+    await this.loadStdOverrides();
+    this._crops = await this.loadCrops();
+    this.renderCrops();
+    AppBus.on('reference:request', d=>this.openFromName(d));
+
+    if(q.get('cropId')){ const c=this._crops.find(x=>x.id===q.get('cropId')); if(c) this.setActive(c); }
+    else if(q.get('crop')){ this.selectByName(q.get('crop'), q.get('psis')); }
+  },
+
+  isFruit(name, category){
+    const cat=(category||'').toLowerCase(), nm=(name||'').toLowerCase();
+    if(cat.includes('유실수')||cat.includes('과수')) return true;
+    if(cat.includes('채소')||cat.includes('작물')) return false; 
+    const exactFruits = ['감', '배', '밤'];
+    if(exactFruits.some(k => nm === k || (nm.endsWith(k) && !nm.includes('감자') && !nm.includes('양배추')))) return true;
+    return CONFIG.fruitKeywords.some(k => !exactFruits.includes(k) && nm.includes(String(k).toLowerCase()));
+  },
+
+  _stdOverrides: {},
+  async loadStdOverrides(){
+    try{
+      const rows = await DB.list('cropNameOverrides');
+      this._stdOverrides = {};
+      (rows||[]).forEach(r => { if(r.name && r.stdName) this._stdOverrides[r.name] = { stdName:r.stdName, id:r.id }; });
+    }catch(e){ this._stdOverrides = {}; }
+  },
+  async setStdOverride(name, stdName){
+    const cur = this._stdOverrides[name];
+    if(cur && cur.id){
+      await DB.update('cropNameOverrides', cur.id, { stdName });
+      this._stdOverrides[name].stdName = stdName;
+    }else{
+      const id = await DB.add('cropNameOverrides', { name, stdName, createdAt:Date.now() });
+      this._stdOverrides[name] = { stdName, id };
+    }
+  },
+
+  getStandardName(name) {
+    if(!name) return '';
+    if(this._stdOverrides && this._stdOverrides[name]) return this._stdOverrides[name].stdName;
+    const customMap = { '선비잡이콩': '콩', '머루콩': '콩', '하나가리': '콩', '단감': '감', '참다래': '참다래(키위)', '키위': '참다래(키위)', '방울토마토': '토마토' };
+    if(customMap[name]) return customMap[name];
+    let best = null, bestEnd = -1, bestLen = 0;
+    for(const std of this.STD_CROPS){
+      const idx = name.lastIndexOf(std);
+      if(idx < 0) continue;
+      const end = idx + std.length;
+      if(end > bestEnd || (end === bestEnd && std.length > bestLen)){ best = std; bestEnd = end; bestLen = std.length; }
+    }
+    return best || name;
+  },
+
+  async loadCrops(){
+    const raw = await DB.rawPlants();
+    const seen=new Set(), out=[];
+    for(const p of (raw||[])){
+      if(p.status === 'deleted' || p.status === '고사' || p.status === '수확 완료') continue;
+      const originalName = p.name||p.cropName||''; if(!originalName) continue;
+      if(seen.has(originalName)) continue; seen.add(originalName);
+      const stdName = this.getStandardName(originalName);
+      out.push({
+        id: p.id||originalName, name: originalName,
+        displayName: stdName !== originalName ? `${stdName}(${originalName})` : originalName,
+        category: this.isFruit(stdName, p.category) ? '유실수' : '채소',
+        ncpmsName: stdName, psisName: CONFIG.cropMapToPsis[stdName] || stdName,
+        location: p.location || p.spot || '' 
+      });
+    }
+    return out.sort((a,b)=> (a.category===b.category ? a.displayName.localeCompare(b.displayName,'ko') : (a.category==='유실수'?-1:1)));
+  },
+
+  renderCrops(){
+    const box=document.getElementById('crops');
+    const mw=document.getElementById('cropManualWrap');
+    if(mw) mw.style.display = this._external ? 'none' : 'block';
+    if(!this._crops.length){
+      box.innerHTML = `<div class="state" style="padding:16px">아래에 <b>작물을 추가</b>해 진단을 시작하세요.</div>`;
+      return;
+    }
+    const cat=(icon,key,label)=>{
+      const rows=this._crops.filter(x=>(x.category||'기타')===key);
+      if(!rows.length) return '';
+      return `<div class="cropcat">${icon} ${label} <span class="cnt">(${rows.length}종)</span></div><div class="crops-row">`
+        + rows.map(x=>`<span class="crop-wrap">
+      		<button class="crop ${this.cropObj&&this.cropObj.id===x.id?'on':''}" onclick="App.selectCrop('${x.id}')">${x.displayName}</button>
+      		<button class="crop-pen" title="작물 편집" onclick="event.stopPropagation();App.quickEdit('${x.id}')">✏️</button>
+	</span>`).join('') + `</div>`;
+    };
+    box.innerHTML = cat('🌳','유실수','유실수') + cat('🥬','채소','채소·작물') + cat('🌱','기타','기타');
+  },
+
+  async selectCrop(id){ const c=this._crops.find(x=>x.id===id); if(c) this.setActive(c); },
+  async quickEdit(id){
+    const c = this._crops.find(x=>x.id===id); if(!c) return;
+    const cat = c.category || '';
+    const isFruit = cat.includes('유실수') || cat.includes('과수');
+    const ans = prompt(`[${c.displayName}] 편집\n1 = ${isFruit?'채소로':'유실수로'} 전환\n2 = 표준 작물명 수정\n번호 입력:`, '1');
+    if(ans==='1'){ await CropManager.open(); await CropManager.toggleCategory(id); }
+    else if(ans==='2'){ await CropManager.editStdName(c.name); }
+  },
+
+  selectByName(name, psis){
+    if(!name) return;
+    let c=this._crops.find(x=>x.name===name);
+    if(!c){
+      const stdName = this.getStandardName(name);
+      c={ id:name, name, displayName: stdName!==name ? `${stdName}(${name})` : name,
+          category:this.isFruit(stdName,'')?'유실수':'채소',
+          ncpmsName:stdName, psisName: psis || CONFIG.cropMapToPsis[stdName] || stdName, location:'' };
+    }
+    this.setActive(c);
+  },
+  
+  setActive(c){
+    this.cropObj=c; this.crop=c.ncpmsName||c.name; this.cropPsis=c.psisName||c.name;
+    this.cache={};
+    const pick=document.getElementById('cropPick'); if(pick) pick.style.display='none';
+    const ec=document.getElementById('embedCrop');
+    ec.style.display='flex';
+    const changer = document.body.classList.contains('embed')
+      ? `<span class="chg">관리앱에서 변경</span>`
+      : `<button class="chg-btn" onclick="App.changeCrop()">↺ 작물 변경</button>`;
+    ec.innerHTML=`<span class="tag">${c.category||''}</span> ${c.displayName || c.name} ${changer}`;
+    document.getElementById('tabs').style.display='flex';
+    this.switchTab(this.type, true);
+  },
+  
+  changeCrop(){
+    this.cropObj=null; this.crop=null; this.cropPsis=null; this.cache={};
+    document.getElementById('embedCrop').style.display='none';
+    document.getElementById('tabs').style.display='none';
+    document.getElementById('list').innerHTML='<div class="state">작물을 선택하세요.</div>';
+    const pick=document.getElementById('cropPick'); if(pick) pick.style.display='';
+    this.renderCrops();
+  },
+
+  switchTab(type, force){
+    if(type===this.type && !force){} this.type=type;
+    document.querySelectorAll('.tab').forEach(t=>
+      t.classList.toggle('on', (t.dataset.type==='sick'?'sick':'insect')===type));
+    this.loadList();
+  },
+
+  async loadList(){
+    const key=this.crop+'|'+this.type;
+    const box=document.getElementById('list');
+    box.innerHTML=`<div class="state"><div class="spinner"></div>${this.crop} · ${this.type==='sick'?'병':'해충'} 불러오는 중…</div>`;
+    try{
+      let data = this.cache[key] || (this.cache[key] = await (this.type==='sick' ? NCPMS.listSick(this.crop) : NCPMS.listInsect(this.crop)));
+      const rows=NCPMS.rows(data);
+      if(!rows.length){ box.innerHTML = this.debugView(data); return; }
+      box.innerHTML = `<div class="grid">`+ rows.map((r,i)=>{
+        const nm=NCPMS.name(r)||'(이름미상)', en=NCPMS.nameEn(r);
+        const imgs=NCPMS.images(r); const th=imgs[0];
+        return `<div class="card" onclick="App.openDetail(${i})">
+          <div class="thumb">${ th ? `<img loading="lazy" src="${th}" onerror="App.imgFallback(this,'${encodeURIComponent(th)}')">` : `<div class="ph">사진 준비중</div>`}</div>
+          <div class="body"><div class="nm">${nm}</div>${en?`<div class="en">${en}</div>`:''}</div>
+        </div>`;
+      }).join('') +`</div>`;
+      this._rows=rows;
+    }catch(e){
+      box.innerHTML=`<div class="state">불러오지 못했습니다.<br><small>${e.message}</small></div>`;
+    }
+  },
+
+  debugView(data){
+    return `<div class="hint" style="background:#F7E2DE;border-color:#e6b3a8;color:#7a2f22"><b>‘${this.crop}’ 항목을 찾지 못했습니다.</b></div>`;
+  },
+
+  async webImages(query, btn){
+    const strip=document.getElementById('webstrip');
+    if(btn){ btn.disabled=true; btn.textContent='검색 중…'; }
+    strip.innerHTML=`<div class="empty"><span class="spinner" style="width:18px;height:18px;display:inline-block;vertical-align:middle"></span> 웹 이미지 검색 중…</div>`;
+    try{
+      const qs=new URLSearchParams({ target:'imgsearch', q:query, display:'12' }).toString();
+      const r=await fetch(CONFIG.GAS_URL+'?'+qs); const jr=await r.json();
+      if(!jr.ok) throw new Error(jr.error||'검색 실패');
+      const items=jr.items||[];
+      if(!items.length){ strip.innerHTML=`<div class="empty">검색 결과가 없습니다.</div>`; }
+      else{
+        strip.innerHTML = items.map(it=>
+          `<img loading="lazy" src="${it.thumb}" title="${(it.title||'').replace(/"/g,'')} — 클릭하면 크게"
+             onclick="App.zoom('${it.thumb}')" onerror="this.remove()">`).join('')
+          + `<div class="src">이미지 출처: 웹 검색(네이버) · 참고용이며 저작권은 각 출처에 있습니다.</div>`;
+      }
+      if(btn){ btn.textContent='🔄 다시 검색'; btn.disabled=false; }
+    }catch(e){
+      strip.innerHTML=`<div class="empty" style="color:#C24A3A">${e.message}</div>`;
+      if(btn){ btn.textContent='🔍 웹 이미지 검색'; btn.disabled=false; }
+    }
+  },
+
+  imgFallback(img, encUrl){
+    if(img.dataset.tried) { img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; return; }
+    img.dataset.tried='1';
+    fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl))).then(r=>r.json()).then(d=>{ if(d.ok) img.src=d.dataUri; else img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; });
+  },
+
+  async openDetail(i){
+    const row=this._rows[i];
+    const nm=NCPMS.name(row), en=NCPMS.nameEn(row);
+    const key=NCPMS.key(row, this.type);
+    const sheet=document.getElementById('sheet');
+    document.getElementById('sheetBg').classList.add('on');
+    document.body.style.overflow='hidden';
+    sheet.innerHTML=`<div class="state"><div class="spinner"></div>상세정보 불러오는 중…</div>`;
+
+    let detail=row;
+    try{ if(key) detail = this.type==='sick' ? await NCPMS.detailSick(key) : await NCPMS.detailInsect(key); }catch(e){}
+    const d = detail.service || detail;
+
+    const symptoms = NCPMS.pick(d,['symptoms','damageSympttm']);
+    const prevent  = NCPMS.pick(d,['preventionMethod','preventMethod']);
+    const environ  = NCPMS.pick(d,['developmentCondition','ecology']);
+    const imgs     = NCPMS.images(d).length ? NCPMS.images(d) : NCPMS.images(row);
+    const isPest=this.type==='insect';
+
+    sheet.innerHTML=`
+      <div class="sheet-hd">
+        <span class="tag ${isPest?'pest':''}">${this.crop} · ${isPest?'해충':'병'}</span>
+        <h2>${nm||'-'}</h2>
+        <button class="x" onclick="App.closeSheet()">✕</button>
+      </div>
+      ${en?`<div style="font-size:12px;color:var(--ink-soft);margin:-6px 2px 12px">${en}</div>`:''}
+      <div class="compare">
+        <div class="col">
+          <h3>📷 <b>내 사진</b></h3>
+          <label class="myphoto" id="myphoto">
+            <span>탭하여 촬영<br>또는 선택</span>
+            <input type="file" accept="image/*" capture="environment" hidden onchange="App.setMyPhoto(this)">
+          </label>
+        </div>
+        <div class="col">
+          <h3>🔍 <b>참조</b></h3>
+          <div class="refmain">${ imgs.length ? `<img loading="lazy" src="${imgs[0]}" onclick="App.zoom(this.src)">` : `<div class="ph2">참조사진 없음</div>` }</div>
+        </div>
+      </div>
+
+      <div class="info webbox">
+        <h4>웹에서 증상 사진 더 찾기 <span class="unoff">비공식 · 참고용</span></h4>
+        <p style="font-size:12px;color:var(--ink-soft);margin:0 0 12px">
+          NCPMS 사진이 없거나 부족할 때만 참고하세요. 웹 이미지는 출처가 검증되지 않아
+          <b>실제 병해충과 다를 수 있습니다.</b></p>
+        <button class="webbtn" onclick="App.webImages('${(this.crop+' '+(nm||'')).replace(/'/g,'')}', this)">
+          🔍 ‘${this.crop} ${nm}’ 웹 이미지 검색</button>
+        <div class="webstrip" id="webstrip"></div>
+      </div>
+
+      ${symptoms?`<div class="info"><h4>증상</h4><p>${symptoms}</p></div>`:''}
+      ${environ?`<div class="info"><h4>발생 환경</h4><p>${environ}</p></div>`:''}
+      ${prevent?`<div class="info"><h4>방제 요령</h4><p>${prevent}</p></div>`:''}
+      <div class="handoff">
+        <button class="btn-rx" onclick="App.prescribe('${(nm||'').replace(/'/g,'')}','${this.type}')">
+          💊 이 ${isPest?'해충':'병'}으로 <b style="margin:0 4px">등록 농약</b> 찾기
+        </button>
+      </div>`;
+  },
+  setMyPhoto(input){
+    const f=input.files[0]; if(!f) return;
+    document.getElementById('myphoto').innerHTML=`<img src="${URL.createObjectURL(f)}">`;
+  },
+  zoom(src){ document.getElementById('lbImg').src=src; document.getElementById('lb').classList.add('on'); },
+  closeSheet(){ document.getElementById('sheetBg').classList.remove('on'); document.body.style.overflow=''; },
+  prescribe(name, type){ AppBus.emit('prescription:request', { cropName:this.crop, cropPsis:this.cropPsis, cropId:this.cropObj&&this.cropObj.id, name, type }); },
+  async openFromName({cropId, cropName, name}){
+    if(!this.cropObj || (cropId? this.cropObj.id!==cropId : this.crop!==cropName)){
+      const c = cropId ? this._crops.find(x=>x.id===cropId) : this._crops.find(x=>x.name===cropName);
+      if(c) await this.selectCrop(c.id);
+    }
+    let idx = (this._rows||[]).findIndex(r=>NCPMS.name(r)===name);
+    if(idx>=0) this.openDetail(idx);
+  }
+};
+
+const Rx = {
+  init(){ AppBus.on('prescription:request', d=>this.search(d)); },
+  psisCrop(c){ return CONFIG.cropMapToPsis[c] || c; },
+
+  async search({cropName, cropPsis, cropId, name, type}){
+    this._hctx = { cropName, cropPsis:cropPsis||cropName, cropId, name, type };
+    const bg=document.getElementById('rxBg'), box=document.getElementById('rx');
+    bg.classList.add('on'); document.body.style.overflow='hidden';
+    box.innerHTML=`<div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div><div class="state"><div class="spinner"></div>PSIS 조회 중…</div>`;
+    try{
+      const qs=new URLSearchParams({ crops: cropPsis || this.psisCrop(cropName), diseases: name }).toString();
+      const r=await fetch(CONFIG.GAS_URL+'?'+qs);
+      const jr=await r.json();
+      let list = Array.isArray(jr) ? jr : (jr.items || jr.data || jr.list || jr.rows || NCPMS.rows(jr));
+      this.render(cropName, name, Array.isArray(list)?list:[]);
+    }catch(e){ box.innerHTML=`<div class="state">조회 실패<br><small>${e.message}</small></div>`; }
+  },
+  render(cropName, name, rows){
+    const box=document.getElementById('rx');
+    this._items = rows;
+    const cardHtml=(r,i)=>{
+      const brand = NCPMS.pick(r,['pestiBrandName','상표명'])||'';
+      const komp = NCPMS.pick(r,['pestiKorName','품목명']);
+      const comp = NCPMS.pick(r,['compName','회사명']);
+      const use  = NCPMS.pick(r,['useName','용도'])||'';
+      const own  = Owned.has(brand);
+      return `<div class="pesti ${own?'owned':''}">
+        <div class="top"><span class="brand">${brand||'-'}</span>
+          ${own?`<span class="own-badge">보유</span>`:`<span class="buy-badge">구입필요</span>`}
+          ${use?`<span class="use">${use}</span>`:''}</div>
+        <div class="meta">${komp?komp+' · ':''}${comp||''}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="back prim" onclick="Plan.open(${i})">📅 방제계획</button>
+        </div>
+      </div>`;
+    };
+    box.innerHTML=`<div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
+      <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 등록 약제 ${rows.length}건</p>
+      ${rows.length ? rows.map((r,i)=>cardHtml(r,i)).join('') : '<div class="state">등록된 약제를 찾지 못했습니다.</div>'}`;
+  },
+  close(){ document.getElementById('rxBg').classList.remove('on'); document.body.style.overflow=''; }
+};
+
+const Plan = {
+  open(i){
+    const item = Rx._items[i]; if(!item) return;
+    const h = Rx._hctx || {};
+    const P=(k)=>NCPMS.pick(item,k);
+    this.ctx = {
+      cropId:h.cropId||null, cropName:h.cropName||App.crop, disease:h.name, type:h.type,
+      brand:P(['pestiBrandName','상표명'])||P(['pestiKorName','품목명']),
+      pestiCode:P(['pestiCode']), dilut:P(['dilutUnit']), suit:P(['useSuittime']),
+      useName:P(['useName']), num:Math.min(5, parseInt((P(['useNum'])||'1').replace(/[^0-9]/g,''))||1), mode:null
+    };
+    this.renderChoice();
+  },
+  modal(html){ document.getElementById('planBox').innerHTML=html; document.getElementById('planBg').classList.add('on'); document.body.style.overflow='hidden'; },
+  close(){ document.getElementById('planBg').classList.remove('on'); document.body.style.overflow=''; },
+  _iso(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; },
+  _addDays(d,n){ return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n); },
+
+  renderChoice(){
+    this.modal(`
+      <div class="rx-hd"><h2>📅 방제 계획</h2><button class="x" onclick="Plan.close()">✕</button></div>
+      <button class="choice" onclick="Plan.choose('예방')"><b>🛡 예방 살포</b><span>격주 주말마다 정기 살포.</span></button>
+      <button class="choice" onclick="Plan.choose('방제')"><b>🎯 발생 후 방제</b><span>이미 증상 있음. 촘촘히 집중.</span></button>`);
+  },
+  choose(mode){ this.ctx.mode=mode; this.buildSchedule(); this.renderSchedule(); },
+  buildSchedule(){
+    const c=this.ctx; c.entries=[];
+    c.num = Math.min(c.num || 1, 5);
+    let d = new Date();
+    for(let k=0;k<c.num;k++){ c.entries.push({date:this._iso(this._addDays(d, k*7)), done:false}); }
+  },
+  renderSchedule(){
+    const c=this.ctx;
+    const rows=c.entries.map((e,idx)=>`<label class="spray"><input type="checkbox" ${e.done?'checked':''} onchange="Plan.toggle(${idx})"><span><b>${idx+1}차</b> ${e.date}</span></label>`).join('');
+    this.modal(`
+      <div class="rx-hd"><h2>📅 ${c.mode} 스케줄</h2><button class="x" onclick="Plan.close()">✕</button></div>
+      <div class="info"><h4>살포 계획 (${c.num}회)</h4>${rows}</div>
+      <button class="btn-rx" onclick="Plan.save()">이 계획 저장</button>`);
+  },
+  toggle(idx){ this.ctx.entries[idx].done=!this.ctx.entries[idx].done; },
+
+  async save(){
+    const c=this.ctx;
+    const dxId = await DB.add('diagnoses', { cropId:c.cropId, cropName:c.cropName, type:c.type, name:c.disease, status:'처방완료', diagnosedAt:Date.now() });
+    const planId = await DB.add('sprayPlan', { diagnosisId:dxId, cropId:c.cropId, cropName:c.cropName, disease:c.disease, brandName:c.brand, entries:c.entries, createdAt:Date.now() });
+
+    for (let i = 0; i < c.entries.length; i++) {
+      const entry = c.entries[i];
+      await DB.add('tasks', {
+         title: `[${c.mode}] ${c.cropName} ${c.disease} 방제 ${i+1}차 (${c.brand})`,
+         date: entry.date, done: false, category: '방제',
+         cropName: c.cropName, brandName: c.brand, linkedPlanId: planId, entryIndex: i, createdAt: Date.now()
+      });
+    }
+    this.close();
+    Toast.show('방제 계획과 할일 목록에 성공적으로 저장했습니다.');
+  },
+
+  async review(){
+    const plans = await DB.list('sprayPlan');
+    const body = plans.length ? plans.slice().reverse().map(p=>{
+      return `<div class="info"><h4>${p.cropName} · ${p.disease}</h4></div>`;
+    }).join('') : `<div class="state">저장된 방제 계획이 없습니다.</div>`;
+    this.modal(`<div class="rx-hd"><h2>📋 방제 계획 · 실행 체크</h2><button class="x" onclick="Plan.close()">✕</button></div>${body}`);
+  }
+};
+
+const CropManager = {
+  plants: [],
+  async addCrop() {
+    const el = document.getElementById('cropInput');
+    const v = (el.value || '').trim();
+    if(!v) return;
+    const stdName = App.getStandardName(v);
+    const newCrop = { name: v, category: App.isFruit(stdName, '') ? '유실수' : '채소', status: '재배 중', createdAt: Date.now() };
+    await DB.add(CONFIG.plantsCollection, newCrop);
+    el.value = '';
+    Toast.show(`'${v}' 작물이 새로 등록되었습니다.`);
+    App._crops = await App.loadCrops();
+    App.renderCrops();
+    App.selectByName(v);
+  },
+  async open() {
+    this.plants = await DB.rawPlants();
+    this.render();
+  },
+  async setStatus(id, status) {
+    await DB.update(CONFIG.plantsCollection, id, {status});
+    App._crops = await App.loadCrops();
+    App.renderCrops();
+  },
+  async toggleCategory(id) {
+    const p = this.plants.find(x => x.id === id); if(!p) return;
+    const newCat = (p.category||'').includes('유실수') ? '채소' : '유실수';
+    await DB.update(CONFIG.plantsCollection, id, { category: newCat });
+    App._crops = await App.loadCrops();
+    App.renderCrops();
+    this.render();
+  },
+  render() {
+    const box = document.getElementById('planBox');
+    document.getElementById('planBg').classList.add('on');
+    const rows = (this.plants||[]).map(p => `
+       <div class="info" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; margin-bottom:8px;">
+          <div><b>${p.name}</b> <span style="font-size:11px">${p.category||''}</span></div>
+          <select onchange="CropManager.setStatus('${p.id}', this.value)" style="padding:6px; border-radius:8px;">
+            <option value="재배 중" ${p.status!=='수확 완료'&&p.status!=='고사'?'selected':''}>🌱 재배 중</option>
+            <option value="수확 완료" ${p.status==='수확 완료'?'selected':''}>🧺 수확 완료</option>
+            <option value="고사" ${p.status==='고사'?'selected':''}>🥀 고사</option>
+          </select>
+       </div>`).join('');
+    box.innerHTML = `<div class="rx-hd"><h2>🌱 작물 상태 관리</h2><button class="x" onclick="Plan.close()">✕</button></div>${rows || '<div class="state">등록된 작물이 없습니다.</div>'}`;
+  }
+};
+
+const Toast = {
+  show(msg){
+    let t=document.getElementById('toast');
+    if(!t){ t=document.createElement('div'); t.id='toast'; document.body.appendChild(t); }
+    t.textContent=msg; t.className='show';
+    setTimeout(()=>{ t.className=''; },2800);
+  }
+};
+
+App.init();
+Rx.init();
+</script>
+</body>
+</html>

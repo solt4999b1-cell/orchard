@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>🌱 내 농약장 관리 (Google Sheets)</title>
+  <link rel="apple-touch-icon" sizes="180x180" href="icon4-180.png">
+  <link rel="shortcut icon" href="icon4-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon4-192.png">
+  <link rel="icon" type="image/jpeg" sizes="512x512" href="icon4-512.jpg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --green-dark: #2E7D32;
+      --green-mid: #388E3C;
+      --green-light: #E8F5E9;
+      --blue-dark: #1565C0;
+      --blue-light: #E3F2FD;
+      --gray-50: #FAFAFA;
+      --gray-100: #F5F5F5;
+      --gray-200: #EEEEEE;
+      --gray-300: #E0E0E0;
+      --gray-600: #757575;
+      --gray-700: #616161;
+      --gray-900: #212121;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Noto Sans KR', sans-serif; background: var(--gray-50); color: var(--gray-900); line-height: 1.5; }
+    .app-container { max-width: 900px; margin: 0 auto; padding: 4px; padding-bottom: 40px; }
+    .app-header { background: linear-gradient(135deg, var(--green-dark) 0%, var(--green-mid) 100%); color: #fff; padding: 12px; border-radius: 8px; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1); }
+    .app-header h1 { font-size: 18px; margin-bottom: 2px; }
+    .sync-status { display: flex; align-items: center; gap: 6px; font-size: 10px; margin-top: 4px; padding: 6px 10px; background: rgba(255, 255, 255, 0.3); border-radius: 6px; width: fit-content; font-weight: 600; border: 1px solid rgba(255, 255, 255, 0.2); }
+    .sync-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #90EE90; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    
+    /* 통계 그리드 스타일 조정 (보유농약 칸과 분류별 요약 칸 배치) */
+    .stat-grid { display: grid; grid-template-columns: 90px 1fr; gap: 6px; margin-top: 6px; }
+    .stat-box { background: rgba(255, 255, 255, 0.2); padding: 6px; border-radius: 4px; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .stat-number { font-size: 16px; font-weight: 700; }
+    .stat-label { font-size: 8px; opacity: 0.9; margin-top: 1px; }
+    
+    /* 분류별 상세 개수 표시 박스 스타일 */
+    .stat-detail-box { background: rgba(255, 255, 255, 0.2); padding: 6px 10px; border-radius: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; font-size: 11px; font-weight: 600; }
+    .stat-detail-item { background: rgba(0, 0, 0, 0.15); padding: 2px 6px; border-radius: 3px; white-space: nowrap; }
+
+    .btn { padding: 6px 12px; background: var(--green-dark); color: #fff; border: none; border-radius: 4px; font-weight: 600; cursor: pointer; font-size: 12px; }
+    .btn:hover { background: #1B5E20; }
+    .results-section { margin-bottom: 4px; }
+    .section-title { font-size: 12px; font-weight: 600; padding: 4px 0 4px 8px; color: var(--gray-600); border-left: 2px solid var(--green-dark); margin-bottom: 4px; }
+    .pesticide-card { background: #fff; border: 1px solid var(--gray-200); border-radius: 8px; padding: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.2s; }
+    .pesticide-card:hover { background: var(--green-light); border-color: var(--green-dark); transform: translateY(-1px); }
+    .pesticide-name:hover { color: var(--green-dark); text-decoration: underline; }
+    .pesticide-info { flex: 1; }
+    .pesticide-name { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .pesticide-meta { font-size: 11px; color: var(--gray-600); }
+    .source-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 3px; margin-top: 4px; font-weight: 600; background: #E8F5E9; color: #2E7D32; }
+    .pesticide-actions { display: flex; gap: 6px; }
+    .btn-small { padding: 6px 10px; font-size: 11px; background: var(--gray-200); color: var(--gray-700); border: none; border-radius: 4px; cursor: pointer; }
+    .category-tabs { display: flex; gap: 4px; overflow-x: auto; padding: 6px 0; margin-bottom: 8px; }
+    .category-tab { padding: 6px 10px; border: 1.5px solid #ddd; background: white; color: #666; border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; white-space: nowrap; }
+    .category-tab.active { background: var(--green-dark); color: white; border-color: var(--green-dark); }
+    .modal-bg { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.5); z-index: 1000; justify-content: center; align-items: center; padding-top: 40px; }
+    .modal-bg.active { display: flex; }
+    .modal { background: #fff; width: 100%; max-width: 500px; max-height: 85vh; overflow-y: auto; border-radius: 12px; padding: 24px; box-shadow: 0 5px 40px rgba(0, 0, 0, 0.16); }
+    .modal-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+    .form-group { margin-bottom: 6px; }
+    .form-label { font-size: 11px; font-weight: 600; color: var(--gray-600); display: block; margin-bottom: 2px; }
+    .form-input, .form-select { width: 100%; padding: 6px; border: 1px solid var(--gray-300); border-radius: 4px; font-size: 11px; font-family: inherit; }
+    .form-input:disabled, .form-select:disabled { background-color: var(--gray-100); color: var(--gray-700); cursor: not-allowed; opacity: 0.8; }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .form-btns { display: flex; gap: 4px; margin-top: 8px; }
+    .form-btns .btn { flex: 1; }
+    .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--gray-800); color: #fff; padding: 12px 20px; border-radius: 8px; font-size: 12px; z-index: 2000; }
+    .loading { text-align: center; padding: 10px; color: var(--gray-600); font-size: 11px; display: none; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- 헤더 -->
+  <div class="header-wrap" style="display: flex; justify-content: space-between; align-items: center; gap: 10px; position: relative;">
+    <div class="header-text" style="flex: 1;">
+        <h1 style="margin-top: 0; margin-bottom: 4px; font-size: 20px;">🌱 내 농약장 관리</h1>
+        <h5 style="margin: 0; color: #666; font-size: 11px;">제작: 이용호 &nbsp; Copyright 2026.07.22. All Right Reserved</h5>
+    </div>
+    <div class="header-image" style="flex-shrink: 0;">
+         <a href="https://solt4999b1-cell.github.io/orchard/index5.html" target="_blank" style="display: block;">
+             <img src="./2cp8g.png" alt="QR코드" style="width: 100px; height: 100px; border: 1px solid #ddd; border-radius: 4px; display: block;">
+         </a>
+     </div>
+  </div>  
+
+  <div class="app-header">
+    <!-- 🟩 Google Sheets (OrchardData) 공동 저장소 모드
+    <div class="sync-status" id="sync-status">
+      <span class="sync-indicator" id="sync-indicator"></span>
+      <span id="sync-text">🔄 로드중...</span>
+      <button onclick="loadDataFromGoogleSheets()" style="background: #1976D2; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 9px; cursor: pointer; margin-left: 6px;">🔄 새로고침</button>
+    </div>  -->
+
+    <!-- 수정된 통계 패널: 보유농약 칸 유지 + 전체 칸 대신 분류별 갯수 요약 칸 배치 -->
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-number" id="stat-sheets">0</div>
+        <div class="stat-label">보유농약</div>
+      </div>
+      <div class="stat-detail-box" id="stat-category-details">
+        <span>분류별 갯수 집계 중...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 새 농약 등록 버튼 -->
+  <div class="results-section">
+    <div class="section-title">➕ 새 농약 등록</div>
+    <button class="btn" onclick="openRegisterModal()" style="margin-bottom: 12px;">+ 새 농약 등록</button>
+  </div>
+
+  <!-- 데이터 목록 섹션 -->
+  <div class="results-section" id="sheets-section">
+    <div class="section-title">🟩 내 보유 농약 (<span id="sheets-count">0</span>개)</div>
+    
+    <div class="category-tabs" id="category-tabs">
+      <button class="category-tab active" data-category="all" onclick="filterByCategory('all')">전체</button>
+      <button class="category-tab" data-category="살균" onclick="filterByCategory('살균')">살균</button>
+      <button class="category-tab" data-category="살충" onclick="filterByCategory('살충')">살충</button>
+      <button class="category-tab" data-category="제초" onclick="filterByCategory('제초')">제초</button>
+      <button class="category-tab" data-category="균충" onclick="filterByCategory('균충')">균충(살균살충)</button>
+      <button class="category-tab" data-category="충초" onclick="filterByCategory('충초')">충초(살충제초)</button>
+      <button class="category-tab" data-category="생조" onclick="filterByCategory('생조')">생조(생장조절)</button>
+      <button class="category-tab" data-category="기타" onclick="filterByCategory('기타')">기타</button>
+    </div>
+    
+    <div id="sheets-list">
+      <div style="text-align: center; padding: 20px; color: #999;">
+        <p>⏳ 데이터를 불러오는 중입니다...</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 농약 등록 모달 -->
+<div class="modal-bg" id="register-modal">
+  <div class="modal">
+    <div class="modal-title" id="modal-title">🧪 새 농약 등록</div>
+    
+    <div class="form-group">
+      <label class="form-label">제품명 *</label>
+      <input type="text" id="form-name" class="form-input" placeholder="농약명 입력...">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">분류 *</label>
+        <select id="form-type" class="form-select">
+          <option value="">선택</option>
+          <option value="살균">살균</option>
+          <option value="살충">살충</option>
+          <option value="제초">제초</option>
+          <option value="균충">균충(살균살충)</option>
+          <option value="충초">충초(살충제초)</option>
+          <option value="생조">생조(생장조정제)</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">수량 *</label>
+        <input type="number" id="form-quantity" class="form-input" placeholder="수량" value="1" min="1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">단위</label>
+      <select id="form-unit" class="form-select">
+        <option value="개">개</option>
+        <option value="병">병</option>
+        <option value="통">통</option>
+        <option value="봉">봉</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">성분</label>
+      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">제조사</label>
+      <input type="text" id="form-manufacturer" class="form-input" placeholder="제조사명">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea id="form-memo" class="form-input" placeholder="구매 날짜, 보관 위치 등..." style="min-height: 80px;"></textarea>
+    </div>
+
+    <div class="form-btns">
+      <button class="btn" id="save-btn" onclick="savePesticide()">저장</button>
+      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검색</button>
+      <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
+    </div>
+
+    <div class="loading" id="modal-loading">⏳ PSIS 및 독성 정보(svc02) 검색 중...</div>
+
+    <!-- PSIS 검색 결과 컨테이너 -->
+    <div id="psis-results-container" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-300);">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--gray-600);">
+        🔍 PSIS 검색 결과 (회사명 선택)
+      </div>
+      <div id="psis-results" style="max-height: 180px; overflow-y: auto;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════
+// 설정 및 전역 변수
+// ════════════════════════════════════════════════════════════════
+
+// ⭐ Google Sheets API 설정 (CORS 완벽 지원 - 읽기용)
+const SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
+const SHEET_API_NAME = 'myPesticides';
+const API_KEY = 'AIzaSyAKjQRRjXwmblrZPqv8DxNfo15E2B58kKA';  // ← API 키는 필요시 교체
+const SHEETS_API_URL = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${SHEET_API_NAME}!A:Z?key=${API_KEY}`;
+
+// 쓰기/수정/삭제용 GAS URL
+const GAS_URL_SHEETS = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+const CURRENT_SHEET_NAME = 'myPesticides';
+const CONFIG_GAS_URL = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+
+let sheetsData = [];
+let editingId = null;
+let currentCategory = 'all';
+let isViewMode = false;
+let psisResultsCache = null;
+
+function normalizeType(typeValue) {
+  if (!typeValue) return '';
+  const normalized = typeValue.trim();
+  const mapping = {
+    '살균제': '살균', '살충제': '살충', '제초제': '제초', '균충제': '균충', '충초제': '충초', '생조제': '생조',
+    '살균': '살균', '살충': '살충', '제초': '제초', '균충': '균충', '충초': '충초', '생조': '생조', '기타': '기타'
+  };
+  return mapping[normalized] || normalized;
+}
+
+// 1. 구글 시트 데이터 로드 (Read) - Google Sheets API 사용
+async function loadDataFromGoogleSheets() {
+  try {
+    updateSyncText('🔄 구글 시트 동기화 중...');
+    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
+    
+    // mode: 'cors' 명시 및 헤더 추가
+    const response = await fetch(url, {
+      method: 'GET',
+      mode: 'cors'
+    });
+    
+    const result = await response.json();
+
+    if (!result.success) {
+      throw new Error(result.message || '데이터 로드 실패');
+    }
+
+    sheetsData = result.data || [];
+    renderSheetsList();
+    updateStats();
+    updateSyncText('✅ 동기화 완료');
+  } catch (err) {
+    console.error('❌ 로드 에러:', err);
+    updateSyncText('❌ 동기화 실패');
+  }
+}
+
+// 2. 저장 및 수정 (Create & Update)
+async function savePesticide() {
+  if (isViewMode) {
+    enableEditMode();
+    return;
+  }
+
+  const name = document.getElementById('form-name').value.trim();
+  const type = document.getElementById('form-type').value.trim();
+  const quantity = document.getElementById('form-quantity').value;
+  const unit = document.getElementById('form-unit').value;
+  const ingredient = document.getElementById('form-ingredient').value.trim();
+  const manufacturer = document.getElementById('form-manufacturer').value.trim();
+  const memo = document.getElementById('form-memo').value.trim();
+
+  if (!name || !type) {
+    alert('제품명과 분류는 필수 입력 항목입니다.');
+    return;
+  }
+
+  const payload = {
+    action: editingId ? 'update' : 'create',
+    sheetName: CURRENT_SHEET_NAME,
+    id: editingId || '',
+    name: name,
+    type: type,
+    quantity: quantity,
+    unit: unit,
+    ingredient: ingredient,
+    manufacturer: manufacturer,
+    memo: memo,
+    registeredAt: new Date().toISOString()
+  };
+
+  try {
+    updateSyncText('⏳ 저장 중...');
+    const params = new URLSearchParams();
+    for (const key in payload) {
+      params.append(key, payload[key]);
+    }
+
+    const response = await fetch(GAS_URL_SHEETS, {
+      method: 'POST',
+      body: params
+    });
+    
+    const result = await response.json();
+
+    if (result.success) {
+      showToast(editingId ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
+      closeRegisterModal();
+      loadDataFromGoogleSheets();
+    } else {
+      throw new Error(result.message || '저장 실패');
+    }
+  } catch (err) {
+    console.error('❌ 저장 에러:', err);
+    alert('저장 중 오류가 발생했습니다: ' + err.message);
+    updateSyncText('❌ 저장 실패');
+  }
+}
+
+// 3. 삭제 (Delete)
+async function deletePesticide(id) {
+  if (!confirm('정말 삭제하시겠습니까?')) return;
+
+  try {
+    updateSyncText('🗑️ 삭제 중...');
+    const params = new URLSearchParams();
+    params.append('action', 'delete');
+    params.append('sheetName', CURRENT_SHEET_NAME);
+    params.append('id', id);
+
+    const response = await fetch(GAS_URL_SHEETS, {
+      method: 'POST',
+      body: params
+    });
+    
+    const result = await response.json();
+
+    if (result.success) {
+      showToast('✅ 삭제되었습니다.');
+      loadDataFromGoogleSheets();
+    } else {
+      throw new Error(result.message || '삭제 실패');
+    }
+  } catch (err) {
+    console.error('❌ 삭제 에러:', err);
+    alert('삭제 실패: ' + err.message);
+    updateSyncText('❌ 삭제 실패');
+  }
+}
+
+// 6. 희석배수 20L 기준 환산 및 메모 생성 함수
+function buildCropMemo(cropDetails, toxicInfo) {
+  const toxicGubun = toxicInfo?.toxicGubun || toxicInfo?.toxicGrade || '-';
+  const toxicName = toxicInfo?.toxicName || toxicInfo?.toxicClassName || '-';
+  const fishToxic = toxicInfo?.fishToxic || toxicInfo?.fishToxicGubun || toxicInfo?.fishGrade || '-';
+  
+  const result = cropDetails.map(crop => {
+    const cName = crop.cropName || '-';
+    const dName = crop.diseaseWeedName || '-';
+    const pUse = crop.pestiUse || '-';
+    let dUnit = crop.dilutUnit || '-';
+    const uSuit = crop.useSuittime || crop.harvestGracePeriod || crop.safetyLine || '-';
+    const uNum = crop.useNum || crop.maxUseCount || '-';
+    
+    if (dUnit) {
+      const aMatch = dUnit.match(/(?:10a|1,000㎡|1000㎡)당\s*([\d\.]+)\s*(g|kg|ml|L)/i);
+      if (aMatch) {
+        let val = parseFloat(aMatch[1]);
+        let unitStr = aMatch[2].toLowerCase();
+        if (unitStr === 'kg') { val *= 1000; unitStr = 'g'; }
+        if (unitStr === 'l') { val *= 1000; unitStr = 'ml'; }
+        const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
+        dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
+      } else if (dUnit.includes('배')) {
+        const match = dUnit.match(/(\d+)배/);
+        if (match) {
+          const times = parseInt(match[1]);
+          const mlFor20L = (20000 / times).toFixed(1).replace(/\.0$/, '');
+          dUnit = `${dUnit} (20L당 ${mlFor20L}ml)`;
+        }
+      } else {
+        const numMatch = dUnit.match(/([\d\.]+)\s*(g|ml)/i);
+        if (numMatch && !dUnit.includes('20L')) {
+          const val = parseFloat(numMatch[1]);
+          const unitStr = numMatch[2].toLowerCase();
+          const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
+          dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
+        }
+      }
+    }
+    
+    return `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
+  }).join(' / ');
+  
+  return result;
+}
+
+// 4. PSIS 및 svc02 통합 검색 기능
+async function searchPsisFromModal() {
+  const keyword = document.getElementById('form-name').value.trim();
+  if (!keyword) {
+    alert('농약명을 먼저 입력해주세요.');
+    return;
+  }
+
+  const loadingEl = document.getElementById('modal-loading');
+  const container = document.getElementById('psis-results-container');
+  const resultsList = document.getElementById('psis-results');
+
+  loadingEl.style.display = 'block';
+  container.style.display = 'none';
+
+  try {
+    const urlSvc01 = `${CONFIG_GAS_URL}?target=psis&keyword=${encodeURIComponent(keyword)}&searchType=brand&displayCount=50&startPoint=1`;
+    const resSvc01 = await fetch(urlSvc01);
+    const gasData = await resSvc01.json();
+
+    let serviceList = [];
+    if (gasData.service) serviceList = gasData.service;
+    else if (gasData.data && gasData.data.service) serviceList = gasData.data.service;
+    else if (Array.isArray(gasData)) serviceList = gasData;
+
+    if (serviceList.length === 0) {
+      loadingEl.style.display = 'none';
+      container.style.display = 'block';
+      resultsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #666; font-size: 11px;">검색 결과가 없습니다.</div>';
+      return;
+    }
+
+    let toxicInfo = { toxicGubun: '-', toxicName: '-', fishToxic: '-' };
+    const firstItem = serviceList[0];
+    const pestiCode = firstItem.pestiCode || firstItem.code || '';
+
+    if (pestiCode) {
+      try {
+        const urlSvc02 = `${CONFIG_GAS_URL}?target=psis_toxic&pestiCode=${pestiCode}`;
+        const resSvc02 = await fetch(urlSvc02);
+        const toxicData = await resSvc02.json();
+        if (toxicData && toxicData.success && toxicData.data) {
+          toxicInfo = toxicData.data;
+        } else if (toxicData) {
+          toxicInfo = toxicData;
+        }
+      } catch (toxicErr) {
+        console.warn('⚠️ svc02 독성 정보 로드 실패:', toxicErr);
+      }
+    }
+
+    loadingEl.style.display = 'none';
+
+    const combinationMap = new Map();
+    serviceList.forEach(item => {
+      const gubun = item.cmpaItmNm || '미분류';
+      const usage = item.useName || '기타';
+      const compName = item.compName || item.manufacturer || '미분류';
+      const ingredient = item.pestiKorName || item.ingredientName || '품목명 없음';
+      const key = `${gubun}|${usage}|${compName}|${ingredient}`;
+
+      if (!combinationMap.has(key)) {
+        combinationMap.set(key, { gubun, usage, company: compName, ingredient, cropDetails: [] });
+      }
+
+      const data = combinationMap.get(key);
+      const cropDetail = {
+        cropName: item.cropName || '-',
+        diseaseWeedName: item.diseaseWeedName || '-',
+        pestiUse: item.pestiUse || '-',
+        dilutUnit: item.dilutUnit || '-',
+        useSuittime: item.useSuittime || item.harvestGracePeriod || item.safetyLine || '-',
+        useNum: item.useNum || item.maxUseCount || '-'
+      };
+
+      if (!data.cropDetails.find(c => c.cropName === cropDetail.cropName && c.diseaseWeedName === cropDetail.diseaseWeedName)) {
+        data.cropDetails.push(cropDetail);
+      }
+    });
+
+    psisResultsCache = Array.from(combinationMap.values()).map(item => {
+      const cropMemo = buildCropMemo(item.cropDetails, toxicInfo);
+      return { ...item, cropMemo };
+    });
+
+    container.style.display = 'block';
+    resultsList.innerHTML = psisResultsCache.map((item, idx) => `
+      <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
+        <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
+        <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
+        <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
+      </div>
+    `).join('');
+
+  } catch (err) {
+    loadingEl.style.display = 'none';
+    console.error('PSIS 및 독성 검색 실패:', err);
+    alert('PSIS 검색 중 오류가 발생했습니다.');
+  }
+}
+
+function selectPsisCompany(idx) {
+  const item = psisResultsCache[idx];
+  if (!item) return;
+
+  document.getElementById('form-manufacturer').value = item.company || '';
+  document.getElementById('form-ingredient').value = item.ingredient || '';
+  
+  const typeMap = { '살충': '살충', '살균': '살균', '제초': '제초', '생장': '생조' };
+  let matchedType = '기타';
+  for (const key in typeMap) {
+    if (item.usage.includes(key)) {
+      matchedType = typeMap[key];
+      break;
+    }
+  }
+  document.getElementById('form-type').value = matchedType;
+  document.getElementById('form-memo').value = item.cropMemo || '';
+  document.getElementById('psis-results-container').style.display = 'none';
+  showToast('✅ 20L 기준 환산 정보가 자동으로 채워졌습니다.');
+}
+
+// 5. UI 및 모달 제어
+function renderSheetsList() {
+  const listEl = document.getElementById('sheets-list');
+  const countEl = document.getElementById('sheets-count');
+  
+  let filtered = sheetsData;
+  if (currentCategory !== 'all') {
+    filtered = sheetsData.filter(item => (item.type || '').includes(currentCategory));
+  }
+
+  countEl.textContent = filtered.length;
+
+  if (filtered.length === 0) {
+    listEl.innerHTML = '<div style="text-align: center; padding: 20px; color: #999;"><p>📦 등록된 데이터가 없습니다</p></div>';
+    return;
+  }
+
+  listEl.innerHTML = filtered.map(item => `
+    <div class="pesticide-card" onclick="viewPesticide('${item.id}')">
+      <div class="pesticide-info">
+        <div class="pesticide-name">💊 <span style="color: var(--blue-dark);">${item.name || '-'}</span></div>
+        <div class="pesticide-meta">
+          분류: ${item.type || '미분류'} | 수량: ${item.quantity || 0}${item.unit || '개'}
+          ${item.ingredient ? '<br/>성분: ' + item.ingredient : ''}
+          ${item.manufacturer ? ' | 제조사: ' + item.manufacturer : ''}
+          <!-- <div class="source-badge">🟩 Google Sheets</div> -->
+        </div>
+      </div>
+      <div class="pesticide-actions">
+        <button class="btn-small" onclick="event.stopPropagation(); openEditModal('${item.id}')">수정</button>
+        <button class="btn-small" onclick="event.stopPropagation(); deletePesticide('${item.id}')" style="background: #FFCDD2; color: #C62828;">삭제</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function viewPesticide(id) {
+  const item = sheetsData.find(p => String(p.id) === String(id));
+  if (!item) return;
+
+  editingId = item.id;
+  isViewMode = true;
+  
+  document.getElementById('modal-title').textContent = '👁️ 농약 상세 조회';
+  document.getElementById('form-name').value = item.name || '';
+  document.getElementById('form-type').value = normalizeType(item.type || '');
+  document.getElementById('form-quantity').value = item.quantity || 1;
+  document.getElementById('form-unit').value = item.unit || '개';
+  document.getElementById('form-ingredient').value = item.ingredient || '';
+  document.getElementById('form-manufacturer').value = item.manufacturer || '';
+  document.getElementById('form-memo').value = item.memo || '';
+
+  setFieldsDisabled(true);
+  document.getElementById('save-btn').textContent = '편집';
+  document.getElementById('psis-btn').style.display = 'none';
+  document.getElementById('psis-results-container').style.display = 'none';
+  
+  document.getElementById('register-modal').classList.add('active');
+}
+
+function openEditModal(id) {
+  const item = sheetsData.find(p => String(p.id) === String(id));
+  if (!item) return;
+
+  editingId = item.id;
+  isViewMode = false;
+
+  document.getElementById('modal-title').textContent = '✏️ 농약 수정';
+  document.getElementById('form-name').value = item.name || '';
+  document.getElementById('form-type').value = normalizeType(item.type || '');
+  document.getElementById('form-quantity').value = item.quantity || 1;
+  document.getElementById('form-unit').value = item.unit || '개';
+  document.getElementById('form-ingredient').value = item.ingredient || '';
+  document.getElementById('form-manufacturer').value = item.manufacturer || '';
+  document.getElementById('form-memo').value = item.memo || '';
+
+  setFieldsDisabled(false);
+  document.getElementById('save-btn').textContent = '저장';
+  document.getElementById('psis-btn').style.display = 'inline-block';
+  
+  document.getElementById('register-modal').classList.add('active');
+}
+
+function enableEditMode() {
+  isViewMode = false;
+  setFieldsDisabled(false);
+  document.getElementById('modal-title').textContent = '✏️ 농약 수정';
+  document.getElementById('save-btn').textContent = '저장';
+  document.getElementById('psis-btn').style.display = 'inline-block';
+}
+
+function setFieldsDisabled(disabled) {
+  document.getElementById('form-name').disabled = disabled;
+  document.getElementById('form-type').disabled = disabled;
+  document.getElementById('form-quantity').disabled = disabled;
+  document.getElementById('form-unit').disabled = disabled;
+  document.getElementById('form-ingredient').disabled = disabled;
+  document.getElementById('form-manufacturer').disabled = disabled;
+  document.getElementById('form-memo').disabled = disabled;
+}
+
+function openRegisterModal() {
+  editingId = null;
+  isViewMode = false;
+  document.getElementById('modal-title').textContent = '🧪 새 농약 등록';
+  document.getElementById('form-name').value = '';
+  document.getElementById('form-type').value = '';
+  document.getElementById('form-quantity').value = '1';
+  document.getElementById('form-unit').value = '개';
+  document.getElementById('form-ingredient').value = '';
+  document.getElementById('form-manufacturer').value = '';
+  document.getElementById('form-memo').value = '';
+
+  setFieldsDisabled(false);
+  document.getElementById('save-btn').textContent = '저장';
+  document.getElementById('psis-btn').style.display = 'inline-block';
+  document.getElementById('psis-results-container').style.display = 'none';
+  document.getElementById('register-modal').classList.add('active');
+}
+
+function closeRegisterModal() {
+  document.getElementById('register-modal').classList.remove('active');
+}
+
+function filterByCategory(category) {
+  currentCategory = category;
+  document.querySelectorAll('.category-tab').forEach(btn => btn.classList.remove('active'));
+  document.querySelector(`[data-category="${category}"]`).classList.add('active');
+  renderSheetsList();
+}
+
+// 상단 통계 업데이트 함수 (보유농약 27개 유지 + 분류별 개수 집계 표시)
+function updateStats() {
+  try {
+    const statSheets = document.getElementById('stat-sheets');
+    const statDetailBox = document.getElementById('stat-category-details');
+    
+    const totalCount = sheetsData ? sheetsData.length : 0;
+    if (statSheets) statSheets.textContent = totalCount;
+    
+    if (statDetailBox) {
+      // 분류별 갯수 카운트 객체 생성
+      const counts = {};
+      const categories = ['살균', '살충', '제초', '균충', '충초', '생조', '기타'];
+      
+      categories.forEach(cat => counts[cat] = 0);
+      
+      if (sheetsData && sheetsData.length > 0) {
+        sheetsData.forEach(item => {
+          const t = normalizeType(item.type || '');
+          let matched = false;
+          categories.forEach(cat => {
+            if (t.includes(cat)) {
+              counts[cat]++;
+              matched = true;
+            }
+          });
+          if (!matched) {
+            counts['기타']++;
+          }
+        });
+      }
+      
+      // HTML 태그로 조합하여 출력 (0개인 항목도 포함하거나 0 초과인 것만 깔끔하게 표시)
+      let html = '';
+      categories.forEach(cat => {
+        html += `<div class="stat-detail-item"><strong>${cat}</strong>: ${counts[cat]}개</div>`;
+      });
+      statDetailBox.innerHTML = html;
+    }
+    
+    console.log('✅ updateStats() 완료 (분류별 요약 반영)');
+  } catch (err) {
+    console.error('❌ updateStats() 오류:', err.message);
+  }
+}
+
+function updateSyncText(msg) {
+  const syncText = document.getElementById('sync-text');
+  if (syncText) syncText.textContent = msg;
+}
+
+function showToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 2000);
+}
+
+// 최초 실행
+document.addEventListener('DOMContentLoaded', () => {
+  loadDataFromGoogleSheets();
+});
+</script>
+
+</body>
+</html>
