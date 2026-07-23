@@ -117,7 +117,7 @@ window.APP = window.APP || {};
 
 // 2. 이제 APP 객체가 존재하므로 에러 없이 fbTasks를 배열로 초기화할 수 있습니다.
 APP.fbTasks = APP.fbTasks || [];
-
+/*
 async function _loadFbTasks(){
   if(!window.db){ return; }
   try{
@@ -125,7 +125,7 @@ async function _loadFbTasks(){
     APP.fbTasks = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
   }catch(e){ console.warn('tasks 컬렉션 로드 실패:', e.message); }
 }
-
+*/
 function _fbTaskCardHTML(t){
   var overdue = !t.done && t.date < TODAY_STR;
   var cardCls = 'task-card'+(t.done?' done':'')+(overdue?' urgent':'');
