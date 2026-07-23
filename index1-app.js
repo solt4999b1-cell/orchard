@@ -96,7 +96,7 @@ async function searchData() {
     }
 }
 
-const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";  
+const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec";  
 
 const CLAUDE_API_KEY = ""; 
 //const PSIS_URL = "http://psis.rda.go.kr/openApi/service.do";
@@ -245,7 +245,7 @@ function startApp() { initGAS(); }
   console.error = function() { if (!_isFbNoise(arguments)) _origError.apply(console, arguments); };
 })();
 // ════════════════════════════════════════════════════════
-// GAS_URL: https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec
+// GAS_URL: https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec
 // GAS action 목록:
 //   plants      : getPlants / addPlant / updatePlant / deletePlant
 //   workLogs    : getWorkLogs / addWorkLog / updateWorkLog / deleteWorkLog
@@ -262,7 +262,7 @@ function startApp() { initGAS(); }
 // ── Google Sheets (OrchardData) 연결 설정 ──────────────────
 // index5.html과 동일한 GAS URL 사용
 let GAS_URL = localStorage.getItem('_runtimeGasUrl') ||
-              'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec';
+              'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
 async function _gasPost(params) {
   var p = new URLSearchParams();
