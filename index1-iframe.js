@@ -111,14 +111,14 @@ function renderSpraySchedulerPanel(){
    - '이번 주 예정'에는 7일 이내 예정 방제 표시
    - 완료 체크 시 tasks 문서 + 원본 sprayPlan.entries[n].done 동시 갱신
    ═══════════════════════════════════════════════════════════════ */
-APP.fbTasks = APP.fbTasks || [];
+if (typeof APP !== 'undefined') APP.fbTasks = APP.fbTasks || [];
 
 async function _loadFbTasks(){
-  if(!db){ return; }
+  if (typeof _gasGet !== 'function') return;
   try{
-    var snap = await db.collection('tasks').limit(300).get();
-    APP.fbTasks = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
-  }catch(e){ console.warn('tasks 컬렉션 로드 실패:', e.message); }
+    var raw = await _gasGet('getSprayTasks').catch(function(){ return []; });
+    APP.fbTasks = Array.isArray(raw) ? raw : [];
+  }catch(e){ console.warn('sprayTasks 로드 실패:', e.message); }
 }
 
 function _fbTaskCardHTML(t){
@@ -207,28 +207,18 @@ function _appendFbTasksToWeek(){
 /* 완료 체크: tasks 문서 + 원본 sprayPlan.entries 동시 갱신 (양방향) */
 async function _toggleFbTask(taskId){
   var t = (APP.fbTasks||[]).find(function(x){ return x.id===taskId; });
-  if(!t || !db) return;
+  if(!t) return;
   var newDone = !t.done;
-  try{
-    await db.collection('tasks').doc(taskId).update({ done:newDone, doneAt: newDone?Date.now():null });
-    t.done = newDone;
-
-    if(t.linkedPlanId){
-      var ref = db.collection('sprayPlan').doc(t.linkedPlanId);
-      var doc = await ref.get();
-      if(doc.exists){
-        var entries = doc.data().entries || [];
-        var idx = (typeof t.entryIndex==='number') ? t.entryIndex
-                : entries.findIndex(function(e){ return e.date===t.date; });
-        if(idx>=0 && entries[idx]){
-          entries[idx].done = newDone;
-          await ref.update({ entries:entries });
-        }
-      }
+  t.done = newDone;
+  t.doneAt = newDone ? Date.now() : null;
+  try {
+    await _gasPost({ action:'updateSprayTask', id:taskId, done:newDone, doneAt:t.doneAt||'' });
+    if(t.linkedPlanId && t.linkedEntryIdx != null){
+      await _gasPost({ action:'updateSprayPlanEntry', id:t.linkedPlanId, entryIdx:t.linkedEntryIdx, done:newDone });
     }
-    showToast(newDone ? '✅ 방제 완료 (원본 계획에도 반영)' : '완료 취소됨');
-  }catch(e){ showToast('⚠️ 처리 실패: '+e.message); }
-  renderToday();
+  } catch(e){ console.warn('_toggleFbTask 오류:', e.message); }
+  _appendFbTasksToToday();
+  _appendFbTasksToWeek();
 }
 
 /* renderToday 후 방제 할일 섹션 자동 부착 */
