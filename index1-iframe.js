@@ -111,6 +111,7 @@ function renderSpraySchedulerPanel(){
    - '이번 주 예정'에는 7일 이내 예정 방제 표시
    - 완료 체크 시 tasks 문서 + 원본 sprayPlan.entries[n].done 동시 갱신
    ═══════════════════════════════════════════════════════════════ */
+let APP = {};
 APP.fbTasks = APP.fbTasks || [];
 
 async function _loadFbTasks(){
