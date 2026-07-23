@@ -269,7 +269,13 @@ async function _gasPost(params) {
   for (var k in params) p.append(k, params[k] == null ? '' : params[k]);
   var res = await fetch(GAS_URL, { method: 'POST', body: p });
   if (!res.ok) throw new Error('GAS HTTP ' + res.status);
-  return await res.json();
+  var json = await res.json();
+  // wrapResponse 형태 { success, data } 자동 처리
+  if (json && typeof json === 'object' && 'success' in json) {
+    if (json.data && json.data.id) return json.data;
+    return json;
+  }
+  return json;
 }
 
 async function _gasGet(action, extra) {
@@ -277,7 +283,12 @@ async function _gasGet(action, extra) {
   if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
   var res = await fetch(url + '&t=' + Date.now());
   if (!res.ok) throw new Error('GAS HTTP ' + res.status);
-  return await res.json();
+  var json = await res.json();
+  // wrapResponse 형태 { success, data } 자동 처리
+  if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
+    return json.data;
+  }
+  return json;
 }
 
 function initGAS() {
