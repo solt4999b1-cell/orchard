@@ -111,7 +111,11 @@ function renderSpraySchedulerPanel(){
    - '이번 주 예정'에는 7일 이내 예정 방제 표시
    - 완료 체크 시 tasks 문서 + 원본 sprayPlan.entries[n].done 동시 갱신
    ═══════════════════════════════════════════════════════════════ */
-let APP = {};
+// 1. APP 객체가 아직 없다면 빈 객체로 초기화해 줍니다. 
+// (window 객체에 붙여 전역으로 관리하면 여러 파일에서 접근하기 안전합니다.)
+window.APP = window.APP || {}; 
+
+// 2. 이제 APP 객체가 존재하므로 에러 없이 fbTasks를 배열로 초기화할 수 있습니다.
 APP.fbTasks = APP.fbTasks || [];
 
 async function _loadFbTasks(){
