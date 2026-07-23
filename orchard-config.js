@@ -1,10 +1,9 @@
 // ════════════════════════════════════════════════════════════════
-// 🎯 Google Sheets 통합 설정 (Firebase 제거)
 // ════════════════════════════════════════════════════════════════
 
 // Google Sheets 설정
 let SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
 // 컬렉션 매핑
 const COLLECTIONS = {
@@ -98,7 +97,6 @@ let growRecords = [];
 let irangChanges = [];
 let irangLog = [];
 
-// Google Sheets 초기화 (Firebase 대체)
 async function initializeGoogleSheets() {
   try {
     console.log('🔧 Google Sheets 초기화 중...');
@@ -152,7 +150,6 @@ async function initializeGoogleSheets() {
   } catch (err) {
     console.error('❌ Google Sheets 초기화 실패:', err);
     
-    // Firebase 오류시 localStorage에서 복원
     try {
       workLog = JSON.parse(localStorage.getItem('workLog') || '[]');
       plants = JSON.parse(localStorage.getItem('plants') || '[]');

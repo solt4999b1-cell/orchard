@@ -277,8 +277,10 @@ function startApp() { initGAS(); }
 //   appSettings : getAppSettings / setAppSettings
 // ════════════════════════════════════════════════════════
 
-// ── Google Sheets (OrchardData) 연결 설정 ──────────────────
-// index5.html과 동일한 GAS URL 사용
+// ── Google Sheets (공유 OrchardData) 연결 설정 ─────────────
+// g_index.html + index1.html 공유 스프레드시트
+const SHARED_SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
+// GAS URL — 공유 스프레드시트에 접근 (두 앱 통합)
 let GAS_URL = localStorage.getItem('_runtimeGasUrl') ||
               'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
