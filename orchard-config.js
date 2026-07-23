@@ -43,7 +43,12 @@ async function loadFromGoogleSheets(collectionName) {
     console.log(`✅ ${collectionName} 로드 완료: ${(result.data || []).length}개 항목`);
     return result.data || [];
   } catch (err) {
-    console.error(`❌ ${collectionName} 로드 실패:`, err);
+    // 시트가 없는 경우 조용히 빈 배열 반환 (irangLog, irangChanges 등)
+    if (err.message && err.message.includes('시트 없음')) {
+      console.warn(`⚠️ ${collectionName} 시트 없음 — 건너뜀`);
+    } else {
+      console.error(`❌ ${collectionName} 로드 실패:`, err);
+    }
     return [];
   }
 }
@@ -194,7 +199,13 @@ async function loadSVGLibrary() {
     if (result.success && result.data) {
       // SVG 데이터를 ID로 매핑
       result.data.forEach(item => {
-        window.svgLibrary[item.svgName] = item.svgData;
+        // Google Sheets에서 올 때 과도하게 이스케이프된 따옴표 복원
+        let svgData = item.svgData || '';
+        // \\\\\\" → " 복원 (3중 이스케이프 해제)
+        svgData = svgData.replace(/\\\\\\"/g, '"');
+        // \\" → " 복원 (2중 이스케이프 해제)
+        svgData = svgData.replace(/\\"/g, '"');
+        window.svgLibrary[item.svgName] = svgData;
       });
       
       localStorage.setItem('svgLibrary', JSON.stringify(window.svgLibrary));
