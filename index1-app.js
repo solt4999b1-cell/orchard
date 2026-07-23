@@ -224,9 +224,27 @@ TODAY.setHours(0,0,0,0);
 function fmt(d){ return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate()); }
 var TODAY_STR = fmt(TODAY);
 function pad(n){ return n<10?'0'+n:''+n; }
-function addDays(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
-function daysBetween(a,b){ return Math.round((b-a)/(1000*60*60*24)); }
-function parseDate(s){ if(!s) return null; return new Date(s+'T00:00:00'); }
+function addDays(d,n){
+  if(!d||isNaN(d)) return new Date();
+  var r=new Date(d);
+  if(isNaN(r.getTime())) return new Date();
+  r.setDate(r.getDate()+(parseInt(n)||0));
+  return r;
+}
+function daysBetween(a,b){
+  if(!a||!b||isNaN(a)||isNaN(b)) return 0;
+  return Math.round((b-a)/(1000*60*60*24));
+}
+function parseDate(s){
+  if(!s||s===''||s==='undefined'||s==='null') return null;
+  try {
+    // YYYY-MM-DD 형태만 허용
+    var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(!m) return null;
+    var d = new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
+    return isNaN(d.getTime()) ? null : d;
+  } catch(e) { return null; }
+}
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function startApp() { initGAS(); }
@@ -308,22 +326,27 @@ async function _gasGet(action, extra) {
         else if (NUM_FIELDS.indexOf(k) >= 0) {
           out[k] = v === '' ? 0 : Number(v) || 0;
         }
-        // 날짜 필드 — Google Sheets Date 객체가 직렬화되면 이상한 형태로 올 수 있음
+        // 날짜 필드 안전 처리
         else if (DATE_FIELDS.indexOf(k) >= 0) {
-          if (typeof v === 'string') {
-            // "026-05-11T15:00:00.000Z" 같은 잘린 날짜 수정
-            if (v.length > 0 && v.charAt(0) !== '2' && v.length < 24) {
-              v = '2' + v; // 앞자리 '2' 누락 보정
+          try {
+            if (!v || v === '') { out[k] = ''; continue; }
+            if (typeof v === 'number') {
+              // Excel 날짜 시리얼 넘버 → YYYY-MM-DD
+              if (v > 40000 && v < 60000) {
+                var d = new Date(Math.round((v - 25569) * 86400 * 1000));
+                if (!isNaN(d.getTime())) {
+                  out[k] = d.toISOString().slice(0, 10);
+                } else { out[k] = ''; }
+              } else { out[k] = ''; }
+            } else {
+              var s = String(v);
+              // "026-05-11T..." → "2026-05-11T..." (앞자리 누락 보정)
+              if (/^\d{3}-\d{2}-\d{2}/.test(s)) s = '2' + s;
+              // 날짜 부분만 추출 (YYYY-MM-DD)
+              var dateMatch = s.match(/(\d{4}-\d{2}-\d{2})/);
+              out[k] = dateMatch ? dateMatch[1] : '';
             }
-            // T 뒤 시간 제거, 날짜만 추출
-            out[k] = v.slice(0, 10);
-          } else if (typeof v === 'number') {
-            // Excel 날짜 시리얼 넘버 → ISO 문자열 변환
-            var d = new Date(Math.round((v - 25569) * 86400 * 1000));
-            out[k] = d.toISOString().slice(0, 10);
-          } else {
-            out[k] = String(v).slice(0, 10);
-          }
+          } catch(dateErr) { out[k] = ''; }
         }
         // 나머지
         else {
@@ -10935,7 +10958,20 @@ function confirmDeletePlant(id){var p=APP.plants.find(function(x){return x.id===
 async function removeDuplicatePlants(){var seen={},del=[];(APP.plants||[]).forEach(function(p){var nm=(p.name||'').trim();if(!nm)return;if(seen[nm])del.push(p);else seen[nm]=p;});if(!del.length){showToast('✅ 중복 없음');return;}if(!confirm('중복 '+del.length+'개 삭제?'))return;for(var i=0;i<del.length;i++){try{await _gasPost({ action:'deletePlant', id:del[i].id });}catch(e){}}APP.plants=APP.plants.filter(function(p){return!del.find(function(d){return d.id===p.id;});});showToast('🧹 중복 '+del.length+'개 정리');renderManagePlantList();renderPlants();renderToday();}
 
 // ── 수확달력 ─────────────────────────────────────────────────
-function renderHarvestPanel(){var container=document.getElementById('db-list');if(!container)return;var all=(APP&&APP.plants)?APP.plants.filter(function(p){return !p._local&&p.status!=='deleted';}):(window._allPlants||[]);var planted=all.filter(function(p){return p.plantDate&&p.fruitDays&&parseInt(p.fruitDays)>0;});var h='<div style="padding:10px 0;"><div style="font-size:14px;font-weight:700;color:#1B5E20;margin-bottom:8px;">🍎 수확 달력 (심은 날짜 기준)</div>';if(planted.length){planted.forEach(function(p){h+='<div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.06);"><div style="font-size:12px;font-weight:600;">'+_plantEmoji(p)+' '+esc(p.name||'')+'</div><button onclick="toggleHarvestDetail(this,\''+p.id+'\')" style="padding:5px 12px;background:#1B5E20;color:#fff;border-radius:7px;border:none;font-size:11px;cursor:pointer;">📅 달력보기</button></div><div id="harvest-detail-'+p.id+'" style="display:none;padding:0 12px 8px;"></div>';});}else{h+='<div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px;">심은 날짜가 등록된 작물이 없습니다.</div>';}h+='</div>';container.innerHTML=h;}
+function renderHarvestPanel(){
+  var container=document.getElementById('db-list');
+  if(!container)return;
+  // _local 조건 제거 — GAS 데이터도 _local 없음
+  var all=(APP&&APP.plants)
+    ? APP.plants.filter(function(p){ return p.status!=='deleted'; })
+    : (window._allPlants||[]);
+  console.log('[renderHarvestPanel] 전체 식물:', all.length,
+    '/ plantDate 있는 것:', all.filter(function(p){return p.plantDate;}).length,
+    '/ fruitDays>0:', all.filter(function(p){return parseInt(p.fruitDays)>0;}).length);
+  // fruitDays OR totalDays 가 있으면 달력 표시
+  var planted=all.filter(function(p){
+    return p.plantDate && (parseInt(p.fruitDays)>0 || parseInt(p.totalDays)>0);
+  });var h='<div style="padding:10px 0;"><div style="font-size:14px;font-weight:700;color:#1B5E20;margin-bottom:8px;">🍎 수확 달력 (심은 날짜 기준)</div>';if(planted.length){planted.forEach(function(p){h+='<div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.06);"><div style="font-size:12px;font-weight:600;">'+_plantEmoji(p)+' '+esc(p.name||'')+'</div><button onclick="toggleHarvestDetail(this,\''+p.id+'\')" style="padding:5px 12px;background:#1B5E20;color:#fff;border-radius:7px;border:none;font-size:11px;cursor:pointer;">📅 달력보기</button></div><div id="harvest-detail-'+p.id+'" style="display:none;padding:0 12px 8px;"></div>';});}else{h+='<div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px;">심은 날짜가 등록된 작물이 없습니다.</div>';}h+='</div>';container.innerHTML=h;}
 function toggleHarvestDetail(btn,pid){var el=document.getElementById('harvest-detail-'+pid);if(!el)return;if(el.style.display!=='none'){el.style.display='none';btn.textContent='📅 달력보기';btn.style.background='#1B5E20';return;}var plant=(APP.plants||[]).find(function(p){return p.id===pid;});if(!plant){el.innerHTML='<div style="color:#aaa;font-size:12px;">정보 없음</div>';el.style.display='block';return;}var hs=typeof buildHarvestSchedule==='function'?buildHarvestSchedule(plant,'nearest'):null;el.innerHTML=hs&&typeof renderHarvestSchedule==='function'?renderHarvestSchedule(hs):'<div style="color:#aaa;font-size:12px;">수확 예정일 계산 불가</div>';el.style.display='block';btn.textContent='🔼 접기';btn.style.background='#388E3C';}
 
 // ── 내 농약장 다중선택 ────────────────────────────────────────
