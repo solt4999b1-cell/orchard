@@ -119,7 +119,7 @@ window.APP = window.APP || {};
 APP.fbTasks = APP.fbTasks || [];
 
 async function _loadFbTasks(){
-  if(!db){ return; }
+  if(!window.db){ return; }
   try{
     var snap = await db.collection('tasks').limit(300).get();
     APP.fbTasks = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
