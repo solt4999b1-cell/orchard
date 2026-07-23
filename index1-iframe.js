@@ -111,21 +111,16 @@ function renderSpraySchedulerPanel(){
    - '이번 주 예정'에는 7일 이내 예정 방제 표시
    - 완료 체크 시 tasks 문서 + 원본 sprayPlan.entries[n].done 동시 갱신
    ═══════════════════════════════════════════════════════════════ */
-// 1. APP 객체가 아직 없다면 빈 객체로 초기화해 줍니다. 
-// (window 객체에 붙여 전역으로 관리하면 여러 파일에서 접근하기 안전합니다.)
-window.APP = window.APP || {}; 
-
-// 2. 이제 APP 객체가 존재하므로 에러 없이 fbTasks를 배열로 초기화할 수 있습니다.
 APP.fbTasks = APP.fbTasks || [];
-/*
+
 async function _loadFbTasks(){
-  if(!window.db){ return; }
+  if(!db){ return; }
   try{
     var snap = await db.collection('tasks').limit(300).get();
     APP.fbTasks = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
   }catch(e){ console.warn('tasks 컬렉션 로드 실패:', e.message); }
 }
-*/
+
 function _fbTaskCardHTML(t){
   var overdue = !t.done && t.date < TODAY_STR;
   var cardCls = 'task-card'+(t.done?' done':'')+(overdue?' urgent':'');
@@ -260,23 +255,4 @@ async function _toggleFbTask(taskId){
 })();
 
 /* 최초 로드 */
-// 기존 _loadFbTasks()와 renderToday()가 있던 자리에 아래와 같이 작성합니다.
-
-// 예시: SheetDB 객체를 통해 구글 시트의 전체 데이터를 불러오는 로직
-SheetDB.loadAll().then(function(data) {
-    console.log("구글 시트 데이터 로딩 성공!", data);
-    
-    // 데이터를 무사히 가져온 후, 화면에 그려주는 새로운 함수를 여기서 실행합니다.
-    // renderNewUI(data); 
-    
-}).catch(function(error) {
-    console.error("구글 시트 데이터 로딩 실패:", error);
-});
-// 단순히 남은 UI 초기화 함수(예: renderToday)만 바로 실행되도록 남겨둡니다.
-/*
-try { 
-    renderToday(); 
-} catch(e) {
-    console.error('초기화 에러:', e);
-}
-*/
+_loadFbTasks().then(function(){ try{ renderToday(); }catch(e){} });

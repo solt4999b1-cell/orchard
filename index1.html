@@ -29,9 +29,8 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="application-name" content="새솔과수원">
 <meta name="theme-color" content="#143A1B">
-<!-- Firebase SDK (인라인 번들) -->
 <script src="index1-utils.js"></script>
-<script src="index1-firebase-sdk.js"></script>
+
 <!-- Tesseract.js: 브라우저 OCR (API Key·CORS 불필요) -->
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
@@ -1077,7 +1076,7 @@
         <span class="ls-dot"></span><span class="ls-label">로컬 데이터 로드</span>
       </div>
       <div class="ls-item" id="ls-2">
-        <span class="ls-dot"></span><span class="ls-label">Firebase 동기화</span>
+        <span class="ls-dot"></span><span class="ls-label">Google Sheets 동기화</span>
       </div>
       <div class="ls-item" id="ls-3">
         <span class="ls-dot"></span><span class="ls-label">작업 일정 계산</span>
@@ -1087,7 +1086,7 @@
     <!-- 오래 걸릴 때 안내 (5초 후 표시) -->
     <div class="loading-slow-msg" id="loading-slow-msg" style="display:none;">
       <div class="loading-slow-icon">⏳</div>
-      <div>Firebase 연결이 평소보다 느립니다.<br>
+      <div>Google Sheets 연결이 평소보다 느립니다.<br>
       잠시만 기다려 주세요.</div>
       <div class="loading-slow-tip">
         💡 첫 실행이거나 오프라인 상태일 수 있습니다.
