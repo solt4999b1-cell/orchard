@@ -285,10 +285,27 @@ async function _gasGet(action, extra) {
   if (!res.ok) throw new Error('GAS HTTP ' + res.status);
   var json = await res.json();
   // wrapResponse 형태 { success, data } 자동 처리
-  if (json && typeof json === 'object' && 'success' in json && 'data' in json) {
-    return json.data;
+  var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
+    ? json.data : json;
+  // 배열 내 모든 필드를 문자열로 정규화 (GAS가 숫자로 반환하는 경우 대비)
+  if (Array.isArray(data)) {
+    data = data.map(function(row) {
+      var normalized = {};
+      for (var k in row) {
+        var v = row[k];
+        // id는 항상 문자열
+        if (k === 'id' || k === '_key' || k === 'key') {
+          normalized[k] = v == null ? '' : String(v);
+        } else if (typeof v === 'number') {
+          normalized[k] = v; // 숫자는 숫자 유지
+        } else {
+          normalized[k] = v == null ? '' : v;
+        }
+      }
+      return normalized;
+    });
   }
-  return json;
+  return data;
 }
 
 function initGAS() {
@@ -884,7 +901,7 @@ function renderLogs() {
     var srcLbl=l._col==='workLogs'?'작업일지':'재배기록';
     var typeLbl=l.eventType||l.type||'기타';
     var name=l.plantName||l.plant||'', mat=l.material||'', detail=l.detail||l.note||'';
-    var canEdit=!!l.id&&!l.id.startsWith('new_');
+    var canEdit=!!l.id&&!String(l.id||'').startsWith('new_');
     var logId=l.id||'';
 
     var plant=getPlantInfo(name);
