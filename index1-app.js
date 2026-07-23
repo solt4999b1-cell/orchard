@@ -10899,51 +10899,11 @@ async function callClaudeViaGas(key, prompt, maxTokens) {
 
 // ── emoji 수정 ───────────────────────────────────────────────
 async function fixAllEmojis(){var plants=APP.plants||[],fixed=0;for(var i=0;i<plants.length;i++){var p=plants[i];if(!p.id||p._local)continue;var ce=_plantEmoji(Object.assign({},p,{emoji:''}));var cur=(p.emoji||'').trim();var need=!cur||cur.includes('?')||!cur.codePointAt||cur.codePointAt(0)<0x2000;if(need&&ce){try{await _gasPost({ action:'updatePlant', id:p.id, emoji:ce });p.emoji=ce;fixed++;}catch(e){}}}showToast('✅ '+fixed+'개 이모지 수정');renderToday();renderPlants();}
-async function autoFixEmojis(){if(!APP.plants||!APP.plants.length)return;var need=APP.plants.some(function(p){if(p._local||!p.id)return false;var e=(p.emoji||'').trim();return !e||e.includes('?')||!e.codePointAt||e.codePointAt(0)<0x2000;});if(need)await fixAllEmojis();}
-
-// ── AI URL 분석 ──────────────────────────────────────────────
-async function runAiUrlParse(){var name=(document.getElementById('ai-url-name')||{}).value||'';var type=(document.getElementById('ai-url-type')||{}).value||'기능성비료';var url=(document.getElementById('ai-url-input')||{}).value||'';var btn=document.getElementById('ai-url-btn');var out=document.getElementById('ai-url-result');if(!name.trim()){showToast('제품명을 입력하세요');return;}if(btn){btn.disabled=true;btn.textContent='🌐 AI 검색 중...';}if(out)out.innerHTML='<div style="padding:12px;text-align:center;color:var(--gray-400);">AI가 정보를 검색 중입니다...</div>';try{var prompt='다음 농업용 제품 정보를 검색해서 JSON으로만 응답하세요. 설명 없이 JSON만 출력하세요.\n\n제품명: '+name+'\n제품유형: '+type+'\n'+(url?'URL: '+url+'\n':'')+'{"name":"제품명","type":"'+type+'","ingredient":"주요성분","manufacturer":"제조사","feature":"특징 1~2줄","warning":"주의사항","emoji":"이모지","tab":"pest|fert|nutr|micro 중 하나","cropUsage":{"작물명":[{"target":"적용대상","method":"방법","amount":"20L기준사용량","safety":"사용시기","times":"횟수"}]}}';var result=await callClaude(prompt,2000);if(!result.ok){if(out)out.innerHTML='<div style="padding:10px;color:var(--red-dark);">⚠️ '+esc(result.error||'오류')+'</div>';return;}var t=result.text||'';var s=t.indexOf('{'),e=t.lastIndexOf('}');if(s===-1||e===-1)throw new Error('JSON 응답 없음');var parsed=JSON.parse(t.slice(s,e+1));window._aiUrlParsed=parsed;_renderAiUrlConfirm(parsed,out);}catch(e){if(out)out.innerHTML='<div style="padding:10px;color:var(--red-dark);">⚠️ '+esc(e.message)+'</div>';}finally{if(btn){btn.disabled=false;btn.textContent='🌐 AI 자동 분석';}}}
-function _renderAiUrlConfirm(parsed,out){var crops=Object.keys(parsed.cropUsage||{});var h='<div style="background:#E8F5E9;border-radius:10px;padding:12px;margin-top:8px;">';h+='<div style="font-size:15px;font-weight:800;color:var(--green-dark);margin-bottom:6px;">'+(parsed.emoji||'🌱')+' '+esc(parsed.name||'')+'</div>';h+='<div style="font-size:11px;color:#555;margin-bottom:6px;">'+esc(parsed.type||'')+' | '+esc(parsed.ingredient||'')+' | '+esc(parsed.manufacturer||'')+'</div>';if(parsed.feature)h+='<div style="font-size:11px;color:#555;margin-bottom:8px;">'+esc(parsed.feature)+'</div>';if(crops.length){h+='<div style="font-size:11px;font-weight:600;color:var(--green-dark);margin-bottom:4px;">📋 적용 작물 ('+crops.length+'종)</div><table style="width:100%;font-size:10px;border-collapse:collapse;"><tr style="background:#f5f5f5;"><th style="padding:4px;text-align:left;">작물</th><th>사용량(20L)</th><th>사용시기</th></tr>';crops.forEach(function(crop){(parsed.cropUsage[crop]||[]).forEach(function(u,ui){h+='<tr style="border-bottom:0.5px solid #eee;">';if(ui===0)h+='<td style="padding:4px;font-weight:600;" rowspan="'+(parsed.cropUsage[crop].length)+'">'+esc(crop)+'</td>';h+='<td style="padding:4px;text-align:center;color:#1565C0;">'+esc(u.amount||'-')+'</td><td style="padding:4px;text-align:center;">'+esc(u.safety||u.method||'-')+'</td></tr>';});});h+='</table>';}h+='<div style="display:flex;gap:6px;margin-top:10px;"><button onclick="document.getElementById(\'ai-url-result\').innerHTML=\'\'" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--gray-200);background:#fff;font-size:12px;cursor:pointer;">취소</button><button onclick="_saveAiUrlResult()" style="flex:2;padding:9px;border-radius:8px;background:var(--green-dark);color:#fff;border:none;font-size:13px;font-weight:700;cursor:pointer;">✅ 저장</button></div></div>';out.innerHTML=h;}
-async function _saveAiUrlResult(){var parsed=window._aiUrlParsed;if(!parsed)return;var appTab=(typeof _getTabFromType==='function')?_getTabFromType(parsed.type||''):(parsed.tab||'fert');var dbTabMap={pest:'userDb_pest',fert:'userDb_fert',nutr:'userDb_nutr',micro:'userDb_micro'};var dbTab=dbTabMap[appTab]||'userDb_fert';var data={name:parsed.name||'',type:parsed.type||'',ingredient:parsed.ingredient||'',manufacturer:parsed.manufacturer||'',feature:parsed.feature||'',warning:parsed.warning||'',emoji:parsed.emoji||'🌱',tab:appTab,pest_status:'have',cropUsage:parsed.cropUsage||{},registeredAt:new Date().toISOString()};try{await _gasPost(Object.assign({ action:'addUserDb', tab:appTab }, data));if(!USER_DB[appTab])USER_DB[appTab]=[];USER_DB[appTab].push(data);showToast('✅ '+data.name+' 저장 완료');document.getElementById('ai-import-modal').classList.add('hidden');if(typeof renderMyPestPanel==='function')renderMyPestPanel();}catch(e){showToast('❌ 저장 오류: '+e.message);}}
-function _getTabFromType(type){var pestTypes=['살균제','살충제','살균살충제','제초제','생장조정제','유기병해충','유기병해','유기충해'];var nutrTypes=['칼슘','고토황규소','미량요소'];var microTypes=['미생물균'];if(pestTypes.indexOf(type)!==-1)return 'pest';if(nutrTypes.indexOf(type)!==-1)return 'nutr';if(microTypes.indexOf(type)!==-1)return 'micro';return 'fert';}
-function _resetAiText(){['ai-pname','ai-rawtext'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});var out=document.getElementById('ai-parse-result');if(out)out.innerHTML='';}
-function _resetAiUrl(){['ai-url-name','ai-url-input'].forEach(function(id){var e=document.getElementById(id);if(e)e.value='';});var out=document.getElementById('ai-url-result');if(out)out.innerHTML='';window._aiUrlParsed=null;}
-
-// ── 식물 이름 일괄 수정 (1회성) ──────────────────────────────
-async function _fixPlantNames() {
-  if (!APP.plants) return;
-  var renames = [
-    { from: '아주까리콩 파종', to: '아주까리콩' },
-  ];
-  for (var i=0; i<renames.length; i++) {
-    var r = renames[i];
-    var targets = APP.plants.filter(function(p){ return (p.name||'').trim() === r.from; });
-    for (var j=0; j<targets.length; j++) {
-      var p = targets[j];
-      if (!p.id || p._local) continue;
-      try {
-        await _gasPost({ action:'updatePlant', id:p.id, name:r.to });
-        p.name = r.to;
-        console.log('이름 수정:', r.from, '→', r.to);
-      } catch(e) {}
-    }
-    // workLogs/growRecords의 plantName도 수정
-    try {
-      var wlArr = await _gasGet('getWorkLogs', { plantName: r.from }).catch(function(){ return []; });
-      (Array.isArray(wlArr) ? wlArr : []).forEach(function(d){
-        _gasPost({ action:'updateWorkLog', id:d.id, plantName:r.to }).catch(function(){});
-      });
-      var grArr = await _gasGet('getGrowRecords', { plantName: r.from }).catch(function(){ return []; });
-      (Array.isArray(grArr) ? grArr : []).forEach(function(d){
-        _gasPost({ action:'updateGrowRecord', id:d.id, plantName:r.to }).catch(function(){});
-      });
-    } catch(e) {}
-  }
-}
+async function autoFixEmojis(){ /* GAS 준비 후 활성화 */ }
 
 // autoFixEmojis 시작 시 호출
-setTimeout(function(){ try{autoFixEmojis();}catch(e){}}, 2000);
-setTimeout(function(){ try{_fixPlantNames().then(function(){ renderPlants(); renderToday(); });}catch(e){}}, 3000);
+// setTimeout(function(){ try{autoFixEmojis();}catch(e){}}, 2000); // GAS 준비 후 활성화
+// setTimeout(function(){ try{_fixPlantNames().then(function(){ renderPlants(); renderToday(); });}catch(e){}}, 3000); // GAS 준비 후 활성화
 
 async function fixPlantCategories() {
   
