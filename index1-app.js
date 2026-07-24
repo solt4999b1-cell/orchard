@@ -312,6 +312,9 @@ async function _gasGet(action, extra) {
     // 숫자로 저장해야 할 필드
     var NUM_FIELDS = ['no','totalDays','pinchDays','fruitDays','pollDays',
                       'qty','quantity','amount','price','count'];
+    // 날짜 필드 — ISO 문자열을 YYYY-MM-DD로 정규화
+    var DATE_FIELDS2 = ['dateStr','plantDate','addedDate','date','pollDate',
+                        'lastSprayDate','lastFertDate','createdAt','updatedAt','registeredAt'];
     // 날짜 문자열로 저장해야 할 필드
     var DATE_FIELDS = ['plantDate','pollDate','lastSprayDate','lastFertDate',
                        'registeredAt','updatedAt','createdAt','doneAt'];
@@ -323,6 +326,22 @@ async function _gasGet(action, extra) {
         // id류는 항상 문자열
         if (k === 'id' || k === '_key' || k === 'key') {
           out[k] = String(v);
+        }
+        // 날짜 필드 — ISO 형식 → YYYY-MM-DD
+        else if (DATE_FIELDS2.indexOf(k) >= 0) {
+          if (!v || v === '') { out[k] = ''; }
+          else if (typeof v === 'number' && v > 40000 && v < 60000) {
+            // Excel 날짜 시리얼 → YYYY-MM-DD
+            var _d = new Date(Math.round((v - 25569) * 86400 * 1000));
+            out[k] = isNaN(_d.getTime()) ? '' : _d.toISOString().slice(0, 10);
+          } else {
+            var _s = String(v);
+            // "2026-05-26T23:59:10.140Z" → "2026-05-26"
+            if (_s.includes('T')) _s = _s.slice(0, 10);
+            // "026-05-26..." 앞자리 누락 보정
+            if (/^\d{3}-\d{2}-\d{2}/.test(_s)) _s = '2' + _s;
+            out[k] = _s.slice(0, 10);
+          }
         }
         // 숫자 필드
         else if (NUM_FIELDS.indexOf(k) >= 0) {
