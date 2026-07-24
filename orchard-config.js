@@ -172,7 +172,49 @@ async function initializeGoogleSheets() {
     
     // 전역 변수에 할당
     workLog = wl || [];
-    plants = gp || [];
+    // 중복 제거: id 기준 → 없으면 이름+dateStr 기준
+    const _rawPlants = gp || [];
+    const _seenIds = new Set();
+    const _seenNames = new Map(); // name → plant (dateStr 있는 것 우선)
+    _rawPlants.forEach(function(p) {
+      if (!p || !p.name) return;
+      const key = p.name.trim();
+      if (p.id && _seenIds.has(p.id)) return; // id 중복 제거
+      if (p.id) _seenIds.add(p.id);
+      // 같은 이름이 있으면 dateStr이 있는 것(오늘이 아닌) 우선
+      if (_seenNames.has(key)) {
+        const existing = _seenNames.get(key);
+        const existDate = existing.dateStr || '';
+        const newDate   = p.dateStr || '';
+        const today = new Date().toISOString().slice(0,10);
+        // 기존이 오늘 날짜면 새 것으로 교체 (더 정확한 날짜 우선)
+        if (existDate === today && newDate && newDate !== today) {
+          _seenNames.set(key, p);
+        }
+        // 새 것에 events가 더 많으면 교체
+        else if ((p.events||[]).length > (existing.events||[]).length) {
+          _seenNames.set(key, Object.assign({}, existing, {
+            events: p.events,
+            dateStr: newDate || existDate,
+            loc: p.loc || existing.loc,
+            zone: p.zone || existing.zone,
+            irang: p.irang || existing.irang,
+            spot: p.spot || existing.spot,
+          }));
+        }
+        // 기존 것에 dateStr 없으면 새 것의 dateStr 보완
+        else if (!existDate && newDate) {
+          existing.dateStr = newDate;
+          existing.loc   = existing.loc   || p.loc;
+          existing.zone  = existing.zone  || p.zone;
+          existing.irang = existing.irang || p.irang;
+          existing.spot  = existing.spot  || p.spot;
+        }
+      } else {
+        _seenNames.set(key, p);
+      }
+    });
+    plants = Array.from(_seenNames.values());
     mySupplies = sup || [];
     
     // checkedTasks는 객체 형태로 변환

@@ -2127,6 +2127,13 @@ function sanitizePlant(p) {
   var fd = Number(p.fruitDay); p.fruitDay = isFinite(fd) ? fd : 0;
   if (typeof p.note !== 'string') p.note = '';
   if (!Array.isArray(p.events)) p.events = [];
+  // loc 문자열이 있고 zone/irang/spot이 없으면 loc을 zone으로 설정
+  if (p.loc && !p.zone && !p.irang && !p.spot) {
+    p.zone = String(p.loc);
+  }
+  // plantDate/addedDate → dateStr fallback (이미 있으나 재확인)
+  if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+  if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
   return p;
 }
 
@@ -2288,7 +2295,11 @@ function renderGrow() {
       +   '</div>'
       +   '<div style="flex:1;min-width:0">'
       +     '<div style="display:flex;justify-content:space-between;font-size:10px;color:#9E9E9E;margin-bottom:3px">'
-      +       '<span>심은날: '+plantedFmt+(p.note?' · '+p.note:'')+'</span>'
+      +       '<span>심은날: '+plantedFmt+(p.note?' · '+p.note:'')+'</span>'      + (function(){
+          var _loc = (typeof getPlantLoc==='function') ? getPlantLoc(p) : {zone:p.zone||p.loc||'',irang:p.irang||'',spot:p.spot||''};
+          var _locStr = [_loc.zone,_loc.irang,_loc.spot].filter(Boolean).join(' ');
+          return _locStr ? '<span style="margin-left:6px;color:#1B5E20;font-weight:600">📍'+_locStr+'</span>' : '';
+        })()
       +       '<span>'+pct+'%</span>'
       +     '</div>'
       +     '<div style="height:6px;background:#E0E0E0;border-radius:3px;overflow:hidden">'
@@ -5432,8 +5443,8 @@ function renderPurchasePlan() {
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px;flex-wrap:wrap">
           <span style="font-size:16px;font-weight:700;color:${tc}">• ${s.name}</span>
           ${s.ingredient?`<span style="font-size:16px;color:${tc};opacity:0.75">(${s.ingredient})</span>`:''}
-          ${s.crops?.length?`<span style="font-size:10px;color:${tc};opacity:0.7">
-            적용:${s.crops.slice(0,2).join('·')}${s.crops.length>2?'..':''}</span>`:''}
+          ${Array.isArray(s.crops)&&s.crops.length ? '<span style="font-size:10px;color:'+tc+';opacity:0.7">적용:'+s.crops.slice(0,2).join('·')+(s.crops.length>2?'..':'')+'</span>' : ''}
+
         </div>`).join('')}
     </div>`;
   };
@@ -5466,6 +5477,20 @@ function getSupplyTasksForMonth(month, day) {
 }
 
 function initSupply() {
+  // crops 필드 배열 정규화 (Google Sheets에서 문자열로 올 때 대비)
+  mySupplies = mySupplies.map(function(s) {
+    if (!Array.isArray(s.crops)) {
+      var v = String(s.crops || '');
+      if (v.startsWith('[')) {
+        try { s.crops = JSON.parse(v); } catch(e) { s.crops = []; }
+      } else if (v) {
+        s.crops = v.split(/[·,]/).map(function(x){ return x.trim(); }).filter(Boolean);
+      } else {
+        s.crops = [];
+      }
+    }
+    return s;
+  });
   initDefaultSupplies();
   renderSupplyList();
   renderPurchasePlan();
