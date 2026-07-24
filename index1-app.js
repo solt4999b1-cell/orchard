@@ -798,14 +798,27 @@ function renderPlants() {
     return (p.category||'')===(APP.plantFilter);
   });
   // 최종 중복 방어: 같은 이름 제거 (id가 다른 경우 대비)
-  var _rSeen = {};
-  APP.plants = (APP.plants||[]).filter(function(p) {
-    if (!p || !p.name) return false;
-    var k = p._local ? 'local:'+p.name : 'gs:'+p.name;
-    if (_rSeen[k]) return false;
-    _rSeen[k] = true;
-    return true;
+  // 최종 중복 방어: 같은 이름 중 심은날짜 있는 것 우선 유지
+  var _rMap = {};
+  var _today0 = new Date().toISOString().slice(0,10);
+  (APP.plants||[]).forEach(function(p) {
+    if (!p || !p.name) return;
+    var k = p.name.trim();
+    var d = p.dateStr || '';
+    var hasDate = d && d !== _today0 && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    if (!_rMap[k]) {
+      _rMap[k] = p;
+    } else {
+      var ex = _rMap[k];
+      var exD = ex.dateStr || '';
+      var exHas = exD && exD !== _today0 && /^\d{4}-\d{2}-\d{2}$/.test(exD);
+      // 새 것에 날짜 있고 기존엔 없으면 교체
+      if (hasDate && !exHas) _rMap[k] = p;
+      // 둘 다 날짜 있으면 events 많은 것
+      else if (hasDate && exHas && (p.events||[]).length > (ex.events||[]).length) _rMap[k] = p;
+    }
   });
+  APP.plants = Object.values(_rMap);
   var grid = document.getElementById('plant-grid');
   if (!grid) return;
   if (!plants.length) {
@@ -3360,31 +3373,50 @@ async function syncNow(){
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
+      var today = new Date().toISOString().slice(0,10);
+
+      function _hasRealDate(p) {
+        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
+        var d = p.dateStr || '';
+        return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
+      }
+
+      function _betterPlant(ex, p) {
+        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
+        var exHasDate = _hasRealDate(ex);
+        var pHasDate  = _hasRealDate(p);
+        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
+        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
+        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
+        return (p.events||[]).length > (ex.events||[]).length;
+      }
+
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = (p.id && !p._local) ? 'id:' + p.id : 'name:' + p.name.trim();
-        if (_seen[key]) {
-          // 기존보다 events가 많거나 날짜가 더 구체적이면 교체
-          var ex = _seen[key];
-          var exDate = ex.dateStr || '';
-          var newDate = p.dateStr || '';
-          var today = new Date().toISOString().slice(0,10);
-          if ((p.events||[]).length > (ex.events||[]).length ||
-              (exDate === today && newDate && newDate !== today)) {
-            _deduped[_seen[key]._idx] = Object.assign({}, ex, p,
-              { events: (p.events||[]).length > (ex.events||[]).length ? p.events : ex.events });
-            _seen[key] = Object.assign({}, _deduped[_seen[key]._idx], { _idx: _seen[key]._idx });
+        var key = 'name:' + p.name.trim();
+        if (_seen[key] !== undefined) {
+          var idx = _seen[key];
+          var ex  = _deduped[idx];
+          if (_betterPlant(ex, p)) {
+            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
+            _deduped[idx] = Object.assign({}, ex, p, {
+              dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
+              events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
+              no:      ex.no || p.no,
+            });
+          } else {
+            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
+            if (!_hasRealDate(ex) && _hasRealDate(p)) {
+              _deduped[idx].dateStr = p.dateStr;
+            }
           }
         } else {
-          p._idx = _deduped.length;
-          _seen[key] = p;
-          _deduped.push(p);
+          _seen[key] = _deduped.length;
+          _deduped.push(Object.assign({}, p));
         }
       });
-      // _local(MASTER_DB) 항목은 GAS 데이터로 교체된 경우 제거
-      APP.plants = _deduped
-        .filter(function(p) { return p; })
-        .map(function(p) { var q = Object.assign({}, p); delete q._idx; return q; });
+      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
+      APP.plants = _deduped.filter(function(p) { return p; });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
@@ -3608,31 +3640,50 @@ async function loadAllData() {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
+      var today = new Date().toISOString().slice(0,10);
+
+      function _hasRealDate(p) {
+        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
+        var d = p.dateStr || '';
+        return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
+      }
+
+      function _betterPlant(ex, p) {
+        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
+        var exHasDate = _hasRealDate(ex);
+        var pHasDate  = _hasRealDate(p);
+        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
+        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
+        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
+        return (p.events||[]).length > (ex.events||[]).length;
+      }
+
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = (p.id && !p._local) ? 'id:' + p.id : 'name:' + p.name.trim();
-        if (_seen[key]) {
-          // 기존보다 events가 많거나 날짜가 더 구체적이면 교체
-          var ex = _seen[key];
-          var exDate = ex.dateStr || '';
-          var newDate = p.dateStr || '';
-          var today = new Date().toISOString().slice(0,10);
-          if ((p.events||[]).length > (ex.events||[]).length ||
-              (exDate === today && newDate && newDate !== today)) {
-            _deduped[_seen[key]._idx] = Object.assign({}, ex, p,
-              { events: (p.events||[]).length > (ex.events||[]).length ? p.events : ex.events });
-            _seen[key] = Object.assign({}, _deduped[_seen[key]._idx], { _idx: _seen[key]._idx });
+        var key = 'name:' + p.name.trim();
+        if (_seen[key] !== undefined) {
+          var idx = _seen[key];
+          var ex  = _deduped[idx];
+          if (_betterPlant(ex, p)) {
+            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
+            _deduped[idx] = Object.assign({}, ex, p, {
+              dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
+              events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
+              no:      ex.no || p.no,
+            });
+          } else {
+            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
+            if (!_hasRealDate(ex) && _hasRealDate(p)) {
+              _deduped[idx].dateStr = p.dateStr;
+            }
           }
         } else {
-          p._idx = _deduped.length;
-          _seen[key] = p;
-          _deduped.push(p);
+          _seen[key] = _deduped.length;
+          _deduped.push(Object.assign({}, p));
         }
       });
-      // _local(MASTER_DB) 항목은 GAS 데이터로 교체된 경우 제거
-      APP.plants = _deduped
-        .filter(function(p) { return p; })
-        .map(function(p) { var q = Object.assign({}, p); delete q._idx; return q; });
+      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
+      APP.plants = _deduped.filter(function(p) { return p; });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
