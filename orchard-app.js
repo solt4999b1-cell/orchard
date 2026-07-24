@@ -9783,7 +9783,12 @@ function backupToFirebase() {
         } catch(e) {}
         for (const entry of plants) {
           if (existingPl.has(String(entry.id))) continue;
-          await saveToGoogleSheets('create', COLLECTIONS.growPlants, entry).catch(() => {});
+          // dateStr을 YYYY-MM-DD 형식으로 정규화 후 저장
+          const saveEntry = Object.assign({}, entry);
+          if (saveEntry.dateStr && saveEntry.dateStr.includes('T')) {
+            saveEntry.dateStr = saveEntry.dateStr.slice(0, 10);
+          }
+          await saveToGoogleSheets('create', COLLECTIONS.growPlants, saveEntry).catch(() => {});
         }
       })(),
       (async () => {
