@@ -2107,9 +2107,19 @@ function sanitizePlant(p) {
   p.id        = (typeof p.id === 'string' && p.id) ? p.id : ('gr_' + Date.now() + '_' + Math.random().toString(36).slice(2,7));
   p.name      = (typeof p.name === 'string' && p.name) ? p.name : '이름없음';
   p.emoji     = (typeof p.emoji === 'string' && p.emoji) ? p.emoji : '🌱';
-  // dateStr 보정: 문자열이 아니거나 유효하지 않은 날짜면 오늘로
-  if (typeof p.dateStr !== 'string' || !p.dateStr || isNaN(new Date(p.dateStr + 'T00:00:00').getTime())) {
-    try { p.dateStr = toYMD(REAL_TODAY); } catch(e) { p.dateStr = new Date().toISOString().slice(0,10); }
+  // dateStr 보정: plantDate, addedDate 등 다른 필드에서 fallback
+  if (typeof p.dateStr !== 'string' || !p.dateStr ||
+      isNaN(new Date(p.dateStr + 'T00:00:00').getTime())) {
+    // 다른 날짜 필드에서 대체
+    const fallback = p.plantDate || p.addedDate || p.planted_date || '';
+    if (fallback && /^\d{4}-\d{2}-\d{2}/.test(String(fallback))) {
+      p.dateStr = String(fallback).slice(0, 10);
+    } else if (fallback && String(fallback).includes('T')) {
+      p.dateStr = String(fallback).slice(0, 10);
+    } else {
+      // 진짜 없을 때만 오늘 날짜
+      try { p.dateStr = toYMD(REAL_TODAY); } catch(e) { p.dateStr = new Date().toISOString().slice(0,10); }
+    }
   }
   var td = Number(p.totalDays);
   p.totalDays = (isFinite(td) && td > 0) ? td : 120;
@@ -5260,8 +5270,14 @@ function renderSupplyList() {
       font-size:16px;font-weight:700;color:${typeTc[type]||'#546E7A'}">
       ${typeIcon[type]||'📦'} ${type} ${items.length}종</div>`;
     items.forEach(s => {
-      const cropStr = s.crops?.length
-        ? s.crops.slice(0,3).join('·') + (s.crops.length>3?` 외 ${s.crops.length-3}종`:'')
+      // crops가 문자열로 올 경우 배열로 변환
+      const _crops = Array.isArray(s.crops) ? s.crops
+        : (typeof s.crops === 'string' && s.crops)
+          ? (s.crops.startsWith('[') ? (()=>{ try{return JSON.parse(s.crops);}catch(e){return [];} })()
+            : s.crops.split(/[·,]/).map(x=>x.trim()).filter(Boolean))
+          : [];
+      const cropStr = _crops.length
+        ? _crops.slice(0,3).join('·') + (_crops.length>3?` 외 ${_crops.length-3}종`:'')
         : '전체';
       html += `
         <div style="padding:11px 14px;border-bottom:1px solid #F5F5F5">

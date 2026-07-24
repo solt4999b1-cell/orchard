@@ -42,12 +42,54 @@ async function loadFromGoogleSheets(collectionName) {
     
     const rows = result.data || [];
     // 날짜 필드 정규화: "2026-05-04T15:00:00.000Z" → "2026-05-04"
-    const DATE_FIELDS = ['date', 'plantDate', 'addedDate', 'updatedAt', 'createdAt',
+    const DATE_FIELDS = ['date', 'dateStr', 'plantDate', 'addedDate', 'updatedAt', 'createdAt',
                          'registeredAt', 'pollDate', 'lastSprayDate', 'lastFertDate'];
     rows.forEach(row => {
       DATE_FIELDS.forEach(field => {
-        if (row[field] && typeof row[field] === 'string' && row[field].includes('T')) {
-          row[field] = row[field].slice(0, 10);
+        if (!row[field] && row[field] !== 0) return;
+        const v = row[field];
+        // 숫자(Excel 날짜 시리얼) → YYYY-MM-DD
+        if (typeof v === 'number' && v > 40000 && v < 60000) {
+          const d = new Date(Math.round((v - 25569) * 86400 * 1000));
+          row[field] = isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+        }
+        // ISO 문자열 → YYYY-MM-DD
+        else if (typeof v === 'string' && v.includes('T')) {
+          row[field] = v.slice(0, 10);
+        }
+        // "026-05-11..." 형태 (앞자리 잘림) → 보정
+        else if (typeof v === 'string' && /^\d{3}-\d{2}-\d{2}/.test(v)) {
+          row[field] = '2' + v.slice(0, 10);
+        }
+      });
+    });
+    // 배열 필드 자동 파싱 (Sheets 저장 시 문자열로 변환된 것 복원)
+    const ARRAY_FIELDS = ['crops', 'events', 'tags', 'pollHistory', 'incompatible'];
+    rows.forEach(row => {
+      ARRAY_FIELDS.forEach(field => {
+        const v = row[field];
+        if (!v || Array.isArray(v)) return;
+        if (typeof v === 'string') {
+          // JSON 배열 형태인 경우 파싱
+          if (v.startsWith('[')) {
+            try { row[field] = JSON.parse(v); } catch(e) { row[field] = []; }
+          }
+          // "복숭아·사과·배" 형태 → 배열로 분리
+          else if (v.includes('·')) {
+            row[field] = v.split('·').map(s => s.trim()).filter(Boolean);
+          }
+          // 쉼표 구분 문자열 → 배열
+          else if (v.includes(',')) {
+            row[field] = v.split(',').map(s => s.trim()).filter(Boolean);
+          }
+          // 빈 문자열 → 빈 배열
+          else if (v === '') {
+            row[field] = [];
+          }
+          // 단일 값 → 배열
+          else {
+            row[field] = [v];
+          }
         }
       });
     });
