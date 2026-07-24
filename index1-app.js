@@ -278,9 +278,9 @@ function startApp() { initGAS(); }
 // ════════════════════════════════════════════════════════
 
 // ── Google Sheets (공유 OrchardData) 연결 설정 ─────────────
-// g_index.html + index1.html 공유 스프레드시트
+// index.html / index1.html 공유 스프레드시트
 const SHARED_SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
-// GAS URL — 공유 스프레드시트에 접근 (두 앱 통합)
+// GAS URL (index1 전용 — 공유 스프레드시트에 접근)
 let GAS_URL = localStorage.getItem('_runtimeGasUrl') ||
               'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
@@ -380,7 +380,7 @@ function initGAS() {
 }
 
 function showSetupError(msg) {
-  console.warn('[Firebase]', msg);
+  console.warn('[GAS]', msg);
 }
 async function seedPlants() {
   var plants = MASTER_DB.plants;
@@ -797,7 +797,15 @@ function renderPlants() {
     if (APP.plantFilter==='채소') return !isFruitPlant(p);
     return (p.category||'')===(APP.plantFilter);
   });
-  APP.plants = (APP.plants||[]).filter(function(p){ return p && p.name; });
+  // 최종 중복 방어: 같은 이름 제거 (id가 다른 경우 대비)
+  var _rSeen = {};
+  APP.plants = (APP.plants||[]).filter(function(p) {
+    if (!p || !p.name) return false;
+    var k = p._local ? 'local:'+p.name : 'gs:'+p.name;
+    if (_rSeen[k]) return false;
+    _rSeen[k] = true;
+    return true;
+  });
   var grid = document.getElementById('plant-grid');
   if (!grid) return;
   if (!plants.length) {
@@ -3349,7 +3357,34 @@ async function syncNow(){
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     if (plantsArr.length > 0) {
-      APP.plants = plantsArr;
+      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
+      var _seen = {};
+      var _deduped = [];
+      plantsArr.forEach(function(p) {
+        if (!p || !p.name) return;
+        var key = (p.id && !p._local) ? 'id:' + p.id : 'name:' + p.name.trim();
+        if (_seen[key]) {
+          // 기존보다 events가 많거나 날짜가 더 구체적이면 교체
+          var ex = _seen[key];
+          var exDate = ex.dateStr || '';
+          var newDate = p.dateStr || '';
+          var today = new Date().toISOString().slice(0,10);
+          if ((p.events||[]).length > (ex.events||[]).length ||
+              (exDate === today && newDate && newDate !== today)) {
+            _deduped[_seen[key]._idx] = Object.assign({}, ex, p,
+              { events: (p.events||[]).length > (ex.events||[]).length ? p.events : ex.events });
+            _seen[key] = Object.assign({}, _deduped[_seen[key]._idx], { _idx: _seen[key]._idx });
+          }
+        } else {
+          p._idx = _deduped.length;
+          _seen[key] = p;
+          _deduped.push(p);
+        }
+      });
+      // _local(MASTER_DB) 항목은 GAS 데이터로 교체된 경우 제거
+      APP.plants = _deduped
+        .filter(function(p) { return p; })
+        .map(function(p) { var q = Object.assign({}, p); delete q._idx; return q; });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
@@ -3570,7 +3605,34 @@ async function loadAllData() {
         : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     }
     if (plantsArr.length > 0) {
-      APP.plants = plantsArr;
+      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
+      var _seen = {};
+      var _deduped = [];
+      plantsArr.forEach(function(p) {
+        if (!p || !p.name) return;
+        var key = (p.id && !p._local) ? 'id:' + p.id : 'name:' + p.name.trim();
+        if (_seen[key]) {
+          // 기존보다 events가 많거나 날짜가 더 구체적이면 교체
+          var ex = _seen[key];
+          var exDate = ex.dateStr || '';
+          var newDate = p.dateStr || '';
+          var today = new Date().toISOString().slice(0,10);
+          if ((p.events||[]).length > (ex.events||[]).length ||
+              (exDate === today && newDate && newDate !== today)) {
+            _deduped[_seen[key]._idx] = Object.assign({}, ex, p,
+              { events: (p.events||[]).length > (ex.events||[]).length ? p.events : ex.events });
+            _seen[key] = Object.assign({}, _deduped[_seen[key]._idx], { _idx: _seen[key]._idx });
+          }
+        } else {
+          p._idx = _deduped.length;
+          _seen[key] = p;
+          _deduped.push(p);
+        }
+      });
+      // _local(MASTER_DB) 항목은 GAS 데이터로 교체된 경우 제거
+      APP.plants = _deduped
+        .filter(function(p) { return p; })
+        .map(function(p) { var q = Object.assign({}, p); delete q._idx; return q; });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
@@ -5690,7 +5752,7 @@ function _renderAiConfirm(name, parsed, cropUsage) {
      + 'border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
      + (parsed&&parsed.status==='등록취소'
          ? '⚠️ 취소농약으로 기록 저장'
-         : '✅ Firebase에 저장')
+         : '✅ Google Sheets에 저장')
      + '</button>'
      + '<button onclick="document.getElementById(\'ai-parse-result\').innerHTML=\'\'"'
      + ' style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);'
@@ -6133,12 +6195,12 @@ function buildQrConfirmUI(parsed, qrUrl) {
   var isOffline = !_isOnline;
   h += '<div style="display:flex;gap:6px;">'
      + '<button onclick="saveQrParsedData()" style="flex:2;padding:10px;background:var(--green-dark);color:#fff;border-radius:7px;border:none;font-size:13px;font-weight:600;cursor:pointer;">'
-     + (isOffline ? '💾 기기에 저장 (온라인 시 자동 동기화)' : '✅ Firebase에 저장')
+     + (isOffline ? '💾 기기에 저장 (온라인 시 자동 동기화)' : '✅ Google Sheets에 저장')
      + '</button>'
      + '<button onclick="openAiImportModal()" style="flex:1;padding:10px;background:var(--blue-dark);color:#fff;border-radius:7px;border:none;font-size:12px;cursor:pointer;">✏️ 수정 후 저장</button>'
      + '</div>';
   if (isOffline) {
-    h += '<div style="font-size:11px;color:var(--orange);margin-top:6px;text-align:center;">📵 오프라인 상태 — 인터넷 연결 시 자동으로 Firebase에 저장됩니다</div>';
+    h += '<div style="font-size:11px;color:var(--orange);margin-top:6px;text-align:center;">📵 오프라인 상태 — 인터넷 연결 시 자동으로 Google Sheets에 저장됩니다</div>';
   }
   h += '</div>';
   return h;
@@ -6202,7 +6264,7 @@ async function saveQrParsedData() {
 
     var savedMsg = result.source==='local'
       ? '💾 기기에 임시 저장됨 (미동기: '+((await idbGetAll('pendingSync')).length)+'건)'
-      : '✅ Firebase 저장 완료';
+      : '✅ Google Sheets 저장 완료';
     showToast(savedMsg);
     closeModal('scan-modal');
 
@@ -6736,14 +6798,14 @@ function _buildQrConfirmUI(parsed, srcUrl) {
      + '<button onclick="saveQrParsedData()" style="flex:2;min-width:100px;padding:10px;background:'
      + (isCancelled?'#C62828':'var(--green-dark)')
      + ';color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">'
-     + (isCancelled?'⚠️ 취소농약 기록 저장':(_isOnline?'✅ Firebase에 저장':'💾 기기에 저장'))+'</button>'
+     + (isCancelled?'⚠️ 취소농약 기록 저장':(_isOnline?'✅ Google Sheets에 저장':'💾 기기에 저장'))+'</button>'
      + '<button onclick="window.open(\''+esc(srcUrl)+'\')" '
      + 'style="flex:1;padding:10px;background:#fff;border:1px solid var(--blue-mid);color:var(--blue-dark);border-radius:8px;font-size:12px;cursor:pointer;">🔗 사이트</button>'
      + '<button onclick="resetQrPanel()" style="padding:10px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄</button>'
      + '</div>';
 
   if (!_isOnline) {
-    h += '<div style="font-size:11px;color:#E65100;margin-top:5px;text-align:center;">📵 오프라인 — 연결 시 자동 Firebase 동기화</div>';
+    h += '<div style="font-size:11px;color:#E65100;margin-top:5px;text-align:center;">📵 오프라인 — 연결 시 자동 동기화</div>';
   }
   h += '</div>';
   return h;
@@ -8200,7 +8262,7 @@ function renderSprayPlanResult(plan) {
 
   
   h += '<div style="margin-top:12px;display:flex;gap:6px;">'
-     + '<button onclick="saveSprayPlan(window._lastSprayPlan)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Firebase에 계획 저장</button>'
+     + '<button onclick="saveSprayPlan(window._lastSprayPlan)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Google Sheets에 계획 저장</button>'
      + '<button onclick="renderSprayPlanPanel()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:8px;font-size:12px;cursor:pointer;">🔄 다시</button>'
      + '</div>';
 
@@ -8978,7 +9040,7 @@ function renderScheduleResult(sched) {
 
   
   h += '<div style="display:flex;gap:6px;margin-top:12px;">'
-     + '<button onclick="saveScheduleToFirebase(window._lastSchedule)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Firebase에 저장</button>'
+     + '<button onclick="saveScheduleToGAS(window._lastSchedule)" style="flex:2;padding:11px;background:var(--green-dark);color:#fff;border-radius:9px;border:none;font-size:13px;font-weight:700;cursor:pointer;">💾 Google Sheets에 저장</button>'
      + '<button onclick="generateSchedule()" style="flex:1;padding:11px;background:#fff;border:1px solid var(--gray-200);border-radius:9px;font-size:12px;cursor:pointer;">🔄 재생성</button>'
      + '</div>';
 
@@ -9058,7 +9120,7 @@ function renderHarvestSchedule(hs) {
   return h;
 }
 
-async function saveScheduleToFirebase(sched) {
+async function saveScheduleToGAS(sched) {
   if (!sched) { showToast('저장할 스케줄이 없습니다'); return; }
   try {
     await _gasPost(Object.assign({ action:'addSpraySchedule' },{
