@@ -14,8 +14,8 @@
 <link rel="icon" type="image/png" sizes="512x512" href="orchard-icon-512.png">
 <title>새솔동 과수원 관리</title>
 <link rel="stylesheet" href="orchard-style.css">
-  <!-- Firebase SDK (compat version — 브라우저 직접 사용) -->
-  <!-- Firebase SDK는 연결 시 ensureFirebaseSDK()가 여러 CDN 중 가능한 곳에서 동적 로드 -->
+  <!-- Google Sheets GAS 연동 -->
+  
 
 </head>
 <body>
@@ -2439,15 +2439,15 @@
 
     </div><!-- /grow-panel-days -->
 
-    <!-- ▶ 탭B: 생육 기록 (Firebase 통합) -->
+    <!-- ▶ 탭B: 생육 기록 (Google Sheets 통합) -->
     <div id="grow-panel-record" style="display:none">
-      <!-- Firebase growRecords → plants 통합 뷰 -->
+      <!-- Google Sheets growRecords → plants 통합 뷰 -->
       <div class="card" style="margin-top:10px">
         <div class="card-header">
           <span class="card-icon">📝</span>
           <div>
-            <div class="card-title">생육 기록 — Firebase 우선 통합</div>
-            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">Firebase DB 기록이 생육일수 추적 형식으로 통합 표시됩니다</div>
+            <div class="card-title">생육 기록 — Google Sheets 통합</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">Google Sheets 기록이 생육일수 추적 형식으로 통합 표시됩니다</div>
           </div>
           <button onclick="syncAndRenderGrowUnified()"
             style="background:var(--green);color:white;border:none;border-radius:8px;
@@ -2457,7 +2457,7 @@
         </div>
         <div class="card-body" id="growUnifiedList">
           <div style="text-align:center;padding:16px;color:#9E9E9E;font-size:13px">
-            동기화 버튼을 눌러 Firebase 기록을 불러오세요
+            동기화 버튼을 눌러 Google Sheets 기록을 불러오세요
           </div>
         </div>
       </div>
@@ -2608,30 +2608,30 @@
       </div>
     </div>
 
-    <!-- ③ Firebase (백업용) -->
+    <!-- ③ Google Sheets (백업용) -->
     <div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px;margin-bottom:12px;border-left:4px solid #6A1B9A">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:22px">☁️</span>
-          <div style="font-size:15px;font-weight:800;color:#6A1B9A">Firebase <span style="font-size:11px;font-weight:600;color:#AB47BC">· 클라우드 백업</span></div>
+          <div style="font-size:15px;font-weight:800;color:#6A1B9A">Google Sheets <span style="font-size:11px;font-weight:600;color:#AB47BC">· 클라우드 백업</span></div>
         </div>
         <span id="fbConnState" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#F5F5F5;color:#9E9E9E">미연결</span>
       </div>
-      <div id="usageFirebase" style="font-size:12px;font-weight:700;color:#6A1B9A;margin-bottom:8px">☁️ 백업 용량 확인 중...</div>
+      <div id="usageGSheets" style="font-size:12px;font-weight:700;color:#6A1B9A;margin-bottom:8px">☁️ Google Sheets 연결 중...</div>
       <div style="font-size:12px;color:#757575;line-height:1.6;margin-bottom:12px">
         기기를 바꾸거나 폰 데이터가 사라져도 <b>클라우드에서 복원</b>할 수 있는 안전 백업입니다.
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <button onclick="backupToFirebase()"
           style="padding:13px;background:#6A1B9A;color:white;border:none;border-radius:10px;
-          font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">📤 폰 → Firebase 백업</button>
+          font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">📤 폰 → Google Sheets 백업</button>
         <button onclick="restoreFromFirebase()"
           style="padding:13px;background:#F3E5F5;color:#6A1B9A;border:1.5px solid #CE93D8;border-radius:10px;
-          font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 Firebase → 폰 복원</button>
+          font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 Google Sheets → 폰 복원</button>
       </div>
       <button onclick="connectFirebaseManual()"
         style="width:100%;padding:11px;background:#FAFAFA;color:#6A1B9A;border:1.5px dashed #CE93D8;border-radius:10px;
-        font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box">🔌 Firebase 연결하기</button>
+        font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box">🔌 Google Sheets 연결하기</button>
     </div>
 
     <!-- 상태 표시 -->

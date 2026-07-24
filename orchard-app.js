@@ -2,12 +2,9 @@
 let weatherMode = localStorage.getItem('weatherMode') || 'drought';
 
 // ══════════════════════════════════════════════════════════
-// Firebase Firestore 연동 모듈
 // ══════════════════════════════════════════════════════════
 
-// Google Sheets 초기화 (Firebase 대체)
 // 페이지 로드 시 자동 실행
-let _fbReady = false; // 호환성 유지용
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
@@ -21,16 +18,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadConfigData();
     
     if (success) {
-      _fbReady = true;
-      updateFirebaseStatus('connected');
       console.log('✅ Google Sheets 데이터 로드 완료');
     } else {
-      updateFirebaseStatus('error');
       console.warn('⚠️ Google Sheets 로드 중 일부 데이터를 localhost에서 복원함');
     }
   } catch (err) {
     console.error('❌ 초기화 실패:', err);
-    updateFirebaseStatus('error');
   }
 });
 
@@ -47,250 +40,12 @@ function toggleHeader() {
   }
 }
 
-// Firebase 상태 UI 업데이트
-function updateFirebaseStatus(status) {
-  const el = document.getElementById('firebaseStatus');
-  if (!el) return;
-  
-  const statusMap = {
-    connected: { text: '✅ Google Sheets 연결', color: '#4CAF50' },
-    disconnected: { text: '⏳ 연결 중...', color: '#FFC107' },
-    error: { text: '⚠️ 로컬 모드', color: '#FF9800' }
-  };
-  
-  const info = statusMap[status] || statusMap.disconnected;
-  el.innerText = info.text;
-  el.style.color = info.color;
-}
-
-// ── Firestore CRUD 헬퍼 ───────────────────────────────────
-
 // 문서 ID를 안전하게 변환 (슬래시, 공백 제거)
 const toDocId = str => String(str).replace(/[\/\s\.]/g,'_').slice(0,100);
 
-// ── mySupplies → Firestore ────────────────────────────────
-async function fbSaveSupply(entry) {
-  if (!_fbReady || !_db) return;
-  try {
-    await saveToGoogleSheets('supplies').doc(toDocId(entry.id)).set(entry);
-  } catch(e) { console.error('fbSaveSupply:', e.message); }
-}
-
-async function fbDeleteSupply(id) {
-  if (!_fbReady || !_db) return;
-  try {
-    await saveToGoogleSheets('supplies').doc(toDocId(id)).delete();
-  } catch(e) { console.error('fbDeleteSupply:', e.message); }
-}
-
-async function fbLoadSupplies() {
-  if (!_fbReady || !_db) return null;
-  try {
-    const snap = await saveToGoogleSheets('supplies').get();
-    return snap.docs.map(d => d.data());
-  } catch(e) { console.error('fbLoadSupplies:', e.message); return null; }
-}
-
-// ── workLog → Firestore ────────────────────────────────────
-async function fbSaveLog(entry) {
-  if (!_fbReady || !_db) return;
-  try {
-    // photo(base64)는 Firestore 용량 초과 → 제외하고 저장
-    const entryNoPhoto = Object.assign({}, entry);
-    delete entryNoPhoto.photo;
-    await saveToGoogleSheets('workLog').doc(toDocId(entry.id)).set(entryNoPhoto);
-  } catch(e) { console.error('fbSaveLog:', e.message); }
-}
-
-async function fbDeleteLog(id) {
-  if (!_fbReady || !_db) return;
-  try {
-    await saveToGoogleSheets('workLog').doc(toDocId(id)).delete();
-  } catch(e) { console.error('fbDeleteLog:', e.message); }
-}
-
-async function fbLoadLog() {
-  if (!_fbReady || !_db) return null;
-  try {
-    const snap = await saveToGoogleSheets('workLog').get();
-    return snap.docs.map(d => d.data());
-  } catch(e) { console.error('fbLoadLog:', e.message); return null; }
-}
-
-// ── checkedTasks → Firestore ──────────────────────────────
-async function fbSaveChecked(key, val) {
-  if (!_fbReady || !_db) return;
-  try {
-    if (val) {
-      await saveToGoogleSheets('checkedTasks').doc(toDocId(key)).set({key, checked:true});
-    } else {
-      await saveToGoogleSheets('checkedTasks').doc(toDocId(key)).delete();
-    }
-  } catch(e) { console.error('fbSaveChecked:', e.message); }
-}
-
-async function fbLoadChecked() {
-  if (!_fbReady || !_db) return null;
-  try {
-    const snap = await saveToGoogleSheets('checkedTasks').get();
-    const obj  = {};
-    snap.docs.forEach(d => { obj[d.data().key] = true; });
-    return obj;
-  } catch(e) { console.error('fbLoadChecked:', e.message); return null; }
-}
-
-// ── plants 위치 변경 → Firestore ─────────────────────────
-async function fbSavePlant(id, updates) {
-  if (!_fbReady || !_db) return;
-  try {
-    await saveToGoogleSheets('growPlants').doc(toDocId(id)).set(updates, {merge:true});
-  } catch(e) { console.error('fbSavePlant:', e.message); }
-}
-
-async function fbLoadPlants() {
-  if (!_fbReady || !_db) return null;
-  try {
-    const snap = await saveToGoogleSheets('growPlants').get();
-    const obj  = {};
-    snap.docs.forEach(d => { obj[d.id] = d.data(); });
-    return obj;
-  } catch(e) { console.error('fbLoadPlants:', e.message); return null; }
-}
-
-// ── 전체 Firebase → 로컬 동기화 ──────────────────────────
-async function syncFromFirebase() {
-  if (!_fbReady) return;
-  updateFirebaseStatus('syncing');
-  try {
-    // 농자재
-    const fbSupplies = await fbLoadSupplies();
-    if (fbSupplies && fbSupplies.length > 0) {
-      // Firebase 데이터가 있으면 병합
-      fbSupplies.forEach(s => {
-        if (!mySupplies.some(x => x.id === s.id)) mySupplies.push(s);
-      });
-      localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-    } else {
-      // Firebase가 비어 있으면 로컬 → Firebase 업로드
-      for (const s of mySupplies) await fbSaveSupply(s);
-    }
-
-    // 기록장 - Firebase에서 로드 후 localStorage와 병합 (덮어쓰기 금지)
-    const fbLog = await fbLoadLog();
-    if (fbLog && fbLog.length > 0) {
-      // localStorage 기존 데이터 유지하면서 병합
-      const localLog = JSON.parse(localStorage.getItem('workLog') || '[]');
-      const merged = [...fbLog];
-      localLog.forEach(e => {
-        if (!merged.some(f => String(f.id) === String(e.id))) merged.push(e);
-      });
-      merged.sort((a,b) => (b.id||0) - (a.id||0));
-      workLog = merged;
-      localStorage.setItem('workLog', JSON.stringify(workLog));
-    }
-    // fbLog가 null이거나 비어도 로컬 데이터 그대로 유지 (덮어쓰기 안 함)
-
-    // 완료 작업
-    const fbChecked = await fbLoadChecked();
-    if (fbChecked) {
-      Object.assign(checkedTasks, fbChecked);
-      localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
-    } else {
-      for (const [k,v] of Object.entries(checkedTasks)) {
-        if (v) await fbSaveChecked(k, true);
-      }
-    }
-
-    // 식물 위치
-    const fbPlants = await fbLoadPlants();
-    if (fbPlants && Object.keys(fbPlants).length > 0) {
-      const saved = JSON.parse(localStorage.getItem('plants') || '{}');
-      Object.assign(saved, fbPlants);
-      localStorage.setItem('plants', JSON.stringify(saved));
-    }
-
-    // 이랑 이동 기록 동기화
-    await fbSyncIrangLog();
-    // 생육 기록 동기화
-    await fbSyncGrowRecords();
-
-    // 이랑 변경 이력 로드
-    try {
-      const irangSnap = await saveToGoogleSheets('irangChanges').get();  // orderBy 인덱스 불필요
-      const irangLog = irangSnap.docs.map(d => d.data());
-      if (irangLog.length) {
-        localStorage.setItem('irangChanges', JSON.stringify(irangLog));
-      }
-    } catch(e) { console.warn('irangChanges load:', e.message); }
-
-    // 생육일수 추적(growPlants) 동기화
-    try {
-      const gpSnap = await saveToGoogleSheets('growPlants').get();
-      if (!gpSnap.empty) {
-        gpSnap.docs.forEach(doc => {
-          const fp = doc.data();
-          if (!fp || !fp.id) return;
-          if (!Array.isArray(fp.events)) fp.events = [];
-          const li = plants.findIndex(p => p.id === fp.id);
-          if (li < 0) plants.push(fp);
-          else if ((fp.updatedAt||'') >= (plants[li].updatedAt||'')) plants.splice(li,1,fp);
-        });
-        savePlantsLocal();
-      } else if (plants.length > 0) {
-        for (const p of plants) {} // _db.collection('growPlants').doc(p.id).set(p).catch(()=>{});
-      }
-    } catch(e) { console.warn('sync growPlants:', e.message); }
-
-    // 생육기록(growRecords) 동기화
-    try {
-      const grSnap = await saveToGoogleSheets('growRecords').get();
-      if (!grSnap.empty) {
-        const fbRecs = grSnap.docs.map(d => d.data());
-        const rids = new Set(growRecords.map(r => r.id));
-        fbRecs.forEach(r => { if (!rids.has(r.id)) growRecords.unshift(r); });
-        growRecords.sort((a,b) => (b.id > a.id ? 1 : -1));
-        localStorage.setItem('growRecords', JSON.stringify(growRecords));
-        try { migrateGrowRecords(); } catch(e2) {}
-      } else if (growRecords.length > 0) {
-        for (const r of growRecords) {} // _db.collection('growRecords').doc(r.id).set(r).catch(()=>{});
-      }
-    } catch(e) { console.warn('sync growRecords:', e.message); }
-
-    updateFirebaseStatus('connected');
-    showToast('🔄 Firebase 동기화 완료');
-    renderSupplyList();
-    renderPurchasePlan();
-    // renderWorkLog는 기록장 탭 진입 시에만 호출
-
-  } catch(e) {
-    console.error('syncFromFirebase:', e.message);
-    updateFirebaseStatus('error', e.message);
-  }
-}
-
-// ── 실시간 리스너 (Firestore onSnapshot) ─────────────────
-// ⚠️ Google Sheets 사용 중이므로 Firebase 리스너 제거됨
 function startRealtimeSync() {
-  // Google Sheets 사용 중 - Firebase 실시간 동기화 비활성화
   console.log('✅ 실시간 동기화 스킵 (Google Sheets 사용)');
 }
-
-// ── Firebase 수동 동기화 버튼 ─────────────────────────────
-function fbManualSync() {
-  if (!_fbReady) {
-    showToast('❌ Firebase 연결 안됨');
-    return;
-  }
-  // 자동 동기화 제거 - 사용자가 백업·복원 탭에서 수동으로 실행
-}
-
-// ── Firebase 전체 초기화 (개발용) ────────────────────────
-// Google Sheets 사용 중 - 비활성화됨
-async function fbClearAll() {
-  showToast('⚠️ Google Sheets 사용 중 - Firebase 초기화는 사용할 수 없습니다');
-  return;
-}
-
 
 // MONTHLY_SCHEDULE은 Google Sheets에서 로드됨
 
@@ -971,13 +726,11 @@ pestSchedule: {
 
 };
 
-
 checkedTasks = JSON.parse(localStorage.getItem('checkedTasks') || '{}');
 
 // ══════════════════════════════════════════════════════════
 // 농약·비료 통합 DB — 내 과수원 작물 기준 (~1MB)
 // 화성시 새솔동 · 유실수15종 + 밭작물 기반
-
 
 // ── 날짜 상태 (선택 가능) ──────────────────────────────────
 let SELECTED_DATE = (() => {
@@ -1068,8 +821,6 @@ function updateDateUI() {
   const irangEl = document.getElementById('irangTitle');
   if (irangEl) irangEl.textContent = `${d.getMonth()+1}월 이랑 작물 상태`;
 }
-
-
 
 // ── 오늘 날짜 배지 ────────────────────────────────────
 // 날짜 UI는 updateDateUI()로 초기화
@@ -1378,7 +1129,6 @@ function getDateTasks(selDate) {
     }
   }
 
-
   // ── 보유 농자재 구입 알림 추가 ──────────────────────────
   if (typeof getSupplyTasksForMonth !== 'undefined') {
     getSupplyTasksForMonth(m, day).forEach(t => tasks.push(t));
@@ -1531,8 +1281,6 @@ function getNextWeekPrep(month) {
   return preps[month] || [];
 }
 
-
-
 function renderTip(month) {
   const tips = {
     5: {title:'5월 핵심 팁', text:'★ 파종 후 멀칭이 수확량을 결정합니다\n건조한 날이 많으면 비닐 or 짚 멀칭 즉시 실시\n고구마 모종은 흐린 날 저녁에 심어야 활착률↑'},
@@ -1603,7 +1351,6 @@ function renderTasks() {
   // 완료된 반복 작업(월 기반) 제외 옵션
   const monthKey = todayKey.slice(0,7);
   const hideDone = localStorage.getItem('hideDoneTasks') === 'true';
-  // workLog 최신 상태 로드 (Firebase 로드 전일 수 있으므로 localStorage 직접 읽기)
   const _wlForTask = JSON.parse(localStorage.getItem('workLog') || '[]');
   const todayStr = toYMD(REAL_TODAY);
   // 오늘 이전에 기록된 작업 이름 목록
@@ -1704,7 +1451,6 @@ function renderTasks() {
   renderTip(month);
 }
 
-
 function toggleHideDone() {
   const cur = localStorage.getItem('hideDoneTasks') === 'true';
   localStorage.setItem('hideDoneTasks', (!cur).toString());
@@ -1723,10 +1469,8 @@ function toggleTask(key, el) {
   checkedTasks[key] = !checkedTasks[key];
   if (!checkedTasks[key]) {
     delete checkedTasks[key];
-    fbSaveChecked(key, false);  // Firebase 삭제
-  } else {
-    fbSaveChecked(key, true);   // Firebase 저장
-  }
+    } else {
+    }
   localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
 
   // 완료 시 기록장에 저장
@@ -1831,8 +1575,6 @@ function renderDDay() {
   document.getElementById('ddayGrid').innerHTML = buildGrid(ddayData);
   document.getElementById('harvestGrid').innerHTML = buildGrid(harvestData);
 }
-
-
 
 // ── 이랑 현황 데이터 ─────────────────────────────────
 function getIrangData(month) {
@@ -1977,7 +1719,6 @@ function getIrangData(month) {
   ];
   return base;
 }
-
 
 function renderIrang() {
   const month = getMonthNum();
@@ -2145,7 +1886,7 @@ function showTab(id) {
   }
   if (id === 'grow') {
     try { if (typeof updateGrowStorageBanner === 'function') updateGrowStorageBanner(); } catch(e) {}
-    renderGrow();  // 항상 로컬 데이터로 렌더 (Firebase는 수동 버튼으로만)
+    renderGrow();
   }
   if (id === 'search') {
     try { renderBackupList(); } catch(e) {}
@@ -2164,25 +1905,9 @@ function showTab(id) {
     if (_wl) { try { workLog = JSON.parse(_wl); } catch(e) { workLog = []; } }
     else { workLog = []; }
     renderWorkLog();
-    if (_fbReady && _db) {
-      // Google Sheets 사용 중 - Firebase 로드 비활성화
-      // _db.collection('workLog').get()
-      //   .then(snap => {
-      //     const fbLogs = [];
-      //     snap.forEach(doc => { const d=doc.data(); if(d&&d.id) fbLogs.push(d); });
-      //     if (fbLogs.length > 0) {
-      //       fbLogs.forEach(d => { if(!workLog.some(e=>String(e.id)===String(d.id))) workLog.push(d); });
-      //       workLog.sort((a,b)=>(b.id||0)-(a.id||0));
-      //       localStorage.setItem('workLog', JSON.stringify(workLog));
-      //       renderWorkLog();
-      //     }
-      //   }).catch(e => console.warn('workLog load:', e.message));
-    }
     if (!sheetAutoLoaded) { sheetAutoLoaded = true; renderPendingList(); }
   }
 }
-
-
 
 // ── 생육일수 기능 ─────────────────────────────────────
 plants = (function() {
@@ -2232,10 +1957,6 @@ function savePlant() {
 
 function deletePlant(id) {
   if (!confirm('삭제할까요?')) return;
-  // Firebase에서도 삭제
-  if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady && _db) {
-    // _db.collection('growPlants').doc(id).delete().catch(function(){});
-  }
   plants = plants.filter(function(p){ return p.id !== id; });
   savePlantsLocal();
   renderGrow();
@@ -2308,7 +2029,7 @@ function _savePlantEdit(id) {
   var nt = document.getElementById('_pNote'); if(nt) plants[idx].note    = nt.value;
   plants[idx].updatedAt = new Date().toISOString();
   savePlantsLocal();
-  if (typeof fbSavePlant === 'function' && typeof _fbReady !== 'undefined' && _fbReady) fbSavePlant(plants[idx].id, plants[idx]);
+
   var ov = document.querySelector('[data-editov]'); if(ov) ov.remove();
   renderGrow();
   showToast('✅ 작물 수정 완료');
@@ -2381,8 +2102,6 @@ function getProgressColor(days, total) {
   if (pct < 0.9) return '#E65100';
   return '#C62828';
 }
-
-// 작물 객체의 모든 필드를 안전한 기본값으로 보정 (Firebase 불완전 데이터 방어)
 function sanitizePlant(p) {
   if (!p || typeof p !== 'object') return null;
   p.id        = (typeof p.id === 'string' && p.id) ? p.id : ('gr_' + Date.now() + '_' + Math.random().toString(36).slice(2,7));
@@ -2592,7 +2311,6 @@ function renderGrow() {
   }).join('');
 }
 
-
 // ── 전정 가이드 데이터 ────────────────────────────────────
 const pruningData = [
   {group:"3/20입고 (식재21일)",name:"으름나무 홍화대실으름",shape:"덩굴형",judge:"✅ 가능",method:"주간 90~100cm 절단 · 측지 전부 기부 제거 · 와이어 2단 유인",bg:"#E8F5E9",tc:"#1B5E20",cls:"ok"},
@@ -2636,7 +2354,6 @@ const pruningData = [
 
 let pruneFilter = 'all';
 let pruneChecked = JSON.parse(localStorage.getItem('pruneChecked') || '{}');
-
 
 // ── 묘목 목록 → 그림 이동 ────────────────────────────────
 function jumpToImage(gi, ii) {
@@ -2682,8 +2399,6 @@ function filterPruning(cls) {
     el.style.display = (cls === 'all' || itemCls === cls) ? 'block' : 'none';
   });
 }
-
-
 
 function renderPruningList() {
   const list = document.getElementById('pruningList');
@@ -2757,7 +2472,6 @@ function updatePruneProgress() {
   if (prog) prog.style.width = pct + '%';
   if (badge) badge.textContent = done + ' / ' + total;
 }
-
 
 // ── PDF 전정 삽화 탭 전환 ────────────────────────────────
 function showPdfPage(n) {
@@ -2998,13 +2712,6 @@ function saveLocation() {
     pDB.irang = irang;
     pDB.spot  = spot;
     pDB.updatedAt = new Date().toISOString();
-    // Firebase에 저장
-    if (typeof _db !== 'undefined' && _db) {
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // _db.collection('growPlants').doc(pDB.id).update({
-    //   zone, irang, spot, updatedAt: pDB.updatedAt
-    // }).catch(e => console.warn('plants update:', e.message));
-    }
     if (typeof savePlantsDBLocal === 'function') savePlantsDBLocal();
   }
 
@@ -3020,20 +2727,6 @@ function saveLocation() {
   // 이랑 패널이 열려 있으면 갱신
   var pIrang = document.getElementById('pm-panel-irang');
   if (pIrang && pIrang.style.display !== 'none') renderIrangInPanel();
-
-  // Firebase 이랑 변경 이력 저장
-  if (typeof _db !== 'undefined' && _db) {
-    const change = {
-      id: Date.now().toString(),
-      plantId: p.id, plantName: p.name,
-      fromZone: p.zone, fromIrang: p.irang, fromSpot: p.spot,
-      toZone: zone, toIrang: irang, toSpot: spot,
-      date: toYMD(REAL_TODAY), memo,
-    };
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // _db.collection('irangChanges').doc(change.id).set(change)
-    //   .catch(e => console.warn('이랑 변경 저장:', e.message));
-  }
   showToast(`✅ ${p.name} 위치 저장 완료 — 두 패널 모두 반영`);
 }
 
@@ -3103,7 +2796,6 @@ function clearAllChanges() {
   renderBackupList();
   showToast('🗑️ 초기화 완료 · 백업에서 복원 가능');
 }
-
 
 // ══════════════════════════════════════════════════════════
 // 날짜별 백업 · 되돌리기 시스템
@@ -3301,7 +2993,6 @@ function renderBackupList() {
   }).join('');
 }
 
-
 // ── 즉시 되돌리기 (마지막 변경 취소) ─────────────────────
 let lastChangeSnapshot = null; // 직전 locationChanges 스냅샷
 
@@ -3367,7 +3058,6 @@ function clearAllBackups() {
   renderBackupList();
   showToast('🗑️ 전체 백업 삭제 완료');
 }
-
 
 // ══════════════════════════════════════════════════════════
 // 달력 날짜 선택기
@@ -3526,7 +3216,6 @@ function renderCalDays() {
 
   box.innerHTML = cells;
 }
-
 
 function scrollToPruningList() {
   const el = document.getElementById('pruningListCard');
@@ -3754,10 +3443,6 @@ async function loadPruningWeather() {
   }
 }
 
-
-
-
-
 // ── 14일 장기예보 ─────────────────────────────────────────
 let forecastLoaded = false;
 
@@ -3970,7 +3655,6 @@ function toggleFcDetail(i) {
   el.style.display = el.style.display === 'none' ? 'block' : 'none';
 }
 
-
 // ── 날씨 섹션 전용 함수 ───────────────────────────────────
 let wxForecastLoaded = false;
 
@@ -4158,7 +3842,6 @@ async function loadWeatherMain() {
     });
 }
 
-
 function toggleWeatherForecast() {
   const panel = document.getElementById('wxForecastPanel');
   if (!panel) return;
@@ -4265,7 +3948,6 @@ function toggleWxDetail(i){
   const el=document.getElementById('wx-detail-'+i);
   if(el) el.style.display=el.style.display==='none'?'block':'none';
 }
-
 
 // ══════════════════════════════════════════════════════════
 // 병해충·시비 통합 시스템 — 내 작물 기준
@@ -4651,7 +4333,6 @@ const myFertSchedule = {
   ],
 };
 
-
 // 병해충 상세 데이터
 const pestDetail = {
   '흰가루병':   {emoji:'🍃',type:'곰팡이',symptom:'흰 가루 → 황변·낙엽',control:'훼나리몰(훼나리몰수화제)·트리플록시스트로빈(플린트수화제·로만스액상수화제)',risk_temp:[12,25],risk_hum:60,bg:'#F3E5F5',tc:'#6A1B9A'},
@@ -4683,7 +4364,6 @@ function getDbPestScheduleForMonth(month) {
   if (typeof SUPPLY_DB === 'undefined') return [];
   return SUPPLY_DB.pestSchedule[month] || [];
 }
-
 
 // 월별 방제·시비력 (통합)
 const pestCalendar = {
@@ -4978,9 +4658,6 @@ function renderPestCalendar() {
   body.innerHTML = html;
 }
 
-
-
-
 // ── 보유비료 현황 렌더 ───────────────────────────────────
 function renderNhFertList() {
   const el = document.getElementById('nhFertList');
@@ -5044,12 +4721,9 @@ function renderNhFertList() {
   el.innerHTML = html;
 }
 
-
 // ══════════════════════════════════════════════════════════
 // 농약·비료 통합 DB — 내 과수원 작물 기준 (~1MB)
 // 화성시 새솔동 · 유실수15종 + 밭작물 기반
-
-
 
 // ── 농협 농약 성분 → 제품명 매핑 ────────────────────────────
 const nhPesticideMap = {
@@ -5074,7 +4748,6 @@ const nhPesticideMap = {
   '석회유황합제':     '석회유황합제',
 };
 
-
 // ── 재배 그림 탭 전환 ────────────────────────────────────
 const guideNames = ['watermelon','tomato','melon','cucumber','pumpkin','graft','graft_melon','graft_pumpkin'];
 function showGuide(name) {
@@ -5089,7 +4762,6 @@ function showGuide(name) {
     btn.style.borderColor= active ? '#1B5E20' : '#E0E0E0';
   });
 }
-
 
 // ══════════════════════════════════════════════════════════
 // 구글 스프레드시트 LayoutData 연동
@@ -5168,7 +4840,6 @@ function loadSheetData() {
   };
   document.head.appendChild(script);
 }
-
 
 // 테이블 렌더링
 function renderSheetTable() {
@@ -5479,9 +5150,6 @@ function saveSupply() {
   };
   mySupplies.push(entry);
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-  fbSaveSupply(entry);  // Firebase 저장
-
-  // 폼 초기화
   ['supplyName','supplyIngredient','supplyAmount','supplyMonths']
     .forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
   clearCropSelect();
@@ -5550,7 +5218,6 @@ function _saveSupplyEdit(id) {
   mySupplies[idx].qty   = document.getElementById('_sQty').value;
   mySupplies[idx].memo  = document.getElementById('_sMemo').value;
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-  if (typeof fbSaveSupply === 'function' && _fbReady) fbSaveSupply(mySupplies[idx]);
   document.querySelector('div[style*="position:fixed"][style*="z-index:9999"]')?.remove();
   renderSupplyList();
   showToast('✅ 농자재 수정 완료');
@@ -5560,9 +5227,7 @@ function deleteSupply(id) {
   const s = mySupplies.find(x=>x.id===id);
   if (!s || !confirm(`"${s.name}" 삭제할까요?`)) return;
   mySupplies = mySupplies.filter(x=>x.id!==id);
-  localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-  fbDeleteSupply(id);  // Firebase 삭제
-  renderSupplyList();
+  localStorage.setItem('mySupplies', JSON.stringify(mySupplies));  renderSupplyList();
   renderPurchasePlan();
   showToast('🗑️ 삭제 완료');
 }
@@ -5857,8 +5522,6 @@ function recordWork(taskName, taskDetail, taskLoc, taskJudge) {
   workLog.unshift(entry);
   if (workLog.length > 500) workLog = workLog.slice(0, 500);
   localStorage.setItem('workLog', JSON.stringify(workLog));
-  fbSaveLog(entry);  // Firebase 저장
-  // 기록장 탭이 열려있으면 즉시 갱신
   if (document.getElementById('sec-sheet')?.classList.contains('active')) {
     renderWorkLog();
   }
@@ -6094,8 +5757,6 @@ function _saveLogEdit(id) {
   workLog[idx].loc    = document.getElementById('_editLoc').value;
   workLog[idx].type   = document.getElementById('_editType').value;
   localStorage.setItem('workLog', JSON.stringify(workLog));
-  // Firebase에도 저장
-  if (typeof fbSaveLog === 'function' && _fbReady) fbSaveLog(workLog[idx]);
   document.querySelector('div[style*="position:fixed"][style*="z-index:9999"]')?.remove();
   renderWorkLog();
   showToast('✅ 기록 수정 완료');
@@ -6103,9 +5764,7 @@ function _saveLogEdit(id) {
 
 function deleteLogEntry(id) {
   workLog = workLog.filter(e => e.id !== id);
-  localStorage.setItem('workLog', JSON.stringify(workLog));
-  fbDeleteLog(id);  // Firebase 삭제
-  renderWorkLog();
+  localStorage.setItem('workLog', JSON.stringify(workLog));  renderWorkLog();
 }
 
 function clearWorkLog() {
@@ -6117,7 +5776,6 @@ function clearWorkLog() {
 }
 
 // ── 월별일정 표 렌더 ──────────────────────────────────────
-
 
 // ── 월별일정 (최적화 버전) ────────────────────────────────
 const _mtCache = {};
@@ -6289,8 +5947,6 @@ function _prebuild(curM) {
 function buildMonthlySummary(m) { return _buildSummaryFast(m); }
 function renderMonthly() { renderMonthlyTable(String(REAL_TODAY.getMonth()+1)); }
 
-
-
 function exportSupplyJSON() {
   const data = {
     version: '1.0',
@@ -6370,7 +6026,6 @@ function exportWorkLogCSV() {
   document.body.removeChild(a); URL.revokeObjectURL(url);
   showToast('📊 CSV 저장됨 (' + workLog.length + '건)');
 }
-
 
 // ── 구글드라이브 CSV 연동 ─────────────────────────────────
 let driveCsvFileId = localStorage.getItem('driveCsvFileId') || '';
@@ -6519,9 +6174,6 @@ async function loadDriveCSV() {
   if (btn) btn.textContent = '🔄 불러오기';
 }
 
-
-// ── 이랑 현황 + 생육일수 Firebase 연동 ──────────────────────
-
 // ─ 이랑 현황: 작물 이동 저장 ─────────────────────────────
 function saveIrangChange(plantId, fromIrang, toIrang, note) {
   const entry = {
@@ -6536,32 +6188,7 @@ function saveIrangChange(plantId, fromIrang, toIrang, note) {
   let irangLog = JSON.parse(localStorage.getItem('irangLog') || '[]');
   irangLog.unshift(entry);
   localStorage.setItem('irangLog', JSON.stringify(irangLog));
-  // Google Sheets 사용 중 - Firebase 저장 비활성화
-  if (_fbReady && _db) {
-    // _db.collection('irangLog').doc(entry.id).set(entry)
-    //   .catch(e => console.error('irangLog save:', e.message));
-  }
   showToast('📍 이랑 이동 기록됨');
-}
-
-async function fbSyncIrangLog() {
-  if (!_fbReady || !_db) return;
-  try {
-    const snap = await saveToGoogleSheets('irangLog').get();
-    const fbLog = snap.docs.map(d => d.data());
-    if (fbLog.length) {
-      let local = JSON.parse(localStorage.getItem('irangLog') || '[]');
-      const ids = new Set(local.map(e => e.id));
-      fbLog.forEach(e => { if (!ids.has(e.id)) local.unshift(e); });
-      local.sort((a,b) => b.id - a.id);
-      localStorage.setItem('irangLog', JSON.stringify(local));
-    } else {
-      const local = JSON.parse(localStorage.getItem('irangLog') || '[]');
-      for (const e of local) {
-        await saveToGoogleSheets('irangLog').doc(e.id).set(e);
-      }
-    }
-  } catch(e) { console.error('fbSyncIrangLog:', e.message); }
 }
 
 // ─ 생육일수: 착과·파종 기록 ──────────────────────────────
@@ -6587,11 +6214,6 @@ function saveGrowRecord(plantName, eventType, date, note) {
   }
   growRecords.unshift(entry);
   localStorage.setItem('growRecords', JSON.stringify(growRecords));
-  // Google Sheets 사용 중 - Firebase 저장 비활성화
-  if (_fbReady && _db) {
-    // _db.collection('growRecords').doc(entry.id).set(entry)
-    //   .catch(e => console.error('growRecords save:', e.message));
-  }
   showToast('🌱 ' + plantName + ' ' + eventType + ' 기록됨');
   // growRecords 저장 즉시 plants 동기화 (생육일수 추적 탭도 업데이트)
   migrateGrowRecords();
@@ -6608,30 +6230,7 @@ function saveGrowRecord(plantName, eventType, date, note) {
 function deleteGrowRecord(id) {
   growRecords = growRecords.filter(r => r.id !== id);
   localStorage.setItem('growRecords', JSON.stringify(growRecords));
-  if (_fbReady && _db) {
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // _db.collection('growRecords').doc(id).delete()
-    //   .catch(e => console.error('growRecords delete:', e.message));
-  }
   renderGrowRecords();
-}
-
-async function fbSyncGrowRecords() {
-  if (!_fbReady || !_db) return;
-  try {
-    const snap = await saveToGoogleSheets('growRecords').get();
-    const fbRecs = snap.docs.map(d => d.data());
-    if (fbRecs.length) {
-      const ids = new Set(growRecords.map(r => r.id));
-      fbRecs.forEach(r => { if (!ids.has(r.id)) growRecords.unshift(r); });
-      growRecords.sort((a,b) => b.id - a.id);
-      localStorage.setItem('growRecords', JSON.stringify(growRecords));
-    } else {
-      for (const r of growRecords) {
-        await saveToGoogleSheets('growRecords').doc(r.id).set(r);
-      }
-    }
-  } catch(e) { console.error('fbSyncGrowRecords:', e.message); }
 }
 
 // 생육기록 렌더
@@ -6729,11 +6328,6 @@ function saveGrowRecordEdit(id) {
   r.date      = date;
   r.note      = note.trim();
   localStorage.setItem('growRecords', JSON.stringify(growRecords));
-  if (typeof _db !== 'undefined' && _db) {
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // _db.collection('growRecords').doc(String(id)).set(r)
-    //   .catch(function(e){ console.warn('growRecord update:', e.message); });
-  }
   var m = document.getElementById('growRecEditModal');
   if (m) m.remove();
   renderGrowRecords();
@@ -6786,7 +6380,6 @@ function uploadLogPhoto(event, logId) {
       const wasReplace = !!workLog[idx].photo;
       workLog[idx].photo = dataUrl;
       localStorage.setItem('workLog', JSON.stringify(workLog));
-      if (typeof fbSaveLog === 'function' && _fbReady) fbSaveLog(workLog[idx]);
       renderWorkLog();
       showToast(wasReplace ? '🔄 사진 교체 완료' : '📷 사진 저장 완료');
     }
@@ -6800,7 +6393,6 @@ function deleteLogPhoto(logId) {
   if (idx >= 0) {
     delete workLog[idx].photo;
     localStorage.setItem('workLog', JSON.stringify(workLog));
-    if (typeof fbSaveLog === 'function' && _fbReady) fbSaveLog(workLog[idx]);
     renderWorkLog();
     showToast('🗑 사진 삭제 완료');
   }
@@ -7150,14 +6742,11 @@ function addRecommendToSupply(name, type, cropStr) {
 
 // 토스트 메시지
 // ══════════════════════════════════════════════════════════
-// Plants DB — Firestore 실시간 CRUD
-// allPlants를 Firestore plants 컬렉션과 동기화
+
 // ══════════════════════════════════════════════════════════
 
 // ── 런타임 식물 배열 (allPlants 복사본, CRUD로 변경됨) ───
-let plantsDB = [];  // Firestore에서 로드한 현재 식물 목록
-
-// ── plantsDB 로컬 저장/로드 (Firebase 없어도 영구 저장) ───
+let plantsDB = [];
 function savePlantsDBLocal() {
   try { localStorage.setItem('plantsDB', JSON.stringify(plantsDB)); } catch(e) {}
 }
@@ -7213,14 +6802,6 @@ function mergeLocationChangesToPlantsDB() {
         p.irang = ch.irang;
         p.spot  = ch.spot;
         merged++;
-        // Firebase에도 반영
-        if (typeof _db !== 'undefined' && _db) {
-        // Google Sheets 사용 중 - Firebase 저장 비활성화
-        // _db.collection('growPlants').doc(id).update({
-        //   zone: ch.zone, irang: ch.irang, spot: ch.spot,
-        //   updatedAt: new Date().toISOString()
-        // }).catch(function(){});
-        }
       }
     }
   });
@@ -7228,7 +6809,6 @@ function mergeLocationChangesToPlantsDB() {
 }
 
 function startPlantsListener() {
-  // Google Sheets 사용 중 - Firebase 리스너 완전 비활성화
   return;
 }
 
@@ -7245,16 +6825,6 @@ async function addPlant(plant) {
   };
   plantsDB.push(entry);
   savePlantsDBLocal();
-  if (_db) {
-    await saveToGoogleSheets('growPlants').doc(newId).set(entry)
-      .catch(e => console.warn('addPlant:', e.message));
-    // 변경 이력
-    await saveToGoogleSheets('irangChanges').doc(Date.now().toString()).set({
-      type: 'add', plantId: newId, plantName: entry.name,
-      toIrang: entry.irang, toZone: entry.zone,
-      qty: entry.qty, date: toYMD(REAL_TODAY), memo: plant.note || '신규 식재',
-    }).catch(()=>{});
-  }
   renderIrang();
   renderSearchResults('', '전체');
   showToast('🌱 ' + entry.name + ' 추가됨');
@@ -7269,18 +6839,6 @@ async function updatePlant(id, updates) {
   const old = {...plantsDB[idx]};
   plantsDB[idx] = {...plantsDB[idx], ...updates, updatedAt: new Date().toISOString()};
   savePlantsDBLocal();
-  if (_db) {
-    await saveToGoogleSheets('growPlants').doc(id).update({
-      ...updates, updatedAt: new Date().toISOString()
-    }).catch(e => console.warn('updatePlant:', e.message));
-    // 이력 저장
-    await saveToGoogleSheets('irangChanges').doc(Date.now().toString()).set({
-      type: 'update', plantId: id, plantName: old.name,
-      fromQty: old.qty, toQty: updates.qty !== undefined ? updates.qty : old.qty,
-      fromIrang: old.irang, toIrang: updates.irang || old.irang,
-      date: toYMD(REAL_TODAY), memo: updates.memo || '수정',
-    }).catch(()=>{});
-  }
   renderIrang();
   renderSearchResults(document.getElementById('searchInput')?.value || '', '전체');
 }
@@ -7292,17 +6850,6 @@ async function deletePlant(id, reason) {
   const idx = plantsDB.findIndex(p => p.id === id);
   plantsDB.splice(idx, 1);
   savePlantsDBLocal();
-  if (_db) {
-    await saveToGoogleSheets('growPlants').doc(id).update({
-      status: 'deleted', deletedDate: toYMD(REAL_TODAY),
-      deleteReason: reason || '삭제', updatedAt: new Date().toISOString(),
-    }).catch(e => console.warn('deletePlant:', e.message));
-    await saveToGoogleSheets('irangChanges').doc(Date.now().toString()).set({
-      type: 'delete', plantId: id, plantName: plant.name,
-      fromIrang: plant.irang, reason: reason || '삭제',
-      date: toYMD(REAL_TODAY),
-    }).catch(()=>{});
-  }
   renderIrang();
   renderSearchResults(document.getElementById('searchInput')?.value || '', '전체');
   showToast('🗑️ ' + plant.name + ' 삭제됨');
@@ -7503,7 +7050,6 @@ function renderIrang() {
 
   listEl.innerHTML = html || '<div style="padding:20px;text-align:center;color:#9E9E9E">식물 데이터 없음</div>';
 }
-
 
 // ══════════════════════════════════════════════════════════
 // 식물 추가 모달
@@ -7850,8 +7396,7 @@ function renderSearchResults(query, filter) {
 
 // DOMContentLoaded 후 plantsDB 초기화
 document.addEventListener('DOMContentLoaded', function() {
-  // Firebase 준비 후 1초 뒤 초기화 (Firebase initFirebase보다 늦게)
-  setTimeout(() => initPlantsDB(), 1500);
+    setTimeout(() => initPlantsDB(), 1500);
   // 영구 저장 요청 (앱 삭제 전까지 데이터 보존 — 저장공간 부족 시 자동삭제 방지)
   requestPersistentStorage();
 });
@@ -7872,8 +7417,6 @@ async function requestPersistentStorage() {
   return null;
 }
 
-
-
 // ══ 기록장 팝업 ════════════════════════════════════
 function openWorkLogPopup() {
   const popup = document.getElementById('workLogPopup');
@@ -7881,28 +7424,6 @@ function openWorkLogPopup() {
   popup.style.display = 'block';
   document.body.style.overflow = 'hidden';
   renderPopupWorkLog();
-  // Firebase에서도 로드
-  if (typeof _fbReady !== 'undefined' && _fbReady && _db) {
-    // Google Sheets 사용 중 - Firebase 로드 비활성화
-    // _db.collection('workLog').get()
-    //   .then(snap => {
-    //     const fbLogs = [];
-    //     snap.forEach(doc => { const d = doc.data(); if (d && d.id) fbLogs.push(d); });
-    //     if (fbLogs.length > 0) {
-    //       let local = [];
-    //       try { local = JSON.parse(localStorage.getItem('workLog') || '[]'); } catch(e) {}
-    //       fbLogs.forEach(d => {
-    //         if (!local.some(e => String(e.id) === String(d.id))) local.push(d);
-    //       });
-    //       local.sort((a,b) => (b.id||0) - (a.id||0));
-    //       workLog = local;
-    //       localStorage.setItem('workLog', JSON.stringify(workLog));
-    //       renderPopupWorkLog();
-    //       const st = document.getElementById('popupStatus');
-    //       if (st) { st.style.display = 'block'; st.textContent = 'Firebase: ' + fbLogs.length + '건 동기화됨'; }
-    //     }
-    //   }).catch(() => {});
-  }
 }
 
 function closeWorkLogPopup() {
@@ -7990,7 +7511,6 @@ function deletePopupLog(id) {
   logs = logs.filter(e => String(e.id) !== String(id));
   localStorage.setItem('workLog', JSON.stringify(logs));
   workLog = logs;
-  if (typeof fbDeleteLog === 'function') fbDeleteLog(id);
   renderPopupWorkLog();
 }
 
@@ -8042,7 +7562,6 @@ function showToast(msg) {
 
 // ── 초기 실행 ────────────────────────────────────────────
 // ── 구글 시트 연동 ───────────────────────────────────────
-
 
 // ── 구글 시트 연결 진단 ───────────────────────────────────
 
@@ -8257,8 +7776,6 @@ function diagSheet() {
     </div>`;
 }
 
-
-
 window.addEventListener('DOMContentLoaded', function() {
   // fCrop 이벤트
   const fCrop = document.getElementById('fCrop');
@@ -8278,9 +7795,7 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   // 보유 농자재 초기화
   initDefaultSupplies();
-  // Firebase 초기화는 수동으로만 (사용자가 Firebase 버튼 누를 때)
-  // 자동 실행 안 함 - 기본은 내 폰(localStorage) 사용
-  updateFirebaseStatus('offline');
+    // 자동 실행 안 함 - 기본은 내 폰(localStorage) 사용
   // 월 탭 버튼 생성
   (function() {
     const bar = document.querySelector('#sec-monthly [style*="overflow-x:auto"]');
@@ -8328,10 +7843,6 @@ window.addEventListener('DOMContentLoaded', function() {
   try {
     updateGrowStorageBanner();
     migrateGrowRecords();
-    // Firebase 기본 모드면 앱 시작 시 자동 로드
-    if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady && _db) {
-      loadGrowFromFirebaseAndRender();
-    }
   } catch(e) {}
   // 기록장 렌더 (탭 전환과 무관하게 미리 채움)
   renderWorkLog();
@@ -8481,8 +7992,6 @@ function toggleDdayPanel() {
   if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
   if (!isOpen) renderDDay(); // 열 때 렌더링
 }
-
-// ③ 생육 관리 내부 탭 (생육일수 / Firebase 기록)
 function switchGrowTab(tab) {
   var pDays   = document.getElementById('grow-panel-days');
   var pRecord = document.getElementById('grow-panel-record');
@@ -8494,19 +8003,12 @@ function switchGrowTab(tab) {
     pRecord.style.display = 'block';
     if (tDays)   { tDays.style.background='white';   tDays.style.color='#2E7D32'; }
     if (tRecord) { tRecord.style.background='#2E7D32'; tRecord.style.color='white'; }
-    // Firebase 우선 통합 렌더
-    try { syncAndRenderGrowUnified(); } catch(e) { renderGrowRecords(); }
+        try { syncAndRenderGrowUnified(); } catch(e) { renderGrowRecords(); }
   } else {
     pDays.style.display   = 'block';
     pRecord.style.display = 'none';
     if (tDays)   { tDays.style.background='#2E7D32'; tDays.style.color='white'; }
     if (tRecord) { tRecord.style.background='white';  tRecord.style.color='#2E7D32'; }
-    // Firebase 모드면 최신 데이터 자동 반영 후 렌더
-    if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady && _db) {
-      loadGrowFromFirebaseAndRender();
-    } else {
-      renderGrow();
-    }
   }
 }
 // ══ 생육 저장방식 + 불러오기/올리기 ═════════════════════
@@ -8514,39 +8016,21 @@ function setGrowStorage(mode) {
   growStorageMode = mode;
   localStorage.setItem('growStorageMode', mode);
   updateGrowStorageBanner();
-  if (mode === 'firebase') {
-    showToast('☁️ Firebase 모드 — 데이터를 불러옵니다...');
-    setTimeout(function() {
-      if (typeof _fbReady !== 'undefined' && _fbReady && _db) {
-        loadGrowFromFirebaseAndRender();
-      } else {
-        showToast('⚠ Firebase 미연결 상태입니다');
-      }
-    }, 300);
-  } else {
-    // 내 폰 모드 전환 시 현재 로컬 데이터로 렌더
-    renderGrow();
-    showToast('📱 내 폰 모드 — 로컬 데이터를 표시합니다');
-  }
+  renderGrow();
+  showToast(mode === 'local' ? '📱 로컬 모드' : '☁️ Google Sheets 모드');
 }
 
 function updateGrowStorageBanner() {
   var lbl = document.getElementById('growStorageLabel');
   var sub = document.getElementById('growStorageSub');
   var bL  = document.getElementById('storageBtn-local');
-  var bF  = document.getElementById('storageBtn-firebase');
-  if (!lbl) return;
-  if (growStorageMode === 'firebase') {
-    lbl.textContent = '☁️ Firebase에 저장 중 (기본)';
-    sub.textContent = '추가·수정·삭제 시 Firebase에 자동 저장';
-    if (bF) { bF.style.background='#1B5E20'; bF.style.color='white'; bF.style.borderColor='#1B5E20'; bF.style.fontWeight='700'; }
-    if (bL) { bL.style.background='white'; bL.style.color='#9E9E9E'; bL.style.borderColor='#E0E0E0'; bL.style.fontWeight='600'; }
-  } else {
+    if (!lbl) return;
+  
     lbl.textContent = '📱 내 폰에만 저장 (선택됨)';
-    sub.textContent = 'Firebase 미사용 · 이 기기에만 저장';
+    sub.textContent = 'Google Sheets 사용 중 · 이 기기에만 저장';
     if (bL) { bL.style.background='#1B5E20'; bL.style.color='white'; bL.style.borderColor='#1B5E20'; bL.style.fontWeight='700'; }
     if (bF) { bF.style.background='white'; bF.style.color='#9E9E9E'; bF.style.borderColor='#E0E0E0'; bF.style.fontWeight='600'; }
-  }
+  
 }
 
 function savePlantsLocal() {
@@ -8555,126 +8039,11 @@ function savePlantsLocal() {
 
 function savePlantsAll() {
   savePlantsLocal();
-  if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady && _db) {
-    plants.forEach(function(p) {
-      // _db.collection('growPlants').doc(p.id).set(p).catch(function() {});
-    });
-  }
 }
-
-// 📥 Firebase → 내 폰 (불러오기)
-async function loadGrowFromFirebaseAndRender() {
-  var statusEl = document.getElementById('growSyncStatus');
-  if (statusEl) statusEl.textContent = '⏳ 불러오는 중...';
-  // Firebase 아직 초기화 중이면 최대 5초 대기
-  if (typeof _fbReady === 'undefined' || !_fbReady || !_db) {
-    if (statusEl) statusEl.textContent = '⏳ Firebase 연결 대기 중...';
-    var waited = 0;
-    await new Promise(function(resolve) {
-      var iv = setInterval(function() {
-        waited += 300;
-        if ((typeof _fbReady !== 'undefined' && _fbReady && _db) || waited >= 5000) {
-          clearInterval(iv); resolve();
-        }
-      }, 300);
-    });
-    if (!_fbReady || !_db) {
-      // Firebase 없이 로컬 데이터로 렌더
-      renderGrow();
-      if (statusEl) statusEl.textContent = '📱 로컬 데이터';
-      showToast('📱 Firebase 미연결 — 로컬 데이터를 표시합니다');
-      return;
-    }
-  }
-  try {
-    var snap = await saveToGoogleSheets('growPlants').get();
-    var added = 0, updated = 0;
-
-    if (!snap.empty) {
-      // growPlants 컬렉션 → plants 배열에 반영 (splice 사용, 재할당 없음)
-      snap.docs.forEach(function(doc) {
-        var fp = doc.data();
-        // 필수 필드 없는 불완전한 데이터 건너뜀
-        if (!fp || !fp.id || typeof fp.id !== 'string') return;
-        if (!fp.name || typeof fp.name !== 'string') return;
-        fp = sanitizePlant(fp);
-        var li = plants.findIndex(function(p){ return p.id === fp.id; });
-        if (li < 0) {
-          plants.push(fp); added++;
-        } else {
-          // Firebase 버전이 최신이거나 같으면 업데이트
-          if ((fp.updatedAt||'2000') >= (plants[li].updatedAt||'2000')) {
-            plants.splice(li, 1, fp); updated++;
-          }
-        }
-      });
-    }
-
-    // growRecords도 동기화
-    var snap2 = await saveToGoogleSheets('growRecords').get();
-    if (!snap2.empty) {
-      var fbRecs = snap2.docs.map(function(d){ return d.data(); })
-        .filter(function(r){ // 불완전한 레코드 필터링
-          return r && r.id && typeof r.plantName === 'string' && r.plantName
-                 && typeof r.date === 'string' && r.date;
-        });
-      var rids = new Set(growRecords.map(function(r){ return r.id; }));
-      fbRecs.forEach(function(r){ if (!rids.has(r.id)) growRecords.unshift(r); });
-      growRecords.sort(function(a,b){ return b.id > a.id ? 1 : -1; });
-      localStorage.setItem('growRecords', JSON.stringify(growRecords));
-    }
-
-    migrateGrowRecords();  // migrated_ 정리 + growRecords 이벤트 병합
-    savePlantsLocal();
-    renderGrow();
-
-    var msg = snap.empty
-      ? ('☁️ growPlants 데이터 없음. "+ 새 작물 추가"로 등록하세요')
-      : ('📥 불러오기 완료 — 신규 ' + added + '건, 업데이트 ' + updated + '건');
-    showToast(msg);
-    if (statusEl) statusEl.textContent = '✅ ' + new Date().toLocaleTimeString();
-  } catch(e) {
-    const msg = e.code === 'permission-denied'
-      ? '❌ Firebase 권한 없음 — Firestore 규칙(Rules)을 allow read,write:if true 로 변경하세요'
-      : ('❌ 불러오기 오류: ' + (e.message||String(e)));
-    showToast(msg);
-    if (statusEl) statusEl.textContent = '❌ ' + (e.message||String(e));
-    console.error('loadGrowFromFirebaseAndRender:', e.code, e.message, e.stack);
-  }
-}
-
-// 📤 내 폰 → Firebase (올리기)
 async function uploadGrowToFirebase() {
-  var statusEl = document.getElementById('growSyncStatus');
-  if (typeof _fbReady === 'undefined' || !_fbReady || !_db) {
-    showToast('⚠ Firebase 연결이 없습니다');
-    return;
-  }
-  if (!plants.length) {
-    showToast('⚠ 업로드할 생육 데이터가 없습니다');
-    return;
-  }
-  if (!confirm('내 폰의 생육일수 데이터 ' + plants.length + '건을 Firebase에 올릴까요?')) return;
-  if (statusEl) statusEl.textContent = '⏳ 올리는 중...';
-  try {
-    for (var i = 0; i < plants.length; i++) {
-      var p = plants[i];
-      if (!p.updatedAt) p.updatedAt = new Date().toISOString();
-      await saveToGoogleSheets('growPlants').doc(p.id).set(p);
-    }
-    // growRecords도 업로드
-    for (var j = 0; j < growRecords.length; j++) {
-      await saveToGoogleSheets('growRecords').doc(growRecords[j].id).set(growRecords[j]);
-    }
-    savePlantsLocal();
-    showToast('📤 Firebase 업로드 완료 — ' + plants.length + '건');
-    if (statusEl) statusEl.textContent = '✅ ' + new Date().toLocaleTimeString();
-  } catch(e) {
-    showToast('❌ 업로드 오류: ' + e.message);
-    if (statusEl) statusEl.textContent = '❌ 오류';
-    console.error('uploadGrowToFirebase:', e);
-  }
+  showToast('⚠️ 이 기능은 Google Sheets 백업으로 대체되었습니다');
 }
+
 function migrateGrowRecords() {
   try {
     var gr = JSON.parse(localStorage.getItem('growRecords') || '[]');
@@ -8728,7 +8097,7 @@ function migrateGrowRecords() {
           id: 'gr_' + name.replace(/[^가-힣a-zA-Z0-9]/g,'_') + '_' + dateStr.replace(/-/g,''),
           name: name,
           emoji: emoji,
-          loc: 'Firebase 기록',
+          loc: 'Google Sheets 기록',
           dateStr: dateStr,
           totalDays: 120,
           pinchDay: 0,
@@ -8763,100 +8132,56 @@ function migrateGrowRecords() {
   } catch(e) { console.warn('migrateGrowRecords:', e); }
 }
 
-// ══ Firebase growRecords → plants 통합 렌더 ══════════════
 async function syncAndRenderGrowUnified() {
   var el = document.getElementById('growUnifiedList');
   if (!el) return;
-  el.innerHTML = '<div style="text-align:center;padding:20px;color:#9E9E9E">⏳ Firebase에서 불러오는 중...</div>';
+  el.innerHTML = '<div style="text-align:center;padding:20px;color:#9E9E9E">⏳ Google Sheets에서 불러오는 중...</div>';
 
-  // 1. Firebase growRecords 동기화
-  if (typeof _fbReady !== 'undefined' && _fbReady && _db) {
-    try {
-      var snap = await saveToGoogleSheets('growRecords').get();
-      var fbRecs = snap.docs.map(function(d){ return d.data(); });
-      if (fbRecs.length) {
-        var ids = new Set(growRecords.map(function(r){ return r.id; }));
-        fbRecs.forEach(function(r){ if (!ids.has(r.id)) growRecords.unshift(r); });
-        growRecords.sort(function(a,b){ return b.id > a.id ? 1 : -1; });
-        localStorage.setItem('growRecords', JSON.stringify(growRecords));
-      }
-      // growPlants도 동기화
-      var snap2 = await saveToGoogleSheets('growPlants').get();
-      if (!snap2.empty) {
-        var fbPlants = snap2.docs.map(function(d){ return d.data(); });
-        var localIds = new Set(plants.map(function(p){ return p.id; }));
-        fbPlants.forEach(function(fp){
-          if (!fp || !fp.id || !fp.name) return;
-          fp = sanitizePlant(fp);
-          if (!localIds.has(fp.id)) { plants.push(fp); }
-          else {
-            var li = plants.findIndex(function(p){ return p.id === fp.id; });
-            if (li >= 0 && (fp.updatedAt||'') > (plants[li].updatedAt||'')) plants[li] = fp;
-          }
-        });
-        savePlantsLocal();
-      }
-    } catch(e) { console.warn('syncAndRenderGrowUnified:', e.message); }
-  }
+  try {
+    // Google Sheets에서 growRecords 로드
+    var rawGr = await loadFromGoogleSheets(COLLECTIONS.growRecords);
+    if (rawGr && rawGr.length > 0) {
+      var localIds = new Set(growRecords.map(function(r){ return String(r.id); }));
+      rawGr.forEach(function(r){
+        if (!localIds.has(String(r.id))) growRecords.unshift(r);
+      });
+      growRecords.sort(function(a,b){ return (b.id||0) > (a.id||0) ? 1 : -1; });
+      localStorage.setItem('growRecords', JSON.stringify(growRecords));
+    }
+  } catch(e) { console.warn('syncAndRenderGrowUnified:', e.message); }
 
   // 2. growRecords를 plants[].events에 병합
-  migrateGrowRecords();
+  var byName = {};
+  growRecords.forEach(function(r){
+    var nm = r.plantName || r.name || '';
+    if (!nm) return;
+    if (!byName[nm]) byName[nm] = [];
+    byName[nm].push(r);
+  });
 
-  // 3. growRecords 중 plants에 없는 작물도 독립 카드로 추가
   var standaloneNames = {};
-  growRecords.forEach(function(r) {
-    var matched = plants.some(function(p){ return p.name === r.plantName; });
-    if (!matched) {
-      if (!standaloneNames[r.plantName]) standaloneNames[r.plantName] = [];
-      standaloneNames[r.plantName].push(r);
-    }
+  Object.keys(byName).forEach(function(nm){
+    var found = plants.some(function(p){ return p.name === nm; });
+    if (!found) standaloneNames[nm] = byName[nm];
   });
 
-  // 4. 생육일수 추적 형식으로 렌더
-  var _eic = {'파종':'🌾','정식':'🌿','발아':'🌱','개화':'🌸','착과':'🍎','수확':'🎉','순치기':'✂️','기타':'📝'};
   var html = '';
-
-  // plants 기반 카드
-  plants.forEach(function(p) {
-    var evArr = Array.isArray(p.events) ? p.events.slice().sort(function(a,b){ return a.date.localeCompare(b.date); }) : [];
-    if (!evArr.length) return; // 이벤트 없는 것은 생략
-    var planted = new Date((p.dateStr||'2025-01-01')+'T00:00:00');
-    var elapsed = Math.round((getToday() - planted) / 86400000);
-    var evHtml = evArr.map(function(ev){
-      return '<div style="display:flex;align-items:center;gap:4px;padding:3px 0;font-size:12px">'
-        + '<span style="background:#E8F5E9;color:#1B5E20;padding:1px 6px;border-radius:5px;font-weight:700;flex-shrink:0">'+(_eic[ev.type]||'•')+' '+ev.type+'</span>'
-        + '<span style="color:#546E7A;flex-shrink:0">'+ev.date+'</span>'
-        + (ev.daysFrom>0?'<span style="color:#9E9E9E;flex-shrink:0;margin-left:2px">+'+ev.daysFrom+'일</span>':'')
-        + '<span style="color:#9E9E9E;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px">'+(ev.note||'')+'</span>'
-        + '<button data-pid="'+p.id+'" data-eid="'+ev.id+'" onclick="deleteGrowEvent(this.dataset.pid,this.dataset.eid);syncAndRenderGrowUnified()" style="background:none;border:none;color:#BDBDBD;font-size:12px;cursor:pointer;padding:0 2px">✕</button>'
-        + '</div>';
-    }).join('');
-    html += '<div style="background:white;border:1.5px solid #A5D6A7;border-radius:10px;margin-bottom:8px;overflow:hidden">'
-      + '<div style="background:#1B5E20;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">'
-      + '<span style="font-size:14px;font-weight:700;color:white">'+p.name+'</span>'
-      + '<span style="font-size:10px;color:rgba(255,255,255,0.8)">심은날: '+(p.dateStr||'?')+' · '+elapsed+'일째</span>'
-      + '</div>'
-      + '<div style="padding:8px 12px">'+evHtml+'</div>'
-      + '</div>';
-  });
-
-  // growRecords 단독 카드 (plants에 없는 것)
-  Object.entries(standaloneNames).forEach(function(entry){
+  Object.entries(byName).forEach(function(entry) {
     var name = entry[0], recs = entry[1];
     recs.sort(function(a,b){ return a.date.localeCompare(b.date); });
     var evHtml = recs.map(function(r){
       return '<div style="display:flex;align-items:center;gap:4px;padding:3px 0;font-size:12px">'
-        + '<span style="background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:5px;font-weight:700;flex-shrink:0">'+(_eic[r.eventType]||'•')+' '+r.eventType+'</span>'
+        + '<span style="background:#FFF3E0;color:#E65100;padding:1px 6px;border-radius:5px;font-weight:700;flex-shrink:0">'+(r.eventType||r.type||'기록')+'</span>'
         + '<span style="color:#546E7A;flex-shrink:0">'+r.date+'</span>'
         + (r.daysFrom>0?'<span style="color:#9E9E9E;flex-shrink:0;margin-left:2px">+'+r.daysFrom+'일</span>':'')
         + '<span style="color:#9E9E9E;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-left:2px">'+(r.note||'')+'</span>'
-        + '<button data-rid="'+r.id+'" onclick="deleteGrowRecord(this.dataset.rid);syncAndRenderGrowUnified()" style="background:none;border:none;color:#BDBDBD;font-size:12px;cursor:pointer;padding:0 2px">✕</button>'
+        + '<button data-rid="'+r.id+'" onclick="deleteGrowRecord(this.dataset.rid);syncAndRenderGrowUnified()" style="background:none;border:none;color:#ccc;font-size:13px;cursor:pointer;flex-shrink:0">✕</button>'
         + '</div>';
     }).join('');
     html += '<div style="background:white;border:1.5px solid #FFCC80;border-radius:10px;margin-bottom:8px;overflow:hidden">'
       + '<div style="background:#E65100;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">'
       + '<span style="font-size:14px;font-weight:700;color:white">'+name+'</span>'
-      + '<span style="font-size:10px;color:rgba(255,255,255,0.8)">Firebase 전용 기록</span>'
+      + '<span style="font-size:10px;color:rgba(255,255,255,0.8)">Google Sheets 기록</span>'
       + '</div>'
       + '<div style="padding:8px 12px">'+evHtml+'</div>'
       + '</div>';
@@ -9239,7 +8564,6 @@ function saveUnifiedAdd() {
     targetPlant.events.push({ id:Date.now().toString(), type:evType, date:evDate, note:evNote, daysFrom:daysFrom });
     targetPlant.updatedAt = new Date().toISOString();
     savePlantsAll();
-    // growRecords에도 저장 (Firebase 생육기록 탭과 동기화)
     saveGrowRecord(targetPlant.name, evType, evDate, evNote);
     return; // saveGrowRecord 내부에서 renderGrow 호출됨
   }
@@ -9249,7 +8573,6 @@ function saveUnifiedAdd() {
 }
 
 // ══════════════════════════════════════════════════════════
-// 전체 데이터 백업 · 복원 · Firebase 동기화
 // ══════════════════════════════════════════════════════════
 
 // 백업 대상 전체 데이터 수집
@@ -9271,7 +8594,7 @@ function collectAllData() {
     // 이랑현황 (plantsDB → localStorage 캐시)
     plantsDB:       JSON.parse(localStorage.getItem('plantsDB_cache') || '[]'),
     // 설정
-    growStorageMode:localStorage.getItem('growStorageMode') || 'firebase',
+    growStorageMode:localStorage.getItem('growStorageMode') || 'local',
   };
 }
 
@@ -9392,149 +8715,15 @@ function importFullBackup(event) {
   };
   reader.readAsText(file, 'UTF-8');
 }
-
-// 🔄 전체 Firebase 동기화 (양방향 병합)
 async function fullFirebaseSync() {
   var st = document.getElementById('shareStatus');
-  if (!_fbReady || !_db) { showToast('⚠ Firebase 미연결'); return; }
   if (st) st.textContent = '⏳ 동기화 중...';
-  try {
-    await syncFromFirebase();
-    if (st) st.textContent = '✅ Firebase 동기화 완료 — ' + new Date().toLocaleTimeString();
-    showToast('🔄 전체 Firebase 동기화 완료');
-  } catch(e) {
-    if (st) st.textContent = '❌ 오류: ' + e.message;
-    showToast('❌ 동기화 오류: ' + e.message);
-  }
 }
-
-// 📤 내 폰 → Firebase 전체 업로드
 async function fullFirebaseUpload() {
-  if (!_fbReady || !_db) { showToast('⚠ Firebase 미연결'); return; }
-  var cnt = plants.length + growRecords.length + workLog.length + mySupplies.length;
-  if (!confirm('내 폰의 모든 데이터(' + cnt + '건)를 Firebase에 업로드할까요?\nFirebase의 기존 데이터와 병합됩니다.')) return;
-
-  var st = document.getElementById('shareStatus');
-  function say(msg){ if (st) st.textContent = msg; if (typeof setSt==='function') setSt(msg); }
-
-  // 업로드할 (컬렉션, 문서ID, 데이터) 목록을 한 번에 모음
-  // 문서 ID는 toDocId로 정제 (슬래시·점·공백이 있으면 Firestore가 거부함)
-  var jobs = [];
-  for (var i=0; i<plants.length; i++) {
-    if (!plants[i].updatedAt) plants[i].updatedAt = new Date().toISOString();
-    jobs.push(['growPlants', toDocId(plants[i].id), plants[i]]);
-  }
-  for (var j=0; j<growRecords.length; j++) {
-    jobs.push(['growRecords', toDocId(growRecords[j].id), growRecords[j]]);
-  }
-  for (var k=0; k<workLog.length; k++) {
-    if (workLog[k].id) {
-      // 사진(base64)은 Firestore 1MB 제한·전송 부담 때문에 업로드에서 제외 (폰 로컬에만 보관)
-      var logCopy = Object.assign({}, workLog[k]);
-      delete logCopy.photo;
-      jobs.push(['workLog', toDocId(workLog[k].id), logCopy]);
-    }
-  }
-  for (var l=0; l<mySupplies.length; l++) {
-    if (mySupplies[l].id) jobs.push(['supplies', toDocId(mySupplies[l].id), mySupplies[l]]);
-  }
-  for (var key in checkedTasks) {
-    if (checkedTasks[key]) jobs.push(['checkedTasks', toDocId(key), { key: key, checked: true }]);
-  }
-
-  var total = jobs.length;
-  if (total === 0) { say('올릴 데이터가 없습니다'); showToast('올릴 데이터가 없습니다'); return; }
-
-  // 진단: 비정상적으로 큰 문서가 있으면 경고 (Firestore 1MB 제한 / 전송 지연 원인)
-  var bigItems = [];
-  jobs.forEach(function(job){
-    try {
-      var bytes = JSON.stringify(job[2]).length;
-      if (bytes > 200000) bigItems.push(job[0] + '/' + job[1] + ' (' + Math.round(bytes/1024) + 'KB)');
-    } catch(e){}
-  });
-  if (bigItems.length > 0) {
-    console.warn('⚠ 큰 문서 발견:', bigItems);
-    say('⚠ 용량 큰 항목 ' + bigItems.length + '개 발견 — 콘솔 확인');
-  }
-
-  try {
-    // 진행 표시가 한 건씩 증가하도록 작은 묶음(10건)으로 전송
-    // → 배치의 속도 이점은 유지하면서 진행 상황을 세밀하게 보여줌
-    var CHUNK = 10;
-    var uploaded = 0;
-    var t0 = Date.now();
-
-    // commit이 일정 시간 응답 없으면 멈춤으로 간주 (iOS 네트워크 차단 등)
-    function commitWithTimeout(promise, ms) {
-      return Promise.race([
-        promise,
-        new Promise(function(_, reject){
-          setTimeout(function(){ reject(new Error('서버 응답 없음(시간 초과) — 네트워크/사설 릴레이를 확인하세요')); }, ms);
-        })
-      ]);
-    }
-
-    // 진단: 먼저 한 건만 시험 쓰기 → 권한 거부 등 진짜 원인을 드러냄
-    say('☁️ 연결 테스트 중...');
-    try {
-      await commitWithTimeout(
-        // _db.collection('_uploadTest').doc('ping').set({ t: Date.now() }),
-        15000
-      );
-    } catch(testErr) {
-      var code = (testErr && testErr.code) ? testErr.code : '(코드없음)';
-      var msg  = (testErr && testErr.message) || '알 수 없는 오류';
-      var name = (testErr && testErr.name) ? testErr.name : '';
-      var full = '쓰기 테스트 실패\n\n에러코드: ' + code + '\n이름: ' + name + '\n내용: ' + msg;
-      say('❌ ' + code + ': ' + msg);
-      console.error('업로드 테스트 실패:', testErr);
-      alert(full);   // 전체 내용을 잘림 없이 표시
-      return;
-    }
-
-    // 카운터를 from→to 까지 부드럽게 한 칸씩 올려 보여줌
-    function animateCount(from, to) {
-      return new Promise(function(resolve){
-        var n = from;
-        var timer = setInterval(function(){
-          n++;
-          say('☁️ 업로드 중... ' + n + ' / ' + total + '건');
-          if (n >= to) { clearInterval(timer); resolve(); }
-        }, 40);
-      });
-    }
-
-    // Google Sheets 사용 중 - Firebase 배치 업로드 비활성화
-    // for (var start = 0; start < total; start += CHUNK) {
-    //   var slice = jobs.slice(start, start + CHUNK);
-    //   var batch = _db.batch();
-    //   slice.forEach(function(job){
-    //     batch.set(// _db.collection(job[0]).doc(job[1]), job[2]);
-    //   });
-    //   await commitWithTimeout(batch.commit(), 20000);
-    //   var newCount = Math.min(start + slice.length, total);
-    //   await animateCount(uploaded, newCount);
-    //   uploaded = newCount;
-    // }
-    uploaded = total;  // 진행률 100% 설정
-    savePlantsLocal();
-    var sec = ((Date.now() - t0) / 1000).toFixed(1);
-    say('✅ 업로드 완료 — ' + uploaded + '건 (' + sec + '초)');
-    showToast('📤 업로드 완료 — ' + uploaded + '건 · ' + sec + '초');
-  } catch(e) {
-    say('❌ 업로드 오류: ' + e.message);
-    showToast('❌ 업로드 오류: ' + e.message);
-    console.error('fullFirebaseUpload:', e);
-  }
+  // Google Sheets 백업으로 전환
+  backupToFirebase();
 }
 
-
-// ══════════════════════════════════════════════════════════
-// CSV 백업 · 복원 함수
-// ══════════════════════════════════════════════════════════
-
-// CSV 한 셀 이스케이프
 function csvCell(v) {
   var s = (v === null || v === undefined) ? '' : String(v);
   if (s.includes(',') || s.includes('"') || s.includes('\n')) {
@@ -9748,8 +8937,6 @@ function importCSVGrowRecords(text) {
     growRecords.unshift(r);
     rids.add(id);
     added++;
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // if (_fbReady && _db) // _db.collection('growRecords').doc(id).set(r).catch(function(){});;
   });
   growRecords.sort(function(a,b){ return b.id>a.id?1:-1; });
   localStorage.setItem('growRecords', JSON.stringify(growRecords));
@@ -9778,8 +8965,6 @@ function importCSVWorkLog(text) {
     workLog.unshift(e);
     wids.add(id);
     added++;
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // if (_fbReady && _db) // _db.collection('workLog').doc(String(id)).set(e).catch(function(){});
   });
   workLog.sort(function(a,b){ return (b.id||0)-(a.id||0); });
   localStorage.setItem('workLog', JSON.stringify(workLog));
@@ -9811,8 +8996,6 @@ function importCSVSupplies(text) {
     var li = mySupplies.findIndex(function(s){ return s.id===id || s.name===name; });
     if (li<0) { mySupplies.push(obj); added++; }
     else { mySupplies.splice(li,1,obj); updated++; }
-    // Google Sheets 사용 중 - Firebase 저장 비활성화
-    // if (_fbReady && _db) // _db.collection('supplies').doc(id).set(obj).catch(function(){});
   });
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
   return { added:added, updated:updated };
@@ -9851,7 +9034,6 @@ function importIrangCSV2(text) {
   } catch(e2){ console.warn('importIrangCSV2:', e2); }
   return result;
 }
-
 
 // ── 전정가이드 이미지 로드 오류 처리 ─────────────────────
 function onPruningImgError(img) {
@@ -10183,7 +9365,6 @@ function ttsUpdateUI() {
 // 🗂️ 통합 백업·복원 시스템 (백업·복원 메뉴 전용)
 //   - 내 폰: 수시 저장(자동) + 스냅샷
 //   - CSV  : 앱 밖 파일 보관·엑셀 편집
-//   - Firebase: 클라우드 안전 백업
 // ══════════════════════════════════════════════════════════
 
 var BACKUP_DATA = [
@@ -10216,13 +9397,7 @@ function renderBackupSummary() {
       + '<span style="font-size:13px;font-weight:800;color:'+(n?'#1B5E20':'#BDBDBD')+'">'+n+'</span>'
       + '</div>';
   }).join('');
-  var fbEl = document.getElementById('fbConnState');
-  if (fbEl) {
-    var on = (typeof _fbReady !== 'undefined' && _fbReady);
-    fbEl.textContent = on ? '연결됨' : '미연결';
-    fbEl.style.background = on ? '#E8F5E9' : '#F5F5F5';
-    fbEl.style.color      = on ? '#1B5E20' : '#9E9E9E';
-  }
+  
   // 영구 저장 상태
   var pEl = document.getElementById('persistState');
   if (pEl) {
@@ -10234,7 +9409,7 @@ function renderBackupSummary() {
       pEl.innerHTML = '🔓 영구 저장이 꺼져 있습니다 — <u style="cursor:pointer" onclick="requestPersistentStorage().then(renderBackupSummary)">다시 요청</u> · 가끔 CSV로도 백업하세요';
       pEl.style.background = '#FFF3E0'; pEl.style.color = '#E65100';
     } else {
-      pEl.textContent = '💾 이 기기에 저장됨 — 가끔 CSV·Firebase로도 백업하세요';
+      pEl.textContent = '💾 이 기기에 저장됨 — 가끔 CSV·Google Sheets로도 백업하세요';
       pEl.style.background = '#F1F8E9'; pEl.style.color = '#33691E';
     }
   }
@@ -10242,8 +9417,6 @@ function renderBackupSummary() {
   renderStorageUsage();
   renderPerMethodUsage();
 }
-
-// ── 방식별(내폰/CSV/Firebase) 용량 표시 ──────────────────
 function _coreDataBytes() {
   // 핵심 입력 데이터(스냅샷 제외)의 추정 용량
   var total = 0;
@@ -10267,11 +9440,7 @@ function renderPerMethodUsage() {
   var c = document.getElementById('usageCSV');
   if (c) c.textContent = '📦 내보낼 데이터 약 ' + coreStr;
 
-  var f = document.getElementById('usageFirebase');
-  if (f) {
-    var on = (typeof _fbReady !== 'undefined' && _fbReady);
-    f.textContent = (on ? '☁️ 백업 대상 약 ' : '☁️ 백업 가능 데이터 약 ') + coreStr;
-  }
+  
 }
 
 // 모든 용량 표시를 한 번에 갱신 (수치 불일치 방지)
@@ -10526,24 +9695,16 @@ function importUnifiedCSV(text) {
   showToast('✅ CSV 복원 완료 — ' + (added+updated) + '건');
 }
 
-// ── ③ Firebase — 백업/복원 ───────────────────────────────
-
-// Firebase SDK 로드 보장
 // iPhone WKWebView/Safari: gstatic 차단(사설릴레이·차단기) 대비 여러 CDN을 순서대로 시도
-// Google Sheets 버전 - Firebase SDK 로드 불필요
 function ensureFirebaseSDK() {
   return Promise.resolve(); // Google Sheets 사용으로 SDK 불필요
 }
 
 // Google Sheets 버전 - 연결 확인
 function ensureFirebaseConnected() {
-  if (typeof _fbReady !== 'undefined' && _fbReady) {
-    return Promise.resolve();
-  }
   
   // Google Sheets 초기화
   return initializeGoogleSheets().then(() => {
-    _fbReady = true;
     if (typeof renderBackupSummary === 'function') {
       renderBackupSummary();
     }
@@ -10559,32 +9720,86 @@ function backupToFirebase() {
     // 모든 데이터를 Google Sheets에 저장
     Promise.all([
       (async () => {
+        let existingIds = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.workLog);
+          existingIds = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
         for (const entry of workLog) {
-          await saveToGoogleSheets('create', COLLECTIONS.workLog, entry).catch(() => {});
+          if (existingIds.has(String(entry.id))) continue;
+          const normalized = Object.assign({}, entry);
+          if (normalized.date && normalized.date.includes('T')) {
+            normalized.date = normalized.date.slice(0, 10);
+          }
+          await saveToGoogleSheets('create', COLLECTIONS.workLog, normalized).catch(() => {});
         }
       })(),
       (async () => {
+        let existingPl = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.growPlants);
+          existingPl = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
         for (const entry of plants) {
+          if (existingPl.has(String(entry.id))) continue;
           await saveToGoogleSheets('create', COLLECTIONS.growPlants, entry).catch(() => {});
         }
       })(),
       (async () => {
+        let existingSup = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.supplies);
+          existingSup = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
         for (const entry of mySupplies) {
+          if (existingSup.has(String(entry.id))) continue;
           await saveToGoogleSheets('create', COLLECTIONS.supplies, entry).catch(() => {});
         }
       })(),
       (async () => {
+        // 중복 방지: 기존 Sheets 데이터 id 목록 로드
+        let existingIds = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.growRecords);
+          existingIds = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
         for (const entry of growRecords) {
-          await saveToGoogleSheets('create', COLLECTIONS.growRecords, entry).catch(() => {});
+          if (existingIds.has(String(entry.id))) continue; // 이미 있으면 스킵
+          // 날짜 형식 정규화 (ISO → YYYY-MM-DD)
+          const normalized = Object.assign({}, entry);
+          if (normalized.date && normalized.date.includes('T')) {
+            normalized.date = normalized.date.slice(0, 10);
+          }
+          await saveToGoogleSheets('create', COLLECTIONS.growRecords, normalized).catch(() => {});
         }
       })(),
       (async () => {
-        for (const entry of irangChanges) {
+        // irangChanges: localStorage에서 직접 읽기 (전역 변수 미선언 대비)
+        const _irangChanges = (typeof irangChanges !== 'undefined' && irangChanges.length > 0)
+          ? irangChanges
+          : JSON.parse(localStorage.getItem('irangChanges') || '[]');
+        let existingIc = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.irangChanges);
+          existingIc = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
+        for (const entry of _irangChanges) {
+          if (existingIc.has(String(entry.id))) continue;
           await saveToGoogleSheets('create', COLLECTIONS.irangChanges, entry).catch(() => {});
         }
       })(),
       (async () => {
-        for (const entry of irangLog) {
+        // irangLog: localStorage에서 직접 읽기
+        const _irangLog = (typeof irangLog !== 'undefined' && Array.isArray(irangLog) && irangLog.length > 0)
+          ? irangLog
+          : JSON.parse(localStorage.getItem('irangLog') || '[]');
+        let existingIl = new Set();
+        try {
+          const existing = await loadFromGoogleSheets(COLLECTIONS.irangLog);
+          existingIl = new Set((existing||[]).map(r => String(r.id)));
+        } catch(e) {}
+        for (const entry of _irangLog) {
+          if (existingIl.has(String(entry.id))) continue;
           await saveToGoogleSheets('create', COLLECTIONS.irangLog, entry).catch(() => {});
         }
       })()
@@ -10624,13 +9839,11 @@ function connectFirebaseManual() {
   initializeGoogleSheets().then(() => {
     setSt('✅ Google Sheets 연결됨');
     showToast('✅ Google Sheets 연결됨');
-    _fbReady = true;
     renderBackupSummary();
   }).catch(function(err) {
     var msg = (err && err.message) || 'Google Sheets 연결 실패';
     setSt('❌ ' + msg);
     showToast('❌ ' + msg);
-    _fbReady = false;
     renderBackupSummary();
   });
 }

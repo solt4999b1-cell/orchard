@@ -40,8 +40,19 @@ async function loadFromGoogleSheets(collectionName) {
       throw new Error(result.message || '로드 실패');
     }
     
-    console.log(`✅ ${collectionName} 로드 완료: ${(result.data || []).length}개 항목`);
-    return result.data || [];
+    const rows = result.data || [];
+    // 날짜 필드 정규화: "2026-05-04T15:00:00.000Z" → "2026-05-04"
+    const DATE_FIELDS = ['date', 'plantDate', 'addedDate', 'updatedAt', 'createdAt',
+                         'registeredAt', 'pollDate', 'lastSprayDate', 'lastFertDate'];
+    rows.forEach(row => {
+      DATE_FIELDS.forEach(field => {
+        if (row[field] && typeof row[field] === 'string' && row[field].includes('T')) {
+          row[field] = row[field].slice(0, 10);
+        }
+      });
+    });
+    console.log(`✅ ${collectionName} 로드 완료: ${rows.length}개 항목`);
+    return rows;
   } catch (err) {
     // 시트가 없는 경우 조용히 빈 배열 반환 (irangLog, irangChanges 등)
     if (err.message && err.message.includes('시트 없음')) {
