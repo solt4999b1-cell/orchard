@@ -408,6 +408,7 @@ async function _gasGet(action, extra) {
 }
 
 function initGAS() {
+  console.log('🔖 index1-app.js 버전: 2026-07-25-v3 (status/category/dedup 수정본)');
   document.getElementById('loading').classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
   // index5와 동일: GAS_OCR_URL이 있으면 우선 사용
@@ -448,6 +449,16 @@ function calcTodayTasks() {
   var fertMap  = {};   
   var taskList = [];   
 
+  var _activeCount = APP.plants.filter(function(p){ return p.status==='active'; }).length;
+  var _dateCount   = APP.plants.filter(function(p){ return !!p.plantDate; }).length;
+  console.log('[calcTodayTasks] 전체식물:', APP.plants.length,
+    '/ status=active:', _activeCount,
+    '/ plantDate있음:', _dateCount);
+  if (APP.plants.length > 0) {
+    var _s = APP.plants[0];
+    console.log('[calcTodayTasks] 첫식물 샘플 status:', _s.status,
+      'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
+  }
   APP.plants.forEach(function(plant){
     if (!plant.plantDate || plant.status!=='active') return;
     var planted = parseDate(plant.plantDate);
@@ -730,6 +741,17 @@ function _plantEmoji(p) {
 function esc_plantEmoji(p) { return esc(_plantEmoji(p)); }
 
 function renderToday() {
+  var tasks = calcTodayTasks();
+  console.log('[renderToday] 오늘 할일 수:', tasks.length);
+  if (tasks.length === 0) {
+    console.log('[renderToday] 할일 없음 — APP.plants:', APP.plants.length,
+      '/ active+plantDate:', APP.plants.filter(function(p){
+        return p.status==='active' && p.plantDate;
+      }).length);
+  } else {
+    console.log('[renderToday] 할일 목록:',
+      tasks.slice(0,3).map(function(t){ return t.plant+'·'+t.action+'('+t.type+')'; }).join(', '));
+  }
   var tasks    = calcTodayTasks();
   var filtered = tasks.filter(function(t){
     if(APP.filter==='spray')   return t.type==='spray';
@@ -831,6 +853,16 @@ function taskCardHTML(t) {
 }
 
 function renderPlants() {
+  console.log('[renderPlants] APP.plants 수:', (APP.plants||[]).length,
+    '/ filter:', APP.plantFilter||'all');
+  if ((APP.plants||[]).length > 0) {
+    var _cats = {};
+    APP.plants.forEach(function(p){ var c=p.category||'(없음)'; _cats[c]=(_cats[c]||0)+1; });
+    console.log('[renderPlants] category 분포:', JSON.stringify(_cats));
+    var _sts = {};
+    APP.plants.forEach(function(p){ var s=p.status||'(없음)'; _sts[s]=(_sts[s]||0)+1; });
+    console.log('[renderPlants] status 분포:', JSON.stringify(_sts));
+  }
   // ── 카테고리 분류: category 필드 우선, 없으면 이름 키워드 보조 ──
   var fruitKw = ['사과','배','복숭아','포도','블루베리','블랙베리','감나무','자두','매실','살구',
                  '무화과','다래','키위','앵두','마르멜로','으름','헤이즐럿','헤이즐넛','오디','바이오체리',
@@ -1027,6 +1059,16 @@ function plantStatusBadges(p) {
 }
 
 function renderLogs() {
+  console.log('[renderLogs] 총 로그:', APP.logs.length);
+  // 중복 확인
+  var _seen2 = {}, _dups = 0;
+  APP.logs.forEach(function(l) {
+    var _d2 = (l.detail||l.note||'').slice(0,20);
+    var k2 = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||'')+'|'+_d2;
+    if (_seen2[k2]) _dups++;
+    _seen2[k2] = true;
+  });
+  if (_dups > 0) console.warn('[renderLogs] 중복 로그 발견:', _dups, '개');
   var el=document.getElementById('log-list');
   if(APP.logs.length===0){
     el.innerHTML='<div class="empty-state"><span class="emoji">📖️</span><p>기록 없음.<br>+ 버튼으로 추가하세요.</p></div>';
@@ -3528,6 +3570,14 @@ async function syncNow(){
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+      console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
+      if (APP.plants.length > 0) {
+        var _p0 = APP.plants[0];
+        console.log('[loadAllData] 첫 식물:', _p0.name,
+          '| status:', _p0.status, '| category:', _p0.category,
+          '| plantDate:', _p0.plantDate, '| dateStr:', _p0.dateStr,
+          '| fruitDays:', _p0.fruitDays, '| totalDays:', _p0.totalDays);
+      }
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
