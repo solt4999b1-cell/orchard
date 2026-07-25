@@ -3446,7 +3446,21 @@ async function syncNow(){
         }
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
-      APP.plants = _deduped.filter(function(p) { return p; });
+      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+        // dateStr ↔ plantDate 양방향 동기화
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
+        if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
+        // 숫자 필드 보장
+        p.fruitDays = parseInt(p.fruitDays) || 0;
+        p.totalDays = parseInt(p.totalDays) || 0;
+        p.pinchDays = parseInt(p.pinchDays) || 0;
+        p.pollDays  = parseInt(p.pollDays)  || 0;
+        // loc → zone 변환
+        if (p.loc && !p.zone) p.zone = String(p.loc);
+        return p;
+      });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
@@ -3713,7 +3727,21 @@ async function loadAllData() {
         }
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
-      APP.plants = _deduped.filter(function(p) { return p; });
+      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+        // dateStr ↔ plantDate 양방향 동기화
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
+        if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
+        // 숫자 필드 보장
+        p.fruitDays = parseInt(p.fruitDays) || 0;
+        p.totalDays = parseInt(p.totalDays) || 0;
+        p.pinchDays = parseInt(p.pinchDays) || 0;
+        p.pollDays  = parseInt(p.pollDays)  || 0;
+        // loc → zone 변환
+        if (p.loc && !p.zone) p.zone = String(p.loc);
+        return p;
+      });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
@@ -11112,7 +11140,10 @@ function renderHarvestPanel(){
     : (window._allPlants||[]);
   console.log('[renderHarvestPanel] 전체 식물:', all.length,
     '/ plantDate 있는 것:', all.filter(function(p){return p.plantDate;}).length,
-    '/ fruitDays>0:', all.filter(function(p){return parseInt(p.fruitDays)>0;}).length);
+    '/ dateStr 있는 것:', all.filter(function(p){return p.dateStr;}).length,
+    '/ fruitDays>0:', all.filter(function(p){return parseInt(p.fruitDays)>0;}).length,
+    '/ totalDays>0:', all.filter(function(p){return parseInt(p.totalDays)>0;}).length);
+  if(all.length>0) console.log('[renderHarvestPanel] 첫 식물 샘플:', JSON.stringify(all[0]).slice(0,200));
   // fruitDays OR totalDays 가 있으면 달력 표시
   // plantDate 또는 dateStr 중 하나라도 있으면 포함
   var planted=all.filter(function(p){
