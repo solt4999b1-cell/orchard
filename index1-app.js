@@ -338,6 +338,22 @@ async function _gasGet(action, extra) {
         if (k === 'id' || k === '_key' || k === 'key') {
           out[k] = String(v);
         }
+        // time 필드 — "1899-12-30T06:47:08.000Z" → "06:47" 변환
+        else if (k === 'time') {
+          var sv = String(v||'');
+          if (sv.includes('1899') || (sv.includes('T') && sv.length > 10)) {
+            // ISO 형식에서 시:분만 추출
+            var tm = sv.match(/T(\d{2}:\d{2})/);
+            out[k] = tm ? tm[1] : '';
+          } else if (typeof v === 'number' && v > 0 && v < 1) {
+            // Excel 시간 소수(0.282 = 06:47) → HH:MM
+            var totalMin = Math.round(v * 24 * 60);
+            var hh = Math.floor(totalMin / 60), mm = totalMin % 60;
+            out[k] = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+          } else {
+            out[k] = sv.slice(0, 5); // 이미 HH:MM 형태면 5자만
+          }
+        }
         // 날짜 필드 — ISO 형식 → YYYY-MM-DD
         else if (DATE_FIELDS2.indexOf(k) >= 0) {
           if (!v || v === '') { out[k] = ''; }
@@ -815,48 +831,71 @@ function taskCardHTML(t) {
 }
 
 function renderPlants() {
-  var fruitKw = ['유실수','과수','사과','배','복숭아','포도','블루베리','블랙베리','감','자두','매실','살구','무화과','다래','키위','앵두','마르멜로','으름','헤이즐럿','복분자'];
+  // ── 카테고리 분류: category 필드 우선, 없으면 이름 키워드 보조 ──
+  var fruitKw = ['사과','배','복숭아','포도','블루베리','블랙베리','감나무','자두','매실','살구',
+                 '무화과','다래','키위','앵두','마르멜로','으름','헤이즐럿','헤이즐넛','오디','바이오체리',
+                 '피코튬','대추','모과','마르멜로','복분자','백살구'];
+  var vegKw   = ['감자','토마토','고추','오이','호박','상추','배추','무','파','양파','마늘','시금치',
+                 '깻잎','열무','봄동','당근','브로콜리','콩','팥','옥수수','땅콩','부추','쑥갓'];
+
   function isFruitPlant(p) {
-    var cat=(p.category||'').toLowerCase(), nm=(p.name||'').toLowerCase();
-    return cat.includes('유실수')||cat.includes('과수')||fruitKw.some(function(k){return nm.includes(k);});
+    var cat = (p.category || '').trim();
+    var nm  = (p.name || '').toLowerCase();
+    // 1) category 필드가 명시적으로 설정된 경우 우선
+    if (cat === '유실수' || cat === '과수') return true;
+    if (cat === '채소' || cat === '채소작물' || cat === '농작물') return false;
+    if (cat && cat !== '') {
+      // 그 외 category가 있으면 이름 키워드로 판단하지 않음
+      return false;
+    }
+    // 2) category 없을 때만 이름 키워드로 판단
+    // 채소 키워드가 먼저 매칭되면 채소
+    if (vegKw.some(function(k){ return nm.includes(k.toLowerCase()); })) return false;
+    // 유실수 키워드 매칭
+    return fruitKw.some(function(k){ return nm.includes(k.toLowerCase()); });
   }
-  var plants = APP.plants.filter(function(p){
-    if (p.status==='deleted') return false;
-    if (APP.plantFilter==='all') return true;
-    if (APP.plantFilter==='유실수') return isFruitPlant(p);
-    if (APP.plantFilter==='채소') return !isFruitPlant(p);
-    return (p.category||'')===(APP.plantFilter);
-  });
-  // 최종 중복 방어: 같은 이름 제거 (id가 다른 경우 대비)
-  // 최종 중복 방어: 같은 이름 중 심은날짜 있는 것 우선 유지
-  var _rMap = {};
+
+  // ── 중복 제거 (renderPlants 호출마다 APP.plants 건드리지 않음) ──
   var _today0 = new Date().toISOString().slice(0,10);
+  var _rMap   = {};
   (APP.plants||[]).forEach(function(p) {
     if (!p || !p.name) return;
-    var k = p.name.trim();
-    var d = p.dateStr || '';
-    var hasDate = d && d !== _today0 && /^\d{4}-\d{2}-\d{2}$/.test(d);
+    var k   = p.name.trim();
+    var d   = p.dateStr || '';
+    var hasDate = d && d !== _today0 && d.length === 10;
     if (!_rMap[k]) {
       _rMap[k] = p;
     } else {
-      var ex = _rMap[k];
-      var exD = ex.dateStr || '';
-      var exHas = exD && exD !== _today0 && /^\d{4}-\d{2}-\d{2}$/.test(exD);
-      // 새 것에 날짜 있고 기존엔 없으면 교체
+      var ex    = _rMap[k];
+      var exD   = ex.dateStr || '';
+      var exHas = exD && exD !== _today0 && exD.length === 10;
       if (hasDate && !exHas) _rMap[k] = p;
-      // 둘 다 날짜 있으면 events 많은 것
       else if (hasDate && exHas && (p.events||[]).length > (ex.events||[]).length) _rMap[k] = p;
     }
   });
-  APP.plants = Object.values(_rMap);
+  var dedupedPlants = Object.values(_rMap);
+
+  // ── 카테고리 필터 적용 ──────────────────────────────────────────
+  var plants = dedupedPlants.filter(function(p) {
+    if (p.status === 'deleted') return false;
+    if (!APP.plantFilter || APP.plantFilter === 'all') return true;
+    if (APP.plantFilter === '유실수') return isFruitPlant(p);
+    if (APP.plantFilter === '채소')   return !isFruitPlant(p);
+    return (p.category || '') === APP.plantFilter;
+  });
+
   var grid = document.getElementById('plant-grid');
   if (!grid) return;
   if (!plants.length) {
-    grid.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#aaa;"><div style="font-size:36px;margin-bottom:10px;">🌱️</div><div>등록된 식물이 없습니다.</div></div>';
+    grid.innerHTML = '<div style="text-align:center;padding:40px 20px;color:#aaa;">' +
+      '<div style="font-size:36px;margin-bottom:8px">🌱</div>' +
+      '<div>' + (APP.plantFilter && APP.plantFilter !== 'all' ? APP.plantFilter + ' ' : '') +
+      '등록된 작물이 없습니다.</div></div>';
   } else {
     grid.innerHTML = plants.map(plantCardHTML).join('');
   }
 }
+
 function plantCardHTML(p) {
   var planted      = parseDate(p.plantDate);
   var dfp          = planted ? daysBetween(planted,TODAY) : -1;
@@ -3453,12 +3492,24 @@ async function syncNow(){
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
-        p.fruitDays = parseInt(p.fruitDays) || 0;
+        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
+        p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
         p.totalDays = parseInt(p.totalDays) || 0;
-        p.pinchDays = parseInt(p.pinchDays) || 0;
-        p.pollDays  = parseInt(p.pollDays)  || 0;
+        p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
+        p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
+        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
+        if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
         // loc → zone 변환
         if (p.loc && !p.zone) p.zone = String(p.loc);
+        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
+        if (typeof p.events === 'string') {
+          if (p.events.startsWith('[')) {
+            try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
+          } else if (p.events === '' || p.events.includes('[object')) {
+            p.events = [];
+          }
+        }
+        if (!Array.isArray(p.events)) p.events = [];
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
@@ -3734,12 +3785,24 @@ async function loadAllData() {
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
-        p.fruitDays = parseInt(p.fruitDays) || 0;
+        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
+        p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
         p.totalDays = parseInt(p.totalDays) || 0;
-        p.pinchDays = parseInt(p.pinchDays) || 0;
-        p.pollDays  = parseInt(p.pollDays)  || 0;
+        p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
+        p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
+        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
+        if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
         // loc → zone 변환
         if (p.loc && !p.zone) p.zone = String(p.loc);
+        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
+        if (typeof p.events === 'string') {
+          if (p.events.startsWith('[')) {
+            try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
+          } else if (p.events === '' || p.events.includes('[object')) {
+            p.events = [];
+          }
+        }
+        if (!Array.isArray(p.events)) p.events = [];
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
@@ -3768,7 +3831,15 @@ async function loadAllData() {
           material: d.material||'', detail: d.note||d.detail||'', time: d.time||'',
         }, d);
       });
-      APP.logs = wlRows.concat(grRows).sort(function(a,b){
+      var _allLogs = wlRows.concat(grRows);
+      // id 기준 중복 제거 (같은 기록이 workLogs/growRecords 양쪽에 있는 경우)
+      var _logSeen = {};
+      APP.logs = _allLogs.filter(function(l) {
+        var k = l.id ? String(l.id) : (l.date||'')+(l.plantName||'')+(l.type||'')+(l.detail||'');
+        if (_logSeen[k]) return false;
+        _logSeen[k] = true;
+        return true;
+      }).sort(function(a,b){
         var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
         if(da!==db_) return da>db_?-1:1;
         return (a.time||'')>(b.time||'')?-1:1;
@@ -8703,10 +8774,12 @@ function buildHarvestSchedule(plantInfo, weekendPref) {
   
   var name       = plantInfo.name || '';
   var plantDate  = plantInfo.plantDate ? new Date(plantInfo.plantDate) : null;
-  var fruitDays  = parseInt(plantInfo.fruitDays) || 0;
+  var fruitDays  = parseInt(plantInfo.fruitDays || plantInfo.fruitDay) || 0;
   var totalDays  = parseInt(plantInfo.totalDays) || 0;
   var wpref      = weekendPref || 'nearest';
 
+  // fruitDays 없으면 totalDays로 대체
+  if (!fruitDays && totalDays) fruitDays = totalDays;
   if (!plantDate || !fruitDays) return null;
 
   var harvestDate = addDays(plantDate, fruitDays);
