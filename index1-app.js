@@ -1,18 +1,3 @@
-// ════════════════════════════════════════════════════════════════════
-// 🔧 파일 버전: index1-app__DEBUG_FIX__ (2026-07-25-v3-PATCHED)
-// 📌 이 파일이 정상 로드되면 콘솔에 "✅ DEBUG_FIX 파일 적용됨" 메시지가 표시됩니다.
-// 🔥 수정 사항:
-//    ✓ plantDate 빈 문자열('') 처리 추가
-//    ✓ dateStr undefined 자동 설정
-//    ✓ plantName 계산 로직 개선
-//    ✓ 403 에러 후 데이터 손실 방지
-// ════════════════════════════════════════════════════════════════════
-(function() {
-  console.log('%c✅ 파일 로드됨: index1-app__DEBUG_FIX__ (수정 버전 2026-07-25)', 'color: #2E7D32; font-weight: bold; font-size: 14px;');
-  console.log('%c📌 이 파일이 보이면 수정 사항이 적용되고 있습니다.', 'color: #1565C0; font-weight: bold;');
-  window._APP_VERSION = 'index1-app__DEBUG_FIX__-2026-07-25-v3-PATCHED';
-  window._PATCH_APPLIED = true;
-})();
 
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
@@ -315,11 +300,19 @@ async function _gasPost(params) {
 async function _gasGet(action, extra) {
   var url = GAS_URL + '?action=' + encodeURIComponent(action);
   if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
+  console.log('[_gasGet] 요청 URL:', url.substring(0, 100), '...');
   var res = await fetch(url + '&t=' + Date.now());
-  if (!res.ok) throw new Error('GAS HTTP ' + res.status);
   var json;
   try { json = await res.json(); }
-  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
+  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message, '| HTTP 상태:', res.status); return []; }
+  
+  // 🔥 수정: 403이어도 JSON에 데이터가 있으면 사용
+  if (!res.ok) {
+    console.warn('[_gasGet] ⚠️ GAS HTTP ' + res.status + ' 하지만 데이터 시도:', json);
+  } else {
+    console.log('[_gasGet] ✅ HTTP ' + res.status + ' 성공');
+  }
+  
   // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
     ? json.data : json;
@@ -465,9 +458,7 @@ async function _gasPost(params) {
 })();
 
 function initGAS() {
-  console.log('🔖 index1-app.js 버전: 2026-07-25-v3-DEBUG_FIX (plantDate/dateStr 수정본)');
-  console.log('%c✅✅✅ DEBUG_FIX 파일이 정상 적용되었습니다! ✅✅✅', 'color: #2E7D32; background: #E8F5E9; font-weight: bold; font-size: 16px; padding: 10px;');
-  console.log('%c📝 수정 내용: plantDate 빈 문자열 처리, dateStr 자동 설정, 데이터 손실 방지', 'color: #1565C0; font-weight: bold;');
+  console.log('🔖 index1-app.js 버전: 2026-07-25-v3 (status/category/dedup 수정본)');
   // 화면 디버그 패널에 즉시 표시
   var dbgEl = document.getElementById('early-debug');
   function dbgLog(msg, color) {
@@ -3609,28 +3600,18 @@ function setSyncStatus(online){
   }
 }
 async function syncNow(){
-  console.log('%c[DEBUG_FIX] syncNow() 실행 - GAS 동기화 시작, plantDate 빈 문자열 처리 적용', 'color: #FF6F00; font-weight: bold;');
-  
-  // 🔥 에러 발생 시 데이터 손실 방지: 기존 데이터 백업
-  var previousPlants = APP.plants.slice();  // 기존 데이터 백업 (배열 복사)
-  var previousPlantsCount = APP.plants.length;
-  console.log('[DEBUG_FIX] syncNow 시작 - 현재 식물수:', previousPlantsCount, '개 (백업 완료)');
-  
+  console.log('[🔄 syncNow] 시작 — GAS 동기화');
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
   if(dot)   dot.className     = 'sync-dot';
   if(label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
   try {
+    console.log('[🔄 syncNow] _gasGet("getPlants") 호출...');
     var raw = await _gasGet('getPlants');
-    console.log('[DEBUG_FIX] _gasGet 결과:', (Array.isArray(raw) ? raw.length : Object.keys(raw||{}).length), '개');
+    console.log('[🔄 syncNow] GAS 응답 받음:', raw ? (Array.isArray(raw) ? raw.length : Object.keys(raw||{}).length) : 'null', '개');
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
-    
-    // 🔥 DEBUG: plantsArr 검증
-    console.log('[DEBUG_FIX] plantsArr 첫 항목:', plantsArr[0]);
-    var validCount = plantsArr.filter(function(p){ return p && p.name; }).length;
-    console.log('[DEBUG_FIX] 유효한 name 있는 항목:', validCount, '개 / 전체:', plantsArr.length, '개');
-    
+    console.log('[🔄 syncNow] plantsArr 변환 완료:', plantsArr.length, '개');
     if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
@@ -3678,58 +3659,10 @@ async function syncNow(){
         }
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
-      
-      // 🔥 핵심 수정: _deduped가 비어있으면 기존 APP.plants 유지!
-      console.log('[DEBUG_FIX] syncNow _deduped 완성: ', _deduped.length, '개');
-      if (_deduped.length === 0) {
-        console.warn('[DEBUG_FIX] ⚠️ 경고: GAS 데이터가 필터링으로 모두 제거됨! 기존 데이터 유지');
-        console.warn('[DEBUG_FIX] 원인: plantsArr의 name 필드 없음 또는 중복 제거 로직에서 제거됨');
-        // APP.plants를 그대로 유지
-        console.log('[DEBUG_FIX] 현재 유지되는 APP.plants:', APP.plants.length, '개');
-      } else {
-        APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // 🔥 DEBUG: 첫 번째 식물의 데이터 로깅
-        if (p === _deduped[0]) {
-          console.log('[DEBUG_FIX] GAS 식물 원본 데이터:', {
-            name: p.name, id: p.id,
-            plantDate: p.plantDate, plantDate_type: typeof p.plantDate,
-            addedDate: p.addedDate, addedDate_type: typeof p.addedDate,
-            dateStr: p.dateStr, dateStr_type: typeof p.dateStr,
-            createdAt: p.createdAt, updatedAt: p.updatedAt
-          });
-        }
-        
-        // dateStr ↔ plantDate 양방향 동기화 (빈 문자열 처리 개선)
-        // 🔥 plantDate가 빈 문자열('')이 아닌지 확인해야 dateStr 설정
-        if (!p.dateStr && p.plantDate && String(p.plantDate).trim() !== '') {
-          p.dateStr = String(p.plantDate).slice(0,10);
-          console.log('[DEBUG_FIX] dateStr 설정 (plantDate):', p.name, '→', p.dateStr);
-        }
-        // addedDate도 시도
-        if (!p.dateStr && p.addedDate && String(p.addedDate).trim() !== '') {
-          p.dateStr = String(p.addedDate).slice(0,10);
-          console.log('[DEBUG_FIX] dateStr 설정 (addedDate):', p.name, '→', p.dateStr);
-        }
-        // createdAt도 시도
-        if (!p.dateStr && p.createdAt && String(p.createdAt).trim() !== '') {
-          p.dateStr = String(p.createdAt).slice(0,10);
-          console.log('[DEBUG_FIX] dateStr 설정 (createdAt):', p.name, '→', p.dateStr);
-        }
-        // MASTER_DB에서 찾기
-        if (!p.dateStr) {
-          var _masterPlant = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
-            return m.id===p.id || m.name===p.name;
-          });
-          if (_masterPlant && _masterPlant.dateStr) {
-            p.dateStr = _masterPlant.dateStr;
-            console.log('[DEBUG_FIX] dateStr 설정 (MASTER_DB):', p.name, '→', p.dateStr);
-          }
-        }
-        // 마지막 수단: 현재 날짜 사용 (또는 빈 문자열 유지)
-        if (!p.dateStr) {
-          console.log('[DEBUG_FIX] ⚠️ dateStr 설정 불가:', p.name, '(심은 날짜 정보 없음)');
-        }
-        
+      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+        // dateStr ↔ plantDate 양방향 동기화
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
@@ -3766,12 +3699,14 @@ async function syncNow(){
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
-      console.log('%c[DEBUG_FIX] ✅ syncNow 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
+      console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
       if (APP.plants.length > 0) {
-        var _p1 = APP.plants[0];
-        console.log('%c[DEBUG_FIX] syncNow 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p1.name, '| dateStr:', _p1.dateStr);
+        var _p0 = APP.plants[0];
+        console.log('[loadAllData] 첫 식물:', _p0.name,
+          '| status:', _p0.status, '| category:', _p0.category,
+          '| plantDate:', _p0.plantDate, '| dateStr:', _p0.dateStr,
+          '| fruitDays:', _p0.fruitDays, '| totalDays:', _p0.totalDays);
       }
-      }  // ← else 블록을 닫는 괄호 추가!
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
@@ -3806,22 +3741,13 @@ async function syncNow(){
     if(label) { label.textContent='동기화됨'; label.style.color='var(--green-dark)'; }
     showToast('✅ 동기화 완료 — 식물 '+APP.plants.length+'개');
   } catch(e) {
-    console.warn('[DEBUG_FIX] syncNow 에러 발생 - 기존 데이터 복구:', e.message);
-    console.warn('[syncNow] 에러 상세:', e);
-    
-    // 🔥 에러 발생 시 백업된 데이터 복구
-    if (previousPlants && previousPlants.length > 0) {
-      APP.plants = previousPlants.slice();  // 백업 복구
-      console.log('[DEBUG_FIX] 데이터 복구됨 — 백업된 식물수:', APP.plants.length, '개 복구됨');
-      try { renderToday(); renderPlants(); } catch(re){ console.warn('[DEBUG_FIX] 렌더링 오류:', re.message); }
-    } else {
-      console.warn('[DEBUG_FIX] 복구할 백업 데이터 없음 - 기존 APP.plants 유지');
-      console.log('[DEBUG_FIX] 현재 APP.plants:', APP.plants.length, '개');
-    }
-    
+    console.error('[🔄 syncNow] ❌ 에러 발생:', e);
+    console.error('[🔄 syncNow] 에러 메시지:', e.message);
+    console.error('[🔄 syncNow] 에러 스택:', e.stack);
+    console.warn('[syncNow] 오류:', e.message);
     if(dot)   dot.className     = 'sync-dot offline';
-    if(label) { label.textContent='동기화 실패 (데이터 유지)'; label.style.color='#FF6F00'; }
-    showToast('⚠️ 동기화 실패: '+e.message+' (기존 데이터 유지됨)');
+    if(label) { label.textContent='동기화 실패'; label.style.color='#C62828'; }
+    showToast('동기화 실패: '+e.message);
   }
 }
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
@@ -3993,7 +3919,6 @@ function resetHarvestLookup() {
 }
 
 async function loadAllData() {
-  console.log('%c[DEBUG_FIX] loadAllData() 실행 - plantDate 수정 로직 활성화됨', 'color: #FF6F00; font-weight: bold;');
   setLoadingStep(1, 30, '로컬 DB 로드 중...');
   if (APP.plants.length === 0) {
     // status: 'active' 를 강제로 부여하여 할 일 목록에 표시되게 함
@@ -4062,14 +3987,9 @@ async function loadAllData() {
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
       APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // dateStr ↔ plantDate 양방향 동기화 (빈 문자열 처리 개선)
-        // 🔥 plantDate가 빈 문자열('')이 아닌지 확인해야 dateStr 설정
-        if (!p.dateStr && p.plantDate && String(p.plantDate).trim() !== '') {
-          p.dateStr = String(p.plantDate).slice(0,10);
-        }
-        if (!p.dateStr && p.addedDate && String(p.addedDate).trim() !== '') {
-          p.dateStr = String(p.addedDate).slice(0,10);
-        }
+        // dateStr ↔ plantDate 양방향 동기화
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
@@ -4094,11 +4014,6 @@ async function loadAllData() {
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
-      console.log('%c[DEBUG_FIX] ✅ syncNow 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
-      if (APP.plants.length > 0) {
-        var _p1 = APP.plants[0];
-        console.log('%c[DEBUG_FIX] syncNow 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p1.name, '| dateStr:', _p1.dateStr);
-      }
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
