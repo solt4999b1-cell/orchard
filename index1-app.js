@@ -3610,12 +3610,19 @@ function setSyncStatus(online){
 }
 async function syncNow(){
   console.log('%c[DEBUG_FIX] syncNow() 실행 - GAS 동기화 시작, plantDate 빈 문자열 처리 적용', 'color: #FF6F00; font-weight: bold;');
+  
+  // 🔥 에러 발생 시 데이터 손실 방지: 기존 데이터 백업
+  var previousPlants = APP.plants.slice();  // 기존 데이터 백업 (배열 복사)
+  var previousPlantsCount = APP.plants.length;
+  console.log('[DEBUG_FIX] syncNow 시작 - 현재 식물수:', previousPlantsCount, '개 (백업 완료)');
+  
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
   if(dot)   dot.className     = 'sync-dot';
   if(label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
   try {
     var raw = await _gasGet('getPlants');
+    console.log('[DEBUG_FIX] _gasGet 결과:', (Array.isArray(raw) ? raw.length : Object.keys(raw||{}).length), '개');
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     if (plantsArr.length > 0) {
@@ -3666,15 +3673,48 @@ async function syncNow(){
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
       APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // dateStr ↔ plantDate 양방향 동기화
+        // 🔥 DEBUG: 첫 번째 식물의 데이터 로깅
+        if (p === _deduped[0]) {
+          console.log('[DEBUG_FIX] GAS 식물 원본 데이터:', {
+            name: p.name, id: p.id,
+            plantDate: p.plantDate, plantDate_type: typeof p.plantDate,
+            addedDate: p.addedDate, addedDate_type: typeof p.addedDate,
+            dateStr: p.dateStr, dateStr_type: typeof p.dateStr,
+            createdAt: p.createdAt, updatedAt: p.updatedAt
+          });
+        }
+        
+        // dateStr ↔ plantDate 양방향 동기화 (빈 문자열 처리 개선)
         // 🔥 plantDate가 빈 문자열('')이 아닌지 확인해야 dateStr 설정
         if (!p.dateStr && p.plantDate && String(p.plantDate).trim() !== '') {
           p.dateStr = String(p.plantDate).slice(0,10);
+          console.log('[DEBUG_FIX] dateStr 설정 (plantDate):', p.name, '→', p.dateStr);
         }
+        // addedDate도 시도
         if (!p.dateStr && p.addedDate && String(p.addedDate).trim() !== '') {
           p.dateStr = String(p.addedDate).slice(0,10);
+          console.log('[DEBUG_FIX] dateStr 설정 (addedDate):', p.name, '→', p.dateStr);
         }
-        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        // createdAt도 시도
+        if (!p.dateStr && p.createdAt && String(p.createdAt).trim() !== '') {
+          p.dateStr = String(p.createdAt).slice(0,10);
+          console.log('[DEBUG_FIX] dateStr 설정 (createdAt):', p.name, '→', p.dateStr);
+        }
+        // MASTER_DB에서 찾기
+        if (!p.dateStr) {
+          var _masterPlant = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+            return m.id===p.id || m.name===p.name;
+          });
+          if (_masterPlant && _masterPlant.dateStr) {
+            p.dateStr = _masterPlant.dateStr;
+            console.log('[DEBUG_FIX] dateStr 설정 (MASTER_DB):', p.name, '→', p.dateStr);
+          }
+        }
+        // 마지막 수단: 현재 날짜 사용 (또는 빈 문자열 유지)
+        if (!p.dateStr) {
+          console.log('[DEBUG_FIX] ⚠️ dateStr 설정 불가:', p.name, '(심은 날짜 정보 없음)');
+        }
+        
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
@@ -3753,10 +3793,22 @@ async function syncNow(){
     if(label) { label.textContent='동기화됨'; label.style.color='var(--green-dark)'; }
     showToast('✅ 동기화 완료 — 식물 '+APP.plants.length+'개');
   } catch(e) {
-    console.warn('[syncNow] 오류:', e.message);
+    console.warn('[DEBUG_FIX] syncNow 에러 발생 - 기존 데이터 복구:', e.message);
+    console.warn('[syncNow] 에러 상세:', e);
+    
+    // 🔥 에러 발생 시 백업된 데이터 복구
+    if (previousPlants && previousPlants.length > 0) {
+      APP.plants = previousPlants.slice();  // 백업 복구
+      console.log('[DEBUG_FIX] 데이터 복구됨 — 백업된 식물수:', APP.plants.length, '개 복구됨');
+      try { renderToday(); renderPlants(); } catch(re){ console.warn('[DEBUG_FIX] 렌더링 오류:', re.message); }
+    } else {
+      console.warn('[DEBUG_FIX] 복구할 백업 데이터 없음 - 기존 APP.plants 유지');
+      console.log('[DEBUG_FIX] 현재 APP.plants:', APP.plants.length, '개');
+    }
+    
     if(dot)   dot.className     = 'sync-dot offline';
-    if(label) { label.textContent='동기화 실패'; label.style.color='#C62828'; }
-    showToast('동기화 실패: '+e.message);
+    if(label) { label.textContent='동기화 실패 (데이터 유지)'; label.style.color='#FF6F00'; }
+    showToast('⚠️ 동기화 실패: '+e.message+' (기존 데이터 유지됨)');
   }
 }
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
