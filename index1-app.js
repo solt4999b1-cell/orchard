@@ -3766,14 +3766,12 @@ async function syncNow(){
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
-      console.log('%c[DEBUG_FIX] ✅ 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
+      console.log('%c[DEBUG_FIX] ✅ syncNow 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
       if (APP.plants.length > 0) {
-        var _p0 = APP.plants[0];
-        console.log('%c[DEBUG_FIX] 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p0.name,
-          '| status:', _p0.status, '| category:', _p0.category,
-          '| plantDate:', _p0.plantDate, '| dateStr:', _p0.dateStr,
-          '| fruitDays:', _p0.fruitDays, '| totalDays:', _p0.totalDays);
+        var _p1 = APP.plants[0];
+        console.log('%c[DEBUG_FIX] syncNow 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p1.name, '| dateStr:', _p1.dateStr);
       }
+      }  // ← else 블록을 닫는 괄호 추가!
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
