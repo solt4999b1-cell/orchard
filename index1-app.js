@@ -477,29 +477,7 @@ function startApp() { initGAS(); }
   console.warn  = function() { if (!_isFbNoise(arguments)) _origWarn.apply(console, arguments); };
   console.error = function() { if (!_isFbNoise(arguments)) _origError.apply(console, arguments); };
 })();
-function initFirebase(cfg) {
-  document.getElementById('loading').classList.remove('hidden');
-  setLoadingStep(0, 5, '앱 초기화 중...');
-
-  // [수정된 부분] 변수 선언 여부를 먼저 확인합니다.
-  if (typeof GAS_OCR_URL !== 'undefined' && GAS_OCR_URL && GAS_OCR_URL.includes('script.google.com')) {
-    localStorage.setItem('_runtimeGasUrl', GAS_OCR_URL);
-    _runtimeGasUrl = GAS_OCR_URL;
-  } else {
-    // 만약 GAS_OCR_URL이 없다면, 기존에 저장된 값을 우선 사용합니다.
-    _runtimeGasUrl = localStorage.getItem('_runtimeGasUrl') || '';
-  }
-
-  try {
-    if (!firebase.apps.length) firebase.initializeApp(cfg);
-    db = firebase.firestore();
-    setLoadingStep(0, 15, 'Firebase 연결 중...');
-    launchApp();
-  } catch(e) {
-    console.warn('[Firebase] 오류:', e.message);
-    launchApp();
-  }
-}
+function initFirebase(cfg){ initGAS(); }
 
 
 function showSetupError(msg) {
@@ -9902,11 +9880,11 @@ async function testClaudeKey() {
   }
 }
 
-// Firebase SDK는 인라인 → 즉시 실행 가능
+// Google Sheets GAS 초기화
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function(){ initFirebase(FIREBASE_CONFIG); });
+  document.addEventListener('DOMContentLoaded', function(){ initGAS(); });
 } else {
-  initFirebase(FIREBASE_CONFIG);
+  initGAS();
 }
 
 const STRAIGHT_DB = {
