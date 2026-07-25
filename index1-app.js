@@ -183,6 +183,7 @@ function parseAiJson(text) {
 }
 
 // 🔥 Firebase 미사용을 위한 가짜(Mock) DB 객체
+// 🔥 Firebase 미사용을 위한 가짜(Mock) DB 객체
 var db = {
   collection: function(colName) {
     return {
@@ -202,6 +203,12 @@ var db = {
     return { set: function(){}, update: function(){}, delete: function(){}, commit: async function(){} };
   }
 };
+
+window.addEventListener('load', function() {
+  if (typeof firebase !== 'undefined') {
+    firebase.firestore = function() { return db; };
+  }
+});
 
 // 백그라운드에서 Firebase가 멋대로 켜져서 403 에러를 뿜는 것을 원천 차단
 window.addEventListener('load', function() {
@@ -962,25 +969,22 @@ function getPlantInfo(nm) {
 async function loadAllData() {
   setLoadingStep(1, 30, '로컬 DB 로드 중...');
 
-  // 💡 MASTER_DB.plants가 꼬이더라도 에러가 나지 않도록 안전장치 추가
+  // 💡 MASTER_DB.plants가 안전하게 로드되도록 처리
   var defaultPlants = (typeof MASTER_DB !== 'undefined' && MASTER_DB.plants) ? MASTER_DB.plants : [];
 
   if (APP.plants.length === 0) {
-    // 식물 데이터가 로드될 때 기본 상태를 'active'로 강제 설정 (화면에 보이게 함)
-    APP.plants = defaultPlants.map(function(p){ 
-        return Object.assign({ status: 'active' }, p, { _local: true }); 
+    APP.plants = defaultPlants.map(function(p){
+        return Object.assign({ status: 'active' }, p, { _local: true });
     });
     try { renderToday(); renderPlants(); } catch(e){}
   }
-  
+
   setLoadingStep(1, 45, 'Google Sheets에서 데이터 로드 중...');
   try {
     var raw = await _gasGet('getPlants');
-    
-    // 배열 변환
     var plantsArr = Array.isArray(raw) ? raw : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
-
-    // 🔥 핵심 방어막: 구글 시트 응답 에러 객체를 식물 데이터로 오해하지 않도록 '이름(name)'이 있는 진짜 데이터만 걸러냄
+    
+    // 🔥 빈 응답이나 에러 객체를 걸러내는 안전장치
     plantsArr = plantsArr.filter(function(p) { return p && typeof p === 'object' && p.name; });
 
     if (plantsArr.length > 0) {
@@ -996,8 +1000,8 @@ async function loadAllData() {
       function _betterPlant(ex, p) {
         var exHasDate = _hasRealDate(ex);
         var pHasDate  = _hasRealDate(p);
-        if (!exHasDate && pHasDate) return true;  
-        if (exHasDate && !pHasDate) return false; 
+        if (!exHasDate && pHasDate) return true;
+        if (exHasDate && !pHasDate) return false;
         return (p.events||[]).length > (ex.events||[]).length;
       }
 
@@ -1042,11 +1046,9 @@ async function loadAllData() {
           }
         }
         if (!Array.isArray(p.events)) p.events = [];
-        if (!p.status) p.status = 'active'; 
+        if (!p.status) p.status = 'active';
         if (!p.category) {
-          var _mp = (defaultPlants).find(function(m){
-            return m.id===p.id || m.name===p.name;
-          });
+          var _mp = (defaultPlants).find(function(m){ return m.id===p.id || m.name===p.name; });
           if (_mp && _mp.category) p.category = _mp.category;
         }
         if (!p.location && p.loc) p.location = p.loc;
@@ -1061,15 +1063,15 @@ async function loadAllData() {
     (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
       return Object.assign({_key:k}, doneRaw[k]);
     })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
-    
+
     setLoadingStep(2, 70, 'Google Sheets 동기화 완료!');
     try { renderToday(); renderPlants(); } catch(e){}
-    
+
     var dot = document.getElementById('sync-dot');
     var lbl = document.getElementById('sync-label');
     if (dot) dot.className = 'sync-dot';
     if (lbl) { lbl.textContent = '온라인 (Sheets)'; lbl.style.color = 'var(--green-dark)'; }
-    
+
     setTimeout(function(){ hideLoading(); }, 300);
 
     Promise.all([
