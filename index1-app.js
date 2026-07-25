@@ -961,24 +961,28 @@ function getPlantInfo(nm) {
 
 async function loadAllData() {
   setLoadingStep(1, 30, '로컬 DB 로드 중...');
+
+  // 💡 MASTER_DB.plants가 꼬이더라도 에러가 나지 않도록 안전장치 추가
+  var defaultPlants = (typeof MASTER_DB !== 'undefined' && MASTER_DB.plants) ? MASTER_DB.plants : [];
+
   if (APP.plants.length === 0) {
-    // 💡 식물 데이터가 로드될 때 기본 상태를 'active'로 설정합니다.
-    APP.plants = MASTER_DB.plants.map(function(p){ 
+    // 식물 데이터가 로드될 때 기본 상태를 'active'로 강제 설정 (화면에 보이게 함)
+    APP.plants = defaultPlants.map(function(p){ 
         return Object.assign({ status: 'active' }, p, { _local: true }); 
     });
     try { renderToday(); renderPlants(); } catch(e){}
   }
+  
   setLoadingStep(1, 45, 'Google Sheets에서 데이터 로드 중...');
   try {
     var raw = await _gasGet('getPlants');
     
-    // 배열로 변환 시도
+    // 배열 변환
     var plantsArr = Array.isArray(raw) ? raw : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
 
-    // 🔥 핵심 안전장치: 응답 데이터 중 '이름(name)'이 있는 진짜 식물 데이터만 걸러냅니다. 
+    // 🔥 핵심 방어막: 구글 시트 응답 에러 객체를 식물 데이터로 오해하지 않도록 '이름(name)'이 있는 진짜 데이터만 걸러냄
     plantsArr = plantsArr.filter(function(p) { return p && typeof p === 'object' && p.name; });
 
-    // 진짜 식물 데이터가 구글 시트에서 넘어왔을 때만 병합을 수행합니다.
     if (plantsArr.length > 0) {
       var _seen = {};
       var _deduped = [];
@@ -1040,7 +1044,7 @@ async function loadAllData() {
         if (!Array.isArray(p.events)) p.events = [];
         if (!p.status) p.status = 'active'; 
         if (!p.category) {
-          var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+          var _mp = (defaultPlants).find(function(m){
             return m.id===p.id || m.name===p.name;
           });
           if (_mp && _mp.category) p.category = _mp.category;
@@ -1061,7 +1065,6 @@ async function loadAllData() {
     setLoadingStep(2, 70, 'Google Sheets 동기화 완료!');
     try { renderToday(); renderPlants(); } catch(e){}
     
-    // 🔥 Firebase 미사용 모드이므로 동기화 상태 라벨만 업데이트하고 idbSync는 뺍니다.
     var dot = document.getElementById('sync-dot');
     var lbl = document.getElementById('sync-label');
     if (dot) dot.className = 'sync-dot';
