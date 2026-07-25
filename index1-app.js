@@ -1,3 +1,4 @@
+
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
     if (!htmlStr) return '-';
