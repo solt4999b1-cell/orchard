@@ -3610,7 +3610,10 @@ async function syncNow(){
     if (plantsArr.length === 0) {
       console.warn('[syncNow] ⚠️ GAS에서 0개 데이터 반환 → 기존 APP.plants 유지 (현재:', APP.plants.length, '개)');
       // APP.plants를 그대로 둠
-    } else if (plantsArr.length > 0) {
+    }
+    
+    // 💡 [수정] 'else if'에서 'else'를 지우고 'if'로 변경하여 무조건 중복 제거 로직을 타게 합니다.
+    if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
@@ -3934,6 +3937,9 @@ async function loadAllData() {
       plantsArr = Array.isArray(raw) ? raw
         : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     }
+
+    // 💡 [핵심 추가] 여기서도 로컬 데이터를 무조건 병합하여 증발을 차단합니다.
+    plantsArr = APP.plants.concat(plantsArr || []);
     if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
