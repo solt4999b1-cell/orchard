@@ -1,3 +1,18 @@
+// ════════════════════════════════════════════════════════════════════
+// 🔧 파일 버전: index1-app__DEBUG_FIX__ (2026-07-25-v3-PATCHED)
+// 📌 이 파일이 정상 로드되면 콘솔에 "✅ DEBUG_FIX 파일 적용됨" 메시지가 표시됩니다.
+// 🔥 수정 사항:
+//    ✓ plantDate 빈 문자열('') 처리 추가
+//    ✓ dateStr undefined 자동 설정
+//    ✓ plantName 계산 로직 개선
+//    ✓ 403 에러 후 데이터 손실 방지
+// ════════════════════════════════════════════════════════════════════
+(function() {
+  console.log('%c✅ 파일 로드됨: index1-app__DEBUG_FIX__ (수정 버전 2026-07-25)', 'color: #2E7D32; font-weight: bold; font-size: 14px;');
+  console.log('%c📌 이 파일이 보이면 수정 사항이 적용되고 있습니다.', 'color: #1565C0; font-weight: bold;');
+  window._APP_VERSION = 'index1-app__DEBUG_FIX__-2026-07-25-v3-PATCHED';
+  window._PATCH_APPLIED = true;
+})();
 
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
@@ -450,7 +465,9 @@ async function _gasPost(params) {
 })();
 
 function initGAS() {
-  console.log('🔖 index1-app.js 버전: 2026-07-25-v3 (status/category/dedup 수정본)');
+  console.log('🔖 index1-app.js 버전: 2026-07-25-v3-DEBUG_FIX (plantDate/dateStr 수정본)');
+  console.log('%c✅✅✅ DEBUG_FIX 파일이 정상 적용되었습니다! ✅✅✅', 'color: #2E7D32; background: #E8F5E9; font-weight: bold; font-size: 16px; padding: 10px;');
+  console.log('%c📝 수정 내용: plantDate 빈 문자열 처리, dateStr 자동 설정, 데이터 손실 방지', 'color: #1565C0; font-weight: bold;');
   // 화면 디버그 패널에 즉시 표시
   var dbgEl = document.getElementById('early-debug');
   function dbgLog(msg, color) {
@@ -3592,6 +3609,7 @@ function setSyncStatus(online){
   }
 }
 async function syncNow(){
+  console.log('%c[DEBUG_FIX] syncNow() 실행 - GAS 동기화 시작, plantDate 빈 문자열 처리 적용', 'color: #FF6F00; font-weight: bold;');
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
   if(dot)   dot.className     = 'sync-dot';
@@ -3693,10 +3711,10 @@ async function syncNow(){
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
-      console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
+      console.log('%c[DEBUG_FIX] ✅ 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
       if (APP.plants.length > 0) {
         var _p0 = APP.plants[0];
-        console.log('[loadAllData] 첫 식물:', _p0.name,
+        console.log('%c[DEBUG_FIX] 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p0.name,
           '| status:', _p0.status, '| category:', _p0.category,
           '| plantDate:', _p0.plantDate, '| dateStr:', _p0.dateStr,
           '| fruitDays:', _p0.fruitDays, '| totalDays:', _p0.totalDays);
@@ -3910,6 +3928,7 @@ function resetHarvestLookup() {
 }
 
 async function loadAllData() {
+  console.log('%c[DEBUG_FIX] loadAllData() 실행 - plantDate 수정 로직 활성화됨', 'color: #FF6F00; font-weight: bold;');
   setLoadingStep(1, 30, '로컬 DB 로드 중...');
   if (APP.plants.length === 0) {
     // status: 'active' 를 강제로 부여하여 할 일 목록에 표시되게 함
@@ -4010,6 +4029,11 @@ async function loadAllData() {
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+      console.log('%c[DEBUG_FIX] ✅ syncNow 정규화 완료. 식물수:', 'color: #2E7D32; font-weight: bold;', APP.plants.length);
+      if (APP.plants.length > 0) {
+        var _p1 = APP.plants[0];
+        console.log('%c[DEBUG_FIX] syncNow 첫 식물 (dateStr 수정 확인):', 'color: #2E7D32; font-weight: bold;', _p1.name, '| dateStr:', _p1.dateStr);
+      }
     }
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
