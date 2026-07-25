@@ -12,10 +12,8 @@ async function searchData() {
     if (!keyword) { alert('검색어를 입력해주세요.'); return; }
     resultDiv.innerHTML = '<div style="text-align:center; color:#666;">데이터를 불러오는 중입니다...</div>';
 
-    // getEffectiveGasUrl()에서 동적으로 GAS URL 획득 (localStorage 우선)
-    const gasUrl = typeof getEffectiveGasUrl === 'function' ? getEffectiveGasUrl() : GAS_URL;
-    if (!gasUrl) { resultDiv.innerHTML = '<div class="error-msg">GAS URL이 설정되지 않았습니다. 설정 > GAS URL 설정을 확인해주세요.</div>'; return; }
-    const url = `${gasUrl}?keyword=${encodeURIComponent(keyword)}`;
+    const GAS_URL = ''; // ⚙️ 설정에서 입력 (소스에 노출 안 됨) // 본인의 실제 웹앱 주소
+    const url = `${GAS_URL}?keyword=${encodeURIComponent(keyword)}`;
 
     try {
         const response = await fetch(url, { method: 'GET', redirect: 'follow' });
@@ -398,7 +396,28 @@ async function _gasGet(action, extra) {
   }
   return data;
 }
-
+async function _gasPost(params) {
+  try {
+    var p = new URLSearchParams();
+    for (var k in params) p.append(k, params[k] == null ? '' : params[k]);
+    var res = await fetch(GAS_URL, { method: 'POST', body: p });
+    if (!res.ok) throw new Error('GAS HTTP ' + res.status);
+    var json = await res.json();
+    // wrapResponse 형태 { success, data } 자동 처리
+    if (json && typeof json === 'object' && 'success' in json) {
+      if (!json.success) {
+        console.warn('[_gasPost] GAS 오류:', json.message || '알 수 없는 오류', params.action||'');
+        return json; // throw 대신 반환 (promise rejection 방지)
+      }
+      if (json.data && json.data.id) return json.data;
+      return json;
+    }
+    return json;
+  } catch(e) {
+    console.warn('[_gasPost] 네트워크 오류:', e.message, params && params.action ? params.action : '');
+    return { success: false, error: e.message };
+  }
+}
 // ── 화면 디버그 패널 (임시) ───────────────────────────────────────
 (function() {
   var panel = document.createElement('div');
@@ -3630,7 +3649,13 @@ async function syncNow(){
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
       APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
         // dateStr ↔ plantDate 양방향 동기화
-        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        // 🔥 plantDate가 빈 문자열('')이 아닌지 확인해야 dateStr 설정
+        if (!p.dateStr && p.plantDate && String(p.plantDate).trim() !== '') {
+          p.dateStr = String(p.plantDate).slice(0,10);
+        }
+        if (!p.dateStr && p.addedDate && String(p.addedDate).trim() !== '') {
+          p.dateStr = String(p.addedDate).slice(0,10);
+        }
         if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
@@ -3953,9 +3978,14 @@ async function loadAllData() {
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
       APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // dateStr ↔ plantDate 양방향 동기화
-        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
-        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        // dateStr ↔ plantDate 양방향 동기화 (빈 문자열 처리 개선)
+        // 🔥 plantDate가 빈 문자열('')이 아닌지 확인해야 dateStr 설정
+        if (!p.dateStr && p.plantDate && String(p.plantDate).trim() !== '') {
+          p.dateStr = String(p.plantDate).slice(0,10);
+        }
+        if (!p.dateStr && p.addedDate && String(p.addedDate).trim() !== '') {
+          p.dateStr = String(p.addedDate).slice(0,10);
+        }
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
         // 숫자 필드 보장
