@@ -1,6 +1,8 @@
+
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
     if (!htmlStr) return '-';
+    // 태그 제거 및 공백 정리
     return htmlStr.toString().replace(/<[^>]+>/g, '').trim();
 }
 
@@ -10,8 +12,10 @@ async function searchData() {
     if (!keyword) { alert('검색어를 입력해주세요.'); return; }
     resultDiv.innerHTML = '<div style="text-align:center; color:#666;">데이터를 불러오는 중입니다...</div>';
 
-    var localSearchUrl = getEffectiveGasUrl(); 
-    const url = `${localSearchUrl}?keyword=${encodeURIComponent(keyword)}`;
+    // getEffectiveGasUrl()에서 동적으로 GAS URL 획득 (localStorage 우선)
+    const gasUrl = typeof getEffectiveGasUrl === 'function' ? getEffectiveGasUrl() : GAS_URL;
+    if (!gasUrl) { resultDiv.innerHTML = '<div class="error-msg">GAS URL이 설정되지 않았습니다. 설정 > GAS URL 설정을 확인해주세요.</div>'; return; }
+    const url = `${gasUrl}?keyword=${encodeURIComponent(keyword)}`;
 
     try {
         const response = await fetch(url, { method: 'GET', redirect: 'follow' });
@@ -19,7 +23,7 @@ async function searchData() {
 
         console.log("전체 데이터:", data);
         
-        // 💡 API 응답 배열 변환 및 필수 속성 생성 로직 추가
+        // data.list.item 구조를 확인하여 변환 및 _rawList 매핑
         if (data.list && data.list.item) {
             const items = Array.isArray(data.list.item) ? data.list.item : [data.list.item];
             data.success = true;
@@ -76,19 +80,30 @@ async function searchData() {
     }
 }
 
-const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec";  
+
+// Firebase 설정 (난독화)
+const _FC = 'eyJhcGlLZXkiOiAiQUl6YVN5QUtqUVJSalh3bWJsclpQcXY4RHhOZm8xNUUyQjU4a0tBIiwgInByb2plY3RJZCI6ICJvcmNoYXJkYXBwLWI4MWNhIiwgImF1dGhEb21haW4iOiAib3JjaGFyZGFwcC1iODFjYS5maXJlYmFzZWFwcC5jb20iLCAiYXBwSWQiOiAiMTo4NDg2ODAzNDU0OTY6d2ViOjExZDQ2OGM0NGI0MTJjMDM3Nzk1ZWQifQ==';
+const FIREBASE_CONFIG = JSON.parse(atob(_FC));
+window.FIREBASE_CONFIG = FIREBASE_CONFIG;
+
+const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";  
 
 const CLAUDE_API_KEY = ""; 
+//const PSIS_URL = "http://psis.rda.go.kr/openApi/service.do";
 
 const MASTER_DB = {"pesticides":[{"id":"p01","no":1,"name":"스트레이트","type":"살충제","form":"아바멕틴계·입상수화제","ingredient":"에마멕틴벤조에이트 2.15%","target":"진딧물, 나방류 유충, 총채벌레, 굴파리류","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소 광범위","warning":"동일 계통 연용 자제","moa":"I-D","moaName":"아버멕틴/아버멕틴계","moaColor":"#4CAF50","soilUse":false,"maxTimes":2,"microbeSafe":true,"incompatible":["알칼리성 농약"],"note":"스트레이트. 아버멕틴계. 미생물균과 혼용 주의"},{"id":"p02","no":2,"name":"라이몬","type":"살충제","form":"IGR계·액상수화제","ingredient":"노발루론 10%","target":"나방류, 총채벌레, 온실가루이, 노린재","method":"1,000~2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"57개 작물 등록","warning":"6월 이후 나방류 효과. 알·유충·번데기 방제","moa":"I-F","moaName":"성장억제","moaColor":"#9E9E9E","soilUse":false,"maxTimes":2,"microbeSafe":true,"incompatible":["강알칼리 농약"],"note":"성장억제제. 미생물균과 혼용 가능"},{"id":"p03","no":3,"name":"코니도","type":"살충제","form":"네오니코티노이드·수화제","ingredient":"이미다클로프리드 8%","target":"진딧물, 총채벌레, 온실가루이, 매미충","method":"2,000배 경엽살포·토양관주","bee_toxicity":"매우강함","bloom_use":"절대금지","crop_range":"흡즙해충 전용","warning":"침투이행성. 연용 자제","moa":"I-A","moaName":"네오니코티노이드","moaColor":"#F44336","soilUse":true,"maxTimes":2,"microbeSafe":true,"incompatible":[],"note":"경엽·토양 겸용. 네오니코티노이드"},{"id":"p04","no":4,"name":"모스피란","type":"살충제","form":"네오니코티노이드·수용제","ingredient":"아세타미프리드 20%","target":"진딧물, 가루이, 깍지벌레, 잎벌레","method":"2,000~3,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"연용 시 저항성 주의","moa":"I-A","moaName":"네오니코티노이드","moaColor":"#F44336"},{"id":"p05","no":5,"name":"에이팜","type":"살충제","form":"스피노신계·액상수화제","ingredient":"스피노사드 25%","target":"나방류, 총채벌레, 굴파리","method":"1,000~2,000배 경엽살포","bee_toxicity":"중간","bloom_use":"주의","crop_range":"유기농 적합 작물","warning":"천연유래 성분. 저독성","moa":"I-E","moaName":"스피노신","moaColor":"#00BCD4","soilUse":false,"maxTimes":2,"microbeSafe":true,"incompatible":["강알칼리성 농약"],"note":"스피노신계. 미생물 유래 성분"},{"id":"p06","no":6,"name":"렘페이지","type":"살충제","form":"다이아마이드계·액상수화제","ingredient":"클로란트라닐리프롤 20%","target":"나방류 유충","method":"2,000~4,000배 경엽살포","bee_toxicity":"중간","bloom_use":"주의","crop_range":"과수·채소","warning":"나방류 전용 고효과. 연용 자제","moa":"I-B","moaName":"다이아미드","moaColor":"#2196F3","soilUse":false,"maxTimes":3,"microbeSafe":true,"incompatible":[],"note":"다이아미드계. 미생물균 혼용 가능"},{"id":"p07","no":7,"name":"데시스","type":"살충제","form":"피레스로이드계·유제","ingredient":"델타메트린 2.5%","target":"나방류, 진딧물, 노린재","method":"1,000~2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"어독성 강함. 수계 오염 주의","moa":"I-C","moaName":"피레스로이드","moaColor":"#FF9800"},{"id":"p08","no":8,"name":"세베로","type":"살충제","form":"카바메이트계·수화제","ingredient":"카보설판 25%","target":"진딧물, 굼벵이, 나방류","method":"1,000배 경엽·토양처리","bee_toxicity":"강함","bloom_use":"금지","crop_range":"채소·과수","warning":"어독성 주의","moa":"I-H","moaName":"기타살충","moaColor":"#78909C"},{"id":"p09","no":9,"name":"살비왕","type":"살충제·살비제","form":"아카리사이드·수화제","ingredient":"사이에노피라펜 20%","target":"응애류(점박이응애, 이리응애)","method":"2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과수·채소 응애 방제","warning":"응애 전용. 천적 보호"},{"id":"p10","no":10,"name":"오베론","type":"살충제","form":"케토엔올계·액상수화제","ingredient":"스피로메시펜 24%","target":"온실가루이, 응애류","method":"2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"주의","crop_range":"시설 채소·과수","warning":"가루이·응애 동시 방제","moa":"I-H","moaName":"기타살충","moaColor":"#78909C"},{"id":"p11","no":11,"name":"아타라","type":"살충제","form":"네오니코티노이드·입제","ingredient":"티아메톡삼 1%","target":"진딧물, 굴파리, 잎벌레","method":"토양혼화 처리","bee_toxicity":"강함","bloom_use":"금지","crop_range":"채소 정식시","warning":"침투이행성 입제. 정식시 토양처리","moa":"I-A","moaName":"네오니코티노이드","moaColor":"#F44336"},{"id":"p12","no":12,"name":"스미치온","type":"살충제","form":"유기인계·유제","ingredient":"펜티온 50%","target":"나방류, 진딧물, 응애","method":"1,000~1,500배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"고온기 약해 주의","moa":"I-G","moaName":"유기인계","moaColor":"#8D6E63"},{"id":"p13","no":13,"name":"파단","type":"살충제","form":"네레이스독소계·수화제","ingredient":"카르타프 50%","target":"나방류, 이화명나방, 잎벌레","method":"1,000배 경엽살포","bee_toxicity":"중간","bloom_use":"금지","crop_range":"벼·채소·과수","warning":"누에에 독성 강함","moa":"I-H","moaName":"기타살충","moaColor":"#78909C"},{"id":"p14","no":14,"name":"청줄어람","type":"살충제","form":"IGR계·유제","ingredient":"루페뉴론 5%","target":"나방류 유충, 총채벌레","method":"1,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"6월~나방류 방제. 라이몬 교차 사용 권장","moa":"I-F","moaName":"성장억제","moaColor":"#9E9E9E"},{"id":"p15","no":15,"name":"노블레스","type":"살충제·살비제","form":"아카리사이드·액상수화제","ingredient":"아바멕틴 1.8%","target":"응애, 굴파리, 잎응애","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"응애·굴파리 동시 방제"},{"id":"p16","no":16,"name":"히트론","type":"살충제","form":"피레스로이드계·유제","ingredient":"사이퍼메트린 5%","target":"나방류, 노린재, 진딧물","method":"1,000~2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"잔효성 좋음","moa":"I-C","moaName":"피레스로이드","moaColor":"#FF9800"},{"id":"p17","no":17,"name":"팡파레","type":"살충제","form":"다이아마이드·액상수화제","ingredient":"시안트라닐리프롤 10%","target":"나방류, 굴파리","method":"2,000~3,000배 경엽살포","bee_toxicity":"중간","bloom_use":"주의","crop_range":"채소·과수","warning":"나방·굴파리 전문. 잔효기간 김","moa":"I-B","moaName":"다이아미드","moaColor":"#2196F3","soilUse":false,"maxTimes":2,"microbeSafe":true,"incompatible":[],"note":"다이아미드계"},{"id":"p18","no":18,"name":"코르도반","type":"살충제","form":"오가노포스페이트·수화제","ingredient":"클로르피리포스 40.8%","target":"응애, 진딧물, 깍지벌레","method":"1,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수 전용","warning":"어독성·조류독성 주의","moa":"I-G","moaName":"유기인계","moaColor":"#8D6E63"},{"id":"p19","no":19,"name":"트란스폼","type":"살충제","form":"설폭시민계·액상수화제","ingredient":"설폭사플로르 22%","target":"진딧물, 가루이, 깍지벌레","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"네오니코 내성 해충 방제","moa":"I-A","moaName":"네오니코티노이드","moaColor":"#F44336"},{"id":"p20","no":20,"name":"이샷","type":"살충제","form":"네오니코티노이드·액상수화제","ingredient":"디노테퓨란 20%","target":"진딧물, 가루이, 매미충","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"침투이행성. 연용 자제","moa":"I-A","moaName":"네오니코티노이드","moaColor":"#F44336"},{"id":"p21","no":21,"name":"알파스린","type":"살충제","form":"피레스로이드계·유제","ingredient":"알파-사이퍼메트린 5%","target":"나방류, 진딧물, 노린재","method":"1,000~2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"잔효성 좋음. 고온기 약해 주의","moa":"I-C","moaName":"피레스로이드","moaColor":"#FF9800"},{"id":"p22","no":22,"name":"터세로","type":"살충제","form":"네오니코·피레스로이드 혼합","ingredient":"티아메톡삼+람다사이할로트린","target":"나방류, 진딧물, 노린재","method":"1,500~2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"이중 작용. 잔효 길음","moa":"I-A+I-C","moaName":"네오니코티노이드 + 피레스로이드","moaColor":"#F44336"},{"id":"p23","no":23,"name":"델란","type":"살균제","form":"무기황계·수화제","ingredient":"디티아논 75%","target":"흑성병, 탄저병, 겹무늬썩음병, 갈색무늬병","method":"600~1,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"주의","crop_range":"과수·채소 광범위","warning":"예방 위주. 석회유황합제 혼용 금지","moa":"F-D","moaName":"보호살균","moaColor":"#607D8B","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["석회유황합제","동제","강알칼리"],"note":"보호살균. 다부위 작용"},{"id":"p24","no":24,"name":"다코닐","type":"살균제","form":"클로로탈로닐계·수화제","ingredient":"클로로탈로닐 75%","target":"탄저병, 역병, 노균병, 잿빛곰팡이","method":"500~800배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수 광범위","warning":"예방 보호살균제. 연용 자제","moa":"F-D","moaName":"보호살균","moaColor":"#607D8B","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["석회유황합제","오일제","캡탄"],"note":"다코닐. 보호살균"},{"id":"p25","no":25,"name":"포리옥신","type":"살균제","form":"항생물질계·수용제","ingredient":"폴리옥신B 10%","target":"흰가루병, 잿빛곰팡이, 탄저병","method":"1,000~2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수","warning":"생물유래 살균제. 저독성","moa":"F-F","moaName":"기타살균","moaColor":"#795548","soilUse":false,"maxTimes":3,"microbeSafe":true,"incompatible":[],"note":"항생물질계. 미생물균 혼용 주의"},{"id":"p26","no":26,"name":"스코어","type":"살균제","form":"트리아졸계·유제","ingredient":"디페노코나졸 25%","target":"탄저병, 흑성병, 흰가루병, 녹병","method":"2,000~3,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과수·채소","warning":"침투치료형. 발병 초기 사용","moa":"F-C","moaName":"DMI(트리아졸)","moaColor":"#3F51B5","soilUse":false,"maxTimes":3,"microbeSafe":true,"incompatible":["동제"],"note":"DMI(트리아졸)계"},{"id":"p27","no":27,"name":"오티바","type":"살균제","form":"스트로빌루린계·액상수화제","ingredient":"아족시스트로빈 25%","target":"노균병, 탄저병, 역병, 흰가루병","method":"1,000~2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수 광범위","warning":"광범위 침투살균. 내성 주의","moa":"F-B","moaName":"스트로빌루린","moaColor":"#9C27B0","soilUse":false,"maxTimes":4,"microbeSafe":false,"incompatible":["동제","석회유황합제"],"note":"오티바(아족시스트로빈). 스트로빌루린"},{"id":"p28","no":28,"name":"앤트라콜","type":"살균제","form":"유기유황계·수화제","ingredient":"프로피네브 70%","target":"역병, 노균병, 탄저병","method":"500~700배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수","warning":"예방 보호살균. 연속 강우 시 효과 저하","moa":"F-D","moaName":"보호살균","moaColor":"#607D8B","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["동제","강알칼리"],"note":"앤트라콜. 보호살균"},{"id":"p29","no":29,"name":"로브랄","type":"살균제","form":"디카복시미드계·수화제","ingredient":"이프로디온 50%","target":"잿빛곰팡이, 균핵병, 흑색무름병","method":"1,000~1,500배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수·딸기","warning":"잿빛곰팡이 전문. 저온기 효과 우수","moa":"F-F","moaName":"기타살균","moaColor":"#795548"},{"id":"p30","no":30,"name":"리도밀골드","type":"살균제","form":"아실알라닌계·수화제","ingredient":"메탈락실엠","target":"역병, 노균병","method":"600~800배 경엽·토양처리","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"토마토·감자·오이","warning":"역병 전문 치료+예방. 연용 자제","moa":"F-E","moaName":"페닐아미드","moaColor":"#FF5722","soilUse":true,"maxTimes":2,"microbeSafe":false,"incompatible":["동제","알칼리성 농약"],"note":"토양 관주 또는 경엽. 역병·노균병 전문"},{"id":"p31","no":31,"name":"베노밀","type":"살균제","form":"벤지미다졸계·수화제","ingredient":"베노밀 50%","target":"흰가루병, 탄저병, 균핵병, 흑성병","method":"1,500~2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과수·채소","warning":"광범위 살균. 내성균 발생 주의","moa":"F-F","moaName":"기타살균","moaColor":"#795548"},{"id":"p32","no":32,"name":"실바코","type":"살균제","form":"트리아졸계·수화제","ingredient":"테부코나졸 25%","target":"흰가루병, 녹병, 탄저병","method":"2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과수·채소","warning":"침투치료형. 흰가루병 특효","moa":"F-C","moaName":"DMI(트리아졸)","moaColor":"#3F51B5","soilUse":false,"maxTimes":3,"microbeSafe":true,"incompatible":["동제"],"note":"테부코나졸(DMI)"},{"id":"p33","no":33,"name":"영일바리신","type":"살균제","form":"항생물질계·수화제","ingredient":"발리다마이신 3%","target":"잘록병, 흰비단병, 모잘록병","method":"500~1,000배 토양관주","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소 육묘","warning":"토양살균. 육묘기 사용","moa":"F-F","moaName":"기타살균","moaColor":"#795548","soilUse":true,"maxTimes":3,"microbeSafe":true,"incompatible":[],"note":"항생물질계. 미생물균과 혼용 가능"},{"id":"p64","no":64,"name":"프린트","type":"살균제","form":"액상수화제","ingredient":"트리플록시스트로빈","target":"흰가루병·탄저병·검은별무늬병","method":"2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"주의","crop_range":"과수·채소 광범위","warning":"등록번호 4-살균-216, 저독성(어독성 Ⅰ급)","manufacturer":"바이엘","moa":"F-B","moaName":"스트로빌루린","moaColor":"#9C27B0"},{"id":"p35","no":35,"name":"만코지","type":"살균제","form":"유기유황계·수화제","ingredient":"만코제브 80%","target":"역병, 노균병, 탄저병","method":"500~700배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"채소·과수 광범위","warning":"예방 보호살균. 잔류 주의","moa":"F-D","moaName":"보호살균","moaColor":"#607D8B","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["동제","오일제","강알칼리"],"note":"만코제브. 보호살균"},{"id":"p36","no":36,"name":"팜플루","type":"살균제","form":"카복사미드계·액상수화제","ingredient":"보스칼리드 26.7%+크레속심메틸","target":"흰가루병, 탄저병, 잿빛곰팡이","method":"1,500~2,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과수·채소","warning":"이중 작용 복합살균. 연용 자제","moa":"F-A+F-B","moaName":"SDHI계 + 스트로빌루린","moaColor":"#E91E63","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["동제","석회유황합제"],"note":"팜플루. SDHI+스트로빌루린 혼합"},{"id":"p37","no":37,"name":"월동나무","type":"살균제","form":"코퍼계·수화제","ingredient":"수산화동 77%","target":"세균성 병해, 흑성병, 궤양병","method":"600~1,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"주의","crop_range":"과수 세균병","warning":"세균병 전문. 개화기 약해 주의","moa":"F-D","moaName":"보호살균","moaColor":"#607D8B","soilUse":false,"maxTimes":2,"microbeSafe":false,"incompatible":["강산성 농약","황제","기계유","오일제"],"note":"동제. 알칼리성. 대부분 농약과 혼용 주의"},{"id":"p38","no":38,"name":"코리도","type":"살균살충제","form":"복합계·수화제","ingredient":"이미다클로프리드+티오파네이트메틸","target":"진딧물+흰가루병","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"채소·과수","warning":"살균·살충 동시 방제","moa":"I-A+F-F","moaName":"네오니코티노이드 + 기타살균","moaColor":"#F44336"},{"id":"p39","no":39,"name":"캡틴","type":"살균살충제","form":"복합계·수화제","ingredient":"클로르피리포스+캡탄","target":"나방+탄저병","method":"1,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"사과·배·복숭아","warning":"과수 병해충 동시 방제","moa":"I-G+F-D","moaName":"유기인계 + 보호살균","moaColor":"#8D6E63"},{"id":"p40","no":40,"name":"코사이드","type":"살균살충제","form":"복합계·수화제","ingredient":"이미다클로프리드+보스칼리드","target":"흡즙해충+흰가루병","method":"2,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"복합 방제. 연용 자제","moa":"I-A+F-A","moaName":"네오니코티노이드 + SDHI계","moaColor":"#F44336"},{"id":"p41","no":41,"name":"파워샷","type":"살균살충제","form":"복합계·유제","ingredient":"람다사이할로트린+테부코나졸","target":"나방류+흰가루병·녹병","method":"1,500배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","crop_range":"과수·채소","warning":"이중 작용. 연용 자제","moa":"I-C+F-C","moaName":"피레스로이드 + DMI(트리아졸)","moaColor":"#FF9800"},{"id":"p42","no":42,"name":"에이스원","type":"살균살충제","form":"복합계·액상수화제","ingredient":"사이안트라닐리프롤+디페노코나졸","target":"나방+탄저병·흑성병","method":"2,000배 경엽살포","bee_toxicity":"중간","bloom_use":"주의","crop_range":"과수·채소","warning":"고효과 복합. 비용 효율 높음","moa":"I-B+F-C","moaName":"다이아미드 + DMI(트리아졸)","moaColor":"#2196F3"},{"id":"p43","no":43,"name":"마구퍼져","type":"비선택성 제초제","form":"포스포노아미노산계·액제","ingredient":"글루포시네이트암모늄 18%","target":"화본과·광엽 잡초 공통","method":"30~50배 희석 잡초 경엽살포","bee_toxicity":"낮음","bloom_use":"비접촉 가능","crop_range":"과원·밭둑 잡초 방제","warning":"작물 접촉 시 고사. 무풍 건조한 날"},{"id":"p44","no":44,"name":"근사미(바스타)","type":"비선택성 제초제","form":"글리포세이트계·액제","ingredient":"글리포세이트 41%","target":"다년생·화본과 잡초 공통","method":"50배 희석 경엽살포","bee_toxicity":"낮음","bloom_use":"비접촉 가능","crop_range":"다년생 잡초 제거","warning":"잔류 주의. 토양 흡착"},{"id":"p45","no":45,"name":"그람목손(터보)","type":"비선택성 제초제","form":"비피리딜리움계·액제","ingredient":"파라쾃 24%","target":"1년생 잡초 신속 고사","method":"50배 희석 경엽살포","bee_toxicity":"낮음","bloom_use":"비접촉 가능","crop_range":"비상시 신속 제초","warning":"인체 맹독성. 안전장비 필수"},{"id":"p46","no":46,"name":"라쏘","type":"비선택성 제초제","form":"클로로아세트아마이드계·유제","ingredient":"알라클로르 48%","target":"화본과 잡초","method":"파종 전 토양처리","bee_toxicity":"낮음","bloom_use":"토양처리","crop_range":"밭 파종 전 처리","warning":"파종 전 토양 잔류성"},{"id":"p47","no":47,"name":"그라목손 프리미엄","type":"선택성 제초제","form":"포스포노아미노산계·액제","ingredient":"글루포시네이트암모늄+기타","target":"화본과 잡초 선택","method":"25~30배 경엽살포","bee_toxicity":"낮음","bloom_use":"비접촉 가능","crop_range":"과원 화본과 방제","warning":"광엽잡초 적용 범위 제한"},{"id":"p48","no":48,"name":"나브","type":"선택성 제초제","form":"아릴옥시페녹시프로피온산계·유제","ingredient":"펜옥사프롭-에틸 6.9%","target":"화본과 잡초","method":"50~100배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"대두밭·채소밭","warning":"광엽작물에 안전. 화본과 전용"},{"id":"p49","no":49,"name":"세렉스","type":"선택성 제초제","form":"트리아진계·수화제","ingredient":"메트리부진 70%","target":"1년생 광엽잡초","method":"200~250배 토양처리","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"콩·감자밭","warning":"콩밭 선택성 제초"},{"id":"p50","no":50,"name":"론스타","type":"선택성 제초제","form":"술포닐우레아계·수화제","ingredient":"이마자픽 70%","target":"1년생 잡초","method":"포장지 기준 토양처리","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"콩밭 전용","warning":"콩 전용 선택성"},{"id":"p51","no":51,"name":"한방","type":"선택성 제초제","form":"아릴옥시페녹시·수화제","ingredient":"할록시포프-R 10.8%","target":"화본과 잡초","method":"50~75배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"두류·채소밭","warning":"광엽작물 안전. 화본과 전용"},{"id":"p52","no":52,"name":"그린탑","type":"선택성 제초제","form":"카바메이트계·수화제","ingredient":"아슐람 34.5%","target":"화본과 잡초","method":"50배 경엽살포","bee_toxicity":"낮음","bloom_use":"가능","crop_range":"과원·밭","warning":"특히 쇠뜨기류 효과"},{"id":"p53","no":53,"name":"말뚝","type":"토양살충제","form":"유기인계·입제","ingredient":"터부포스 5%","target":"굼벵이, 방아벌레, 거세미나방, 뿌리혹선충","method":"정식·파종 전 토양혼화","bee_toxicity":"강함","bloom_use":"금지","crop_range":"밭작물(과수 제외)","warning":"1회만 사용. 장갑·마스크 필수","soilUse":true,"maxTimes":1,"moa":"I-G","microbeSafe":false,"incompatible":["동제","석회유황합제"],"note":"토양 혼화 처리. 고독성. 정식 전 1회"},{"id":"p54","no":54,"name":"데푸콘","type":"토양살충제","form":"카바메이트계·입제","ingredient":"카보퓨란 3%","target":"굼벵이, 선충, 고자리파리","method":"정식시 토양혼화","bee_toxicity":"강함","bloom_use":"금지","crop_range":"채소·밭작물","warning":"어독성 강함. 수계 유출 주의","soilUse":true,"maxTimes":1,"moa":"I-H","microbeSafe":false,"incompatible":["동제"],"note":"토양 혼화/관주. 정식 전 또는 파종 전 1회"},{"id":"p55","no":55,"name":"모캡","type":"토양살충제","form":"유기인계·입제","ingredient":"에토프로포스","target":"굼벵이, 방아벌레, 선충류","method":"파종전 토양혼화","bee_toxicity":"강함","bloom_use":"금지","crop_range":"감자·채소","warning":"조류 독성 주의","soilUse":true,"maxTimes":1,"moa":"I-G","microbeSafe":false,"incompatible":["알칼리성 농약","석회유황합제"],"note":"토양 혼화. 독성 주의"},{"id":"p56","no":56,"name":"주토","type":"토양살충제","form":"네오니코티노이드계·입제","ingredient":"포클로르부람 0.3%","target":"굼벵이, 고자리파리","method":"정식시 토양혼화","bee_toxicity":"중간","bloom_use":"금지","crop_range":"채소·밭작물","warning":"비교적 안전한 토양살충제","soilUse":true,"maxTimes":1,"moa":"I-H","microbeSafe":false,"incompatible":[],"note":"토양 처리 전용"},{"id":"p57","no":57,"name":"토갑","type":"토양살충제","form":"카바메이트계·입제","ingredient":"포레이트 10%","target":"굼벵이, 선충, 방아벌레","method":"파종전 토양혼화","bee_toxicity":"강함","bloom_use":"금지","crop_range":"밭작물","warning":"독성 강함. 철저한 보호장비","soilUse":true,"maxTimes":1,"moa":"I-G","microbeSafe":false,"incompatible":["알칼리성 농약"],"note":"토양 혼화. 고독성. 취급 주의"},{"id":"p58","no":58,"name":"심마니","type":"토양살충제","form":"복합계·입제","ingredient":"카보퓨란+에토프로포스","target":"굼벵이, 선충, 고자리파리 복합","method":"파종·정식전 토양혼화","bee_toxicity":"강함","bloom_use":"금지","crop_range":"채소·밭작물","warning":"복합효과. 처리 후 복토 필수","soilUse":true,"maxTimes":1,"moa":"I-G+I-H","microbeSafe":false,"incompatible":["동제","알칼리성 농약"],"note":"토양 혼화 혼합제"},{"id":"p59","no":59,"name":"비타민B군","type":"생장조정제·기타","form":"식물영양제","ingredient":"아미노산+비타민복합","target":"생육 촉진, 스트레스 완화","method":"500~1,000배 엽면시비","bee_toxicity":"없음","bloom_use":"가능","crop_range":"모든 작물","warning":"약해 없음. 생육기 수시 사용 가능"},{"id":"p60","no":60,"name":"아그리마이신","type":"생장조정제·기타","form":"항생물질계·수용제","ingredient":"옥시테트라사이클린 17%","target":"화상병, 세균성 궤양병","method":"1,000배 경엽살포","bee_toxicity":"낮음","bloom_use":"주의","crop_range":"사과·배 화상병","warning":"화상병 방제 전문. 내성 주의"},{"id":"p61","no":61,"name":"맥시마","type":"생장조정제·기타","form":"미생물제","ingredient":"바실루스 서브틸리스","target":"잿빛곰팡이, 흰가루병 예방","method":"500~1,000배 경엽살포","bee_toxicity":"없음","bloom_use":"가능","crop_range":"유기농·친환경 재배","warning":"친환경 미생물 살균. 저독성"},{"id":"p62","no":62,"name":"삼진왕","type":"살균살충제","form":"미탁제","ingredient":"디페노코나졸 이미녹타딘트리아세테이트","target":"흰가루병·탄저병·진딧물·응애","method":"1,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","warning":"등록번호 1-살균-261, 보통독성(어독성 Ⅱ급)","crop_range":"채소·과수 광범위","manufacturer":"경농","moa":"F-C","moaName":"DMI(트리아졸)","moaColor":"#3F51B5"},{"id":"p63","no":63,"name":"다트롤","type":"살충제","form":"유탁제","ingredient":"플룩사메타마이드 유탁제","target":"나방류(배추좀나방·파밤나방·담배나방)","method":"1,000배 경엽살포","bee_toxicity":"강함","bloom_use":"금지","warning":"등록번호 8-살충-39, 저독성(어독성 Ⅱ급)","crop_range":"채소·과수","manufacturer":"농협케미칼","moa":"F-A","moaName":"SDHI계","moaColor":"#E91E63","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["동제"],"note":"다트롤. SDHI계"},{"id":"p65","no":65,"name":"후론사이드","type":"살균제","form":"입제","ingredient":"플루아지남","target":"역병·뿌리흑병·뿌리마름병·더뎅이병·뿌리썩음병·흰날개무늬병","method":"토양혼화처리 (정식전·파종전)","bee_toxicity":"낮음","bloom_use":"가능","warning":"등록번호 46-살균-312, 저독성(어독성 Ⅲ급)","crop_range":"고추·배추·오이·참외·감자·참깨·양배추·브로콜리·갓·무·순무·딸기·사과","manufacturer":"팜한농","moa":"F-A","moaName":"SDHI계","moaColor":"#E91E63","soilUse":false,"maxTimes":3,"microbeSafe":false,"incompatible":["동제","알칼리성"],"note":"후론사이드. SDHI계"},{"id":"p66","no":66,"name":"듀알골드","type":"선택성 제초제","form":"입제","ingredient":"에스메톨라클로르","target":"일년생 잡초 (화본과·광엽잡초)","method":"파종·정식기 토양처리 (파종 복토 후 3일 이내)","bee_toxicity":"없음","bloom_use":"가능","warning":"등록번호 제2-제초-274, 저독성(어독성 Ⅲ급)","crop_range":"감자·고구마·고추·동부·무·시금치·옥수수·콩·파","manufacturer":"신젠타코리아㈜","moa":"F-A+F-B","moaName":"SDHI계 + 스트로빌루린","moaColor":"#E91E63","soilUse":false,"maxTimes":4,"microbeSafe":false,"incompatible":["동제","석회유황합제"],"note":"벨리스에스. SDHI+스트로빌루린"},{"id":"p66","no":66,"name":"벨리스에스","type":"살균제","ingredient":"보스칼리드(13.6%) + 피라클로스트로빈(8%)","manufacturer":"(주)경농","form":"액상수화제","feature":"SDHI계+스트로빌루린계 혼합, 예방·치료 동시, 내성 발현 적음, 광범위 살균 스펙트럼","target":"탄저병·잿빛곰팡이병·흰가루병·균핵병·점무늬낙엽병 등 광범위","method":"경엽처리(2,000배) / 토양처리·관주(1,000배) / 무인항공(16배)","bee_toxicity":"저독성","bloom_use":"개화기 주의","warning":"동제와 혼용 금지. 약해 주의(혼용가부표 확인)","regNo":"확인필요 (QR→경농 사이트)","qrSource":"http://www.knco.co.kr/knco/productSap2025View.php?skskIdx=000000000000500783","cropUsage":{"감(단감포함)":[{"target":"둥근무늬낙엽병","method":"6월 상순부터 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"4회"},{"target":"탄저병","method":"6월 상순부터 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"4회"}],"고추":[{"target":"갈색점무늬병","method":"발생초기 10일간격 경엽처리","amount":"2,000배","safety":"수확5일전","times":"2회"}],"고추(단고추류포함)":[{"target":"탄저병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확5일전","times":"2회"},{"target":"탄저병(무인항공기)","method":"발병초 10일간격 경엽처리(무인항공)","amount":"16배","safety":"수확3일전","times":"3회"}],"단고추류":[{"target":"갈색점무늬병","method":"발생초기 10일간격 경엽처리","amount":"2,000배","safety":"수확5일전","times":"2회"}],"당근":[{"target":"검은잎마름병","method":"발생초기 20일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"딸기":[{"target":"흰가루병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확3일전","times":"3회"},{"target":"탄저병(육묘상)","method":"발병초 7일간격 경엽처리(육묘상)","amount":"2,000배","safety":"수확3일전","times":"3회"}],"마늘":[{"target":"흑색썩음균핵병","method":"월동후 관주처리","amount":"1,000배","safety":"월동직후","times":"1회"},{"target":"흑색썩음균핵병","method":"파종전 토양처리","amount":"1,000배","safety":"파종기","times":"1회"},{"target":"잎마름병(무인항공기)","method":"발병초 10일간격 경엽처리(무인항공)","amount":"16배","safety":"수확7일전","times":"1회"}],"매실":[{"target":"탄저병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"4회"},{"target":"검은별무늬병","method":"4월중순부터 10일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"4회"},{"target":"녹병","method":"발생초기 10일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"4회"}],"배":[{"target":"검은별무늬병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확14일전","times":"3회"}],"복숭아":[{"target":"잿빛무늬병","method":"발병초 7일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"},{"target":"탄저병","method":"발생초기 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"사과":[{"target":"탄저병","method":"6월상순부터 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"5회"},{"target":"점무늬낙엽병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"5회"},{"target":"갈색무늬병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"5회"},{"target":"겹무늬썩음병","method":"6월중순부터 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"5회"}],"상추":[{"target":"균핵병","method":"발병초 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"수박(복수박포함)":[{"target":"덩굴마름병","method":"발병초 7일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"양상추":[{"target":"균핵병","method":"발병초 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"양앵두(체리)":[{"target":"탄저병","method":"발병초기 10일간격 경엽처리","amount":"2,000배","safety":"수확21일전","times":"3회"}],"양파":[{"target":"잎마름병","method":"발생초기 10일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"},{"target":"잎마름병(무인항공기)","method":"발병초 10일간격 경엽처리(무인항공)","amount":"16배","safety":"수확7일전","times":"3회"},{"target":"검은무늬병","method":"발생초기 7일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"},{"target":"노균병","method":"발생초기 7일간격 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"},{"target":"흑색썩음균핵병","method":"정식전 토양처리","amount":"1,000배","safety":"정식기","times":"1회"}],"오이":[{"target":"흰가루병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확2일전","times":"3회"}],"자두":[{"target":"잿빛무늬병","method":"발생초기 7일간격 경엽처리","amount":"2,000배","safety":"수확3일전","times":"3회"},{"target":"주머니병","method":"개화전 및 낙화후 경엽처리","amount":"2,000배","safety":"수확3일전","times":"3회"}],"쪽파":[{"target":"녹병","method":"발생초기 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"콩":[{"target":"탄저병(무인항공기)","method":"발병초 10일간격 경엽처리(무인항공)","amount":"16배","safety":"수확21일전","times":"3회"},{"target":"자주무늬병","method":"발병초부터 경엽처리(무인항공)","amount":"32배","safety":"수확21일전","times":"2회"}],"파":[{"target":"녹병","method":"발생초기 경엽처리","amount":"2,000배","safety":"수확7일전","times":"3회"}],"포도":[{"target":"잿빛곰팡이병","method":"발생초기 경엽처리","amount":"2,000배","safety":"수확30일전","times":"3회"},{"target":"갈색무늬병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"3회"},{"target":"탄저병","method":"발병초 10일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"3회"},{"target":"새눈무늬병","method":"발병초 7일간격 경엽처리","amount":"2,000배","safety":"수확30일전","times":"3회"}]},"moa":"F-A+F-B","moaName":"SDHI계 + 스트로빌루린","moaColor":"#E91E63","soilUse":false,"maxTimes":4,"microbeSafe":false,"incompatible":["동제","석회유황합제"],"note":"벨리스에스. SDHI+스트로빌루린"}],"fertilizers":[{"id":"f01","no":1,"name":"21-17-17 복합비료","type":"복합비료","ingredient":"N21-P17-K17","effect":"생육 균형 영양 공급","method":"밑거름 또는 웃거름 토양시비","amount":"20~30kg","timing":"정식2주전 밑거름, 생육기 웃거름","note":"범용 복합비료"},{"id":"f02","no":2,"name":"NK비료 12-0-22","type":"복합비료","ingredient":"N12-K22","effect":"착색·당도 향상, 칼리 보강","method":"웃거름 토양시비","amount":"10~15kg","timing":"과실 비대기~착색기 (7~8월)","note":"착색·당도 전용"},{"id":"f03","no":3,"name":"유안복합 15-15-15","type":"복합비료","ingredient":"N15-P15-K15","effect":"균형 생육 촉진","method":"밑거름 또는 웃거름","amount":"20~25kg","timing":"전 생육기","note":"범용 균형비료"},{"id":"f04","no":4,"name":"수용성 복합비료 20-20-20","type":"복합비료","ingredient":"N20-P20-K20","effect":"관비용 균형 비료","method":"물 500배 희석 관수시비","amount":"2~3kg","timing":"생육기 주 1~2회","note":"관비·엽면 겸용"},{"id":"f05","no":5,"name":"하이포넥스 6-10-5","type":"복합비료","ingredient":"N6-P10-K5","effect":"개화·결실 촉진","method":"물 1,000배 엽면시비","amount":"0.5kg","timing":"개화 전·결실기","note":"개화기 특화"},{"id":"f06","no":6,"name":"수퍼비 10-5-8","type":"복합비료","ingredient":"N10-P5-K8","effect":"과실 품질 향상","method":"물 500배 엽면시비","amount":"1kg","timing":"착과기~수확전","note":"과실 전용"},{"id":"f07","no":7,"name":"요소 (Urea)","type":"질소질비료","ingredient":"N 46%","effect":"잎·줄기 생육 촉진, 엽색 개선","method":"0.3~0.5% 엽면시비 또는 토양시비","amount":"2~3kg (엽면)","timing":"생육초~중기 (4~7월)","note":"엽면시비 가장 빠른 효과"},{"id":"f08","no":8,"name":"황산암모늄 (유안)","type":"질소질비료","ingredient":"N21%, S24%","effect":"질소+유황 공급, 토양 산성화","method":"밑거름 또는 웃거름","amount":"30~40kg","timing":"봄·가을 밑거름","note":"블루베리 산성 선호 작물에 적합"},{"id":"f09","no":9,"name":"질산암모늄칼슘","type":"질소질비료","ingredient":"N27%, Ca8%","effect":"질소+칼슘 동시 공급","method":"밑거름 또는 웃거름","amount":"20~30kg","timing":"생육기 전반","note":"칼슘 결핍 예방 효과"},{"id":"f10","no":10,"name":"석회질소","type":"질소질비료","ingredient":"N21%, CaO55%","effect":"지효성 질소+토양 살균","method":"밑거름 토양혼화 (독성—피부보호 필수)","amount":"40~60kg","timing":"정식 3주 전","note":"토양 살균 효과 겸용"},{"id":"f11","no":11,"name":"용성인비","type":"인산질비료","ingredient":"P2O5 20%, MgO·SiO2 포함","effect":"뿌리 발달, 개화·결실 촉진","method":"밑거름 토양혼화","amount":"40~60kg","timing":"정식·파종 2~4주 전","note":"완효성. 미리 시비 필수"},{"id":"f12","no":12,"name":"과인산석회","type":"인산질비료","ingredient":"P2O5 17~20%","effect":"개화·결실 촉진, 뿌리 발달","method":"밑거름 토양시비","amount":"30~50kg","timing":"정식·파종 2주 전 밑거름","note":"속효성 인산"},{"id":"f13","no":13,"name":"중과인산석회","type":"인산질비료","ingredient":"P2O5 45%","effect":"고농도 인산 집중 공급","method":"밑거름 소량 토양혼화","amount":"15~25kg","timing":"정식 전 밑거름","note":"소량 고농도. 과용 금지"},{"id":"f14","no":14,"name":"황산칼리","type":"칼리질비료","ingredient":"K2O 50%, S18%","effect":"착색·품질 향상, 염소 민감 작물","method":"밑거름 또는 웃거름","amount":"10~15kg","timing":"밑거름 또는 비대기 (7~8월)","note":"블루베리·딸기 등 추천"},{"id":"f15","no":15,"name":"염화칼리","type":"칼리질비료","ingredient":"K2O 60%","effect":"과실 비대·착색, 병해 저항성","method":"밑거름 또는 웃거름","amount":"10~15kg","timing":"밑거름 또는 착색기","note":"범용. 염소 민감 작물 황산칼리로 대체"},{"id":"f16","no":16,"name":"탄산칼리","type":"칼리질비료","ingredient":"K2O 56%","effect":"알칼리성. 토양 pH 상승","method":"밑거름 토양시비","amount":"8~12kg","timing":"밑거름","note":"산성 토양 교정 겸용"},{"id":"f17","no":17,"name":"우분 퇴비","type":"퇴비·유기질","ingredient":"유기물40%↑, N1~2%, P1%, K1%","effect":"토양 물리성 개선, 지효성 양분","method":"밑거름 토양 전면혼화","amount":"2,000~3,000kg","timing":"정식 3~4주 전 (완숙 필수)","note":"완숙 여부 반드시 확인"},{"id":"f18","no":18,"name":"돈분 퇴비","type":"퇴비·유기질","ingredient":"유기물45%↑, N2~3%, P2%, K1%","effect":"빠른 양분 공급, 토양 개선","method":"밑거름 토양 전면혼화","amount":"1,500~2,000kg","timing":"정식 4주 전","note":"질소 고농도—사용량 조절"},{"id":"f19","no":19,"name":"계분 퇴비","type":"퇴비·유기질","ingredient":"유기물50%↑, N3~5%, P3%, K2%","effect":"빠른 질소·인산 공급","method":"소량 밑거름 혼화","amount":"500~800kg","timing":"정식 4~6주 전","note":"고농도 소량 원칙"},{"id":"f20","no":20,"name":"부엽토","type":"퇴비·유기질","ingredient":"유기물60%↑","effect":"보수력·통기성, 미생물 활성","method":"멀칭 또는 토양혼화","amount":"500~1,000kg","timing":"연중 (특히 가을~이른봄)","note":"블루베리 멀칭 효과 탁월"},{"id":"f21","no":21,"name":"유박 (깻묵)","type":"퇴비·유기질","ingredient":"N5~7%, P2%, K1%","effect":"완효성 질소, 토양미생물 증가","method":"밑거름 토양혼화","amount":"100~150kg","timing":"정식 2~3주 전","note":"지효성. 냄새 강함"},{"id":"f22","no":22,"name":"아주까리 유박","type":"퇴비·유기질","ingredient":"N5%, P2%, K1%","effect":"지효성 질소, 선충 억제","method":"밑거름 토양혼화","amount":"80~120kg","timing":"정식 2주 전","note":"선충 억제 효과"},{"id":"f23","no":23,"name":"어분","type":"퇴비·유기질","ingredient":"N8~10%, P6%","effect":"속효성 질소·인산","method":"밑거름 또는 웃거름","amount":"50~80kg","timing":"정식전 또는 생육초기","note":"속효성 유기질비료"},{"id":"f24","no":24,"name":"골분","type":"퇴비·유기질","ingredient":"N3%, P20%","effect":"인산 공급, 뿌리 발달","method":"밑거름 토양혼화","amount":"50~100kg","timing":"정식 2주 전","note":"인산 유기질"},{"id":"f25","no":25,"name":"혈분","type":"퇴비·유기질","ingredient":"N12~14%","effect":"속효성 고농도 질소","method":"소량 밑거름","amount":"30~50kg","timing":"정식전 또는 생육초기","note":"고농도—소량 사용 원칙"},{"id":"f26","no":26,"name":"아미노산 비료","type":"퇴비·유기질","ingredient":"아미노산 복합, N3~5%","effect":"생육 촉진, 품질 향상, 스트레스 경감","method":"500~1,000배 엽면시비 또는 관수","amount":"1~2kg (엽면)","timing":"전 생육기 수시","note":"약해 없음. 빈번한 시비 가능"},{"id":"f27","no":27,"name":"해조류 추출물","type":"퇴비·유기질","ingredient":"사이토카이닌·오옥신·알긴산","effect":"뿌리 발달, 개화 촉진, 과실 비대","method":"500~1,000배 엽면시비","amount":"0.5~1kg","timing":"정식후~개화기, 비대기","note":"천연 생장 조절 물질"},{"id":"f28","no":28,"name":"붕사 (붕소)","type":"미량요소","ingredient":"B 11%","effect":"화분 발아, 결실 향상, 열과 방지","method":"0.1~0.2% 엽면시비","amount":"0.1~0.2kg","timing":"개화 전·개화기","note":"과량 시 약해. 소량 정밀","cropUsage":{"블루베리":[{"target":"결실 향상·화분 발아","method":"0.1% 엽면시비","amount":"0.1% (1,000배)","safety":"수확 전","times":"개화 전·개화기"}],"무화과":[{"target":"착과율 향상","method":"0.1% 엽면시비","amount":"0.1%","safety":"수확 전","times":"개화기"}],"감나무":[{"target":"낙과 방지","method":"0.1% 엽면시비","amount":"0.1%","safety":"수확 전","times":"개화기~착과기"}],"사과":[{"target":"열과·낙과 방지","method":"0.1~0.2% 엽면시비","amount":"0.1~0.2%","safety":"수확 전","times":"개화 전"}]}},{"id":"f29","no":29,"name":"황산아연","type":"미량요소","ingredient":"Zn 35%","effect":"새잎 황화 방지, 효소 활성화","method":"0.2~0.3% 엽면시비 또는 토양시비","amount":"0.2kg (엽면)","timing":"생육기 결핍 증상 발현 시","note":"아연결핍(새잎황화) 방지"},{"id":"f30","no":30,"name":"황산망간","type":"미량요소","ingredient":"Mn 32%","effect":"광합성 효소 보조, 엽록소 합성","method":"0.2~0.3% 엽면시비","amount":"0.2kg (엽면)","timing":"생육기 결핍 시","note":"결핍시 엽맥사이 황화"},{"id":"f31","no":31,"name":"황산철","type":"미량요소","ingredient":"Fe 20%","effect":"엽록소 합성, 철 결핍 황화 교정","method":"0.1~0.2% 엽면시비","amount":"0.1kg (엽면)","timing":"새잎 황화 발생 시","note":"중성·알칼리 토양 결핍 多"},{"id":"f32","no":32,"name":"몰리브덴","type":"미량요소","ingredient":"Mo 39%","effect":"질소 동화 효소, 콩류 뿌리혹 형성","method":"0.05~0.1% 엽면시비","amount":"극소량","timing":"파종기 또는 생육초기","note":"두류 고정 필수 원소"},{"id":"f33","no":33,"name":"구리 (황산동)","type":"미량요소","ingredient":"Cu 25%","effect":"살균 효과, 효소 활성화","method":"0.1~0.2% 엽면시비","amount":"0.1kg (엽면)","timing":"생육기 결핍 시","note":"살균 겸용. 과량 축적 주의"},{"id":"f34","no":34,"name":"칼슘 엽면제","type":"미량요소","ingredient":"Ca 15% (질산칼슘형)","effect":"세포벽 강화, 배꼽썩음병 예방","method":"0.3~0.5% 엽면시비","amount":"0.5~1kg","timing":"과실 비대기~착색기","note":"토마토·고추 배꼽썩음병 예방","cropUsage":{"토마토":[{"target":"배꼽썩음병 예방","method":"0.3~0.5% 엽면시비","amount":"500배 희석","safety":"수확 전 3일","times":"과실 비대기"}],"고추":[{"target":"배꼽썩음병 예방","method":"0.3~0.5% 엽면시비","amount":"500배 희석","safety":"수확 전 2일","times":"착과 후"}],"딸기":[{"target":"칼슘 결핍 예방","method":"엽면시비","amount":"700배 희석","safety":"수확 전","times":"주 1회"}],"사과":[{"target":"고두현상 예방","method":"엽면시비","amount":"500배 희석","safety":"수확 전","times":"과실 비대기~착색기"}],"배":[{"target":"코르크스팟 예방","method":"엽면시비","amount":"500배 희석","safety":"수확 전","times":"과실 비대기"}],"블루베리":[{"target":"과실 품질 향상","method":"엽면시비","amount":"700배 희석","safety":"수확 전","times":"착과 후"}]}},{"id":"f35","no":35,"name":"고토석회","type":"석회·토양개량","ingredient":"CaO 50%↑, MgO 15%↑","effect":"토양 pH 교정, 칼슘·마그네슘 보충","method":"밑거름 전 토양살포 후 경운","amount":"100~200kg","timing":"정식·파종 2~4주 전 우선시비","note":"비료와 동시 시비 금지"},{"id":"f36","no":36,"name":"소석회","type":"석회·토양개량","ingredient":"CaO 70%↑","effect":"토양 pH 강력 교정, 살균","method":"극소량. 비료 시비 최소 2주 후","amount":"50~100kg","timing":"가을 토양 소독 후","note":"강한 알칼리. 소량 사용"},{"id":"f37","no":37,"name":"황토 석회황","type":"석회·토양개량","ingredient":"S+Ca 복합","effect":"토양 살균, 응애·깍지벌레 방제","method":"500~800배 수피 도포 또는 경엽살포","amount":"희석 사용","timing":"낙엽후~발아전 (11~3월)","note":"생육기 사용 금지"},{"id":"f38","no":38,"name":"피트모스","type":"석회·토양개량","ingredient":"유기물90%↑, pH 3.5~4.5","effect":"토양 산성화, 보수력 향상","method":"식재 전 토양혼화","amount":"10~20L/주","timing":"식재 전 (블루베리 필수)","note":"블루베리 pH 4.5~5.5 필수"},{"id":"f39","no":39,"name":"펄라이트","type":"석회·토양개량","ingredient":"무기질 경량골재","effect":"배수성·통기성 향상","method":"토양 혼화 (20~30%)","amount":"10~20%","timing":"식재 전 토양 개량","note":"점질 토양 개량 효과"},{"id":"f40","no":40,"name":"훈탄 (왕겨숯)","type":"석회·토양개량","ingredient":"규산·탄소","effect":"토양 통기성, 미생물 활성","method":"토양혼화 또는 멀칭","amount":"100~200kg","timing":"정식 전 또는 멀칭 용","note":"규산 공급. 미생물 서식 촉진"},{"id":"f41","no":41,"name":"게르마늄토","type":"석회·토양개량","ingredient":"게르마늄·미네랄 복합","effect":"항산화·품질 향상, 토양 미생물 활성화","method":"밑거름 토양혼화","amount":"10~20kg","timing":"정식 전","note":"기능성 농산물 생산용"},{"id":"f42","no":42,"name":"규산질비료","type":"석회·토양개량","ingredient":"SiO2 30%↑","effect":"줄기·잎 강화, 도복 방지, 병해 저항","method":"밑거름 토양시비","amount":"60~100kg","timing":"정식·파종 전","note":"벼·과채류 병해 저항성 향상"},{"id":"f43","no":43,"name":"버미큘라이트","type":"석회·토양개량","ingredient":"무기질 경량골재","effect":"보수성·통기성 균형 향상","method":"토양혼화 (10~20%)","amount":"5~10%","timing":"육묘·식재 전 토양개량","note":"육묘상에도 효과"},{"id":"f44","no":44,"name":"미생물 토양활성제","type":"석회·토양개량","ingredient":"바실루스·트리코데르마 복합","effect":"토양 유익균 증식, 뿌리 생육 향상","method":"정식시 토양관주 또는 관수","amount":"500~1,000배","timing":"정식후 주 1회 초기 3회","note":"화학비료 감량 가능"},{"id":"f45","no":45,"name":"세라믹볼 (제오라이트)","type":"석회·토양개량","ingredient":"제오라이트 미네랄","effect":"비료 흡착·완충, 토양 양이온 교환","method":"토양혼화","amount":"100~200kg","timing":"정식 전","note":"비료 흡착으로 비료 절감"},{"id":"f46","no":46,"name":"코이어 더스트","type":"석회·토양개량","ingredient":"코코넛 껍질 섬유","effect":"보수력·통기성 향상, pH 6.0 중성","method":"토양혼화 또는 멀칭","amount":"100~200kg","timing":"식재 전 또는 멀칭용","note":"피트모스 대체재. pH 중성"},{"id":"f47","no":47,"name":"황 (S)","type":"석회·토양개량","ingredient":"S 90%","effect":"토양 산성화, 살균 효과","method":"밑거름 토양혼화","amount":"10~30kg","timing":"식재 전","note":"블루베리 pH 낮추기용"},{"id":"f48","no":48,"name":"단한번비료","type":"복합비료","ingredient":"N22-P9-K9 완효성","effect":"완효성 균형 생육 촉진","method":"밑거름 토양시비","amount":"20~30kg","timing":"3·4·8·9·10월 밑거름","note":"완효성. 한 번 시비로 지속 효과"},{"id":"f49","no":49,"name":"엔케이플러스","type":"복합비료","ingredient":"N17-K17 착과추비","effect":"착과·비대기 질소+칼리 보강","method":"웃거름 토양시비","amount":"10~15kg","timing":"5~9월 착과 후 추비","note":"착과추비 전용. 인산 미포함"},{"id":"f50","no":50,"name":"원예맞춤고추비료","type":"복합비료","ingredient":"N12-P6-K12+Ca·Mg","effect":"고추 전용 균형 비료+칼슘·마그네슘","method":"밑거름+웃거름 토양시비","amount":"20~25kg","timing":"5~8월 생육기 전반","note":"고추 전용. 칼슘·마그네슘 결핍 예방"},{"id":"f51","no":51,"name":"일회만비료","type":"복합비료","ingredient":"N21-P9-K9 완효성","effect":"완효성 균형 생육","method":"밑거름 1회 시비","amount":"20~30kg","timing":"3·4·8~11월 밑거름","note":"완효성 1회 시비"},{"id":"f52","no":52,"name":"슈퍼복합비료","type":"복합비료","ingredient":"N21-P17-K17 균형형","effect":"생육 균형 영양 공급","method":"밑거름 또는 웃거름","amount":"20~30kg","timing":"3~5·8~10월 밑거름+웃거름","note":"범용 균형 복합비료. 수퍼비 강화형"},{"id":"f53","no":53,"name":"가축분퇴비(부숙완료)","type":"퇴비·유기질","ingredient":"유기물40%↑, N1~2%","effect":"토양 물리성 개선, 지효성 양분","method":"밑거름 토양 전면혼화","amount":"2,000~3,000kg","timing":"정식·파종 15~20일 전 밑거름","note":"부숙 완료 확인 필수. 전작물 적용"},{"id":"f54","no":54,"name":"튼튼한 칼슘제","brand":"청년농부의","type":"미량요소","ingredient":"유기칼슘 100%, 붕소+미네랄+다당류","effect":"무릎현상·고두현상 예방, 당도·색깔·저장성 향상, 칼슘 결핍 빠른 회복","method":"엽면시비 또는 관주","amount":"1,000배~500배 희석","timing":"칼슘 결핍 우려시, 10~14일 간격","note":"과수류·과채류·엽채류·근채류 광범위 적용. 500ml/병. 쿠팡(농대나온남자) 구매","cropUsage":{"과수류,과채류,엽채류,근채류":[{"target":"칼슘 결핍·무릎현상·고두현상","method":"엽면 또는 관주","amount":"1,000배~500배","safety":"수확 전 사용 가능 (비농약)","times":"10~14일 간격"}],"블루베리":[{"target":"칼슘 결핍·과실 품질 향상","method":"엽면시비","amount":"1,000배 희석","safety":"수확 전 사용 가능","times":"10~14일 간격"}],"무화과":[{"target":"칼슘 결핍·저장성 향상","method":"엽면시비","amount":"800배~500배 희석","safety":"수확 전 사용 가능","times":"10~14일 간격"}],"감나무":[{"target":"고두현상 예방·당도 향상","method":"엽면시비","amount":"1,000배 희석","safety":"수확 전 사용 가능","times":"착과 후 10~14일 간격"}]}},{"id":"f55","no":55,"name":"트라포스 모빌","brand":"Rovensa Next (로벤자 넥스트)","type":"미량요소","category":"바이오영양제","ingredient":"수용성 인산(P2O5) 28.5%, 수용성 칼륨(K2O) 29.2%, 수용성 붕소(B2O3) 1.4%, 수용성 몰리브덴(Mo) 0.7%","effect":"개화·착과 향상, 내병성·당도 증진, 봄철 생장 촉진, 붕소 확보로 착과율 향상","feature":"100% 수용성, 침투이행성(잎·뿌리 흡수), 몰리브덴 질소고정 촉진, 모든 작물 적용 가능","method":"엽면시비 또는 점적관수(드립)","amount":"제조사 권장 희석비율 준수 (엽면·관주 겸용)","timing":"봄철 생장기, 개화 전~착과기, 내병성 향상 필요시","note":"공급: Rovensa Next Korea. 문의: info.korea@rovensanext.com","url":"https://www.rovensanext.kr/바이오영양제/트라포스-모빌","cropUsage":{"과수류 전반":[{"target":"개화·착과 향상, 당도 증진","method":"엽면시비 또는 점적관수","amount":"권장희석비","safety":"수확 전 사용 가능","times":"개화 전~착과기"}],"블루베리":[{"target":"개화·착과율 향상, 봄철 생장 촉진","method":"엽면시비","amount":"권장희석비","safety":"수확 전","times":"봄철 신초 발생기~개화 전"}],"무화과":[{"target":"당도·품질 향상, 내병성 증진","method":"엽면시비 또는 관주","amount":"권장희석비","safety":"수확 전","times":"착과기~비대기"}],"감나무":[{"target":"착과율 향상, 낙과 방지, 당도 증진","method":"엽면시비","amount":"권장희석비","safety":"수확 전","times":"개화 전~착과기"}]}}],"plants":[{"id":"plant_001","no":1,"name":"다래 일세","emoji":"🍇","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 0m"},{"id":"plant_002","no":2,"name":"다래 레몬프레시","emoji":"🍇","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 2m"},{"id":"plant_003","no":3,"name":"다래 참다래(키위)","emoji":"🍇","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 4m"},{"id":"plant_004","no":4,"name":"다래 용성2호","emoji":"🍇","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 6m"},{"id":"plant_005","no":5,"name":"으름 토종","emoji":"🌿","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 8m"},{"id":"plant_006","no":6,"name":"으름 슈퍼대실","emoji":"🌿","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 10m"},{"id":"plant_007","no":7,"name":"으름 백화대실","emoji":"🌿","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 12m"},{"id":"plant_008","no":8,"name":"으름 홍화대실","emoji":"🌿","location":"1이랑 1구역","category":"유실수","plantDate":"","note":"경계 14m"},{"id":"plant_009","no":9,"name":"보우짱 단호박①","emoji":"🎃","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑①"},{"id":"plant_010","no":10,"name":"블랙망고수박","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑②"},{"id":"plant_011","no":11,"name":"애플수박","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑③"},{"id":"plant_012","no":12,"name":"자몽애플수박","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑④"},{"id":"plant_013","no":13,"name":"흑피애플미니꼬꼬마수박①","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑤"},{"id":"plant_014","no":14,"name":"흑피애플미니꼬꼬마수박②","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑥"},{"id":"plant_015","no":15,"name":"애플미니꼬꼬마수박①","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑦"},{"id":"plant_016","no":16,"name":"애플미니꼬꼬마수박②","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑧"},{"id":"plant_017","no":17,"name":"보우짱 단호박②","emoji":"🎃","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑨"},{"id":"plant_018","no":18,"name":"접목수박","emoji":"🍉","location":"1이랑 1구역","category":"채소","plantDate":"","note":"고랑⑪→⑩유인"},{"id":"plant_019","no":19,"name":"블랙베리(슈퍼복분자)","emoji":"🫐","location":"2이랑 1구역","category":"유실수","plantDate":"","note":"기둥 전체"},{"id":"plant_020","no":20,"name":"복분자","emoji":"🫐","location":"2이랑 1구역","category":"유실수","plantDate":"","note":"19·21m"},{"id":"plant_021","no":21,"name":"애호박①","emoji":"🟢","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑①"},{"id":"plant_022","no":22,"name":"백다다기오이","emoji":"🥒","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑②"},{"id":"plant_023","no":23,"name":"쿠카멜론①","emoji":"🥒","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑③"},{"id":"plant_024","no":24,"name":"쿠카멜론②","emoji":"🥒","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑④"},{"id":"plant_025","no":25,"name":"망고참외","emoji":"🍈","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑⑤"},{"id":"plant_026","no":26,"name":"꿀참외","emoji":"🍈","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑⑥"},{"id":"plant_027","no":27,"name":"맷돌호박①","emoji":"🎃","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑⑦"},{"id":"plant_028","no":28,"name":"맷돌호박②","emoji":"🎃","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑⑧"},{"id":"plant_029","no":29,"name":"애호박②","emoji":"🟢","location":"2이랑 1구역","category":"채소","plantDate":"","note":"고랑⑨"},{"id":"plant_030","no":30,"name":"바이오체리","emoji":"🍒","location":"3이랑 1구역","category":"유실수","plantDate":"","note":"0~2m"},{"id":"plant_031","no":31,"name":"머루포도(MBA)","emoji":"🍇","location":"3이랑 1구역","category":"유실수","plantDate":"","note":"2~4m"},{"id":"plant_032","no":32,"name":"양파","emoji":"🧅","location":"3이랑 1구역","category":"채소","plantDate":"","note":"4~13m"},{"id":"plant_033","no":33,"name":"마늘(3이랑)","emoji":"🧄","location":"3이랑 1구역","category":"채소","plantDate":"","note":"13~22m"},{"id":"plant_034","no":34,"name":"동부(마늘 후작)","emoji":"🫘","location":"3이랑 1구역","category":"채소","plantDate":"","note":"4~22m(후작)"},{"id":"plant_035","no":35,"name":"고구마","emoji":"🍠","location":"A·B이랑 사이구역","category":"채소","plantDate":"","note":"전체 2열 140주"},{"id":"plant_036","no":36,"name":"감자(봄재배)","emoji":"🥔","location":"C·D이랑 사이구역","category":"채소","plantDate":"","note":"전체"},{"id":"plant_037","no":37,"name":"배추(가을)","emoji":"🥬","location":"C·D이랑 사이구역","category":"채소","plantDate":"","note":"전체(후작)"},{"id":"plant_038","no":38,"name":"선비잡이콩","emoji":"🫘","location":"1이랑 2구역","category":"채소","plantDate":"","note":"전체 15m"},{"id":"plant_039","no":39,"name":"개구리참외","emoji":"🍈","location":"2이랑 2구역","category":"채소","plantDate":"","note":"0~2m"},{"id":"plant_040","no":40,"name":"베타카로틴참외","emoji":"🍈","location":"2이랑 2구역","category":"채소","plantDate":"","note":"2~4m"},{"id":"plant_041","no":41,"name":"사과참외","emoji":"🍈","location":"2이랑 2구역","category":"채소","plantDate":"","note":"4~6m"},{"id":"plant_042","no":42,"name":"망고수박①","emoji":"🍉","location":"2이랑 2구역","category":"채소","plantDate":"","note":"6~8.6m"},{"id":"plant_043","no":43,"name":"망고수박②","emoji":"🍉","location":"2이랑 2구역","category":"채소","plantDate":"","note":"8.6~11.2m"},{"id":"plant_044","no":44,"name":"망고수박③","emoji":"🍉","location":"2이랑 2구역","category":"채소","plantDate":"","note":"11.2~13m"},{"id":"plant_045","no":45,"name":"접목애플수박①","emoji":"🍉","location":"2이랑 2구역","category":"채소","plantDate":"","note":"13~14.6m"},{"id":"plant_046","no":46,"name":"마늘(2이랑 후작)","emoji":"🧄","location":"2이랑 2구역","category":"채소","plantDate":"","note":"전체(후작)"},{"id":"plant_047","no":47,"name":"머루콩","emoji":"🫘","location":"3이랑 2구역","category":"채소","plantDate":"","note":"전체 13.4m"},{"id":"plant_048","no":48,"name":"헤이즐넛 바르셀로나","emoji":"🌰","location":"3이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_049","no":49,"name":"헤이즐넛 초거대향","emoji":"🌰","location":"3이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_050","no":50,"name":"황근대","emoji":"🌿","location":"4이랑 2구역","category":"채소","plantDate":"","note":"0~5.5m"},{"id":"plant_051","no":51,"name":"청근대","emoji":"🌿","location":"4이랑 2구역","category":"채소","plantDate":"","note":"0~5.5m"},{"id":"plant_052","no":52,"name":"복수박①","emoji":"🍉","location":"4이랑 2구역","category":"채소","plantDate":"","note":"5.5~7.5m"},{"id":"plant_053","no":53,"name":"복수박②","emoji":"🍉","location":"4이랑 2구역","category":"채소","plantDate":"","note":"7.5~9.5m"},{"id":"plant_054","no":54,"name":"접목애플수박②","emoji":"🍉","location":"4이랑 2구역","category":"채소","plantDate":"","note":"9.5~11m"},{"id":"plant_055","no":55,"name":"김장무","emoji":"🥕","location":"4이랑 2구역","category":"채소","plantDate":"","note":"전체(8/20)"},{"id":"plant_056","no":56,"name":"남고 매실","emoji":"🌸","location":"5이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_057","no":57,"name":"노천 매실","emoji":"🌸","location":"5이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_058","no":58,"name":"마르멜로(서양모과)","emoji":"🍋","location":"5이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_059","no":59,"name":"모과(대실모과)","emoji":"🍋","location":"5이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_060","no":60,"name":"어수리(5이랑)","emoji":"🌿","location":"5이랑 2구역","category":"채소","plantDate":"","note":"6포기"},{"id":"plant_061","no":61,"name":"양파(6이랑)","emoji":"🧅","location":"6이랑 2구역","category":"채소","plantDate":"","note":"전체(9월정식)"},{"id":"plant_062","no":62,"name":"앵두(대홍앵)","emoji":"🍒","location":"7이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_063","no":63,"name":"백살구","emoji":"🍑","location":"7이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_064","no":64,"name":"B360살구","emoji":"🍑","location":"7이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_065","no":65,"name":"토종생강","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"0~1.5m"},{"id":"plant_066","no":66,"name":"개량생강","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"4~9.6m"},{"id":"plant_067","no":67,"name":"어수리(7이랑)","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"3포기"},{"id":"plant_068","no":68,"name":"곤드레(7이랑)","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"3포기"},{"id":"plant_069","no":69,"name":"황근대(7이랑)","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"5포기"},{"id":"plant_070","no":70,"name":"청근대(7이랑)","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"4포기"},{"id":"plant_071","no":71,"name":"바질","emoji":"🌿","location":"7이랑 2구역","category":"채소","plantDate":"","note":"5포기"},{"id":"plant_072","no":72,"name":"대천황살구(킹코트)","emoji":"🍑","location":"8이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_073","no":73,"name":"어수리(8이랑)","emoji":"🌿","location":"8이랑 2구역","category":"채소","plantDate":"","note":"3포기"},{"id":"plant_074","no":74,"name":"곤드레(8이랑)","emoji":"🌿","location":"8이랑 2구역","category":"채소","plantDate":"","note":"4포기"},{"id":"plant_075","no":75,"name":"킹코트살구(하코트)","emoji":"🍑","location":"9이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_076","no":76,"name":"하코드살구","emoji":"🍑","location":"9이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_077","no":77,"name":"어수리(9이랑)","emoji":"🌿","location":"9이랑 2구역","category":"채소","plantDate":"","note":"4포기"},{"id":"plant_078","no":78,"name":"곤드레(9이랑)","emoji":"🌿","location":"9이랑 2구역","category":"채소","plantDate":"","note":"3포기"},{"id":"plant_079","no":79,"name":"나가노신구 사과","emoji":"🍎","location":"10이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_080","no":80,"name":"돌고 사과","emoji":"🍎","location":"10이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_081","no":81,"name":"아리수 사과","emoji":"🍎","location":"10이랑 2구역","category":"유실수","plantDate":"","note":"묘목"},{"id":"plant_082","no":82,"name":"어수리(10이랑)","emoji":"🌿","location":"10이랑 2구역","category":"채소","plantDate":"","note":"3포기"},{"id":"plant_083","no":83,"name":"무화과 시카고하디","emoji":"🍈","location":"온실 내부 온실","category":"유실수","plantDate":"","note":"화분"},{"id":"plant_084","no":84,"name":"무화과 롱다우트","emoji":"🍈","location":"온실 내부 온실","category":"유실수","plantDate":"","note":"화분"},{"id":"plant_085","no":85,"name":"무화과 바나네","emoji":"🍈","location":"온실 내부 온실","category":"유실수","plantDate":"","note":"화분"},{"id":"plant_086","no":86,"name":"무화과 피코튬","emoji":"🍈","location":"온실 내부 온실","category":"유실수","plantDate":"","note":"화분"},{"id":"plant_087","no":87,"name":"블루베리 패트리오트","emoji":"🫐","location":"온실 앞 온실","category":"유실수","plantDate":"","note":"10주"},{"id":"plant_088","no":88,"name":"땅콩","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-12","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_089","no":89,"name":"머루콩","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-01","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_090","no":90,"name":"선비잡이콩","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-01","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_091","no":91,"name":"토종생강","emoji":"🌿","location":"2구역 7이랑","category":"재배중","plantDate":"2026-05-01","totalDays":155,"note":""},{"id":"plant_092","no":92,"name":"개량생강","emoji":"🌿","location":"2구역 7이랑","category":"재배중","plantDate":"2026-05-01","totalDays":155,"note":""},{"id":"plant_093","no":93,"name":"아주까리","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-04","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_094","no":94,"name":"토마토","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-09","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_095","no":95,"name":"블랙망고수박","emoji":"🍉","location":"1구역 1이랑 고랑②","category":"재배중","plantDate":"2026-05-09","fruitDays":45,"pinchDays":15,"totalDays":75,"note":""},{"id":"plant_096","no":96,"name":"애플수박","emoji":"🍉","location":"1구역 1이랑 고랑③","category":"재배중","plantDate":"2026-05-09","fruitDays":45,"pinchDays":15,"totalDays":75,"note":""},{"id":"plant_097","no":97,"name":"접목수박","emoji":"🍉","location":"1구역 1이랑 고랑⑪","category":"재배중","plantDate":"2026-05-09","fruitDays":55,"pinchDays":18,"totalDays":90,"note":""},{"id":"plant_098","no":98,"name":"망고수박①","emoji":"🍉","location":"2구역 2이랑","category":"재배중","plantDate":"2026-05-09","fruitDays":50,"pinchDays":15,"totalDays":80,"note":""},{"id":"plant_099","no":99,"name":"망고참외","emoji":"🍈","location":"1구역 2이랑 고랑⑤","category":"재배중","plantDate":"2026-05-09","fruitDays":45,"pinchDays":12,"totalDays":75,"note":""},{"id":"plant_100","no":100,"name":"개구리참외","emoji":"🍈","location":"2구역 2이랑","category":"재배중","plantDate":"2026-05-09","fruitDays":50,"pinchDays":12,"totalDays":80,"note":""},{"id":"plant_101","no":101,"name":"백다다기오이","emoji":"🥒","location":"1구역 2이랑 고랑②","category":"재배중","plantDate":"2026-05-09","fruitDays":28,"pinchDays":7,"totalDays":50,"note":""},{"id":"plant_102","no":102,"name":"쿠카멜론①","emoji":"🥒","location":"1구역 2이랑 고랑③","category":"재배중","plantDate":"2026-05-09","fruitDays":35,"pinchDays":7,"totalDays":55,"note":""},{"id":"plant_103","no":103,"name":"미니단호박보우짱①","emoji":"🎃","location":"1구역 1이랑 고랑①","category":"재배중","plantDate":"2026-05-09","fruitDays":55,"pinchDays":18,"totalDays":95,"note":""},{"id":"plant_104","no":104,"name":"애호박①","emoji":"🟢","location":"1구역 2이랑 고랑①","category":"재배중","plantDate":"2026-05-09","fruitDays":28,"pinchDays":7,"totalDays":45,"note":""},{"id":"plant_105","no":105,"name":"맷돌호박①","emoji":"🎃","location":"1구역 2이랑 고랑⑦","category":"재배중","plantDate":"2026-05-09","fruitDays":65,"pinchDays":18,"totalDays":110,"note":""},{"id":"plant_106","no":106,"name":"맷돌호박②","emoji":"🎃","location":"1구역 2이랑 고랑⑧","category":"재배중","plantDate":"2026-05-09","fruitDays":65,"pinchDays":18,"totalDays":110,"note":""},{"id":"plant_107","no":107,"name":"고구마","emoji":"🍠","location":"사이구역 A·B이랑","category":"재배중","plantDate":"2026-05-14","pinchDays":20,"totalDays":125,"note":""},{"id":"plant_108","no":108,"name":"작두콩","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-15","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_109","no":109,"name":"고구마(2차)","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-05-24","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_110","no":110,"name":"열무","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-06-14","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_111","no":111,"name":"시금치","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-06-14","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_112","no":112,"name":"동부콩","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-06-16","fruitDays":60,"totalDays":120,"note":""},{"id":"plant_113","no":113,"name":"옥수수","emoji":"🌱","location":"직접입력","category":"재배중","plantDate":"2026-06-12","fruitDays":60,"totalDays":120,"note":"하우스 안 모종"},{"id":"plant_114","no":114,"name":"아주까리콩 파종","emoji":"🫘","location":"Firebase 기록","category":"재배중","plantDate":"2026-05-05","totalDays":120,"note":""}],"spraySchedule":[{"crop":"사과","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"진딧물·나방류"},{"crop":"사과","pesticide":"라이몬","pestType":"살충제","interval":"10~14일 간격","preharvest":"수확 14일 전","target":"나방류·총채벌레"},{"crop":"사과","pesticide":"델란","pestType":"살균제","interval":"7~14일 간격","preharvest":"수확 21일 전","target":"흑성병·탄저병"},{"crop":"사과","pesticide":"다코닐","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 21일 전","target":"탄저·겹무늬썩음병"},{"crop":"사과","pesticide":"마구퍼져","pestType":"비선택성 제초제","interval":"연 2~3회","preharvest":"직접 살포 금지","target":"잡초 방제"},{"crop":"배","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"진딧물·나방류"},{"crop":"배","pesticide":"델란","pestType":"살균제","interval":"7~14일 간격","preharvest":"수확 21일 전","target":"흑성병·갈색무늬병"},{"crop":"복숭아","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"복숭아순나방·진딧물"},{"crop":"복숭아","pesticide":"델란","pestType":"살균제","interval":"10일 간격","preharvest":"수확 21일 전","target":"탄저병·갈색무늬병"},{"crop":"포도","pesticide":"라이몬","pestType":"살충제","interval":"10일 간격","preharvest":"수확 21일 전","target":"유리나방"},{"crop":"포도","pesticide":"오티바","pestType":"살균제","interval":"10~14일 간격","preharvest":"수확 21일 전","target":"노균병·탄저병"},{"crop":"블루베리","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"진딧물·총채벌레"},{"crop":"블루베리","pesticide":"라이몬","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 7일 전","target":"총채벌레·혹파리"},{"crop":"블루베리","pesticide":"델란","pestType":"살균제","interval":"10~14일 간격","preharvest":"수확 14일 전","target":"탄저병·잿빛곰팡이"},{"crop":"딸기","pesticide":"로브랄","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 3일 전","target":"잿빛곰팡이·균핵병"},{"crop":"감","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"나방류·진딧물"},{"crop":"매실","pesticide":"라이몬","pestType":"살충제","interval":"10일 간격","preharvest":"수확 14일 전","target":"복숭아순나방"},{"crop":"토마토","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(정식전)","preharvest":"수확 45일 전","target":"굼벵이·거세미"},{"crop":"토마토","pesticide":"스트레이트","pestType":"살충제","interval":"7일 간격","preharvest":"수확 3일 전","target":"온실가루이·총채벌레"},{"crop":"토마토","pesticide":"라이몬","pestType":"살충제","interval":"7일 간격","preharvest":"수확 3일 전","target":"온실가루이·나방"},{"crop":"토마토","pesticide":"리도밀골드","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 3일 전","target":"역병 전문 방제"},{"crop":"고추","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(정식전)","preharvest":"수확 45일 전","target":"굼벵이·거세미"},{"crop":"고추","pesticide":"스트레이트","pestType":"살충제","interval":"7일 간격","preharvest":"수확 3일 전","target":"담배가루이·총채벌레"},{"crop":"고추","pesticide":"다코닐","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 7일 전","target":"탄저병·역병 예방"},{"crop":"오이","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(정식전)","preharvest":"수확 30일 전","target":"굼벵이"},{"crop":"오이","pesticide":"오티바","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 3일 전","target":"노균병·역병"},{"crop":"수박","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 7일 전","target":"진딧물·온실가루이"},{"crop":"수박","pesticide":"다코닐","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 7일 전","target":"탄저병·덩굴마름병"},{"crop":"고구마","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(정식전)","preharvest":"수확 45일 전","target":"굼벵이·거세미"},{"crop":"고구마","pesticide":"라이몬","pestType":"살충제","interval":"10일 간격","preharvest":"수확 14일 전","target":"뿔나방"},{"crop":"콩","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(파종전)","preharvest":"수확 45일 전","target":"굼벵이·거세미"},{"crop":"콩","pesticide":"라이몬","pestType":"살충제","interval":"7일 간격","preharvest":"수확 14일 전","target":"거세미나방"},{"crop":"옥수수","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(파종전)","preharvest":"수확 30일 전","target":"굼벵이·거세미"},{"crop":"옥수수","pesticide":"스트레이트","pestType":"살충제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"조명나방"},{"crop":"감자","pesticide":"말뚝","pestType":"토양살충제","interval":"1회(파종전)","preharvest":"수확 30일 전","target":"굼벵이"},{"crop":"감자","pesticide":"리도밀골드","pestType":"살균제","interval":"7~10일 간격","preharvest":"수확 14일 전","target":"역병 전문"}],"fertSchedule":[{"crop":"사과·배","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"연 1회","amount":"2,000~3,000kg","desc":"수확후 또는 이른봄. 완숙 필수"},{"crop":"사과·배","fertilizer":"고토석회","fertType":"석회·토양개량","interval":"2~3년 1회","amount":"100~200kg","desc":"비료 시비 2주 전 우선 시비"},{"crop":"사과·배","fertilizer":"21-17-17","fertType":"복합비료","interval":"2회 웃거름","amount":"20~30kg/회","desc":"밑거름+낙화후+비대기 웃거름"},{"crop":"사과·배","fertilizer":"NK비료","fertType":"복합비료","interval":"착색기 2회","amount":"10~15kg/회","desc":"착색 시작 시 2회. 당도 향상"},{"crop":"사과·배","fertilizer":"요소","fertType":"질소질비료","interval":"30일 간격","amount":"2~3kg 0.3%","desc":"잎 황화 시 엽면시비"},{"crop":"블루베리","fertilizer":"피트모스","fertType":"석회·토양개량","interval":"식재전 1회","amount":"10~20L/주","desc":"식재전 필수. pH4.5~5.5 유지"},{"crop":"블루베리","fertilizer":"황 (S)","fertType":"석회·토양개량","interval":"연 1회","amount":"10~20kg","desc":"pH 낮추기. 피트모스와 병행"},{"crop":"블루베리","fertilizer":"황산암모늄","fertType":"질소질비료","interval":"2~3회","amount":"10~15kg/회","desc":"산성 질소. 요소보다 황산암모늄 권장"},{"crop":"블루베리","fertilizer":"황산칼리","fertType":"칼리질비료","interval":"착색기 2회","amount":"8~10kg/회","desc":"염소 민감. 염화칼리 자제"},{"crop":"블루베리","fertilizer":"붕사","fertType":"미량요소","interval":"개화전 1회","amount":"0.1~0.2kg 0.1%엽면","desc":"결실율 향상"},{"crop":"복숭아·자두","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"연 1회","amount":"2,000kg","desc":"수확후 밑거름"},{"crop":"복숭아·자두","fertilizer":"21-17-17","fertType":"복합비료","interval":"2회 웃거름","amount":"20kg/회","desc":"밑거름+낙화후+비대기"},{"crop":"포도","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"연 1회","amount":"2,000kg","desc":"수확후 또는 이른봄"},{"crop":"포도","fertilizer":"21-17-17","fertType":"복합비료","interval":"2회 웃거름","amount":"20kg/회","desc":"발아기+비대기"},{"crop":"감·매실·무화과","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"연 1회","amount":"1,500~2,000kg","desc":"가을 밑거름"},{"crop":"감·매실·무화과","fertilizer":"21-17-17","fertType":"복합비료","interval":"1~2회","amount":"20kg/회","desc":"밑거름+비대기"},{"crop":"토마토","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"정식전 1회","amount":"2,000kg","desc":"정식3주전 완숙퇴비"},{"crop":"토마토","fertilizer":"21-17-17","fertType":"복합비료","interval":"3주 간격","amount":"20kg/회","desc":"밑거름+3주 간격 웃거름"},{"crop":"토마토","fertilizer":"칼슘엽면제","fertType":"미량요소","interval":"2주 간격","amount":"0.5kg 0.3%엽면","desc":"착과후 배꼽썩음병 예방"},{"crop":"고추","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"정식전 1회","amount":"2,000kg","desc":"완숙퇴비 필수"},{"crop":"고추","fertilizer":"21-17-17","fertType":"복합비료","interval":"3주 간격","amount":"20kg/회","desc":"착과후 칼리 추가"},{"crop":"오이","fertilizer":"21-17-17","fertType":"복합비료","interval":"2주 간격","amount":"15~20kg/회","desc":"단기작. 잦은 웃거름"},{"crop":"수박","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"정식전 1회","amount":"2,000~3,000kg","desc":"밑거름 위주 재배"},{"crop":"수박","fertilizer":"21-17-17","fertType":"복합비료","interval":"1~2회","amount":"20kg/회","desc":"착과 확인 후 최소 웃거름"},{"crop":"수박","fertilizer":"NK비료","fertType":"복합비료","interval":"비대기 1회","amount":"10kg/회","desc":"착과후 칼리 보강"},{"crop":"참외·호박","fertilizer":"21-17-17","fertType":"복합비료","interval":"3주 간격","amount":"20kg/회","desc":""},{"crop":"콩·팥","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"파종전 1회","amount":"1,000~1,500kg","desc":"질소 소량. 인산·칼리 위주"},{"crop":"콩·팥","fertilizer":"용성인비","fertType":"인산질비료","interval":"파종전 1회","amount":"40kg","desc":"뿌리혹 형성 촉진"},{"crop":"옥수수","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"파종전 1회","amount":"2,000kg","desc":""},{"crop":"옥수수","fertilizer":"21-17-17","fertType":"복합비료","interval":"2회 웃거름","amount":"25kg/회","desc":"줄기신장기+이삭기 웃거름"},{"crop":"옥수수","fertilizer":"요소","fertType":"질소질비료","interval":"2회 토양시비","amount":"5kg/회","desc":"질소 요구량 높음"},{"crop":"감자","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"파종전 1회","amount":"1,500~2,000kg","desc":""},{"crop":"감자","fertilizer":"21-17-17","fertType":"복합비료","interval":"1~2회","amount":"25kg/회","desc":"밑거름 위주. 웃거름 최소화"},{"crop":"고구마","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"정식전 1회","amount":"1,000~1,500kg","desc":"질소 과다 시 덩굴웃자람"},{"crop":"고구마","fertilizer":"용성인비","fertType":"인산질비료","interval":"정식전 1회","amount":"40kg","desc":"뿌리 발달 촉진"},{"crop":"배추","fertilizer":"우분퇴비","fertType":"퇴비·유기질","interval":"정식전 1회","amount":"1,500~2,000kg","desc":""},{"crop":"배추","fertilizer":"21-17-17","fertType":"복합비료","interval":"2주 간격","amount":"15~20kg/회","desc":"결구기 질소 집중"},{"crop":"양파·마늘","fertilizer":"21-17-17","fertType":"복합비료","interval":"1개월 간격","amount":"20kg/회","desc":"구 비대기 칼리 추가"},{"crop":"대파·상추","fertilizer":"21-17-17","fertType":"복합비료","interval":"2주 간격","amount":"15kg/회","desc":"잦은 수확에 맞춰 웃거름"}],"microbes":[{"id":"m01","name":"고초균 (Bacillus subtilis)","emoji":"🌾","type":"세균 (호기성)","source":"농업기술센터 무료배부","aka":"바실러스, 고초균(枯草菌)","effect":["탄저병·시들음병·흰가루병 병원균 항생물질로 억제","유해균 생육 억제 — 이투린(Iturin) 등 항균물질 생성","난분해성 유기물 분해 · 퇴비 부숙 촉진","토양 입단화 촉진 — 땅심 향상","키티나제(효소) 분비 — 파리·응애 유충 억제","잎 색이 선명해지고 엽육 두꺼워짐"],"method":"엽면살포 또는 토양 관주","dilution":"200~500배 희석 (물 1,000L당 미생물 2~5L)","interval":"7~14일 간격","timing":"병 발생 전 예방 위주. 봄~가을 생육기 전반","storage":"5℃ 냉장 보관. 직사광선 차단. 수령 후 가급적 빠른 사용","applicableCrops":["블루베리","무화과","감나무","과수류 전반","채소류"],"incompatibleWith":["동제(수산화동·황산구리)","클로로탈로닐(다코닐)","만코제브(만코지·앤트라콜)","이프로디온(로브랄)","벤레이트(베노밀)","석회유황합제","캡탄","강산성·강알칼리성 농약"],"safeMixWith":["유산균","광합성균","효모균","트리코더마","스피노사드","에마멕틴"],"waitAfterChem":3,"waitNote":"살균제 살포 후 3일 이상 경과 후 사용. 동제·석회유황 후 7일 이상","tip":"딸기·블루베리 흰가루병에 20배 희석 엽면 살포 시 효과 확인(논산시농기센터)","commercial":["세레나(바이엘)","싹쓰리(경농)","바실러스WP"]},{"id":"m02","name":"광합성균 (Rhodopseudomonas)","emoji":"☀️","type":"세균 (혐기성·호기암 조건)","source":"농업기술센터 무료배부","aka":"광합성세균, PSB","effect":["공기 중 질소 고정 — 작물 생육에 이용 가능한 양분으로 전환","비타민·아미노산·생장촉진물질(옥신·사이토키닌) 생성","시설재배지 염류 장해·연작 장해 해소","가스 장해(유해가스) 제거","착색·당도 향상, 저장성 향상","악취 유발물질 제거 (축산 환경 개선)"],"method":"엽면살포 또는 토양 관주 (과수: 광합성균+혼합균 10L/600평/2주)","dilution":"200~500배 희석","interval":"2주 간격","timing":"생육 전반. 연작지나 시설재배지 특히 효과적","storage":"5℃ 냉장 보관. 암소 보관 중요(빛에 약함)","applicableCrops":["블루베리","무화과","감나무","과수류 전반","시설재배 전체"],"incompatibleWith":["동제","강산성 농약 (pH 4 이하)","강알칼리성 농약"],"safeMixWith":["고초균","유산균","효모균"],"waitAfterChem":3,"waitNote":"화학살균제 살포 후 3일 이상 경과 후 사용","tip":"과수 배부기준: 광합성균 + 혼합균 10L/600평/2주 (영천 농업기술센터 기준)","commercial":["EM 제제","광합성균 원액"]},{"id":"m03","name":"유산균 (Lactobacillus)","emoji":"🥛","type":"세균 (젖산균)","source":"농업기술센터 무료배부","aka":"젖산균, LAB","effect":["인산 가용화 — 토양 내 불용성 인산을 식물 흡수 가능 형태로 전환","유기물 발효·분해 촉진 — 퇴비 발효 시 특히 유용","유해 병원균 억제 (젖산 생성으로 산성 환경 조성)","효모균과 혼용 시 효과 증진 (상호 보완)","토양 유기물 분해 촉진 — 땅심 향상"],"method":"토양 관주 또는 엽면살포","dilution":"200~500배 희석","interval":"7~14일 간격","timing":"생육 전반. 퇴비 발효 시 원액 첨가","storage":"5℃ 냉장 보관","applicableCrops":["블루베리","무화과","감나무","과수류 전반","채소류 전반"],"incompatibleWith":["동제","석회유황합제","강알칼리성 농약"],"safeMixWith":["고초균","효모균","광합성균"],"waitAfterChem":3,"waitNote":"살균제 살포 후 3일 이상 경과 후 사용","tip":"효모균과 혼합 사용 시 시너지 효과. 퇴비 발효 시 원액 첨가 가능","commercial":["락토바실러스 제제","EM배양액"]},{"id":"m04","name":"효모균 (Saccharomyces)","emoji":"🍞","type":"진균 (곰팡이류)","source":"농업기술센터 무료배부","aka":"사카로미세스, 이스트균","effect":["난분해성 유기물 가용화 — 땅심 증진","생리 활성물질 분비 — 뿌리 생장 촉진","유산균과 혼용 시 효과 증진 (상호 보완 관계)","산소 유무와 관계없이 성장 가능 (혐기·호기 모두 적응)","pH 범위가 넓어 다양한 토양 조건에서 활동 가능"],"method":"토양 관주 또는 엽면살포","dilution":"200~500배 희석","interval":"7~14일 간격","timing":"생육 전반. 유산균과 함께 사용 시 효과 상승","storage":"5℃ 냉장 보관. 열에 약함(55℃ 이상 사멸)","applicableCrops":["블루베리","무화과","감나무","과수류 전반","채소류 전반"],"incompatibleWith":["동제","강살균성 농약","고온(55℃ 이상) 처리 병행 불가"],"safeMixWith":["유산균","광합성균","고초균"],"waitAfterChem":3,"waitNote":"화학살균제 살포 후 3일 이상 경과 후 사용","tip":"유산균+효모균 혼합은 가장 기본적인 복합 미생물 조합","commercial":["효모균 제제","EM 복합균"]},{"id":"m05","name":"트리코더마 (Trichoderma spp.)","emoji":"🍄","type":"진균 (사상균·길항균)","source":"상업 구매","aka":"트리코더마균, 길항균","effect":["토양병원균 직접 기생·용해 — 역병·잘록병·흰비단병균 사멸","항생물질 분비로 병원균 억제","뿌리 활성화 — 식물 면역력(SAR) 유도","키틴 분해효소 생성 — 선충·해충 억제","유기물 분해 촉진 — 인산 가용화"],"method":"토양 혼화 또는 관주처리","dilution":"1,000배 희석 또는 제품 표시량","interval":"정식 전 1회 또는 생육기 2~3회","timing":"정식 전 토양 처리 또는 병 발생 초기","storage":"상온 보관 가능 (균사체 분제). 습기 차단","applicableCrops":["블루베리","무화과","감나무","딸기","고추","토마토"],"incompatibleWith":["동제","클로로탈로닐(다코닐)","이프로디온(로브랄)","만코제브","벤레이트","석회유황합제","캡탄","티람"],"safeMixWith":["고초균","유산균","곤충병원성선충"],"waitAfterChem":7,"waitNote":"살균제 살포 후 최소 7일 이상 경과 후 처리","tip":"블루베리 화분 정식 시 뿌리 주변 토양 혼화로 뿌리썩음병 예방 효과","commercial":["트리코더마WG(그린바이오)","트리코맥스","에코호프"]},{"id":"m06","name":"곤충병원성선충 (Steinernema/Heterorhabditis)","emoji":"🪱","type":"선충 (생물살충)","source":"상업 구매","aka":"엔토모병원성선충, 생물적 방제제","effect":["뿌리파리 유충·굼벵이·나방류 유충 방제","선충이 해충 체내에 침입 → 공생세균이 해충 사멸","잔류 없음 — 친환경 인증 가능"],"method":"토양 관주 (뿌리 주변). 저녁 시간 관주 권장","dilution":"1억 마리/㎡ (제품 표시량)","interval":"해충 발생 초기 1~2회","timing":"해충 발생 초기. 저녁 또는 흐린 날 처리","storage":"냉장 보관(5~10℃). 직사광선 금지. 즉시 사용","applicableCrops":["블루베리","무화과","감나무","화분 재배 전체"],"incompatibleWith":["카보퓨란(데푸콘)","에토프로포스(모캡)","클로르피리포스(코르도반)","포레이트(토갑)","카보설판(세베로)","강산성 농약"],"safeMixWith":["고초균","트리코더마"],"waitAfterChem":14,"waitNote":"토양살충제 처리 후 14일 이상 경과 후 사용","tip":"관주 후 즉시 물을 추가 공급하여 선충이 토양 깊이 침투하도록 유도","commercial":["네마킬(세스코)","스타이너마","바이오컨트롤"]},{"id":"m07","name":"EM(유용미생물군) 복합균","emoji":"🌿","type":"복합미생물 (광합성균+유산균 등)","source":"상업 구매 또는 농업기술센터","aka":"Effective Microorganisms, EM균","effect":["광합성균·유산균 등 유익균 복합 조합","토양 유기물 분해·양분 공급 종합 효과","악취 제거, 토양 환경 개선","작물 면역력·생육 촉진 전반"],"method":"토양 관주 또는 엽면살포","dilution":"500~1,000배 희석 (제품별 상이)","interval":"7~14일 간격","timing":"생육 전반. 정식 전~수확 전","storage":"5℃ 냉장 보관","applicableCrops":["블루베리","무화과","감나무","과수류 전반","채소류 전반"],"incompatibleWith":["동제","석회유황합제","강산성·강알칼리성 농약","클로로탈로닐"],"safeMixWith":["단독 또는 고초균과 혼합 가능"],"waitAfterChem":3,"waitNote":"화학살균제 살포 후 3일 이상 경과 후 사용","tip":"농업기술센터 공급 혼합균과 동일 개념. 자가 배양 시 쌀뜨물+당밀로 증식 가능","commercial":["EM원액(EM코리아)","유용미생물복합제","파워EM"]}]};
 
 async function callClaude(messages, maxTokens, imageBase64, imageMediaType) {
+  
   var key = localStorage.getItem('claude_api_key') || '';
   if (!key && typeof CLAUDE_API_KEY !== 'undefined' && CLAUDE_API_KEY && !CLAUDE_API_KEY.includes('여기에') && CLAUDE_API_KEY !== '') {
     key = CLAUDE_API_KEY;
   }
-  if (!key) return { ok: false, error: 'API_KEY_MISSING' };
+  if (!key) {
+    return { ok: false, error: 'API_KEY_MISSING' };
+  }
 
+  
   var msgContent = [];
   if (imageBase64 && imageMediaType) {
     msgContent.push({
@@ -102,6 +117,7 @@ async function callClaude(messages, maxTokens, imageBase64, imageMediaType) {
     msgContent = msgContent.concat(messages);
   }
 
+  // GAS 중계 (CORS 우회)
   var _gasUrl2 = (typeof getEffectiveGasUrl==='function') ? getEffectiveGasUrl() : '';
   if (_gasUrl2) {
     try {
@@ -140,6 +156,7 @@ async function callClaude(messages, maxTokens, imageBase64, imageMediaType) {
     return { ok: true, text: text };
 
   } catch(e) {
+    
     var msg = e.message || String(e);
     if (msg.includes('Load failed') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
       return { ok: false, error: 'CORS_OR_NETWORK' };
@@ -174,6 +191,7 @@ function parseAiJson(text) {
   try {
     return JSON.parse(text.replace(/```json|```/g,'').trim());
   } catch(e) {
+    
     var m = text.match(/\{[\s\S]*\}/);
     if (m) {
       try { return JSON.parse(m[0]); } catch(e2) {}
@@ -182,7 +200,6 @@ function parseAiJson(text) {
   }
 }
 
-// 🔥 Firebase 미사용을 위한 가짜(Mock) DB 객체
 // 🔥 Firebase 미사용을 위한 가짜(Mock) DB 객체
 var db = {
   collection: function(colName) {
@@ -203,12 +220,6 @@ var db = {
     return { set: function(){}, update: function(){}, delete: function(){}, commit: async function(){} };
   }
 };
-
-window.addEventListener('load', function() {
-  if (typeof firebase !== 'undefined') {
-    firebase.firestore = function() { return db; };
-  }
-});
 
 // 백그라운드에서 Firebase가 멋대로 켜져서 403 에러를 뿜는 것을 원천 차단
 window.addEventListener('load', function() {
@@ -234,15 +245,18 @@ var TODAY_STR = fmt(TODAY);
 function pad(n){ return n<10?'0'+n:''+n; }
 function toYMD(d){ if(!d) return ''; var dt=new Date(d); if(isNaN(dt.getTime())) return ''; return dt.getFullYear()+'-'+pad(dt.getMonth()+1)+'-'+pad(dt.getDate()); }
 function addDays(d,n){
-  if(!d||isNaN(d)) return new Date();
-  var r=new Date(d);
+  if(!d) return new Date();
+  var r = (d instanceof Date) ? new Date(d) : new Date(d);
   if(isNaN(r.getTime())) return new Date();
   r.setDate(r.getDate()+(parseInt(n)||0));
   return r;
 }
 function daysBetween(a,b){
-  if(!a||!b||isNaN(a)||isNaN(b)) return 0;
-  return Math.round((b-a)/(1000*60*60*24));
+  if(!a||!b) return 0;
+  var ta = (a instanceof Date)?a.getTime():new Date(a).getTime();
+  var tb = (b instanceof Date)?b.getTime():new Date(b).getTime();
+  if(isNaN(ta)||isNaN(tb)) return 0;
+  return Math.round((tb-ta)/(1000*60*60*24));
 }
 function parseDate(s){
   if(!s||s===''||s==='undefined'||s==='null') return null;
@@ -255,24 +269,10 @@ function parseDate(s){
 }
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
-function startApp() { initGAS(); }
-
-(function() {
-  var _origWarn  = console.warn;
-  var _origError = console.error;
-  var _FB_NOISE = ['WebChannelConnection','transport errored',
-                   'Could not reach Cloud Firestore',
-                   'operate in offline mode','Connection failed'];
-  function _isFbNoise(args) {
-    var msg = Array.from(args).join(' ');
-    return _FB_NOISE.some(function(k){ return msg.includes(k); });
-  }
-  console.warn  = function() { if (!_isFbNoise(arguments)) _origWarn.apply(console, arguments); };
-  console.error = function() { if (!_isFbNoise(arguments)) _origError.apply(console, arguments); };
-})();
-
-// ── Google Sheets 연결 설정 ─────────────
+// ── Google Sheets (공유 OrchardData) 연결 설정 ─────────────
+// index.html / index1.html 공유 스프레드시트
 const SHARED_SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
+// GAS URL (index1 전용 — 공유 스프레드시트에 접근)
 let GAS_URL = localStorage.getItem('_runtimeGasUrl') ||
               'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
@@ -283,10 +283,11 @@ async function _gasPost(params) {
     var res = await fetch(GAS_URL, { method: 'POST', body: p });
     if (!res.ok) throw new Error('GAS HTTP ' + res.status);
     var json = await res.json();
+    // wrapResponse 형태 { success, data } 자동 처리
     if (json && typeof json === 'object' && 'success' in json) {
       if (!json.success) {
         console.warn('[_gasPost] GAS 오류:', json.message || '알 수 없는 오류', params.action||'');
-        return json; 
+        return json; // throw 대신 반환 (promise rejection 방지)
       }
       if (json.data && json.data.id) return json.data;
       return json;
@@ -306,13 +307,18 @@ async function _gasGet(action, extra) {
   var json;
   try { json = await res.json(); }
   catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
+  // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
     ? json.data : json;
+  // 배열 데이터 타입 정규화
   if (Array.isArray(data)) {
+    // 숫자로 저장해야 할 필드
     var NUM_FIELDS = ['no','totalDays','pinchDays','fruitDays','pollDays',
                       'qty','quantity','amount','price','count'];
+    // 날짜 필드 — ISO 문자열을 YYYY-MM-DD로 정규화
     var DATE_FIELDS2 = ['dateStr','plantDate','addedDate','date','pollDate',
                         'lastSprayDate','lastFertDate','createdAt','updatedAt','registeredAt'];
+    // 날짜 문자열로 저장해야 할 필드
     var DATE_FIELDS = ['plantDate','pollDate','lastSprayDate','lastFertDate',
                        'registeredAt','updatedAt','createdAt','doneAt'];
     data = data.map(function(row) {
@@ -320,41 +326,52 @@ async function _gasGet(action, extra) {
       for (var k in row) {
         var v = row[k];
         if (v == null) { out[k] = ''; continue; }
+        // id류는 항상 문자열
         if (k === 'id' || k === '_key' || k === 'key') {
           out[k] = String(v);
         }
+        // time 필드 — "1899-12-30T06:47:08.000Z" → "06:47" 변환
         else if (k === 'time') {
           var sv = String(v||'');
           if (sv.includes('1899') || (sv.includes('T') && sv.length > 10)) {
+            // ISO 형식에서 시:분만 추출
             var tm = sv.match(/T(\d{2}:\d{2})/);
             out[k] = tm ? tm[1] : '';
           } else if (typeof v === 'number' && v > 0 && v < 1) {
+            // Excel 시간 소수(0.282 = 06:47) → HH:MM
             var totalMin = Math.round(v * 24 * 60);
             var hh = Math.floor(totalMin / 60), mm = totalMin % 60;
             out[k] = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
           } else {
-            out[k] = sv.slice(0, 5); 
+            out[k] = sv.slice(0, 5); // 이미 HH:MM 형태면 5자만
           }
         }
+        // 날짜 필드 — ISO 형식 → YYYY-MM-DD
         else if (DATE_FIELDS2.indexOf(k) >= 0) {
           if (!v || v === '') { out[k] = ''; }
           else if (typeof v === 'number' && v > 40000 && v < 60000) {
+            // Excel 날짜 시리얼 → YYYY-MM-DD
             var _d = new Date(Math.round((v - 25569) * 86400 * 1000));
             out[k] = isNaN(_d.getTime()) ? '' : _d.toISOString().slice(0, 10);
           } else {
             var _s = String(v);
+            // "2026-05-26T23:59:10.140Z" → "2026-05-26"
             if (_s.includes('T')) _s = _s.slice(0, 10);
+            // "026-05-26..." 앞자리 누락 보정
             if (/^\d{3}-\d{2}-\d{2}/.test(_s)) _s = '2' + _s;
             out[k] = _s.slice(0, 10);
           }
         }
+        // 숫자 필드
         else if (NUM_FIELDS.indexOf(k) >= 0) {
           out[k] = v === '' ? 0 : Number(v) || 0;
         }
+        // 날짜 필드 안전 처리
         else if (DATE_FIELDS.indexOf(k) >= 0) {
           try {
             if (!v || v === '') { out[k] = ''; continue; }
             if (typeof v === 'number') {
+              // Excel 날짜 시리얼 넘버 → YYYY-MM-DD
               if (v > 40000 && v < 60000) {
                 var d = new Date(Math.round((v - 25569) * 86400 * 1000));
                 if (!isNaN(d.getTime())) {
@@ -363,12 +380,15 @@ async function _gasGet(action, extra) {
               } else { out[k] = ''; }
             } else {
               var s = String(v);
+              // "026-05-11T..." → "2026-05-11T..." (앞자리 누락 보정)
               if (/^\d{3}-\d{2}-\d{2}/.test(s)) s = '2' + s;
+              // 날짜 부분만 추출 (YYYY-MM-DD)
               var dateMatch = s.match(/(\d{4}-\d{2}-\d{2})/);
               out[k] = dateMatch ? dateMatch[1] : '';
             }
           } catch(dateErr) { out[k] = ''; }
         }
+        // 나머지
         else {
           out[k] = typeof v === 'number' ? v : (v === '' ? '' : String(v));
         }
@@ -411,7 +431,8 @@ async function _gasGet(action, extra) {
 })();
 
 function initGAS() {
-  console.log('🔖 index1-app.js 버전: 2026-07-25-v4 (mock db 완벽 적용본)');
+  console.log('🔖 index1-app.js 버전: 2026-07-25-v3 (status/category/dedup 수정본)');
+  // 화면 디버그 패널에 즉시 표시
   var dbgEl = document.getElementById('early-debug');
   function dbgLog(msg, color) {
     console.log('[initGAS] ' + msg);
@@ -423,8 +444,10 @@ function initGAS() {
     }
   }
   dbgLog('④ initGAS() 실행됨');
+  dbgLog('  loading el: ' + (document.getElementById('loading') ? '있음' : '없음'));
   document.getElementById('loading').classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
+  // index5와 동일: GAS_OCR_URL이 있으면 우선 사용
   if (typeof GAS_OCR_URL !== 'undefined' && GAS_OCR_URL &&
       GAS_OCR_URL.includes('script.google.com')) {
     localStorage.setItem('_runtimeGasUrl', GAS_OCR_URL);
@@ -439,25 +462,51 @@ function initGAS() {
   launchApp();
 }
 
+function startApp() { initGAS(); }
+
+
+// Firestore 내부 연결 오류 메시지 억제 (앱 동작에 영향 없음)
+(function() {
+  var _origWarn  = console.warn;
+  var _origError = console.error;
+  var _FB_NOISE = ['WebChannelConnection','transport errored',
+                   'Could not reach Cloud Firestore',
+                   'operate in offline mode','Connection failed'];
+  function _isFbNoise(args) {
+    var msg = Array.from(args).join(' ');
+    return _FB_NOISE.some(function(k){ return msg.includes(k); });
+  }
+  console.warn  = function() { if (!_isFbNoise(arguments)) _origWarn.apply(console, arguments); };
+  console.error = function() { if (!_isFbNoise(arguments)) _origError.apply(console, arguments); };
+})();
+function initFirebase(cfg){ initGAS(); }
+
+
 function showSetupError(msg) {
-  console.warn('[GAS]', msg);
+  console.warn('[Firebase]', msg);
 }
 
 async function seedPlants() {
   var plants = MASTER_DB.plants;
-  try {
-    for (var i = 0; i < plants.length; i++) {
-      await _gasPost({ action: 'addPlant', id: plants[i].id, data: JSON.stringify(plants[i]) });
-      if (i === 0) {
-        APP.plants = plants.slice(0, 1).map(function(p){ return Object.assign({}, p); });
-        renderToday(); renderPlants();
-      }
+  var chunkSize = 20;  
+  for (var i=0; i<plants.length; i+=chunkSize) {
+    var chunk = plants.slice(i, i+chunkSize);
+    var batch = db.batch();
+    chunk.forEach(function(p){
+      batch.set(db.collection('plants').doc(p.id), p, {merge:true});
+    });
+    await batch.commit().catch(function(e){ console.warn('seed chunk',e); });
+    
+    if (i === 0) {
+      APP.plants = chunk.map(function(p){ return Object.assign({},p); });
+      renderToday(); renderPlants();
     }
-    showToast('식물 DB 초기화 완료 ('+plants.length+'개)');
-  } catch(e) { console.warn('seedPlants 오류:', e.message); }
+  }
+  showToast('식물 DB 초기화 완료 ('+plants.length+'개)');
 }
 
 function calcTodayTasks() {
+  
   var sprayMap = {};   
   var fertMap  = {};   
   var taskList = [];   
@@ -467,7 +516,6 @@ function calcTodayTasks() {
   console.log('[calcTodayTasks] 전체식물:', APP.plants.length,
     '/ status=active:', _activeCount,
     '/ plantDate있음:', _dateCount);
-    
   if (APP.plants.length > 0) {
     var _s = APP.plants[0];
     console.log('[calcTodayTasks] 첫식물 샘플 status:', _s.status,
@@ -480,6 +528,7 @@ function calcTodayTasks() {
     var dfp = daysBetween(planted, TODAY);
     var nm  = plant.name;
 
+    
     MASTER_DB.spraySchedule.forEach(function(spray){
       var crops = spray.crop.split('·');
       var match = crops.some(function(c){
@@ -512,6 +561,7 @@ function calcTodayTasks() {
       });
     });
 
+    
     MASTER_DB.fertSchedule.forEach(function(fert){
       var crops = fert.crop.split('·');
       var match = crops.some(function(c){
@@ -544,6 +594,7 @@ function calcTodayTasks() {
       });
     });
 
+    
     if (plant.pollDate && plant.pollDays>0) {
       var polled = parseDate(plant.pollDate);
       var hd     = addDays(polled, plant.pollDays);
@@ -560,6 +611,7 @@ function calcTodayTasks() {
       }
     }
 
+    
     if (plant.fruitDays>0) {
       var dL2 = plant.fruitDays - dfp;
       if (dL2<=7 && dL2>=0) {
@@ -574,6 +626,7 @@ function calcTodayTasks() {
       }
     }
 
+    
     if (plant.pinchDays>0 && dfp===plant.pinchDays) {
       var tk3='pinch_'+plant.id+'_'+TODAY_STR;
       taskList.push({
@@ -584,6 +637,7 @@ function calcTodayTasks() {
       });
     }
 
+    
     if (plant.totalDays>0) {
       var dL3 = plant.totalDays-dfp;
       if (dL3<=7 && dL3>0) {
@@ -598,8 +652,10 @@ function calcTodayTasks() {
     }
   });
 
+  
   var tasks = [];
 
+  
   Object.keys(sprayMap).forEach(function(pestName){
     var g = sprayMap[pestName];
     var taskKey = 'spray_group_'+pestName.replace(/\s/g,'')+'_'+TODAY_STR;
@@ -621,6 +677,7 @@ function calcTodayTasks() {
     });
   });
 
+  
   Object.keys(fertMap).forEach(function(fertName){
     var g = fertMap[fertName];
     var taskKey = 'fert_group_'+fertName.replace(/\s/g,'')+'_'+TODAY_STR;
@@ -640,6 +697,7 @@ function calcTodayTasks() {
     });
   });
 
+  
   tasks = tasks.concat(taskList);
 
   tasks.sort(function(a,b){
@@ -656,14 +714,21 @@ function calcTodayTasks() {
 
 function parseInterval(s) {
   if (!s) return 0;
+  
   if (s.includes('연') || s.includes('년')) return 365;
+  // "N주" → N×7일
   if (s.includes('주')) { var mw=s.match(/(\d+)/); return mw ? parseInt(mw[1])*7 : 0; }
+  // "N~M일 간격" → 작은 숫자 사용
   var rangeM = s.match(/(\d+)~(\d+)일/);
   if (rangeM) return parseInt(rangeM[1]);
+  // "N일 간격" / "N일마다"
   var dayM = s.match(/(\d+)일/);
   if (dayM) return parseInt(dayM[1]);
+  // "식재전", "정식전", "파종전" → 시즌 1회 (90일)
   if (s.includes('식재전') || s.includes('정식전') || s.includes('파종전')) return 90;
+  // "개화전" → 봄 1회 (90일)
   if (s.includes('개화전') || s.includes('개화기')) return 90;
+  // "착색기 N회", "웃거름 N회" 등 — 횟수만 있는 경우 → 30일 간격으로 처리
   if (s.includes('회') && !s.match(/\d+일/)) return 30;
   
   var nm = s.match(/(\d+)/);
@@ -673,16 +738,23 @@ function parseInterval(s) {
   }
   return 0;
 }
-
 function isInSeason(iv, date) {
   var m = date.getMonth() + 1;  
+  
   if (iv.includes('연') || iv.includes('년')) return m>=3 && m<=5;
+  
   if (iv.includes('착색')) return m>=7 && m<=9;
+  
   if (iv.includes('개화')) return m>=3 && m<=5;
+  
   if (iv.includes('식재전') || iv.includes('파종전') || iv.includes('정식전')) return m>=4 && m<=6;
+  
   if (iv.includes('밑거름')) return m>=3 && m<=5;
+  
   if (iv.includes('웃거름')) return m>=5 && m<=9;
+  // "N~M일 간격" 또는 "N일 간격" → 일반 생육기 4~10월
   if (iv.match(/\d+[~-]?\d*일/)) return m>=4 && m<=10;
+  
   return m>=4 && m<=10;
 }
 
@@ -703,6 +775,7 @@ function calcWeekTasks() {
 
 function renderAll(){ renderToday(); renderPlants(); renderLogs(); renderDb(); }
 
+// ── 작물 이모지 자동 매핑 ────────────────────────────────────
 function _plantEmoji(p) {
   if (p.emoji) {
     var e = (p.emoji||'').trim();
@@ -729,6 +802,7 @@ function _plantEmoji(p) {
 }
 function esc_plantEmoji(p) { return esc(_plantEmoji(p)); }
 
+
 function renderToday() {
   var tasks = calcTodayTasks();
   console.log('[renderToday] 오늘 할일 수:', tasks.length);
@@ -741,6 +815,7 @@ function renderToday() {
     console.log('[renderToday] 할일 목록:',
       tasks.slice(0,3).map(function(t){ return t.plant+'·'+t.action+'('+t.type+')'; }).join(', '));
   }
+  var tasks    = calcTodayTasks();
   var filtered = tasks.filter(function(t){
     if(APP.filter==='spray')   return t.type==='spray';
     if(APP.filter==='fert')    return t.type==='fert';
@@ -751,6 +826,7 @@ function renderToday() {
   var pending = tasks.filter(function(t){ return !t.done; }).length;
   var countEl = document.getElementById('today-count');
   if (countEl) countEl.textContent = '총 '+tasks.length+'건 (미완료 '+pending+'건)';
+  // 하단 nav 오늘 버튼 옆 미완료 수 표시
   var pendingBadge = document.getElementById('today-pending-count');
   if (pendingBadge) {
     if (pending > 0) {
@@ -792,6 +868,7 @@ function taskCardHTML(t) {
   var doneBadge = t.done ? '<span class="badge badge-done">완료</span>' : '';
   var cardCls   = 'task-card'+(t.done?' done':'')+(t.urgent&&!t.done?' urgent':'')+(t.type==='fert'?' fert':'');
 
+  
   var plantsHtml = '';
   if (t.plants && t.plants.length > 0) {
     var shown = t.plants.slice(0, 8);
@@ -839,6 +916,17 @@ function taskCardHTML(t) {
 }
 
 function renderPlants() {
+  console.log('[renderPlants] APP.plants 수:', (APP.plants||[]).length,
+    '/ filter:', APP.plantFilter||'all');
+  if ((APP.plants||[]).length > 0) {
+    var _cats = {};
+    APP.plants.forEach(function(p){ var c=p.category||'(없음)'; _cats[c]=(_cats[c]||0)+1; });
+    console.log('[renderPlants] category 분포:', JSON.stringify(_cats));
+    var _sts = {};
+    APP.plants.forEach(function(p){ var s=p.status||'(없음)'; _sts[s]=(_sts[s]||0)+1; });
+    console.log('[renderPlants] status 분포:', JSON.stringify(_sts));
+  }
+  // ── 카테고리 분류: category 필드 우선, 없으면 이름 키워드 보조 ──
   var fruitKw = ['사과','배','복숭아','포도','블루베리','블랙베리','감나무','자두','매실','살구',
                  '무화과','다래','키위','앵두','마르멜로','으름','헤이즐럿','헤이즐넛','오디','바이오체리',
                  '피코튬','대추','모과','마르멜로','복분자','백살구'];
@@ -848,15 +936,24 @@ function renderPlants() {
   function isFruitPlant(p) {
     var cat = (p.category || '').trim();
     var nm  = (p.name || '').toLowerCase();
+    // 1) category 필드가 명시적으로 설정된 경우 우선
     if (cat === '유실수' || cat === '과수') return true;
     if (cat === '채소' || cat === '채소작물' || cat === '농작물') return false;
-    if (cat && cat !== '') return false;
+    if (cat && cat !== '') {
+      // 그 외 category가 있으면 이름 키워드로 판단하지 않음
+      return false;
+    }
+    // 2) category 없을 때: MASTER_DB에서 확인
     var _mP = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){ return m.name===p.name||m.id===p.id; });
-    if (_mP && _mP.category) return _mP.category==='유실수'||_mP.category==='과수';
+    if (_mP && _mP.category) {
+      return _mP.category==='유실수'||_mP.category==='과수';
+    }
+    // 3) 이름 키워드 (채소 먼저)
     if (vegKw.some(function(k){ return nm.includes(k.toLowerCase()); })) return false;
     return fruitKw.some(function(k){ return nm.includes(k.toLowerCase()); });
   }
 
+  // ── 중복 제거 (renderPlants 호출마다 APP.plants 건드리지 않음) ──
   var _today0 = new Date().toISOString().slice(0,10);
   var _rMap   = {};
   (APP.plants||[]).forEach(function(p) {
@@ -876,6 +973,7 @@ function renderPlants() {
   });
   var dedupedPlants = Object.values(_rMap);
 
+  // ── 카테고리 필터 적용 ──────────────────────────────────────────
   var plants = dedupedPlants.filter(function(p) {
     if (p.status === 'deleted') return false;
     if (!APP.plantFilter || APP.plantFilter === 'all') return true;
@@ -895,7 +993,6 @@ function renderPlants() {
     grid.innerHTML = plants.map(plantCardHTML).join('');
   }
 }
-
 function plantCardHTML(p) {
   var planted      = parseDate(p.plantDate);
   var dfp          = planted ? daysBetween(planted,TODAY) : -1;
@@ -903,6 +1000,7 @@ function plantCardHTML(p) {
   var pct          = (total>0&&dfp>=0) ? Math.min(100,Math.round(dfp/total*100)) : 0;
   var barCls       = pct<40?'bar-early':pct<75?'bar-mid':'bar-late';
 
+  
   var hBadge='';
   if (p.pollDate&&p.pollDays>0) {
     var polled=parseDate(p.pollDate), hd=addDays(polled,p.pollDays), dL=daysBetween(TODAY,hd), sinceP=daysBetween(polled,TODAY);
@@ -921,17 +1019,20 @@ function plantCardHTML(p) {
     else if (dL3<=0)   hBadge='<span class="pi-badge pi-harvest-ok">✅ 재배 완료</span>';
   }
 
+  
   var pollBadge='';
   if (p.pollDate) { var sinceP2=daysBetween(parseDate(p.pollDate),TODAY); pollBadge='<span class="pi-badge pi-poll">🌸 착과 '+sinceP2+'일째</span>'; }
 
-  var nm=p.name.toLowerCase();
-  var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm&&(l.type==='농약살포'||l.eventType==='농약살포'); });
+  
+  var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===p.name.toLowerCase()&&(l.type==='농약살포'||l.eventType==='농약살포'); });
   var dSpray=lsl&&lsl.date?daysBetween(parseDate(lsl.date.slice(0,10)),TODAY):-1;
   var spBadge=''; if(dSpray>=0){ var c1=dSpray>=14?'pi-spray-due':''; var s1=dSpray<14?'background:#E8F5E9;color:#2E7D32;':''; spBadge='<span class="pi-badge '+c1+'" style="'+s1+'">🌿 살포 '+dSpray+'일 전</span>'; }
-  var lfl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm&&(l.type==='시비'||l.eventType==='시비'); });
+  var lfl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===p.name.toLowerCase()&&(l.type==='시비'||l.eventType==='시비'); });
   var dFert=lfl&&lfl.date?daysBetween(parseDate(lfl.date.slice(0,10)),TODAY):-1;
   var ftBadge=''; if(dFert>=0){ var c2=dFert>=21?'pi-fert-due':''; var s2=dFert<21?'background:#E8EAF6;color:#283593;':''; ftBadge='<span class="pi-badge '+c2+'" style="'+s2+'">🌱 시비 '+dFert+'일 전</span>'; }
 
+  
+  var nm=p.name.toLowerCase();
   var pLogs=APP.logs.filter(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm; }).slice(0,3);
   var ICON={'농약살포':'🌿','시비':'🌱','파종':'🌾','수확':'🍎','순치기':'✂️','병해충':'🐛','개화':'🌸','정식':'🌱','착과':'🌸','기타':'📝'};
   var miniLog=pLogs.length>0?'<div class="plant-mini-log">'+pLogs.map(function(l){
@@ -940,6 +1041,7 @@ function plantCardHTML(p) {
       +'<span class="ml-type">'+(ICON[t]||'📝')+t+'</span>'+(mat?'<span class="ml-mat">'+esc(mat.slice(0,18))+'</span>':'')+'</div>';
   }).join('')+'</div>':'';
 
+  
   var progressBar=total>0?'<div class="plant-bar-wrap" style="margin-top:5px;"><div class="plant-bar '+barCls+'" style="width:'+pct+'%;"></div></div>'
     +'<div class="plant-progress-label"><span>'+pct+'% 진행</span><span>'+dfp+'/'+total+'일</span></div>':'';
 
@@ -964,59 +1066,2558 @@ function getPlantInfo(nm) {
   return APP.plants.find(function(p){ var pn=p.name.toLowerCase(); return pn===n||pn.includes(n)||n.includes(pn.split(' ')[0]); })||null;
 }
 
-// ... 기타 나머지 UI 및 유틸 함수들 ...
+function plantStatusBadges(p) {
+  if(!p||!p.plantDate) return '';
+  var planted=parseDate(p.plantDate); if(!planted) return '';
+  var dfp=daysBetween(planted,TODAY), total=p.totalDays||0, pct=total>0?Math.min(100,Math.round(dfp/total*100)):0;
+  var barCls=pct<40?'bar-early':pct<75?'bar-mid':'bar-late';
+  var daysBadge='<span class="pi-badge" style="background:var(--green-light);color:var(--green-dark);font-weight:600;">D+'+dfp+'일</span>';
 
-async function loadAllData() {
-  setLoadingStep(1, 30, '로컬 DB 로드 중...');
-
-  // 💡 MASTER_DB.plants가 안전하게 로드되도록 처리
-  var defaultPlants = (typeof MASTER_DB !== 'undefined' && MASTER_DB.plants) ? MASTER_DB.plants : [];
-
-  if (APP.plants.length === 0) {
-    APP.plants = defaultPlants.map(function(p){
-        return Object.assign({ status: 'active' }, p, { _local: true });
-    });
-    try { renderToday(); renderPlants(); } catch(e){}
+  var progressBar='';
+  if(total>0){
+    progressBar='<div style="margin:4px 0 2px;">'
+      +'<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--gray-400);margin-bottom:2px;">'
+      +'<span>'+esc(p.plantDate)+' 심음</span><span>'+pct+'% · '+dfp+'/'+total+'일</span></div>'
+      +'<div class="plant-bar-wrap" style="margin:0;"><div class="plant-bar '+barCls+'" style="width:'+pct+'%;"></div></div></div>';
   }
 
-  setLoadingStep(1, 45, 'Google Sheets에서 데이터 로드 중...');
+  var hb='';
+  if(p.pollDate&&p.pollDays>0){
+    var polled=parseDate(p.pollDate),hd=addDays(polled,p.pollDays),dL=daysBetween(TODAY,hd),sinceP=daysBetween(polled,TODAY);
+    hb=dL===0?'<span class="pi-badge pi-harvest-today">🍎 수확 D-day!</span>'
+      :dL>0?'<span class="pi-badge pi-harvest-days">🍎 수확 D-'+dL+'일 (착과 '+sinceP+'일째)</span>'
+           :'<span class="pi-badge pi-harvest-ok">🍎 수확기 (착과 '+sinceP+'일째)</span>';
+  } else if(p.fruitDays>0){
+    var dL2=p.fruitDays-dfp;
+    hb=dL2===0?'<span class="pi-badge pi-harvest-today">🍎 수확 D-day!</span>'
+      :dL2>0&&dL2<=7?'<span class="pi-badge pi-harvest-soon">🍎 수확 D-'+dL2+'일</span>'
+      :dL2>0?'<span class="pi-badge pi-harvest-days">🍎 수확 D-'+dL2+'일</span>'
+            :'<span class="pi-badge pi-harvest-ok">🍎 수확 +'+Math.abs(dL2)+'일째</span>';
+  } else if(total>0){
+    var dL3=total-dfp;
+    if(dL3<=7&&dL3>0) hb='<span class="pi-badge pi-harvest-soon">⏰ 종료 D-'+dL3+'</span>';
+    else if(dL3<=0)   hb='<span class="pi-badge pi-harvest-ok">✅ 재배 완료</span>';
+  }
+
+  var pollBadge='';
+  if(p.pollDate){ var s2=daysBetween(parseDate(p.pollDate),TODAY); pollBadge='<span class="pi-badge pi-poll">🌸 착과 '+s2+'일째</span>'; }
+
+  var nm=p.name.toLowerCase();
+  var lsl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm&&(l.type==='농약살포'||l.eventType==='농약살포'); });
+  var dSp=lsl&&lsl.date?daysBetween(parseDate(lsl.date.slice(0,10)),TODAY):-1;
+  var spB=''; if(dSp>=0){ var spCls=dSp>=14?'pi-spray-due':''; var spSty=dSp<14?'background:#E8F5E9;color:#2E7D32;':''; spB='<span class="pi-badge '+spCls+'" style="'+spSty+'">🌿 살포 '+dSp+'일 전</span>'; }
+
+  var lfl=APP.logs.find(function(l){ return (l.plantName||l.plant||'').toLowerCase()===nm&&(l.type==='시비'||l.eventType==='시비'); });
+  var dFt=lfl&&lfl.date?daysBetween(parseDate(lfl.date.slice(0,10)),TODAY):-1;
+  var ftB=''; if(dFt>=0){ var ftCls=dFt>=21?'pi-fert-due':''; var ftSty=dFt<21?'background:#E8EAF6;color:#283593;':''; ftB='<span class="pi-badge '+ftCls+'" style="'+ftSty+'">🌱 시비 '+dFt+'일 전</span>'; }
+
+  return '<div class="log-plant-detail"><div class="lpd-top">'
+    +'<span class="lpd-emoji">'+esc(p.emoji||'🌱')+'</span>'
+    +'<div class="lpd-body"><div class="lpd-name">'+esc(p.name)
+    +(p.location?'<span class="lpd-loc">📍 '+esc(p.location)+'</span>':'')+'</div>'
+    +progressBar
+    +'<div class="plant-info-row" style="margin-top:3px;flex-wrap:wrap;">'+daysBadge+hb+pollBadge+spB+ftB+'</div>'
+    +'</div></div></div>';
+}
+
+function renderLogs() {
+  console.log('[renderLogs] 총 로그:', APP.logs.length);
+  // 중복 확인
+  var _seen2 = {}, _dups = 0;
+  APP.logs.forEach(function(l) {
+    var _d2 = (l.detail||l.note||'').slice(0,20);
+    var k2 = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||'')+'|'+_d2;
+    if (_seen2[k2]) _dups++;
+    _seen2[k2] = true;
+  });
+  if (_dups > 0) console.warn('[renderLogs] 중복 로그 발견:', _dups, '개');
+  var el=document.getElementById('log-list');
+  if(APP.logs.length===0){
+    el.innerHTML='<div class="empty-state"><span class="emoji">📖️</span><p>기록 없음.<br>+ 버튼으로 추가하세요.</p></div>';
+    return;
+  }
+  var TICON={'농약살포':'🌿','시비':'🌱','파종':'🌾','수확':'🍎','순치기':'✂️','병해충':'🐛','기타':'📝','정식':'🌱','개화':'🌸','착과':'🌸','천연자재':'🧪'};
+  var TCLS={'농약살포':'log-type-spray','시비':'log-type-fert','파종':'log-type-task','정식':'log-type-task','수확':'log-type-task','기타':'log-type-note'};
+
+  var html2='', lastDate='';
+  APP.logs.forEach(function(l){
+    var dateStr=(l.date||'').slice(0,10), isToday=dateStr===TODAY_STR;
+    if(dateStr!==lastDate){
+      lastDate=dateStr;
+      var ds=isToday?' style="background:var(--green-dark);color:#fff;padding:2px 12px;border-radius:10px;"':'';
+      html2+='<div class="log-date-divider"><span'+ds+'>'+(isToday?'📅 오늘 · '+dateStr:dateStr)+'</span></div>';
+    }
+    var srcCls=l._col==='workLogs'?'log-source-wl':'log-source-gr';
+    var srcLbl=l._col==='workLogs'?'작업일지':'재배기록';
+    var typeLbl=l.eventType||l.type||'기타';
+    var name=l.plantName||l.plant||'', mat=l.material||'', detail=l.detail||l.note||'';
+    var canEdit=!!l.id&&!String(l.id||'').startsWith('new_');
+    var logId=l.id||'';
+
+    var plant=getPlantInfo(name);
+    var plantDetail=(plant&&plant.plantDate)?plantStatusBadges(plant):'';
+
+    html2+='<div class="log-card'+(plantDetail?' log-card-has-plant':'')+'" id="log-'+esc(logId)+'">'
+      +'<div class="log-header">'
+      +'<div class="log-type-icon '+(TCLS[typeLbl]||'log-type-note')+'">'+(TICON[typeLbl]||'📝')+'</div>'
+      +'<div style="flex:1;min-width:0;">'
+      +'<div class="log-date">'+esc(dateStr)+(l.time?' '+esc(l.time):'')+'</div>'
+      +'<div class="log-name">'+esc(name)+(mat?' · <span style="font-weight:400;color:var(--gray-400);">'+esc(mat)+'</span>':'')+'</div>'
+      +'</div>'
+      +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px;flex-shrink:0;">'
+      +'<span class="badge badge-log">'+esc(typeLbl)+'</span>'
+      +'<span class="badge '+srcCls+'" style="font-size:9px;">'+srcLbl+'</span>'
+      +'</div></div>'
+      +(detail?'<div class="log-detail">'+esc(detail)+'</div>':'')
+      +plantDetail
+      +(canEdit
+        ?'<div class="log-card-actions">'
+          +'<button class="log-edit-btn" data-id="'+esc(logId)+'" onclick="openEditLog(this)">✏️ 수정</button>'
+          +'<button class="log-del-btn" data-id="'+esc(logId)+'" onclick="confirmDeleteLog(this)">🗑 삭제</button>'
+          +'</div>':'')
+      +'</div>';
+  });
+  el.innerHTML=html2;
+}
+
+function openRescanModal() {
+  document.getElementById('rescan-bar').style.width = '0%';
+  document.getElementById('rescan-status').textContent = '검색 준비 중...';
+  document.getElementById('rescan-results').innerHTML = '';
+  document.getElementById('rescan-start-btn').disabled = false;
+  document.getElementById('rescan-modal').classList.remove('hidden');
+}
+
+async function startRescan() {
+  var target = document.getElementById('rescan-target').value;
+  var btn    = document.getElementById('rescan-start-btn');
+  btn.disabled = true;
+  btn.textContent = '검색 중...';
+  document.getElementById('rescan-results').innerHTML = '';
+
+  
+  var items = [];
+  if (target==='all'||target==='pest')  items = items.concat(getMergedDb('pest').map(function(x){ return Object.assign({},x,{_tab:'pest'}); }));
+  if (target==='all'||target==='fert')  items = items.concat(getMergedDb('fert').map(function(x){ return Object.assign({},x,{_tab:'fert'}); }));
+  if (target==='all'||target==='micro') items = items.concat(getMergedDb('micro').map(function(x){ return Object.assign({},x,{_tab:'micro'}); }));
+
+  var results = [];
+  for (var i=0; i<items.length; i++) {
+    var item = items[i];
+    var pct  = Math.round((i+1)/items.length*100);
+    document.getElementById('rescan-bar').style.width = pct+'%';
+    document.getElementById('rescan-status').textContent =
+      '('+(i+1)+'/'+items.length+') 검색 중: '+item.name;
+
+    
+    var enriched = await enrichItemWithAI(item);
+    if (enriched && enriched.hasUpdate) {
+      results.push({ original: item, enriched: enriched });
+      renderRescanResult(results, item, enriched);
+    }
+    
+    await new Promise(function(r){ setTimeout(r, 200); });
+  }
+
+  document.getElementById('rescan-status').textContent =
+    '✅ 검색 완료 — '+results.length+'개 항목 정보 보완됨';
+  btn.textContent = '🔍 다시 검색';
+  btn.disabled = false;
+
+  if (results.length === 0) {
+    document.getElementById('rescan-results').innerHTML =
+      '<div style="text-align:center;color:var(--gray-400);padding:20px;font-size:13px;">모든 항목이 최신 상태입니다 ✅</div>';
+  }
+}
+
+async function enrichItemWithAI(item) {
+  try {
+    var prompt = '다음 농업 자재에 대해 부족한 정보를 JSON으로 보완해주세요.\n'
+      + '현재 정보: '+JSON.stringify({name:item.name, type:item.type||'', ingredient:item.ingredient||'',
+          target:item.target||'', method:item.method||'', effect:item.effect||''})+'\n\n'
+      + '아래 JSON 형식으로만 응답하세요 (변경이 없으면 hasUpdate:false):\n'
+      + '{"hasUpdate":true,"ingredient":"보완된 성분","target":"보완된 방제대상","method":"보완된 사용법",'
+      + '"effect":"효과","timing":"적합한 시기","warning":"주의사항","crop_range":"적용 작물","summary":"한줄 요약"}';
+
+        var res = await callClaude(prompt, 400);
+    if (!res.ok) return null;
+    return parseAiJson(res.text);
+  } catch(e) { return null; }
+}
+
+function renderRescanResult(results, item, enriched) {
+  var container = document.getElementById('rescan-results');
+  var diffs = [];
+  if (enriched.ingredient && enriched.ingredient !== (item.ingredient||''))
+    diffs.push('<b>성분:</b> '+esc(enriched.ingredient));
+  if (enriched.target && enriched.target !== (item.target||''))
+    diffs.push('<b>방제대상:</b> '+esc(enriched.target));
+  if (enriched.method && enriched.method !== (item.method||''))
+    diffs.push('<b>사용법:</b> '+esc(enriched.method));
+  if (enriched.timing) diffs.push('<b>시기:</b> '+esc(enriched.timing));
+  if (enriched.warning && enriched.warning !== (item.warning||''))
+    diffs.push('<b>주의:</b> '+esc(enriched.warning));
+  if (enriched.crop_range) diffs.push('<b>적용작물:</b> '+esc(enriched.crop_range));
+
+  var card = document.createElement('div');
+  card.className = 'rescan-item';
+  card.innerHTML = '<div class="rescan-item-header">'
+    + '<span class="rescan-item-name">'+(item.emoji||'')+' '+esc(item.name)+'</span>'
+    + '<span class="rescan-diff">'+diffs.length+'개 보완</span>'
+    + '</div>'
+    + '<div class="rescan-field">'+diffs.join(' · ')+'</div>'
+    + (enriched.summary ? '<div style="font-size:11px;color:var(--green-dark);margin-top:4px;">💡 '+esc(enriched.summary)+'</div>' : '')
+    + '<div style="display:flex;gap:6px;margin-top:8px;">'
+    + '<button class="db-edit-btn" style="flex:1;" onclick="applyRescanResult('+results.length+',this)" data-idx="'+(results.length-1)+'">✅ 적용</button>'
+    + '<button class="db-del-btn" onclick="this.closest(\'.rescan-item\').remove()">건너뜀</button>'
+    + '</div>';
+  container.appendChild(card);
+}
+
+async function applyRescanResult(idx, btn) {
+  
+  btn.textContent = '저장 중...'; btn.disabled = true;
+  var cards = document.querySelectorAll('#rescan-results .rescan-item');
+  var myIdx = parseInt(btn.getAttribute('data-idx'));
+  
+  var item = getMergedDb(APP.dbTab||'pest')[myIdx];
+  if (!item) { btn.textContent='✅ 완료'; return; }
+  var enrichedData = { name:item.name, tab:item._tab||APP.dbTab, enrichedAt:new Date().toISOString() };
+  await db.collection('userDb_enriched').doc(item.id||item.name).set(enrichedData,{merge:true}).catch(function(){});
+  btn.textContent = '✅ 저장됨'; btn.disabled = true;
+  showToast('💾 '+item.name+' 정보 보완 저장됨');
+}
+
+function openBulkDateModal() {
+  document.getElementById('bulk-date-input').value = TODAY_STR;
+  document.getElementById('bulk-force-overwrite').checked = false;
+  document.getElementById('bulk-date-info').textContent = '';
+  renderBulkPlantList();
+  document.getElementById('bulk-date-modal').classList.remove('hidden');
+}
+
+function renderBulkPlantList() {
+  var list = document.getElementById('bulk-plant-list');
+  var plants = APP.plants.filter(function(p){ return p.status==='active'; });
+  list.innerHTML = plants.map(function(p, i){
+    var hasDate = !!p.plantDate;
+    var sub = hasDate ? '날짜 있음: '+p.plantDate : '날짜 없음';
+    return '<label class="bulk-plant-item">'
+      + '<input type="checkbox" class="bulk-chk" value="'+esc(p.id)+'"'+(hasDate?'':' checked')+'>'
+      + '<div class="bulk-plant-info">'
+      + '<div class="bulk-plant-name">'+(p.emoji||'🌱')+' '+esc(p.name)+'</div>'
+      + '<div class="bulk-plant-sub">'+(p.category||'')+' · '+esc(sub)+'</div>'
+      + '</div></label>';
+  }).join('');
+  updateBulkDateInfo();
+}
+
+function bulkSelectAll(val) {
+  document.querySelectorAll('.bulk-chk').forEach(function(c){ c.checked=val; });
+  updateBulkDateInfo();
+}
+function bulkSelectFilter(cat) {
+  var plants = APP.plants.filter(function(p){ return p.status==='active'; });
+  document.querySelectorAll('.bulk-chk').forEach(function(c, i){
+    c.checked = (plants[i]&&plants[i].category===cat);
+  });
+  updateBulkDateInfo();
+}
+function bulkSelectNoDate() {
+  var plants = APP.plants.filter(function(p){ return p.status==='active'; });
+  document.querySelectorAll('.bulk-chk').forEach(function(c, i){
+    c.checked = !(plants[i]&&plants[i].plantDate);
+  });
+  updateBulkDateInfo();
+}
+function updateBulkDateInfo() {
+  var cnt = document.querySelectorAll('.bulk-chk:checked').length;
+  document.getElementById('bulk-date-info').textContent = cnt+'개 선택됨';
+}
+document.addEventListener('change', function(e){ if(e.target&&e.target.classList.contains('bulk-chk')) updateBulkDateInfo(); });
+
+async function applyBulkDate() {
+  var dateVal  = document.getElementById('bulk-date-input').value;
+  var forceOW  = document.getElementById('bulk-force-overwrite').checked;
+  if (!dateVal) { showToast('날짜를 선택하세요'); return; }
+
+  var checked = Array.from(document.querySelectorAll('.bulk-chk:checked')).map(function(c){ return c.value; });
+  if (checked.length === 0) { showToast('식물을 선택하세요'); return; }
+
+  var plants = APP.plants.filter(function(p){ return p.status==='active'; });
+  var count = 0;
+  for (var i=0; i<checked.length; i++) {
+    var pid = checked[i];
+    var plant = plants.find(function(p){ return p.id===pid; });
+    if (!plant) continue;
+    if (plant.plantDate && !forceOW) continue; 
+    await db.collection('plants').doc(pid).update({ plantDate: dateVal, updatedAt: new Date().toISOString() })
+      .catch(function(e){ console.warn('bulk date error', e); });
+    plant.plantDate = dateVal;
+    var idx = APP.plants.findIndex(function(p){ return p.id===pid; });
+    if (idx >= 0) APP.plants[idx].plantDate = dateVal;
+    count++;
+  }
+  closeModal('bulk-date-modal');
+  showToast('📅 '+count+'개 식물에 '+dateVal+' 적용 완료');
+  renderPlants(); renderToday();
+}
+
+var scanStream   = null;
+var scanInterval = null;
+var scanMode     = 'barcode';   // 'barcode' | 'ocr'
+var ocrParsed    = null;        
+
+function setScanMode(mode, btn) {
+  scanMode = mode;
+  stopScan();
+  document.querySelectorAll('.scan-mode-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+
+  var showEl = function(id){ var e=document.getElementById(id); if(e) e.style.display=''; };
+  var hideEl = function(id){ var e=document.getElementById(id); if(e) e.style.display='none'; };
+
+  
+  hideEl('scan-capture-preview');
+  hideEl('scan-ocr-text-section');
+  document.getElementById('scan-result').innerHTML = '';
+
+  
+  var ocrOpts = document.getElementById('ocr-options-row');
+  if (ocrOpts) ocrOpts.style.display = (mode==='barcode') ? 'none' : '';
+
+  if (mode === 'barcode') {
+    showEl('scan-barcode-btns'); hideEl('scan-ocr-btns'); hideEl('scan-photo-btns');
+    
+    var _vw = document.getElementById('scan-video-wrap');
+    if (_vw) _vw.style.display = 'none';
+    stopScan();
+    hideEl('scan-ocr-tips');    showEl('scan-code-section');
+    document.getElementById('scan-frame-el').style.cssText = 'border-radius:4px;';
+    document.getElementById('scan-hint').textContent = 'QR코드를 사각형 안에 맞춰주세요 (iPhone 상단 주황불 = 정상)';
+  } else if (mode === 'ocr') {
+    hideEl('scan-barcode-btns'); showEl('scan-ocr-btns'); hideEl('scan-photo-btns');
+    hideEl('scan-code-section');  showEl('scan-ocr-tips');
+    document.getElementById('scan-frame-el').style.cssText = 'border-radius:8px;width:90%;aspect-ratio:3/4;';
+    document.getElementById('scan-hint').textContent = '병 라벨 전체를 사각형 안에 맞추고 📸 촬영';
+  } else { 
+    hideEl('scan-barcode-btns'); hideEl('scan-ocr-btns'); showEl('scan-photo-btns');
+    hideEl('scan-code-section'); hideEl('scan-ocr-tips'); hideEl('scan-video-wrap');
+  }
+}
+
+var torchOn      = false;
+var timerOn      = false;
+var zoomLevel    = 1;
+var blurCheckInterval = null;
+
+async function startScan(mode) {
+  if (mode) scanMode = mode;
+  stopScan();
+  torchOn = false; timerOn = false; zoomLevel = 1;
+  var btnTorch = document.getElementById('btn-torch');
+  var btnTimer = document.getElementById('btn-timer');
+  if (btnTorch) btnTorch.classList.remove('active');
+  if (btnTimer) btnTimer.classList.remove('active');
+  var zoomSlider = document.getElementById('zoom-slider');
+  if (zoomSlider) { zoomSlider.value = 1; }
+  var zoomLbl = document.getElementById('zoom-lbl');
+  if (zoomLbl) zoomLbl.textContent = '1\xd7';
+
+  var wrap  = document.getElementById('scan-video-wrap');
+  var video = document.getElementById('scan-video');
+  wrap.style.display = '';
+  hide('scan-capture-preview');
+  hideFocusMarker();
+
+  try {
+    
+    
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    var constraints = isIOS ? {
+      video: { facingMode: { exact: 'environment' } }
+    } : {
+      video: {
+        facingMode: 'environment',
+        width:  { ideal: 1920 },
+        height: { ideal: 1080 },
+        focusMode: { ideal: 'continuous' },
+        zoom: { ideal: 1 },
+      }
+    };
+    scanStream = await navigator.mediaDevices.getUserMedia(constraints);
+    video.srcObject = scanStream;
+    await video.play();
+
+    
+    var track = scanStream.getVideoTracks()[0];
+    if (track) {
+      var caps = track.getCapabilities ? track.getCapabilities() : {};
+      
+      var advConstraints = {};
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        advConstraints.focusMode = 'continuous';
+      }
+      
+      if (caps.zoom) {
+        advConstraints.zoom = caps.zoom.min || 1;
+        zoomLevel = advConstraints.zoom;
+        var sl = document.getElementById('zoom-slider');
+        if (sl) {
+          sl.min  = caps.zoom.min || 1;
+          sl.max  = Math.min(caps.zoom.max || 4, 8);
+          sl.step = caps.zoom.step || 0.1;
+          sl.value = zoomLevel;
+        }
+      }
+      if (Object.keys(advConstraints).length > 0) {
+        track.applyConstraints({ advanced: [advConstraints] }).catch(function(){});
+      }
+    }
+
+    
+    if (scanMode === 'ocr') {
+      startBlurMonitor();
+    }
+
+    if (scanMode === 'barcode') {
+      if (typeof jsQR !== 'function') {
+        setResult('<div style="color:var(--red-dark);padding:8px;">⚠️ QR 라이브러리 오류.</div>');
+        return;
+      }
+
+      
+      var overlayCvs = document.getElementById('qr-overlay-canvas');
+      var overlayCtx = overlayCvs ? overlayCvs.getContext('2d') : null;
+      var focusRing  = document.getElementById('qr-focus-ring');
+
+      
+      var QR_W = 640, QR_H = 480;
+      var qrCvs = document.createElement('canvas');
+      qrCvs.width = QR_W; qrCvs.height = QR_H;
+      var qrCtx  = qrCvs.getContext('2d', {willReadFrequently: true});
+
+      var vidEl = document.getElementById('scan-video');
+      setResult('<div style="font-size:12px;color:var(--green-dark);padding:6px 0;text-align:center;">'
+        + '📱 QR코드를 카메라에 비추면 자동으로 인식됩니다</div>');
+
+      
+      _setupQrAutoFocus(0.5, 0.5);
+
+      
+      window._afTimer = setInterval(function() {
+        _setupQrAutoFocus(0.5, 0.5);
+      }, 3000);
+
+      var _busy    = false;
+      var _lastQr  = null;   
+      var _drawCnt = 0;      
+
+      scanInterval = setInterval(function() {
+        if (_busy) return;
+        if (!vidEl || vidEl.readyState < 3) return;
+        var vw = vidEl.videoWidth, vh = vidEl.videoHeight;
+        if (!vw || !vh) return;
+
+        
+        if (overlayCvs) {
+          overlayCvs.width  = vw;
+          overlayCvs.height = vh;
+        }
+
+        _busy = true;
+        try {
+          qrCvs.width = QR_W; qrCvs.height = QR_H;
+          qrCtx.drawImage(vidEl, 0, 0, QR_W, QR_H);
+          var imgData = qrCtx.getImageData(0, 0, QR_W, QR_H);
+          var code    = jsQR(imgData.data, QR_W, QR_H, {inversionAttempts: 'attemptBoth'});
+
+          if (code && code.data) {
+            var loc = code.location;
+            
+            if (overlayCtx && loc) {
+              
+              var sx = vw / QR_W, sy = vh / QR_H;
+              overlayCtx.clearRect(0, 0, vw, vh);
+
+              
+              var pts = [
+                {x: loc.topLeftCorner.x * sx,     y: loc.topLeftCorner.y * sy},
+                {x: loc.topRightCorner.x * sx,    y: loc.topRightCorner.y * sy},
+                {x: loc.bottomRightCorner.x * sx, y: loc.bottomRightCorner.y * sy},
+                {x: loc.bottomLeftCorner.x * sx,  y: loc.bottomLeftCorner.y * sy},
+              ];
+
+              
+              overlayCtx.fillStyle = 'rgba(0, 230, 118, 0.15)';
+              overlayCtx.beginPath();
+              overlayCtx.moveTo(pts[0].x, pts[0].y);
+              pts.slice(1).forEach(function(p){ overlayCtx.lineTo(p.x, p.y); });
+              overlayCtx.closePath();
+              overlayCtx.fill();
+
+              
+              overlayCtx.strokeStyle = '#00E676';
+              overlayCtx.lineWidth   = Math.max(3, vw * 0.004);
+              overlayCtx.lineJoin    = 'round';
+              overlayCtx.beginPath();
+              overlayCtx.moveTo(pts[0].x, pts[0].y);
+              pts.slice(1).forEach(function(p){ overlayCtx.lineTo(p.x, p.y); });
+              overlayCtx.closePath();
+              overlayCtx.stroke();
+
+              
+              overlayCtx.fillStyle = '#00E676';
+              pts.forEach(function(p) {
+                overlayCtx.beginPath();
+                overlayCtx.arc(p.x, p.y, 6, 0, Math.PI*2);
+                overlayCtx.fill();
+              });
+
+              
+              var cx = pts.reduce(function(a,p){return a+p.x;},0)/4;
+              var cy = pts.reduce(function(a,p){return a+p.y;},0)/4;
+              if (focusRing) {
+                var rect = overlayCvs.getBoundingClientRect();
+                var rx = (cx / vw) * rect.width;
+                var ry = (cy / vh) * rect.height;
+                focusRing.style.display = '';
+                focusRing.style.left    = rx + 'px';
+                focusRing.style.top     = ry + 'px';
+              }
+
+              
+              var fx = loc.topLeftCorner.x / QR_W + (loc.topRightCorner.x - loc.topLeftCorner.x) / QR_W / 2;
+              var fy = loc.topLeftCorner.y / QR_H + (loc.bottomLeftCorner.y - loc.topLeftCorner.y) / QR_H / 2;
+              _setupQrAutoFocus(
+                Math.max(0, Math.min(1, fx)),
+                Math.max(0, Math.min(1, fy))
+              );
+
+              _drawCnt = 8; 
+            }
+
+            
+            if (code.data.trim() !== _lastQr) {
+              _lastQr = code.data.trim();
+              if (navigator.vibrate) navigator.vibrate([50,30,50]);
+              showToast('✅ QR 인식 완료');
+
+              
+              var _val = code.data.trim();
+              setTimeout(function() {
+                clearInterval(scanInterval);
+                if (window._afTimer) { clearInterval(window._afTimer); window._afTimer=null; }
+                scanInterval = null;
+                _onQrScanned(_val);
+              }, 300);
+            }
+
+          } else {
+            
+            if (_drawCnt > 0) {
+              _drawCnt--;
+            } else if (overlayCtx) {
+              overlayCtx.clearRect(0, 0, vw, vh);
+              if (focusRing) focusRing.style.display = 'none';
+            }
+          }
+        } catch(e) {
+          
+        } finally {
+          _busy = false;
+        }
+      }, 150);
+    }
+  } catch(e) {
+    setResult('<div style="color:var(--red-dark);font-size:12px;">\ud83d\udcf7 카메라 접근 오류: '+esc(e.message)+'<br>설정에서 카메라 권한을 허용해주세요.</div>');
+    wrap.style.display = 'none';
+  }
+}
+
+function tapToFocus(event) {
+  var video = document.getElementById('scan-video');
+  var wrap  = document.getElementById('scan-video-wrap');
+  if (!scanStream || !video) return;
+
+  
+  var rect = wrap.getBoundingClientRect();
+  var x = (event.clientX - rect.left) / rect.width;
+  var y = (event.clientY - rect.top)  / rect.height;
+
+  
+  showFocusMarker(event.clientX - rect.left, event.clientY - rect.top);
+
+  
+  var track = scanStream ? scanStream.getVideoTracks()[0] : null;
+  if (track) {
+    var caps = track.getCapabilities ? track.getCapabilities() : {};
+    var constr = {};
+    if (caps.focusMode && caps.focusMode.includes('manual')) {
+      constr.focusMode = 'manual';
+    }
+    if (caps.pointOfInterest) {
+      constr.pointOfInterest = { x: x, y: y };
+    }
+    if (Object.keys(constr).length > 0) {
+      track.applyConstraints({ advanced: [constr] })
+        .then(function() {
+          
+          setTimeout(function() {
+            if (track.readyState === 'live') {
+              track.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }).catch(function(){});
+    
+    if (scanMode === 'barcode' && scanInterval) {
+      clearInterval(scanInterval);
+      scanInterval = null;
+      setTimeout(function(){ startScan('barcode'); }, 800);
+    }
+              lockFocusMarker(false);
+            }
+          }, 1500);
+          lockFocusMarker(true);
+        })
+        .catch(function() {
+          lockFocusMarker(false);
+        });
+    }
+  }
+}
+
+function showFocusMarker(px, py) {
+  var m = document.getElementById('focus-marker');
+  if (!m) return;
+  m.style.display = 'block';
+  m.style.left = px + 'px';
+  m.style.top  = py + 'px';
+  m.classList.remove('locked');
+  
+  clearTimeout(m._hideTimer);
+  m._hideTimer = setTimeout(function() { m.style.display='none'; }, 3000);
+}
+function lockFocusMarker(locked) {
+  var m = document.getElementById('focus-marker');
+  if (!m) return;
+  if (locked) m.classList.add('locked');
+  else m.classList.remove('locked');
+}
+function hideFocusMarker() {
+  var m = document.getElementById('focus-marker');
+  if (m) m.style.display = 'none';
+}
+
+function applyZoom(val) {
+  zoomLevel = parseFloat(val);
+  var lbl = document.getElementById('zoom-lbl');
+  if (lbl) lbl.textContent = (Math.round(zoomLevel*10)/10) + '\xd7';
+
+  if (!scanStream) return;
+  var track = scanStream.getVideoTracks()[0];
+  if (!track) return;
+  var caps = track.getCapabilities ? track.getCapabilities() : {};
+  if (caps.zoom) {
+    track.applyConstraints({ advanced: [{ zoom: zoomLevel }] }).catch(function(){});
+  } else {
+    
+    var video = document.getElementById('scan-video');
+    if (video) video.style.transform = 'scale('+zoomLevel+')';
+  }
+}
+
+async function toggleTorch() {
+  if (!scanStream) return;
+  var track = scanStream.getVideoTracks()[0];
+  if (!track) return;
+  var caps = track.getCapabilities ? track.getCapabilities() : {};
+  if (!caps.torch) { showToast('\ud83d\udca1 이 기기는 플래시를 지원하지 않습니다'); return; }
+  torchOn = !torchOn;
+  await track.applyConstraints({ advanced: [{ torch: torchOn }] }).catch(function(){});
+  var btn = document.getElementById('btn-torch');
+  if (btn) btn.classList.toggle('active', torchOn);
+  showToast(torchOn ? '\ud83d\udca1 플래시 켜짐' : '\ud83d\udca1 플래시 꺼짐');
+}
+
+function toggleTimer() {
+  timerOn = !timerOn;
+  var btn = document.getElementById('btn-timer');
+  if (btn) btn.classList.toggle('active', timerOn);
+  showToast(timerOn ? '\u23f1 타이머 ON (3초 후 촬영)' : '\u23f1 타이머 OFF');
+}
+
+function captureOcrWithTimer() {
+  if (timerOn) {
+    
+    var wrap = document.getElementById('scan-video-wrap');
+    var overlay = document.createElement('div');
+    overlay.className = 'countdown-overlay';
+    overlay.id = 'countdown-overlay';
+    wrap.appendChild(overlay);
+    var count = 3;
+    function tick() {
+      overlay.innerHTML = '<div class="countdown-num">'+count+'</div>';
+      if (count <= 0) {
+        overlay.remove();
+        captureOcr();
+      } else {
+        count--;
+        setTimeout(tick, 1000);
+      }
+    }
+    tick();
+  } else {
+    captureOcr();
+  }
+}
+
+function startBlurMonitor() {
+  var sharpWrap = document.getElementById('sharpness-bar-wrap');
+  if (sharpWrap) sharpWrap.style.display = '';
+  if (blurCheckInterval) clearInterval(blurCheckInterval);
+  blurCheckInterval = setInterval(function() {
+    var score = measureSharpness();
+    updateSharpnessBar(score);
+  }, 800);
+}
+
+function stopBlurMonitor() {
+  if (blurCheckInterval) { clearInterval(blurCheckInterval); blurCheckInterval=null; }
+  var sharpWrap = document.getElementById('sharpness-bar-wrap');
+  if (sharpWrap) sharpWrap.style.display = 'none';
+}
+
+function measureSharpness() {
+  var video = document.getElementById('scan-video');
+  if (!video || !video.videoWidth) return 0;
+  var c = document.getElementById('scan-canvas');
+  var W = Math.min(video.videoWidth,  320);  
+  var H = Math.min(video.videoHeight, 180);
+  c.width = W; c.height = H;
+  var ctx = c.getContext('2d');
+  ctx.drawImage(video, 0, 0, W, H);
+  var id = ctx.getImageData(0, 0, W, H).data;
+
+  
+  var gray = new Float32Array(W*H);
+  for (var i=0; i<id.length; i+=4) {
+    gray[i/4] = 0.299*id[i] + 0.587*id[i+1] + 0.114*id[i+2];
+  }
+  var lapSum = 0, cnt = 0;
+  for (var y=1; y<H-1; y++) {
+    for (var x=1; x<W-1; x++) {
+      var lap = -4*gray[y*W+x]
+        + gray[(y-1)*W+x] + gray[(y+1)*W+x]
+        + gray[y*W+(x-1)] + gray[y*W+(x+1)];
+      lapSum += lap*lap; cnt++;
+    }
+  }
+  return cnt > 0 ? Math.sqrt(lapSum/cnt) : 0;
+}
+
+function updateSharpnessBar(score) {
+  
+  var pct   = Math.min(100, Math.round(score / 40 * 100));
+  var color = pct >= 60 ? 'var(--green-mid)' : pct >= 30 ? '#FFA726' : 'var(--red-dark)';
+  var fill  = document.getElementById('sharpness-fill');
+  var val   = document.getElementById('sharpness-val');
+  var badge = document.getElementById('blur-badge');
+  if (fill) { fill.style.width = pct+'%'; fill.style.background = color; }
+  if (val)  val.textContent = (pct >= 60 ? '선명 ✅' : pct >= 30 ? '보통 ⚠️' : '흐림 ❌') + ' ('+pct+'%)';
+  if (badge) badge.style.display = pct < 30 ? '' : 'none';
+}
+
+function checkBlur() {
+  var score = measureSharpness();
+  var pct   = Math.min(100, Math.round(score/40*100));
+  if (pct >= 60) showToast('\u2705 선명도 양호 ('+pct+'%) — 촬영하세요!');
+  else if (pct >= 30) showToast('\u26a0\ufe0f 보통 선명도 ('+pct+'%) — 조금 더 가까이');
+  else showToast('\u274c 흐림 ('+pct+'%) — 화면 탭으로 초점 맞추세요');
+}
+
+function stopScan() {
+  stopBlurMonitor();
+  if (scanInterval) { clearInterval(scanInterval); scanInterval=null; }
+  if (window._afTimer) { clearInterval(window._afTimer); window._afTimer=null; }
+  if (scanStream)   {
+    
+    var track = scanStream.getVideoTracks()[0];
+    if (track && torchOn) {
+      track.applyConstraints({ advanced:[{torch:false}] }).catch(function(){});
+      torchOn = false;
+    }
+    scanStream.getTracks().forEach(function(t){ t.stop(); });
+    scanStream = null;
+  }
+  var vw = document.getElementById('scan-video-wrap');
+  if (vw) vw.style.display = 'none';
+  hideFocusMarker();
+  
+  var video = document.getElementById('scan-video');
+  if (video) video.style.transform = '';
+}
+
+function captureOcr() {
+  var video  = document.getElementById('scan-video');
+  var canvas = document.getElementById('scan-canvas');
+  if (!video.srcObject) { showToast('먼저 카메라를 시작하세요'); return; }
+
+  
+  var scale = getOpt('opt-scale') ? 2 : 1;
+  canvas.width  = video.videoWidth  * scale;
+  canvas.height = video.videoHeight * scale;
+  var ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+  var dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+  stopScan();
+  showCapturedImage(dataUrl, '촬영 완료 — OCR 처리 중...');
+  runOcrOnImage(dataUrl);
+}
+
+function handlePhotoUpload(input) {
+  if (!input.files || !input.files[0]) return;
+  
+  var files = Array.from(input.files);
+  var idx   = 0;
+  function processNext() {
+    if (idx >= files.length) return;
+    var file = files[idx++];
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      showCapturedImage(e.target.result, '사진 '+idx+'/'+files.length+': '+file.name);
+      runOcrOnImage(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  }
+  processNext();
+  input.value = '';
+}
+
+function getOpt(id) {
+  var el = document.getElementById(id);
+  return el ? el.checked : false;
+}
+
+function showCapturedImage(dataUrl, label) {
+  var preview = document.getElementById('scan-capture-preview');
+  document.getElementById('scan-capture-img').src = dataUrl;
+  document.getElementById('scan-capture-label').textContent = label;
+  preview.style.display = '';
+  
+  var existing = preview.querySelector('.scan-retake-btn');
+  if (!existing) {
+    var btn = document.createElement('button');
+    btn.className = 'scan-retake-btn';
+    btn.textContent = '🔄 다시 촬영';
+    btn.onclick = function(){
+      preview.style.display = 'none';
+      document.getElementById('scan-result').innerHTML = '';
+      document.getElementById('scan-ocr-text-section').style.display = 'none';
+      if (scanMode==='ocr') startScan('ocr');
+    };
+    preview.style.position = 'relative';
+    preview.appendChild(btn);
+  }
+}
+
+async function runOcrOnImage(dataUrl) {
+  setResult('<div class="ocr-loading"><div class="ocr-spinner"></div>'
+    + '<div style="flex:1;">'
+    + '<div style="font-weight:500;margin-bottom:5px;">🔬 농약 포장 OCR 분석 중...</div>'
+    + '<div id="ocr-progress-txt" style="font-size:11px;color:rgba(255,255,255,.6);margin-bottom:5px;">준비 중...</div>'
+    + '<div class="rescan-progress"><div class="rescan-progress-bar" id="ocr-prog-bar" style="width:0%"></div></div>'
+    + '</div></div>');
+
+  function setP(pct, msg) {
+    var bar=document.getElementById('ocr-prog-bar');
+    var txt=document.getElementById('ocr-progress-txt');
+    if(bar) bar.style.width=pct+'%';
+    if(txt) txt.textContent=msg||'';
+  }
+
+  var rawText = '';
+  var confStr = 'medium';
+  var ocrEngine = '';
+
+  try {
+    
+    var gasUrl = getEffectiveGasUrl().trim();
+    if (gasUrl) {
+      setP(10, 'Google Drive OCR 호출 중... (정확도 높음)');
+      var gasResult = await callGasOcr(dataUrl, setP);
+      if (gasResult.ok) {
+        rawText  = gasResult.text;
+        confStr  = gasResult.koreanCharCount >= 10 ? 'high' : gasResult.koreanCharCount >= 3 ? 'medium' : 'low';
+        ocrEngine = 'Google Drive OCR';
+        setP(80, 'Drive OCR 완료 (한글 ' + gasResult.koreanCharCount + '자)');
+      } else {
+        
+        setP(15, 'Drive OCR 실패 → Tesseract로 전환: ' + gasResult.error);
+      }
+    }
+
+    
+    if (!rawText) {
+      var tessResult = await runTesseractOcr(dataUrl, setP);
+      rawText  = tessResult.text;
+      confStr  = tessResult.confStr;
+      ocrEngine = tessResult.engine;
+    }
+
+    if (!rawText || !rawText.trim()) {
+      var hasGas = !!getEffectiveGasUrl();
+      setResult('<div class="ai-error-box">텍스트를 인식하지 못했습니다.<br>'
+        +'💡 라벨을 정면으로, 밝은 곳에서, 흔들리지 않게 촬영해 주세요.<br>'
+        + (hasGas ? '' :
+          '<div style="margin-top:8px;padding:8px 10px;background:#E3F2FD;border-radius:6px;font-size:11px;color:#1565C0;">'
+          +'🌐 <b>Tesseract.js만으로는 한글 인식이 어려울 수 있습니다.</b><br>'
+          +'Google Drive OCR을 연결하면 정확도가 크게 향상됩니다.'
+          +'</div>')
+        +'<div style="display:flex;gap:6px;margin-top:8px;">'
+        + (hasGas ? '' : '<button class="btn-primary" style="flex:1;" onclick="openGasSettingsModal()">⚙️ Drive OCR 연결하기</button>')
+        +'<button class="btn-secondary" style="flex:1;" onclick="showOcrTextInput()">📝 직접 입력</button>'
+        +'</div></div>');
+      return;
+    }
+
+    setP(85, 'OCR 오류 교정 적용 중...');
+    var corrected = applyOcrCorrections(rawText);
+
+    document.getElementById('scan-ocr-textarea').value = corrected;
+    document.getElementById('scan-ocr-text-section').style.display = '';
+
+    setP(95, '제품 정보 파싱 중...');
+    var parsed = parseAgriText(corrected, confStr);
+    parsed._ocrSummary = '<div style="font-size:10px;color:var(--gray-400);margin-bottom:8px;background:var(--gray-100);border-radius:4px;padding:6px 8px;">'
+      +'🔬 OCR 엔진: ' + esc(ocrEngine) + ' · 한글 ' + ((corrected.match(/[가-힣]/g)||[]).length) + '자 인식</div>';
+
+    ocrParsed = parsed;
+    setP(100, '완료!');
+    renderOcrResult(parsed);
+    
+    if (window._scanForPesticide) {
+      window._scanForPesticide = false;
+      setTimeout(function(){ _linkScanResultToPestReg(parsed); }, 400);
+    }
+    if (window._scanForFertilizer) {
+      window._scanForFertilizer = false;
+      setTimeout(function(){ _linkScanResultToFertReg(parsed); }, 400);
+    }
+
+    if (parsed.barcode) document.getElementById('scan-code-input').value = parsed.barcode;
+
+  } catch(e) {
+    setResult('<div class="ai-error-box">OCR 오류: '+esc(e.message)+'<br>'
+      +'<button class="btn-secondary" style="margin-top:8px;width:100%;" onclick="showOcrTextInput()">📝 직접 입력</button></div>');
+  }
+}
+
+async function callGasOcr(dataUrl, setP) {
+  try {
+    var gasUrl = getEffectiveGasUrl().trim();
+    var resp = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },  
+      body: JSON.stringify({ action: 'ocr', imageBase64: dataUrl })
+    });
+    if (!resp.ok) return { ok:false, error: 'HTTP ' + resp.status };
+    var data = await resp.json();
+    if (!data.success) return { ok:false, error: data.error || '알 수 없는 오류' };
+    return { ok:true, text: data.text || '', koreanCharCount: data.koreanCharCount || 0 };
+  } catch(e) {
+    var msg = e.message || String(e);
+    if (msg.includes('Load failed') || msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+      return { ok:false, error: 'CORS 또는 네트워크 오류 (GAS 배포 설정 확인 필요)' };
+    }
+    return { ok:false, error: msg };
+  }
+}
+
+async function runTesseractOcr(dataUrl, setP) {
+  
+  setP(5, '이미지 전처리 중...');
+  var MAX_PX = 1100;
+  var processedVariants;
+  try {
+    processedVariants = preprocessForOcr(dataUrl, MAX_PX);
+  } catch(prepErr) {
+    console.error('[OCR] 전처리 오류:', prepErr);
+    return { ok: false, error: '이미지 전처리 실패: ' + prepErr.message };
+  }
+
+  setP(15, 'OCR 엔진 초기화...');
+  var worker;
+  try {
+    
+    worker = await Tesseract.createWorker('kor', 1, {
+      logger: function(m) {
+        if (m.status === 'recognizing text')
+          setP(20 + Math.round((m.progress||0)*55), '인식 중 ' + Math.round((m.progress||0)*100) + '%');
+      },
+      langPath: 'https://tessdata.projectnaptha.com/4.0.0_best',
+    });
+  } catch(e1) {
+    try {
+      
+      worker = await Tesseract.createWorker('kor', 1, {
+        logger: function(m) {
+          if (m.status === 'recognizing text')
+            setP(20 + Math.round((m.progress||0)*55), '인식 중 ' + Math.round((m.progress||0)*100) + '%');
+        },
+      });
+    } catch(e2) {
+      return { ok: false, error: 'Tesseract 엔진 로드 실패: ' + e2.message };
+    }
+  }
+
+  setP(20, '텍스트 인식 중...');
+  var bestResult = null;
+  var bestConf   = -1;
+  var lastError  = null;
+
+  
+  for (var vi = 0; vi < processedVariants.length; vi++) {
+    try {
+      await worker.setParameters({
+        tessedit_char_whitelist: '',
+        preserve_interword_spaces: '1',
+        tessedit_pageseg_mode: vi === 0 ? '6' : '3',
+      });
+      var r = await worker.recognize(processedVariants[vi]);
+      var rawText = (r.data && r.data.text) || '';
+      var conf    = (r.data && r.data.confidence) || 0;
+
+      
+      var corrected = applyOcrCorrections(rawText);
+      if (!corrected || corrected.trim().length < 5) continue;
+
+      
+      if (conf > bestConf) {
+        bestConf   = conf;
+        bestResult = { text: corrected, rawText: rawText, confidence: conf };
+      }
+    } catch(recErr) {
+      lastError = recErr.message;
+      console.warn('[OCR] 변형본 ' + vi + ' 인식 실패:', recErr.message);
+    }
+  }
+
+  
+  try { await worker.terminate(); } catch(e) {}
+
+  if (!bestResult) {
+    return {
+      ok: false,
+      error: lastError || 'OCR 인식 결과 없음 — 이미지가 너무 어둡거나 흐릿합니다'
+    };
+  }
+
+  
+  if (bestConf < 40) {
+    console.warn('[OCR] 낮은 신뢰도:', bestConf, '% — 수동 확인 권장');
+  }
+
+  setP(80, '텍스트 분석 중...');
+  return {
+    ok:         true,
+    text:       bestResult.text,
+    rawText:    bestResult.rawText,
+    confidence: bestConf,
+    confLabel:  bestConf >= 70 ? 'high' : bestConf >= 40 ? 'medium' : 'low',
+  };
+}
+
+function preprocessForOcr(dataUrl, maxPx) {
+  var img = new Image();
+  img.src = dataUrl;
+  var iw = img.naturalWidth  || 800;
+  var ih = img.naturalHeight || 600;
+  var scale = Math.min(maxPx/iw, maxPx/ih, 1.0);
+  var W = Math.round(iw*scale), H = Math.round(ih*scale);
+
+  var c = document.createElement('canvas');
+  c.width=W; c.height=H;
+  var ctx = c.getContext('2d');
+  ctx.drawImage(img, 0, 0, W, H);
+
+  
+  var regions = [
+    { y1: Math.round(H*0.05), y2: Math.round(H*0.65), label: 'full' },
+    { y1: Math.round(H*0.10), y2: Math.round(H*0.50), label: 'top' },
+  ];
+
+  var variants = [];
+  regions.forEach(function(reg) {
+    var rH = reg.y2 - reg.y1;
+    var rc = document.createElement('canvas');
+    rc.width=W; rc.height=rH;
+    var rctx = rc.getContext('2d');
+    rctx.drawImage(c, 0, reg.y1, W, rH, 0, 0, W, rH);
+    var imgData = rctx.getImageData(0,0,W,rH);
+    var d = imgData.data;
+
+    
+    var gray = new Uint8Array(W*rH);
+    var hist = new Int32Array(256);
+    for (var i=0;i<d.length;i+=4) {
+      var g = Math.round(d[i]*0.299+d[i+1]*0.587+d[i+2]*0.114);
+      gray[i/4]=g; hist[g]++;
+    }
+
+    
+    var total=W*rH, sumT=0, sumB=0, wB=0, maxV=0, thr=128;
+    for (var t=0;t<256;t++) sumT+=t*hist[t];
+    for (var t2=0;t2<256;t2++) {
+      wB+=hist[t2]; if(!wB) continue;
+      var wF=total-wB; if(!wF) break;
+      sumB+=t2*hist[t2];
+      var mB=sumB/wB, mF=(sumT-sumB)/wF;
+      var v=wB*wF*(mB-mF)*(mB-mF);
+      if(v>maxV){maxV=v;thr=t2;}
+    }
+
+    
+    for (var j=0;j<d.length;j+=4) {
+      var v2 = gray[j/4] > thr ? 255 : 0;
+      d[j]=d[j+1]=d[j+2]=v2; d[j+3]=255;
+    }
+    rctx.putImageData(imgData,0,0);
+    variants.push({ dataUrl: rc.toDataURL('image/png'), label: reg.label+'_otsu('+thr+')' });
+
+    
+    var rc2 = document.createElement('canvas');
+    rc2.width=W; rc2.height=rH;
+    var rctx2 = rc2.getContext('2d');
+    rctx2.drawImage(c, 0, reg.y1, W, rH, 0, 0, W, rH);
+    var imgData2 = rctx2.getImageData(0,0,W,rH);
+    var d2=imgData2.data;
+    for (var k=0;k<d2.length;k+=4) {
+      var g2=Math.round(d2[k]*0.299+d2[k+1]*0.587+d2[k+2]*0.114);
+      
+      g2 = Math.min(255,Math.max(0,Math.round((g2-128)*1.8+128)));
+      d2[k]=d2[k+1]=d2[k+2]=g2;
+    }
+    rctx2.putImageData(imgData2,0,0);
+    variants.push({ dataUrl: rc2.toDataURL('image/png'), label: reg.label+'_contrast' });
+  });
+  
+  var bigRow = findBigTextRow(c, W, H);
+  if (bigRow) {
+    var br = document.createElement('canvas');
+    br.width=W; br.height=bigRow.h+20;
+    var brctx=br.getContext('2d');
+    brctx.drawImage(c, 0, bigRow.y-10, W, bigRow.h+20, 0, 0, W, bigRow.h+20);
+    
+    var br3=document.createElement('canvas');
+    br3.width=W*3; br3.height=(bigRow.h+20)*3;
+    br3.getContext('2d').drawImage(br, 0,0, br3.width, br3.height);
+    
+    var brid=br3.getContext('2d').getImageData(0,0,br3.width,br3.height);
+    var brd=brid.data;
+    var brg=new Uint8Array(br3.width*br3.height);
+    var brh2=new Int32Array(256);
+    for(var i=0;i<brd.length;i+=4){ var g=Math.round(brd[i]*.299+brd[i+1]*.587+brd[i+2]*.114); brg[i/4]=g; brh2[g]++; }
+    var brthr=128, brsT=0,brwB=0,brsB=0,brmxV=0,brtot=br3.width*br3.height;
+    for(var t=0;t<256;t++) brsT+=t*brh2[t];
+    for(var t2=0;t2<256;t2++){
+      brwB+=brh2[t2]; if(!brwB) continue;
+      var brwF=brtot-brwB; if(!brwF) break;
+      brsB+=t2*brh2[t2]; var brmB=brsB/brwB,brmF=(brsT-brsB)/brwF;
+      var brv=brwB*brwF*(brmB-brmF)*(brmB-brmF);
+      if(brv>brmxV){brmxV=brv;brthr=t2;}
+    }
+    for(var j=0;j<brd.length;j+=4){ var v3=brg[j/4]>brthr?255:0; brd[j]=brd[j+1]=brd[j+2]=v3; }
+    br3.getContext('2d').putImageData(brid,0,0);
+    variants.push({dataUrl:br3.toDataURL('image/png'), label:'bigrow_y'+bigRow.y+'_3x'});
+  }
+
+  return variants;
+}
+
+function findBigTextRow(canvas, W, H) {
+  var ctx=canvas.getContext('2d');
+  var cropH=Math.round(H*.65);
+  var imgData=ctx.getImageData(0,0,W,cropH);
+  var d=imgData.data;
+
+  
+  var gray=new Uint8Array(W*cropH), hist=new Int32Array(256);
+  for(var i=0;i<d.length;i+=4){ var g=Math.round(d[i]*.299+d[i+1]*.587+d[i+2]*.114); gray[i/4]=g; hist[g]++; }
+  var total=W*cropH,sumT=0,sumB=0,wB=0,maxV=0,thr=128;
+  for(var t=0;t<256;t++) sumT+=t*hist[t];
+  for(var t2=0;t2<256;t2++){
+    wB+=hist[t2]; if(!wB) continue;
+    var wF=total-wB; if(!wF) break;
+    sumB+=t2*hist[t2]; var mB=sumB/wB,mF=(sumT-sumB)/wF;
+    var v=wB*wF*(mB-mF)*(mB-mF); if(v>maxV){maxV=v;thr=t2;}
+  }
+
+  
+  var rowDark=new Int32Array(cropH);
+  for(var y=0;y<cropH;y++){
+    for(var x=0;x<W;x++){ if(gray[y*W+x]<thr) rowDark[y]++; }
+  }
+
+  
+  var minDark=Math.round(W*.05);
+  var bands=[], inBand=false, bStart=0;
+  for(var y2=0;y2<cropH;y2++){
+    if(rowDark[y2]>=minDark && !inBand){ inBand=true; bStart=y2; }
+    else if(rowDark[y2]<minDark && inBand){
+      inBand=false;
+      var bh=y2-bStart;
+      if(bh>=10) bands.push({y:bStart, h:bh});
+    }
+  }
+  if(inBand && cropH-bStart>=10) bands.push({y:bStart, h:cropH-bStart});
+
+  if(!bands.length) return null;
+  
+  bands.sort(function(a,b){return b.h-a.h;});
+  return bands[0];
+}
+
+function applyOcrCorrections(text) {
+  var fixes = [
+    
+    [/트리플록시스트로\s*빈/g,              '트리플록시스트로빈'],
+    [/에스[떼뗴][둥틱톡]라클로르/g,         '에스메톨라클로르'],
+    [/에스피농라클로르/g,                    '에스메톨라클로르'],
+    [/에스메[톨놀]라클로르/g,               '에스메톨라클로르'],
+    [/플룩사메[티터]마이[트드]\s*유[티위테]세/g, '플룩사메타마이드 유탁제'],
+    [/플룩사메타마이[트드]/g,               '플룩사메타마이드'],
+    [/플루아지님/g,                          '플루아지남'],
+    [/플루아지[나내냐]/g,                   '플루아지남'],
+    [/메[탈달]락[실씰][엠옘앰]/g,          '메탈락실엠'],
+    [/디[페패]노코[나다][졸족]/g,          '디페노코나졸'],
+    [/이미녹[타다][딘딘]/g,                 '이미녹타딘'],
+    [/에토프로[포파][스즈]/g,               '에토프로포스'],
+    
+    [/리도[딜밀][골굴]드/g,                '리도밀골드'],
+    [/영[밀믿]\s*리도/g,                   '영일 리도'],
+    [/삼진[학환왜왕]/g,                     '삼진왕'],
+    [/후[론롬롤]사이[드트]/g,              '후론사이드'],
+    [/다트[를를]/g,                         '다트롤'],
+    [/듀[알앨]골[드트]/g,                  '듀알골드'],
+    
+    [/품봄[랑명]/g,                         '품목명'],
+    [/품봄/g,                               '품목'],
+    [/액상수[헤헤에]/g,                    '액상수화제'],
+    [/저[특특독]성/g,                       '저독성'],
+    [/살[군균]제/g,                         '살균제'],
+    [/살[충종]제/g,                         '살충제'],
+    [/농[악아]/g,                           '농약'],
+    [/입[재제]/g,                           '입제'],
+    [/유[탁탑]제/g,                         '유탁제'],
+    
+    [/피노[큐쿼]나졸/g,                     '디페노코나졸'],
+    [/트리[세테]트/g,                       '트리아세테이트'],
+    [/미탁[서]/g,                           '미탁제'],
+    [/[무봄봄]목명/g,                       '품목명'],
+    [/에스[피]농라클로르/g,                 '에스메톨라클로르'],
+    [/에스피[농롱통]라클로르/g,             '에스메톨라클로르'],
+    [/에스메[톨]라클[오로]르/g,             '에스메톨라클로르'],
+    [/에토프로[파][스]/g,                   '에토프로포스'],
+    [/다트[를뢸]/g,                         '다트롤'],
+    [/후[론]사이[트]/g,                     '후론사이드'],
+    [/리도[딜][골]드/g,                     '리도밀골드'],
+    [/삼진[학환]/g,                         '삼진왕'],
+  ];
+  var result = text;
+  fixes.forEach(function(pair) { result = result.replace(pair[0], pair[1]); });
+  return result;
+}
+
+function toggleOcrTextEdit() {
+  var body = document.getElementById('ocr-textedit-body');
+  var arrow = document.getElementById('ocr-textedit-arrow');
+  if (!body) return;
+  var isHidden = body.style.display === 'none';
+  body.style.display = isHidden ? '' : 'none';
+  if (arrow) arrow.textContent = isHidden ? '▼' : '▶';
+}
+
+function toggleRawTextBox(toggleEl) {
+  var box = toggleEl.nextElementSibling;
+  if (!box) return;
+  var isHidden = box.style.display === 'none';
+  box.style.display = isHidden ? 'block' : 'none';
+  toggleEl.textContent = isHidden
+    ? '▼ 원문 텍스트 숨기기'
+    : '▶ 원문 텍스트 보기 (클릭하여 제품명에 적용)';
+}
+
+function buildClickableRawText(rawText) {
+  var lines = rawText.split('\n').map(function(l){ return l.trim(); }).filter(Boolean);
+  return lines.map(function(line){
+    
+    var words = line.split(/\s+/).filter(function(w){ return w.length>=2; });
+    var lineHtml = '<div class="ocr-raw-line">'
+      + '<span class="ocr-raw-line-full" data-text="'+esc(line)+'" onclick="applyRawTextClick(this)" title="클릭하면 전체 줄이 제품명에 입력됩니다">'
+      + esc(line) + '</span>';
+    
+    if (words.length >= 2) {
+      lineHtml += '<span class="ocr-raw-word-list">'
+        + words.map(function(w){
+            return '<span class="ocr-raw-word" data-text="'+esc(w)+'" onclick="applyRawTextClick(this);event.stopPropagation();">'+esc(w)+'</span>';
+          }).join('')
+        + '</span>';
+    }
+    lineHtml += '</div>';
+    return lineHtml;
+  }).join('');
+}
+
+var _activeOcrFieldId = 'ocr-f-name';  
+function setActiveOcrField(id) {
+  _activeOcrFieldId = id;
+  
+  document.querySelectorAll('.ocr-field-item input, .ocr-field-item textarea, .ocr-field-item select').forEach(function(el){
+    el.classList.remove('ocr-field-active');
+  });
+  var el = document.getElementById(id);
+  if (el) el.classList.add('ocr-field-active');
+
+  
+  document.querySelectorAll('.ocr-quickjump-btn').forEach(function(b){
+    b.classList.toggle('active', b.getAttribute('data-target') === id);
+  });
+}
+
+function applyRawTextClick(el) {
+  var text = el.getAttribute('data-text') || el.textContent.trim();
+  if (!text) return;
+
+  var targetId = _activeOcrFieldId || 'ocr-f-name';
+  var target = document.getElementById(targetId);
+  
+  if (!target) { targetId = 'ocr-f-name'; target = document.getElementById(targetId); }
+  if (!target) return;
+
+  target.value = text;
+  target.style.transition = 'background-color .15s';
+  target.style.backgroundColor = '#FFF9C4';
+  setTimeout(function(){ target.style.backgroundColor = ''; }, 500);
+  target.focus();
+
+  if (targetId === 'ocr-f-name') {
+    var statusEl = document.getElementById('ocr-lookup-status');
+    if (statusEl) statusEl.textContent = '';
+  }
+
+  var fieldLabel = getOcrFieldLabel(targetId);
+  showToast('✅ [' + fieldLabel + ']에 적용: ' + text);
+}
+
+function getOcrFieldLabel(id) {
+  var labels = {
+    'ocr-f-name':'제품명', 'ocr-f-tab':'분류 탭', 'ocr-f-type':'세부분류',
+    'ocr-f-regno':'등록번호', 'ocr-f-ingredient':'성분·함량', 'ocr-f-mfr':'제조사',
+    'ocr-f-target':'방제대상·효과', 'ocr-f-method':'사용방법',
+    'ocr-f-amount':'사용량', 'ocr-f-timing':'사용시기', 'ocr-f-warning':'주의사항',
+  };
+  return labels[id] || '입력란';
+}
+
+function buildQuickJumpBar() {
+  var fields = [
+    {id:'ocr-f-name',       label:'제품명',     icon:'🏷️'},
+    {id:'ocr-f-ingredient', label:'성분',       icon:'🧪'},
+    {id:'ocr-f-target',     label:'방제대상',   icon:'🐛'},
+    {id:'ocr-f-method',     label:'사용방법',   icon:'💧'},
+    {id:'ocr-f-amount',     label:'사용량',     icon:'⚖️'},
+    {id:'ocr-f-timing',     label:'사용시기',   icon:'📅'},
+    {id:'ocr-f-warning',    label:'주의사항',   icon:'⚠️'},
+    {id:'ocr-f-regno',      label:'등록번호',   icon:'#'},
+    {id:'ocr-f-mfr',        label:'제조사',     icon:'🏭'},
+  ];
+  return '<div class="ocr-quickjump-bar">'
+    + fields.map(function(f){
+        return '<button type="button" class="ocr-quickjump-btn" data-target="'+f.id+'" onclick="jumpToOcrField(this)">'
+          + f.icon + ' ' + f.label + '</button>';
+      }).join('')
+    + '</div>';
+}
+
+function jumpToOcrField(btn) {
+  var targetId = btn.getAttribute('data-target');
+  setActiveOcrField(targetId);
+
+  
+  document.querySelectorAll('.ocr-quickjump-btn').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+
+  var target = document.getElementById(targetId);
+  if (target) {
+    target.scrollIntoView({ behavior:'smooth', block:'center' });
+    
+    target.style.transition = 'box-shadow .2s';
+    target.style.boxShadow = '0 0 0 3px rgba(21,101,192,.35)';
+    setTimeout(function(){ target.style.boxShadow=''; }, 700);
+  }
+  showToast('👉 [' + getOcrFieldLabel(targetId) + '] 선택됨 — 위에서 글자를 누르면 여기 채워집니다');
+}
+
+function collapseUpperScanUI() {
+  var toHide = ['scan-video-wrap', 'ocr-options-row', 'scan-capture-preview',
+                'scan-barcode-btns', 'scan-ocr-btns', 'scan-ocr-tips', 'scan-code-section'];
+  toHide.forEach(function(id){
+    var el = document.getElementById(id);
+    if (el) el.style.display = 'none';
+  });
+  
+  var tabs = document.querySelector('.scan-mode-tabs');
+  if (tabs) tabs.style.display = 'none';
+}
+
+function restoreUpperScanUI() {
+  var tabs = document.querySelector('.scan-mode-tabs');
+  if (tabs) tabs.style.display = '';
+  var opts = document.getElementById('ocr-options-row');
+  if (opts) opts.style.display = '';
+  var tips = document.getElementById('scan-ocr-tips');
+  if (tips) tips.style.display = '';
+  var ocrBtns = document.getElementById('scan-ocr-btns');
+  if (ocrBtns) ocrBtns.style.display = 'flex';
+}
+
+function renderOcrResult(p) {
+  if (!p) return;
+  _activeOcrFieldId = 'ocr-f-name';  
+
+  
+  collapseUpperScanUI();
+
+  var conf    = p.confidence||'low';
+  var confCls = conf==='high'?'background:#C8E6C9;color:#1B5E20;':conf==='medium'?'background:#FFF9C4;color:#E65100;':'background:#FFCDD2;color:#B71C1C;';
+
+  window._scanResult = p;  
+
+  var html2 = '';
+
+  
+  if (p.raw_text) {
+    html2 += '<div class="ocr-rawtext-panel">'
+      + '<div class="ocr-rawtext-title">👆 인식된 글자를 탭하세요</div>'
+      + '<div class="ocr-rawtext-sub">먼저 넣을 칸을 아래에서 선택 →  그 다음 글자를 누르면 채워집니다</div>'
+      + buildQuickJumpBar()
+      + '<div class="ocr-raw-box-big">' + buildClickableRawText(p.raw_text) + '</div>'
+      + '</div>';
+  }
+
+  
+  html2 += '<div class="ocr-result-card">'
+    + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">'
+    + '<div style="font-size:13px;font-weight:600;color:var(--green-dark);">📝 OCR 인식 결과</div>'
+    + '<span class="ocr-confidence" style="'+confCls+'">신뢰도: '+conf+'</span>'
+    + '</div>';
+
+  html2 += '<div class="ocr-field-row">'
+    + ocrFieldNameWithLookup('제품명 *', 'ocr-f-name', p.name||'', '제품명 입력 또는 위에서 클릭')
+    + ocrField('분류 탭',     'ocr-f-tab',        p.tab||'pest',    'select-tab', '')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('세부분류',    'ocr-f-type',       p.type||'',       'input',  '예: 살충제, 복합비료')
+    + ocrField('등록번호',    'ocr-f-regno',      p.regNo||p.barcode||'', 'input', '')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('성분·함량',   'ocr-f-ingredient', p.ingredient||'', 'input',  '예: 이미다클로프리드 8%')
+    + ocrField('제조사',      'ocr-f-mfr',        p.manufacturer||'','input', '')
+    + '</div>'
+    + '<div class="ocr-field-row">'
+    + ocrFieldFull('방제대상·효과', 'ocr-f-target', p.target||'',   '예: 진딧물, 나방류 유충...')
+    + '</div><div class="ocr-field-row">'
+    + ocrFieldFull('사용방법',      'ocr-f-method', p.method||'',   '예: 2,000배 경엽살포')
+    + '</div><div class="ocr-field-row">'
+    + ocrField('사용량',      'ocr-f-amount',  p.amount||'',  'input', '예: 20kg/10a')
+    + ocrField('사용시기',    'ocr-f-timing',  p.timing||'',  'input', '예: 생육기 전반')
+    + '</div>'
+    + '<div class="ocr-field-row">'
+    + ocrFieldFull('주의사항', 'ocr-f-warning', p.warning||'', '주의사항·안전정보')
+    + '</div>';
+
+  html2 += '<div style="display:flex;gap:6px;margin-top:12px;">'
+    + '<button class="btn-primary" style="flex:2;" onclick="saveOcrResult()">✅ DB에 등록</button>'
+    + '<button class="btn-secondary" style="flex:1;" onclick="retakeOcr()">🔄 재촬영</button>'
+    + '</div></div>';
+
+  setResult(html2);
+
+  
+  var firstBtn = document.querySelector('.ocr-quickjump-btn[data-target="ocr-f-name"]');
+  if (firstBtn) firstBtn.classList.add('active');
+}
+
+function ocrFieldNameWithLookup(label, id, val, ph) {
+  return '<div class="ocr-field-item" style="flex:100%;min-width:100%;">'
+    + '<label>'+label+'</label>'
+    + '<div style="display:flex;gap:5px;align-items:stretch;">'
+    + '<input id="'+id+'" type="text" value="'+esc(val)+'" placeholder="'+esc(ph)+'" '
+    +   'style="flex:1;" onfocus="setActiveOcrField(this.id)" oninput="document.getElementById(\'ocr-lookup-status\').textContent=\'\';">'
+    + '<button type="button" class="ocr-lookup-btn" onclick="lookupProductByName()" title="내장 DB에서 조회 (즉시)">🔍 DB조회</button>'
+    + '</div>'
+    + '<div id="ocr-lookup-status" class="ocr-lookup-status"></div>'
+    + '<div class="ocr-extlink-row">'
+    +   '<span style="font-size:10px;color:var(--gray-400);">작물별 사용시기·사용량 확인:</span>'
+    +   '<button type="button" class="ocr-extlink-btn" onclick="openExternalLookup(\'psis\')">🌐 농약안전정보시스템</button>'
+    +   '<button type="button" class="ocr-extlink-btn" onclick="openExternalLookup(\'nongsaro\')">🌱 농사로</button>'
+    + '</div>'
+    + '</div>';
+}
+
+function openExternalLookup(site) {
+  var nameInput = document.getElementById('ocr-f-name');
+  var name = nameInput ? nameInput.value.trim() : '';
+  if (!name) { showToast('제품명을 먼저 입력하세요'); return; }
+
+  var url;
+  if (site === 'psis') {
+    
+    url = 'https://psis.rda.go.kr/psis/index.ps?menuId=PS00069';
+  } else {
+    
+    url = 'https://www.nongsaro.go.kr/portal/ps/psc/pscc/insectAgchApplcLst.ps?menuId=PS00207';
+  }
+  
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(name).then(function(){
+      showToast('📋 "'+name+'" 복사됨 — 새 탭의 검색창에 붙여넣으세요');
+    }).catch(function(){});
+  } else {
+    showToast('새 탭에서 "'+name+'"을(를) 검색창에 입력하세요');
+  }
+  window.open(url, '_blank');
+}
+
+async function lookupProductByName() {
+  var nameInput = document.getElementById('ocr-f-name');
+  var statusEl  = document.getElementById('ocr-lookup-status');
+  var name = nameInput ? nameInput.value.trim() : '';
+
+  if (!name) {
+    statusEl.innerHTML = '<span style="color:var(--red-dark);">제품명을 먼저 입력하세요</span>';
+    return;
+  }
+
+  statusEl.innerHTML = '<span style="color:var(--gray-400);">🔍 DB에서 조회 중...</span>';
+
+  
+  var match = matchMasterDb(name);
+
+  if (match) {
+    fillOcrFieldsFromMatch(match);
+    statusEl.innerHTML = '<span style="color:var(--green-dark);">✅ DB 매칭: <b>'+esc(match.name)+'</b> — 정보가 자동으로 채워졌습니다</span>';
+    if (match.name !== name) {
+      
+      nameInput.value = match.name;
+    }
+    return;
+  }
+
+  
+  statusEl.innerHTML = '<span style="color:var(--gray-400);">🌐 추가 정보 검색 중...</span>';
+  var enriched = await enrichItemWithAI({ name: name });
+
+  if (enriched && enriched.hasUpdate) {
+    fillOcrFieldsFromMatch(enriched);
+    statusEl.innerHTML = '<span style="color:var(--blue-dark);">💡 유사 제품 정보로 보완됨'
+      + (enriched.summary ? ' — '+esc(enriched.summary) : '') + '</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--orange);">⚠️ DB에 일치하는 정보가 없습니다. 직접 입력해 주세요</span>';
+  }
+}
+
+function fillOcrFieldsFromMatch(src) {
+  var map = {
+    'ocr-f-type':       src.type,
+    'ocr-f-regno':      src.regNo,
+    'ocr-f-ingredient': src.ingredient,
+    'ocr-f-mfr':        src.manufacturer,
+    'ocr-f-target':     src.target,
+    'ocr-f-method':     src.method,
+    'ocr-f-amount':     src.amount,
+    'ocr-f-timing':     src.timing,
+    'ocr-f-warning':    src.warning,
+  };
+  Object.keys(map).forEach(function(id){
+    var el = document.getElementById(id);
+    if (el && !el.value && map[id]) {
+      el.value = map[id];
+      el.style.transition = 'background-color .15s';
+      el.style.backgroundColor = '#FFF9C4';
+      setTimeout(function(){ el.style.backgroundColor=''; }, 600);
+    }
+  });
+  
+  var tabSel = document.getElementById('ocr-f-tab');
+  if (tabSel && src.tab) tabSel.value = src.tab;
+}
+
+function ocrField(label, id, val, type, ph) {
+  var inner = type==='select-tab'
+    ? '<select id="'+id+'" onfocus="setActiveOcrField(this.id)"><option value="pest"'+(val==='pest'?' selected':'')+'>농약</option><option value="fert"'+(val==='fert'?' selected':'')+'>비료·퇴비·영양제</option><option value="micro"'+(val==='micro'?' selected':'')+'>미생물균</option></select>'
+    : '<input id="'+id+'" type="text" value="'+esc(val)+'" placeholder="'+esc(ph)+'" onfocus="setActiveOcrField(this.id)">';
+  return '<div class="ocr-field-item"><label>'+label+'</label>'+inner+'</div>';
+}
+function ocrFieldFull(label, id, val, ph) {
+  return '<div class="ocr-field-item" style="flex:100%;min-width:100%;"><label>'+label+'</label>'
+    + '<textarea id="'+id+'" placeholder="'+esc(ph)+'" onfocus="setActiveOcrField(this.id)">'+esc(val)+'</textarea></div>';
+}
+
+async function saveOcrResult() {
+  var btn = document.querySelector('.ocr-save-btn');
+  if (btn) { btn.disabled = true; btn.textContent = '저장 중...'; }
+
+  try {
+    
+    var name = (document.getElementById('ocr-f-name')||{}).value||'';
+    name = name.trim();
+    if (!name) {
+      showToast('❌ 제품명을 입력하세요');
+      return;
+    }
+
+    
+    function getClean(id) {
+      var v = (document.getElementById(id)||{}).value||'';
+      return v.replace(/[\u0000-\u001F\u007F]/g,'').trim();  
+    }
+
+    var tab        = getClean('ocr-f-tab') || 'pest';
+    var ingredient = getClean('ocr-f-ingredient');
+    var target     = getClean('ocr-f-target');
+    var regNo      = getClean('ocr-f-regno');
+    var type       = getClean('ocr-f-type') || '살균제';
+    var method     = getClean('ocr-f-method');
+    var amount     = getClean('ocr-f-amount');
+    var timing     = getClean('ocr-f-timing');
+    var warning    = getClean('ocr-f-warning');
+    var mfr        = getClean('ocr-f-mfr');
+    var barcode    = ((document.getElementById('scan-code-input')||{}).value||'').trim();
+
+    
+    if (!ingredient && !target) {
+      var proceed = confirm('성분 또는 방제대상 정보가 비어있습니다.\n\n🔍 조회 버튼으로 정보를 먼저 가져오시겠습니까?\n(취소 → 빈 정보로 그대로 등록)');
+      if (proceed) { lookupProductByName(); return; }
+    }
+
+    
+    var saveData = {
+      name:         name,
+      tab:          tab,
+      type:         type,
+      regNo:        regNo        || 'N/A',
+      ingredient:   ingredient   || '',
+      target:       target       || '',
+      method:       method       || '',
+      amount:       amount       || '',
+      timing:       timing       || '',
+      warning:      warning      || '',
+      manufacturer: mfr          || '',
+      barcode:      barcode      || '',
+      ocrScanned:   true,
+      savedAt:      new Date().toISOString(),   
+      _version:     1,
+    };
+
+    
+    if (typeof firebase !== 'undefined' && firebase.firestore && firebase.firestore.FieldValue) {
+      saveData.serverTs = firebase.firestore.FieldValue.serverTimestamp();
+    }
+
+    
+    var result = await smartSave('userDb_' + tab, saveData);
+
+    
+    saveData.id = result.id || result.localId || Date.now().toString();
+    if (!USER_DB[tab]) USER_DB[tab] = [];
+    USER_DB[tab].push(saveData);
+
+    
+    var savedMsg = result.source === 'local'
+      ? '💾 ' + name + ' 기기에 저장 (온라인 시 자동 동기화)'
+      : '✅ ' + name + ' Firebase 저장 완료';
+    showToast(savedMsg);
+    closeModal('scan-modal');
+
+    
+    APP.dbTab = tab;
+    var tabBtn = document.getElementById('dbt-' + tab);
+    if (tabBtn) {
+      document.querySelectorAll('.db-tab').forEach(function(b){ b.classList.remove('on'); });
+      tabBtn.classList.add('on');
+    }
+    if (tab === 'fert' || tab === 'nutr') renderFertPanel(tab);
+    else if (tab === 'micro')             renderMicroPanel();
+    else                                   renderDb();
+    switchTab('db');
+    updatePendingBadge();
+
+  } catch(err) {
+    
+    console.error('[saveOcrResult] 저장 오류:', err);
+    showToast('⚠️ 저장 실패: ' + (err.message || '알 수 없는 오류') + ' — 다시 시도하거나 관리자에 문의하세요.');
+
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = '✅ DB에 등록'; }
+  }
+}
+
+function getV(id) { var el=document.getElementById(id); return el?(el.value||el.textContent||'').trim():''; }
+
+async function analyzeOcrText() {
+  var text = document.getElementById('scan-ocr-textarea').value.trim();
+  if (!text) { showToast('텍스트를 입력하세요'); return; }
+  setResult('<div class="ocr-loading"><div class="ocr-spinner"></div>텍스트 분석 중...</div>');
+  
+  setTimeout(function() {
+    var parsed = parseAgriText(text, 'medium');
+    ocrParsed = parsed;
+    renderOcrResult(parsed);
+  }, 100);
+}
+
+function retakeOcr() {
+  restoreUpperScanUI();
+  document.getElementById('scan-capture-preview').style.display = 'none';
+  document.getElementById('scan-result').innerHTML = '';
+  document.getElementById('scan-ocr-text-section').style.display = 'none';
+  startScan('ocr');
+}
+
+function showOcrTextInput() {
+  document.getElementById('scan-ocr-text-section').style.display = '';
+  document.getElementById('scan-ocr-textarea').value = '';
+  document.getElementById('scan-ocr-textarea').focus();
+}
+
+function setResult(html2) { document.getElementById('scan-result').innerHTML = html2; }
+function hide(id) { var e=document.getElementById(id); if(e) e.style.display='none'; }
+function show2(id) { var e=document.getElementById(id); if(e) e.style.display=''; }
+
+function openScanModal() {
+  stopScan();
+  restoreUpperScanUI();
+  document.getElementById('scan-result').innerHTML = '';
+  document.getElementById('scan-code-input').value = '';
+  document.getElementById('scan-capture-preview').style.display = 'none';
+  document.getElementById('scan-ocr-text-section').style.display = 'none';
+  document.getElementById('scan-ocr-textarea').value = '';
+  
+  setScanMode('barcode', document.getElementById('smt-barcode'));
+  document.getElementById('scan-modal').classList.remove('hidden');
+  setTimeout(initPsisKeyUI, 150);  
+}
+
+async function addScannedItem() {
+  try {
+    var info = window._scanResult;
+    if (!info) { showToast('검색 결과가 없습니다'); return; }
+    var tab = info.tab||'pest';
+    info.createdAt = new Date().toISOString();
+    info.barcode = document.getElementById('scan-code-input').value.trim();
+    var ref = await db.collection('userDb_'+tab).add(info).catch(function(e){ showToast('저장 오류: '+e.message); return null; });
+    if (ref) {
+      info.id = ref.id;
+      if (!USER_DB[tab]) USER_DB[tab] = [];
+      USER_DB[tab].push(info);
+      window._scanResult = null;
+      showToast('✅ '+info.name+' DB에 등록 완료');
+      closeModal('scan-modal');
+      APP.dbTab = tab; renderDb();
+    }
+  } catch(e) { showToast('등록 오류: '+e.message); }
+}
+
+var USER_DB = { pest:[], fert:[], nutr:[], micro:[] };
+var CSV_PENDING = [];
+var TBADGE = {'살충제':'badge-ins','살균제':'badge-fun','살균살충제':'badge-fert','비선택성 제초제':'badge-her','선택성 제초제':'badge-her','토양살충제':'badge-soi','생장조정제·기타':'badge-log'};
+var FBADGE = {'복합비료':'badge-fert','질소질비료':'badge-fert','인산질비료':'badge-fert','칼리질비료':'badge-fert','퇴비·유기질':'badge-plant','미량요소':'badge-log','석회·토양개량':'badge-soi'};
+var TAB_LABELS = {pest:'농약', fert:'비료·퇴비·영양제', micro:'미생물균'};
+
+function getMergedDb(tab) {
+  var base=[];
+  if(tab==='pest') base=MASTER_DB.pesticides.map(function(x){ return Object.assign({},x,{_src:'base'}); });
+  else if(tab==='fert') base=MASTER_DB.fertilizers.map(function(x){ return Object.assign({},x,{_src:'base'}); });
+  
+  var tabs = tab==='fert' ? ['fert','nutr'] : [tab];
+  var user = [];
+  tabs.forEach(function(t){ user = user.concat((USER_DB[t]||[]).map(function(x){ return Object.assign({},x,{_src:'user'}); })); });
+  return base.concat(user);
+}
+
+function renderDb() {
+  var tab=APP.dbTab||'pest';
+  var q=(document.getElementById('db-search').value||'').toLowerCase();
+  var el=document.getElementById('db-list');
+  var cnt=document.getElementById('db-count');
+  var all=getMergedDb(tab);
+  var items=all.filter(function(item){
+    if(!q) return true;
+    return ['name','ingredient','target','type','effect','form'].some(function(k){ return item[k]&&String(item[k]).toLowerCase().includes(q); });
+  });
+  var baseCnt=all.filter(function(x){ return x._src==='base'; }).length;
+  var userCnt=(USER_DB[tab]||[]).length;
+  if(cnt) cnt.textContent=items.length+'개 항목 (기본 '+baseCnt+'종 + 내 등록 '+userCnt+'종)';
+  if(items.length===0){ el.innerHTML='<div class="empty-state"><span class="emoji">🔍</span><p>검색 결과 없음</p></div>'; return; }
+  el.innerHTML=items.map(function(item){
+    var isUser=item._src==='user';
+    var badge=getBadgeClass(tab,item);
+    var typeStr=item.type||'';
+    var detail=buildDbDetail(tab,item);
+    var actions=isUser
+      ?'<div class="db-item-actions">'
+        +'<button class="db-edit-btn" data-id="'+esc(item.id||'')+'" data-tab="'+tab+'" onclick="openDbEdit(this);event.stopPropagation();">✏️ 수정</button>'
+        +'<button class="db-del-btn" data-id="'+esc(item.id||'')+'" data-tab="'+tab+'" onclick="deleteDbItemEl(this);event.stopPropagation();">🗑 삭제</button>'
+        +'</div>':'';
+    return '<div class="db-item db-collapsed'+(isUser?' user-item':'')+'" onclick="toggleDbItem(this)">'
+      +'<div class="db-item-header">'
+      +'<span class="db-item-name">'+(item.emoji?esc(item.emoji)+' ':'')+esc(item.name)+(isUser?' <span class="db-user-badge">내 등록</span>':'')+'</span>'
+      +'<div style="display:flex;gap:4px;align-items:center;flex-shrink:0;">'
+      +(typeStr?'<span class="badge '+badge+'">'+esc(typeStr)+'</span>':'')
+      +(item.qty?'<span style="font-size:10px;color:var(--gray-400);">'+esc(String(item.qty))+(item.unit?' '+esc(item.unit):'')+'</span>':'')
+      +'</div></div>'
+      +'<div class="db-item-detail">'+detail+'</div>'
+      +actions+'</div>';
+  }).join('');
+}
+
+function getBadgeClass(tab,item){
+  var t=item.type||'';
+  if(tab==='pest') return TBADGE[t]||'badge-ins';
+  if(tab==='fert') return FBADGE[t]||'badge-fert';
+  if(tab==='nutr') return 'badge-fert';
+  return 'badge-log';
+}
+
+function buildDbDetail(tab,item){
+  if(tab==='pest') {
+    var moaBadge = item.moa ? buildMoaBadge(item.moa) : '';
+    return moaBadge+(moaBadge?'<br>':'')+'<b>성분:</b> '+esc(item.ingredient||'')+'<br><b>방제:</b> '+esc(item.target||'')+'<br><b>방법:</b> '+esc(item.method||'')+'<br><b>꿀벌독성:</b> '+esc(item.bee_toxicity||'')+' · <b>개화기:</b> '+esc(item.bloom_use||'')+(item.warning?'<br><b>주의:</b> '+esc(item.warning):'')+(item.crop_range?'<br><b>적용:</b> '+esc(item.crop_range):'')+(item.note?'<br><b>메모:</b> '+esc(item.note):'');
+  }
+  var base = '<b>성분:</b> '+esc(item.ingredient||'')+'<br><b>효과:</b> '+esc(item.effect||'')+'<br><b>방법:</b> '+esc(item.method||'')+(item.amount?'<br><b>사용량:</b> '+esc(item.amount):'')+(item.timing?'<br><b>시기:</b> '+esc(item.timing):'')+(item.note?'<br><b>비고:</b> '+esc(item.note):'');
+  if (item.cropUsage) {
+    var crops = Object.keys(item.cropUsage).slice(0,5).join(', ');
+    var total = Object.keys(item.cropUsage).length;
+    base += '<br><span style="color:var(--green-dark);font-size:11px;">🌱 작물별 정보: '+esc(crops)+(total>5?' 외 '+(total-5)+'종':'')+'</span>';
+  }
+  return base;
+}
+
+function toggleDbItem(el){ el.classList.toggle('db-collapsed'); }
+function setDbTab(tab,el){
+  APP.dbTab=tab;
+  document.querySelectorAll('.db-tab').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on'); document.getElementById('db-search').value='';
+  var _srch=document.getElementById('db-search'); if(_srch) _srch.style.display=(tab==='mypest'||tab==='spray')?'none':'';
+  if (tab === 'mypest')                    { renderMyPestPanel(); }
+  else if (tab === 'harvest')              { renderHarvestPanel(); }
+  else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
+  else if (tab === 'micro')                  { renderMicroPanel(); }
+  else if (tab === 'spray')                  { renderSpraySchedulerPanel(); }
+  else { renderDb(); }
+}
+
+async function loadUserDb(){
+  var tabs=['pest','fert','nutr','micro'];
+  for(var i=0;i<tabs.length;i++){
+    var snap=await db.collection('userDb_'+tabs[i]).get().catch(function(){ return {docs:[]}; });
+    USER_DB[tabs[i]]=snap.docs.map(function(d){ return Object.assign({id:d.id},d.data()); });
+  }
+}
+
+function openDbAdd(){
+  var tab=APP.dbTab||'pest';
+  document.getElementById('dim-title').textContent='📝 '+(TAB_LABELS[tab]||tab)+' 등록';
+  document.getElementById('dim-tab').value=tab;
+  document.getElementById('dim-emoji').value=tab==='pest'?'🌿':tab==='fert'?'🌱':tab==='nutr'?'💊':'🧫';
+  ['dim-name','dim-form','dim-ingredient','dim-target','dim-method','dim-warning','dim-croprange',
+   'dim-fert-type','dim-fert-ingredient','dim-effect','dim-fert-method','dim-amount','dim-timing','dim-note','dim-unit'].forEach(function(id){ var e=document.getElementById(id); if(e) e.value=''; });
+  document.getElementById('dim-qty').value=0;
+  document.getElementById('dim-bee').value='강함';
+  document.getElementById('dim-bloom').value='금지';
+  document.getElementById('dim-buy-date').value=TODAY_STR;
+  document.getElementById('dim-edit-id').value='';
+  document.getElementById('dim-edit-tab').value=tab;
+  document.getElementById('dim-delete-btn').style.display='none';
+  onDimTabChange();
+  document.getElementById('db-item-modal').classList.remove('hidden');
+}
+
+function openDbEdit(btn){
+  var id=btn.getAttribute('data-id'), tab=btn.getAttribute('data-tab');
+  var item=(USER_DB[tab]||[]).find(function(x){ return x.id===id; }); if(!item) return;
+  document.getElementById('dim-title').textContent='✏️ '+esc(item.name)+' 수정';
+  document.getElementById('dim-tab').value=tab;
+  document.getElementById('dim-emoji').value=item.emoji||'';
+  document.getElementById('dim-name').value=item.name||'';
+  document.getElementById('dim-pest-type').value=item.type||'살충제';
+  document.getElementById('dim-form').value=item.form||'';
+  document.getElementById('dim-ingredient').value=item.ingredient||'';
+  document.getElementById('dim-target').value=item.target||'';
+  document.getElementById('dim-method').value=item.method||'';
+  document.getElementById('dim-bee').value=item.bee_toxicity||'강함';
+  document.getElementById('dim-bloom').value=item.bloom_use||'금지';
+  var toxEl=document.getElementById('dim-toxicity');      if(toxEl) toxEl.value=item.toxicity||'';
+  var fishEl=document.getElementById('dim-fish-toxicity');if(fishEl) fishEl.value=item.fish_tox||'';
+  var utEl=document.getElementById('dim-use-time');       if(utEl) utEl.value=item.use_time||'';
+  var unEl=document.getElementById('dim-use-num');        if(unEl) unEl.value=item.use_num||'';
+  var moaEl=document.getElementById('dim-moa');           if(moaEl) moaEl.value=item.moa||'';
+  document.getElementById('dim-warning').value=item.warning||'';
+  document.getElementById('dim-croprange').value=item.crop_range||'';
+  document.getElementById('dim-fert-type').value=item.type||'';
+  document.getElementById('dim-fert-ingredient').value=item.ingredient||'';
+  document.getElementById('dim-effect').value=item.effect||'';
+  document.getElementById('dim-fert-method').value=item.method||'';
+  document.getElementById('dim-amount').value=item.amount||'';
+  document.getElementById('dim-timing').value=item.timing||'';
+  document.getElementById('dim-qty').value=item.qty||0;
+  document.getElementById('dim-unit').value=item.unit||'';
+  document.getElementById('dim-buy-date').value=item.buyDate||'';
+  document.getElementById('dim-note').value=item.note||'';
+  document.getElementById('dim-edit-id').value=id;
+  document.getElementById('dim-edit-tab').value=tab;
+  document.getElementById('dim-delete-btn').style.display='block';
+  onDimTabChange();
+  document.getElementById('db-item-modal').classList.remove('hidden');
+}
+
+function onDimTabChange(){
+  var tab=document.getElementById('dim-tab').value;
+  document.getElementById('dim-pest-fields').style.display=(tab==='pest')?'':'none';
+  document.getElementById('dim-fert-fields').style.display=(tab!=='pest')?'':'none';
+  // 농약 탭에서만 PSIS 조회 버튼 표시
+  var psisSection=document.getElementById('dim-psis-section');
+  if(psisSection) psisSection.style.display=(tab==='pest')?'block':'none';
+}
+
+async function saveDbItem(){
+  var tab=document.getElementById('dim-tab').value;
+  var editId=document.getElementById('dim-edit-id').value;
+  var name=document.getElementById('dim-name').value.trim();
+  if(!name){ showToast('제품명을 입력하세요'); return; }
+  var data={name:name, emoji:document.getElementById('dim-emoji').value.trim(),
+    qty:parseFloat(document.getElementById('dim-qty').value)||0,
+    unit:document.getElementById('dim-unit').value.trim(),
+    buyDate:document.getElementById('dim-buy-date').value,
+    note:document.getElementById('dim-note').value.trim(),
+    tab:tab, updatedAt:new Date().toISOString()};
+  if(tab==='pest'){
+    data.type=document.getElementById('dim-pest-type').value;
+    data.form=document.getElementById('dim-form').value.trim();
+    data.ingredient=document.getElementById('dim-ingredient').value.trim();
+    data.target=document.getElementById('dim-target').value.trim();
+    data.method=document.getElementById('dim-method').value.trim();
+    data.bee_toxicity=document.getElementById('dim-bee').value;
+    data.bloom_use=document.getElementById('dim-bloom').value;
+    data.warning=document.getElementById('dim-warning').value.trim();
+    data.crop_range=document.getElementById('dim-croprange').value.trim();
+    data.toxicity  =(document.getElementById('dim-toxicity')     ||{value:''}).value||'';
+    data.fish_tox  =(document.getElementById('dim-fish-toxicity')||{value:''}).value||'';
+    data.use_time  =(document.getElementById('dim-use-time')      ||{value:''}).value.trim()||'';
+    data.use_num   =(document.getElementById('dim-use-num')       ||{value:''}).value.trim()||'';
+    data.moa       =(document.getElementById('dim-moa')           ||{value:''}).value.trim()||'';
+  } else {
+    data.type=document.getElementById('dim-fert-type').value.trim();
+    data.ingredient=document.getElementById('dim-fert-ingredient').value.trim();
+    data.effect=document.getElementById('dim-effect').value.trim();
+    data.method=document.getElementById('dim-fert-method').value.trim();
+    data.amount=document.getElementById('dim-amount').value.trim();
+    data.timing=document.getElementById('dim-timing').value.trim();
+  }
+  var col='userDb_'+tab;
+  if(editId){
+    await db.collection(col).doc(editId).update(data).catch(function(e){ showToast('수정 오류: '+e.message); });
+    var idx=USER_DB[tab].findIndex(function(x){ return x.id===editId; });
+    if(idx>=0) USER_DB[tab][idx]=Object.assign({},USER_DB[tab][idx],data);
+    showToast('✅ 수정 완료');
+  } else {
+    data.createdAt=new Date().toISOString();
+    var ref=await db.collection(col).add(data).catch(function(e){ showToast('저장 오류: '+e.message); return null; });
+    if(ref){ data.id=ref.id; USER_DB[tab].push(data); showToast('✅ 등록 완료'); }
+  }
+  closeModal('db-item-modal'); renderDb();
+}
+
+async function deleteDbItem(){
+  var id=document.getElementById('dim-edit-id').value;
+  var tab=document.getElementById('dim-edit-tab').value; if(!id) return;
+  var item=(USER_DB[tab]||[]).find(function(x){ return x.id===id; });
+  if(!confirm((item?item.name:'이 항목')+'을(를) 삭제하시겠습니까?')) return;
+  await db.collection('userDb_'+tab).doc(id).delete().catch(function(e){ showToast('삭제 오류: '+e.message); });
+  USER_DB[tab]=USER_DB[tab].filter(function(x){ return x.id!==id; });
+  closeModal('db-item-modal'); showToast('🗑 삭제 완료'); renderDb();
+}
+
+function deleteDbItemEl(btn){
+  var id=btn.getAttribute('data-id'), tab=btn.getAttribute('data-tab');
+  var item=(USER_DB[tab]||[]).find(function(x){ return x.id===id; });
+  if(!confirm((item?item.name:'이 항목')+'을(를) 삭제하시겠습니까?')) return;
+  db.collection('userDb_'+tab).doc(id).delete().then(function(){
+    USER_DB[tab]=USER_DB[tab].filter(function(x){ return x.id!==id; });
+    showToast('🗑 삭제 완료'); renderDb();
+  }).catch(function(e){ showToast('삭제 오류: '+e.message); });
+}
+
+function handleCsvUpload(input){
+  if(!input.files||!input.files[0]) return;
+  var file=input.files[0];
+  var reader=new FileReader();
+  reader.onload=function(e){ parseCsvPreview(e.target.result); };
+  reader.readAsText(file,'UTF-8');
+  input.value='';
+}
+
+function parseCsvPreview(csvText){
+  var lines=csvText.replace(/\r\n/g,'\n').replace(/\r/g,'\n').split('\n').filter(function(l){ return l.trim(); });
+  if(lines.length<2){ showToast('CSV 내용이 없습니다'); return; }
+  var headers=parseCsvLine(lines[0]).map(function(h){ return h.trim().toLowerCase(); });
+  if(!headers.includes('name')&&!headers.includes('제품명')){ showToast('name 또는 제품명 컬럼이 필요합니다'); return; }
+  var rows=[], errs=[];
+  for(var i=1;i<lines.length;i++){
+    var cols=parseCsvLine(lines[i]); if(cols.length<2) continue;
+    var obj={}; headers.forEach(function(h,j){ obj[h]=cols[j]?cols[j].trim():''; });
+    var item={name:obj.name||obj['제품명']||'', emoji:obj.emoji||obj['이모지']||'',
+      type:obj.type||obj['분류']||obj['종류']||'기타',
+      tab:(obj.tab||obj['탭']||'pest').toLowerCase(),
+      ingredient:obj.ingredient||obj['성분']||'', target:obj.target||obj['방제대상']||'',
+      method:obj.method||obj['사용방법']||'', effect:obj.effect||obj['효과']||'',
+      amount:obj.amount||obj['사용량']||'', timing:obj.timing||obj['시기']||'',
+      bee_toxicity:obj.bee_toxicity||obj['꿀벌독성']||'', bloom_use:obj.bloom_use||obj['개화기']||'',
+      warning:obj.warning||obj['주의사항']||'', note:obj.note||obj['비고']||''};
+    if(!item.name){ errs.push('행'+(i+1)+':제품명없음'); continue; }
+    rows.push(item);
+  }
+  CSV_PENDING=rows;
+  document.getElementById('csv-preview-info').textContent='총 '+rows.length+'개 항목 등록 예정';
+  document.getElementById('csv-preview-list').innerHTML='<div style="font-size:11px;font-weight:600;border-bottom:2px solid var(--gray-200);padding:3px 0;">제품명 / 탭 / 분류</div>'
+    +rows.map(function(r){ return '<div class="csv-preview-row"><span class="csv-name">'+esc(r.name)+'</span><span class="csv-type">'+(TAB_LABELS[r.tab]||r.tab)+'</span><span>'+esc(r.type)+'</span></div>'; }).join('');
+  document.getElementById('csv-preview-warn').textContent=errs.length>0?'⚠️ 건너뛴 행: '+errs.join(', '):'';
+  document.getElementById('csv-preview-modal').classList.remove('hidden');
+}
+
+function parseCsvLine(line){
+  var result=[],cur='',inQ=false;
+  for(var i=0;i<line.length;i++){
+    var c=line[i];
+    if(c==='"'){ inQ=!inQ; }
+    else if(c===','&&!inQ){ result.push(cur); cur=''; }
+    else{ cur+=c; }
+  }
+  result.push(cur); return result;
+}
+
+async function confirmCsvImport(){
+  if(!CSV_PENDING||CSV_PENDING.length===0) return;
+  var count=0;
+  for(var i=0;i<CSV_PENDING.length;i++){
+    var item=CSV_PENDING[i], tab=item.tab||'pest';
+    item.createdAt=new Date().toISOString();
+    var ref=await db.collection('userDb_'+tab).add(item).catch(function(){ return null; });
+    if(ref){ item.id=ref.id; if(!USER_DB[tab]) USER_DB[tab]=[]; USER_DB[tab].push(item); count++; }
+  }
+  CSV_PENDING=[];
+  closeModal('csv-preview-modal');
+  showToast('✅ CSV '+count+'개 등록 완료');
+  renderDb();
+}
+
+function downloadCsvTemplate(){
+  var tab=APP.dbTab||'pest';
+  var hdr, sample;
+  if(tab==='pest'){ hdr='tab,name,emoji,type,ingredient,target,method,bee_toxicity,bloom_use,warning,note'; sample='pest,새농약이름,🌿,살충제,성분명,방제대상,1000배 경엽살포,강함,금지,주의사항,메모'; }
+  else if(tab==='fert'){ hdr='tab,name,emoji,type,ingredient,effect,method,amount,timing,note'; sample='fert,새비료이름,🌱,복합비료,N21-P17-K17,생육촉진,밑거름 시비,20kg,정식전,메모'; }
+  else if(tab==='nutr'){ hdr='tab,name,emoji,type,ingredient,effect,method,amount,timing,note'; sample='nutr,새영양제이름,💊,영양제,아미노산 5%,생육촉진,500배 엽면시비,1L,생육기,메모'; }
+  else { hdr='tab,name,emoji,type,ingredient,effect,method,amount,timing,note'; sample='micro,고초균,🧫,미생물균,바실루스 서브틸리스,토양개선,500배 관주,1L,정식후,4대균'; }
+  var csv=hdr+'\n'+sample+'\n# tab: pest(농약)/fert(비료퇴비)/nutr(영양제)/micro(미생물균)\n';
+  var blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob), a=document.createElement('a');
+  a.href=url; a.download='자재DB_양식_'+tab+'.csv'; a.click();
+  URL.revokeObjectURL(url);
+  showToast('📂 CSV 양식 다운로드');
+}
+
+function setPanel(name,el){
+  // 모든 패널 숨기기
+  document.querySelectorAll('.panel').forEach(function(p){
+    p.classList.remove('active');
+    p.style.display='none';
+  });
+  // 선택한 패널 보이기
+  var target=document.getElementById('panel-'+name);
+  if(target){ target.classList.add('active'); target.style.display='block'; }
+  // nav 활성화
+  document.querySelectorAll('.nav-item').forEach(function(n){ n.classList.remove('active'); });
+  if(el) el.classList.add('active');
+  // 렌더링
+  try{
+    APP.currentPanel = name;
+    if      (name==='today')  renderToday();
+    else if (name==='plants') renderPlants();
+    else if (name==='log')    renderLogs();
+    else if (name==='manage') renderManagePanel();
+    else if (name==='db') {
+      var tab=APP.dbTab||'pest';
+      if(tab==='mypest')                   renderMyPestPanel();
+      else if(tab==='fert'||tab==='nutr') renderFertPanel(tab);
+      else if(tab==='micro')               renderMicroPanel();
+      else if(tab==='spray')               renderSpraySchedulerPanel();
+      else                                 renderDb();
+    }
+  }catch(e){ console.warn('setPanel 렌더 오류:',name,e.message); }
+}
+function setFilter(f,el){
+  APP.filter=f;
+  document.querySelectorAll('#panel-today .filter-btn').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on'); renderToday();
+}
+function setPlantFilter(f,el){
+  APP.plantFilter=f;
+  document.querySelectorAll('#panel-plants .filter-btn').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on'); renderPlants();
+}
+function setDbTab(tab,el){
+  APP.dbTab=tab;
+  document.querySelectorAll('.db-tab').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on'); document.getElementById('db-search').value='';
+  var _srch=document.getElementById('db-search'); if(_srch) _srch.style.display=(tab==='mypest'||tab==='spray')?'none':'';
+  if (tab === 'mypest')                    { renderMyPestPanel(); }
+  else if (tab === 'harvest')              { renderHarvestPanel(); }
+  else if (tab === 'fert' || tab === 'nutr') { renderFertPanel(tab); }
+  else if (tab === 'micro')                  { renderMicroPanel(); }
+  else if (tab === 'spray')                  { renderSpraySchedulerPanel(); }
+  else { renderDb(); }
+}
+
+function toggleTaskEl(btn) {
+  var key    = btn.getAttribute('data-key');
+  var plantId= btn.getAttribute('data-pid');
+  var pName  = btn.getAttribute('data-name');
+  var action = btn.getAttribute('data-action');
+  var type   = btn.getAttribute('data-type');
+  var mat    = btn.getAttribute('data-mat');
+  var isDone = btn.getAttribute('data-done')==='1';
+
+  if(isDone){
+    db.collection('doneTasks').doc(key).delete().then(function(){
+      delete APP.doneTasks[key]; renderToday(); showToast('완료 취소됨');
+    });
+  } else {
+    
+    var tasks = calcTodayTasks();
+    var task  = tasks.find(function(t){ return t.key===key; });
+    var plants = task && task.plants ? task.plants : [];
+
+    APP.pendingTaskMeta = {
+      key:key, plantId:plantId, name:pName,
+      action:action, type:type, material:mat,
+      plants: plants,
+    };
+    
+    var title = plants.length>1
+      ? '✅ '+action+' ('+plants.length+'개 작물)'
+      : '✅ '+pName+' — '+action;
+    document.getElementById('tdm-title').textContent = title;
+
+    
+    var preview = '';
+    if (plants.length>1) {
+      preview = '<div style="font-size:11px;color:var(--green-dark);margin:6px 0;line-height:1.7;">'
+        + plants.map(function(p){ return esc(p.emoji)+' '+esc(p.name)+' (D+'+p.dfp+'일)'; }).join(' · ')
+        + '</div>';
+      var old = document.getElementById('tdm-plant-preview');
+      if (old) old.innerHTML = preview;
+      else {
+        var el = document.createElement('div');
+        el.id = 'tdm-plant-preview';
+        el.innerHTML = preview;
+        var noteField = document.getElementById('tdm-note');
+        noteField.parentNode.insertBefore(el, noteField);
+      }
+    } else {
+      var old2 = document.getElementById('tdm-plant-preview');
+      if (old2) old2.innerHTML = '';
+    }
+
+    document.getElementById('tdm-note').value='';
+    document.getElementById('task-done-modal').classList.remove('hidden');
+  }
+}
+async function confirmTaskDone() {
+  var meta=APP.pendingTaskMeta; if(!meta) return;
+  var note=document.getElementById('tdm-note').value.trim();
+  var now=new Date();
+  var timeStr=pad(now.getHours())+':'+pad(now.getMinutes());
+
+  
+  await db.collection('doneTasks').doc(meta.key).set({
+    key:meta.key, date:TODAY_STR,
+    plantId:meta.plantId, plantName:meta.name,
+    plants: meta.plants||[],   
+    action:meta.action, type:meta.type, material:meta.material,
+    note:note, doneAt:now.toISOString()
+  });
+
+  
+  var plants = meta.plants && meta.plants.length>0
+    ? meta.plants
+    : [{id:meta.plantId, name:meta.name}];
+
+  for (var i=0; i<plants.length; i++) {
+    var p=plants[i];
+    await db.collection('workLogs').add({
+      date:TODAY_STR, time:timeStr,
+      plantId:p.id||'', plantName:p.name||meta.name,
+      type: meta.type==='spray'?'농약살포':meta.type==='fert'?'시비':'기타',
+      material:meta.material, detail:note,
+      createdAt:now.toISOString(),
+    });
+  }
+
+  APP.doneTasks[meta.key]={doneAt:now.toISOString(),note:note};
+  closeModal('task-done-modal');
+  showToast('✅ '+plants.length+'개 작물 완료 기록 저장!');
+  await loadAllData(); renderToday(); renderLogs();
+}
+
+function openAddPlant(){
+  document.getElementById('pm-title').textContent='🌱 식물 추가';
+  ['pm-name','pm-loc','pm-note'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('pm-emoji').value='🌱';
+  document.getElementById('pm-cat').value='재배중';
+  document.getElementById('pm-date').value=TODAY_STR;
+  ['pm-pdays','pm-fdays','pm-tdays','pm-poll-days'].forEach(function(id){ document.getElementById(id).value=0; });
+  ['pm-poll-date','pm-last-spray','pm-last-spray-name','pm-last-fert','pm-last-fert-name'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('pm-edit-id').value='';
+  document.getElementById('pm-delete-btn').style.display='none';
+  resetHarvestLookup();
+  document.getElementById('plant-modal').classList.remove('hidden');
+}
+function openEditPlant(el){
+  var id=el.getAttribute('data-id');
+  var p=APP.plants.find(function(x){ return x.id===id; }); if(!p) return;
+  document.getElementById('pm-title').textContent='✏️ '+p.name+' 수정';
+  document.getElementById('pm-name').value=p.name;
+  document.getElementById('pm-emoji').value=p.emoji||'🌱';
+  document.getElementById('pm-cat').value=p.category||'재배중';
+  document.getElementById('pm-loc').value=p.location||'';
+  document.getElementById('pm-date').value=p.plantDate||'';
+  document.getElementById('pm-pdays').value=p.pinchDays||0;
+  document.getElementById('pm-fdays').value=p.fruitDays||0;
+  document.getElementById('pm-tdays').value=p.totalDays||0;
+  document.getElementById('pm-poll-date').value=p.pollDate||'';
+  document.getElementById('pm-poll-days').value=p.pollDays||0;
+  document.getElementById('pm-last-spray').value=p.lastSprayDate||'';
+  document.getElementById('pm-last-spray-name').value=p.lastSprayName||'';
+  document.getElementById('pm-last-fert').value=p.lastFertDate||'';
+  document.getElementById('pm-last-fert-name').value=p.lastFertName||'';
+  document.getElementById('pm-note').value=p.note||'';
+  document.getElementById('pm-edit-id').value=id;
+  document.getElementById('pm-delete-btn').style.display='block';
+  resetHarvestLookup();
+  document.getElementById('plant-modal').classList.remove('hidden');
+}
+async function savePlant(){
+  var editId=document.getElementById('pm-edit-id').value;
+  var data={
+    name:      document.getElementById('pm-name').value.trim(),
+    emoji:     document.getElementById('pm-emoji').value.trim()||'🌱',
+    category:  document.getElementById('pm-cat').value,
+    location:  document.getElementById('pm-loc').value.trim(),
+    plantDate: document.getElementById('pm-date').value,
+    pinchDays: parseInt(document.getElementById('pm-pdays').value)||0,
+    fruitDays: parseInt(document.getElementById('pm-fdays').value)||0,
+    totalDays: parseInt(document.getElementById('pm-tdays').value)||0,
+    pollDate:  document.getElementById('pm-poll-date').value,
+    pollDays:  parseInt(document.getElementById('pm-poll-days').value)||0,
+    lastSprayDate: document.getElementById('pm-last-spray').value,
+    lastSprayName: document.getElementById('pm-last-spray-name').value.trim(),
+    lastFertDate:  document.getElementById('pm-last-fert').value,
+    lastFertName:  document.getElementById('pm-last-fert-name').value.trim(),
+    note:      document.getElementById('pm-note').value.trim(),
+    status:    'active', updatedAt: new Date().toISOString(),
+  };
+  if(!data.name){ showToast('식물명을 입력하세요'); return; }
+  if(editId){
+    await _gasPost(Object.assign({ action:'updatePlant', id:editId }, data));
+    var idx=APP.plants.findIndex(function(p){ return p.id===editId; });
+    if(idx>=0) APP.plants[idx]=Object.assign({},APP.plants[idx],data);
+    showToast('✅ 수정 완료');
+  } else {
+    data.no=(APP.plants.length>0?Math.max.apply(null,APP.plants.map(function(p){return p.no||0;})):0)+1;
+    var result = await _gasPost(Object.assign({ action:'addPlant' }, data));
+    var newId = result.id || ('local_'+Date.now());
+    APP.plants.push(Object.assign({id:newId},data));
+    showToast('✅ 식물 추가 완료');
+  }
+  closeModal('plant-modal'); renderPlants(); renderToday();
+}
+async function deletePlant(){
+  var id=document.getElementById('pm-edit-id').value; if(!id) return;
+  var p=APP.plants.find(function(x){ return x.id===id; });
+  if(!confirm((p?p.name:'이 식물')+'을(를) 삭제하시겠습니까?')) return;
+  await _gasPost({ action:'deletePlant', id:id });
+  APP.plants=APP.plants.filter(function(x){ return x.id!==id; });
+  closeModal('plant-modal'); showToast('🗑 삭제 완료'); renderPlants(); renderToday();
+}
+
+function renderPlantSelectGrid(){
+  var grid=document.getElementById('lm-plant-grid'); if(!grid) return;
+  var plants=APP.plants.filter(function(p){ return p.status==='active'; });
+  grid.innerHTML=plants.map(function(p){
+    var cat=(p.category||'').replace(/"/g,'');
+    return '<div class="plant-select-item" data-id="'+esc(p.id)+'" data-cat="'+cat+'" onclick="togglePlantSelect(this)">'
+      +'<div class="psi-check"></div>'
+      +'<span class="psi-emoji">'+esc(p.emoji||'🌱')+'</span>'
+      +'<span class="psi-name">'+esc(p.name)+'</span>'
+      +'</div>';
+  }).join('');
+  updateSelectedLabel();
+}
+function togglePlantSelect(el){
+  el.classList.toggle('selected');
+  el.querySelector('.psi-check').textContent=el.classList.contains('selected')?'✓':'';
+  updateSelectedLabel();
+  if(document.getElementById('lm-type').value==='착과') updatePollHistory();
+}
+function selectPlantsByFilter(filter){
+  document.querySelectorAll('#lm-plant-grid .plant-select-item').forEach(function(el){
+    var cat=el.getAttribute('data-cat'), sel=filter==='all'||filter===cat, desel=filter==='none';
+    if(desel){ el.classList.remove('selected'); el.querySelector('.psi-check').textContent=''; }
+    else if(sel){ el.classList.add('selected'); el.querySelector('.psi-check').textContent='✓'; }
+  });
+  updateSelectedLabel();
+}
+function getSelectedPlants(){
+  return Array.from(document.querySelectorAll('#lm-plant-grid .plant-select-item.selected')).map(function(el){
+    var id=el.getAttribute('data-id'), p=APP.plants.find(function(x){ return x.id===id; });
+    return {id:id, name:p?p.name:el.querySelector('.psi-name').textContent};
+  });
+}
+function updateSelectedLabel(){
+  var sel=getSelectedPlants(), lbl=document.getElementById('lm-selected-label'); if(!lbl) return;
+  lbl.textContent=sel.length===0?'선택된 작물: 없음':'선택됨 '+sel.length+'개: '+sel.map(function(p){ return p.name; }).join(', ');
+}
+function onLogTypeChange(){
+  var type=document.getElementById('lm-type').value;
+  var pollSec=document.getElementById('lm-poll-section');
+  var matLabel=document.getElementById('lm-material-label');
+  var matHint=document.getElementById('lm-material-hint');
+  if(type==='착과'){ pollSec.style.display=''; document.getElementById('lm-poll-date').value=TODAY_STR; updatePollHistory(); }
+  else pollSec.style.display='none';
+  var hints={'농약살포':['사용 농약명','예: 스트레이트, 라이몬, 델란'],'시비':['비료·퇴비명','예: 21-17-17, NK비료, 우분퇴비'],'천연자재':['천연자재명','예: 고초균, 유산균, 광합성균, 효모균, 난황유, 목초액'],'착과':['해당 작물','착과 확인 작물 (위에서 선택)'],'수확':['수확량 (선택)','예: 3kg, 10개']};
+  var h=hints[type]||['사용 자재명',''];
+  matLabel.textContent=h[0]; matHint.textContent=h[1];
+}
+function updatePollHistory(){
+  var sel=getSelectedPlants(), histDiv=document.getElementById('lm-poll-history'); if(!histDiv) return;
+  if(sel.length===0){ histDiv.style.display='none'; return; }
+  var plant=APP.plants.find(function(p){ return p.id===sel[0].id; });
+  if(!plant||!plant.pollHistory||plant.pollHistory.length===0){ histDiv.style.display='none'; return; }
+  histDiv.style.display='';
+  var items=plant.pollHistory.slice(0,10).map(function(h,i){
+    return '<div class="poll-hist-item">'
+      +'<span class="phi-date">🌸 '+(h.pollDate||'')+'</span>'
+      +'<span class="phi-harvest">&rarr; 수확 '+(h.harvestDate||'')+'</span>'
+      +'<span style="color:var(--gray-400);font-size:10px;">'+(h.pollDays||'')+'일 후</span>'
+      +'<button class="phi-del" data-idx="'+i+'" data-pid="'+esc(plant.id)+'" onclick="removePollHistoryEl(this)">✕</button>'
+      +'</div>';
+  }).join('');
+  histDiv.innerHTML='<div style="font-size:11px;font-weight:600;color:var(--orange);margin-bottom:4px;">착과 이력 ('+plant.pollHistory.length+'회)</div>'+items;
+}
+async function removePollHistoryEl(btn){
+  var idx=parseInt(btn.getAttribute('data-idx')), plantId=btn.getAttribute('data-pid');
+  var plant=APP.plants.find(function(p){ return p.id===plantId; }); if(!plant||!plant.pollHistory) return;
+  plant.pollHistory.splice(idx,1);
+  await db.collection('plants').doc(plantId).update({pollHistory:plant.pollHistory});
+  updatePollHistory(); showToast('착과 이력 삭제됨');
+}
+
+function openAddLog(){
+  document.getElementById('lm-title').textContent='📝 작업 기록 추가';
+  document.getElementById('lm-date').value=TODAY_STR;
+  document.getElementById('lm-type').value='농약살포';
+  document.getElementById('lm-material').value='';
+  document.getElementById('lm-detail').value='';
+  document.getElementById('lm-edit-id').value='';
+  document.getElementById('lm-edit-col').value='';
+  document.getElementById('lm-save-btn').textContent='기록 저장';
+  document.getElementById('lm-delete-btn').style.display='none';
+  document.getElementById('lm-multi-section').style.display='';
+  document.getElementById('lm-single-section').style.display='none';
+  document.getElementById('lm-poll-section').style.display='none';
+  renderPlantSelectGrid(); onLogTypeChange();
+  document.getElementById('log-modal').classList.remove('hidden');
+}
+function openEditLog(el){
+  var id=(typeof el==='string')?el:el.getAttribute('data-id');
+  var log=APP.logs.find(function(l){ return l.id===id; }); if(!log) return;
+  document.getElementById('lm-title').textContent='✏️ 기록 수정';
+  document.getElementById('lm-multi-section').style.display='none';
+  document.getElementById('lm-single-section').style.display='';
+  document.getElementById('lm-poll-section').style.display='none';
+  document.getElementById('lm-date').value=(log.date||'').slice(0,10);
+  document.getElementById('lm-plant').value=log.plantName||log.plant||'';
+  var typeVal=log.eventType||log.type||'기타';
+  var sel=document.getElementById('lm-type');
+  sel.value=Array.from(sel.options).some(function(o){ return o.value===typeVal; })?typeVal:'기타';
+  document.getElementById('lm-material').value=log.material||'';
+  document.getElementById('lm-detail').value=log.detail||log.note||'';
+  document.getElementById('lm-edit-id').value=id;
+  document.getElementById('lm-edit-col').value=log._col||'workLogs';
+  document.getElementById('lm-save-btn').textContent='수정 저장';
+  document.getElementById('lm-delete-btn').style.display='block';
+  document.getElementById('log-modal').classList.remove('hidden');
+}
+function confirmDeleteLog(el){
+  var id=(typeof el==='string')?el:el.getAttribute('data-id');
+  var log=APP.logs.find(function(l){ return l.id===id; }); if(!log) return;
+  var name=log.plantName||log.plant||'', date=(log.date||'').slice(0,10);
+  if(!confirm(date+' · '+name+' 기록을 삭제하시겠습니까?')) return;
+  deleteLogById(id, log._col||'workLogs');
+}
+async function deleteLogById(id, col){
+  await _gasPost({ action: col==='growRecords'?'deleteGrowRecord':'deleteWorkLog', id:id });
+  APP.logs=APP.logs.filter(function(l){ return l.id!==id; });
+  closeModal('log-modal'); showToast('🗑 기록 삭제 완료'); renderLogs();
+}
+async function deleteLog(){
+  var id=document.getElementById('lm-edit-id').value, col=document.getElementById('lm-edit-col').value||'workLogs';
+  if(!id) return;
+  var log=APP.logs.find(function(l){ return l.id===id; });
+  var name=log?(log.plantName||log.plant||''):'';
+  if(!confirm(name+' 기록을 삭제하시겠습니까?')) return;
+  await deleteLogById(id,col);
+}
+
+async function saveLog(){
+  var now=new Date(), editId=document.getElementById('lm-edit-id').value;
+  var editCol=document.getElementById('lm-edit-col').value||'workLogs';
+  var dateVal=document.getElementById('lm-date').value;
+  var type=document.getElementById('lm-type').value;
+  var material=document.getElementById('lm-material').value.trim();
+  var detail=document.getElementById('lm-detail').value.trim();
+  var timeStr=pad(now.getHours())+':'+pad(now.getMinutes());
+
+  if(editId){
+    var plant=document.getElementById('lm-plant').value.trim();
+    if(!plant){ showToast('식물명을 입력하세요'); return; }
+    var upd={date:dateVal,plantName:plant,material:material,detail:detail,updatedAt:now.toISOString()};
+    if(editCol==='growRecords'){ upd.eventType=type; upd.note=detail; } else { upd.type=type; }
+    var action = editCol==='growRecords'?'updateGrowRecord':'updateWorkLog';
+    await _gasPost(Object.assign({ action:action, id:editId }, upd));
+    var idx=APP.logs.findIndex(function(l){ return l.id===editId; });
+    if(idx>=0) APP.logs[idx]=Object.assign({},APP.logs[idx],upd,{type:type,eventType:type});
+    closeModal('log-modal'); showToast('✅ 수정 완료'); renderLogs(); return;
+  }
+
+  var selectedPlants=getSelectedPlants();
+  if(selectedPlants.length===0){ showToast('작물을 하나 이상 선택하세요'); return; }
+  var newLogs=[];
+
+  if(type==='착과'){
+    var pollDate=document.getElementById('lm-poll-date').value||dateVal;
+    var pollDays=parseInt(document.getElementById('lm-poll-days').value)||35;
+    var pd=new Date(pollDate+'T00:00:00'); pd.setDate(pd.getDate()+pollDays);
+    var harvestDate=pd.toISOString().slice(0,10);
+    for(var i=0;i<selectedPlants.length;i++){
+      var sp=selectedPlants[i];
+      var plantObj=APP.plants.find(function(p){ return p.id===sp.id; }); if(!plantObj) continue;
+      var hist=plantObj.pollHistory?plantObj.pollHistory.slice():[];
+      hist.unshift({pollDate:pollDate,harvestDate:harvestDate,pollDays:pollDays,createdAt:now.toISOString()});
+      if(hist.length>50) hist=hist.slice(0,50);
+      await _gasPost({ action:'updatePlant', id:plantObj.id, pollDate:pollDate, pollDays:pollDays, pollHistory:JSON.stringify(hist) });
+      APP.plants=APP.plants.map(function(p){ return p.id===plantObj.id?Object.assign({},p,{pollDate:pollDate,pollDays:pollDays,pollHistory:hist}):p; });
+      var rec={date:dateVal,plantName:sp.name,plantId:sp.id,eventType:'착과',type:'착과',material:material,note:'착과일: '+pollDate+', 수확예정: '+harvestDate,createdAt:now.toISOString()};
+      var r = await _gasPost(Object.assign({ action:'addGrowRecord' }, rec));
+      if(r&&r.id) newLogs.push(Object.assign({id:r.id,_col:'growRecords'},rec));
+    }
+  } else {
+    for(var j=0;j<selectedPlants.length;j++){
+      var sp2=selectedPlants[j];
+      var rec2={date:dateVal,plantName:sp2.name,plantId:sp2.id,eventType:type,type:type,material:material,note:detail,createdAt:now.toISOString()};
+      var r2 = await _gasPost(Object.assign({ action:'addGrowRecord' }, rec2));
+      if(r2&&r2.id) newLogs.push(Object.assign({id:r2.id,_col:'growRecords'},rec2));
+    }
+  }
+
+  newLogs.forEach(function(l){ APP.logs.unshift(l); });
+  APP.logs.sort(function(a,b){ var da=(a.date||'').slice(0,10),db_=(b.date||'').slice(0,10); if(da!==db_) return da>db_?-1:1; return (a.time||'')>(b.time||'')?-1:1; });
+  closeModal('log-modal'); showToast('📝 '+selectedPlants.length+'개 작물 기록 저장 완료');
+  renderLogs(); renderPlants();
+}
+
+function closeModal(id){ document.getElementById(id).classList.add('hidden'); }
+document.querySelectorAll('.modal-bg').forEach(function(m){
+  // 배경 클릭으로 닫히지 않는 모달
+  if(m.id==='db-item-modal') return;
+  if(m.id==='gas-settings-modal') return;
+  m.addEventListener('click',function(e){ if(e.target===m) m.classList.add('hidden'); });
+});
+function showToast(msg){ var t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2500); }
+function setSyncStatus(online){
+  var dot   = document.getElementById('sync-dot');
+  var label = document.getElementById('sync-label');
+  if (!dot || !label) return;
+  if (online && db) {
+    dot.className     = 'sync-dot';
+    label.textContent = '동기화됨';
+    label.style.color = 'var(--green-dark)';
+  } else if (!db) {
+    dot.className     = 'sync-dot offline';
+    label.textContent = 'Firebase 미연결';
+    label.style.color = '#E65100';
+  } else {
+    dot.className     = 'sync-dot offline';
+    label.textContent = '오프라인';
+    label.style.color = 'var(--gray-400)';
+  }
+}
+async function syncNow(){
+  var dot   = document.getElementById('sync-dot');
+  var label = document.getElementById('sync-label');
+  if(dot)   dot.className     = 'sync-dot';
+  if(label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
   try {
     var raw = await _gasGet('getPlants');
-    var plantsArr = Array.isArray(raw) ? raw : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
-    
-    // 🔥 빈 응답이나 에러 객체를 걸러내는 안전장치
-    plantsArr = plantsArr.filter(function(p) { return p && typeof p === 'object' && p.name; });
-
+    var plantsArr = Array.isArray(raw) ? raw
+      : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     if (plantsArr.length > 0) {
+      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
       var today = new Date().toISOString().slice(0,10);
 
       function _hasRealDate(p) {
+        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
         var d = p.dateStr || '';
         return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
       }
 
       function _betterPlant(ex, p) {
+        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
         var exHasDate = _hasRealDate(ex);
         var pHasDate  = _hasRealDate(p);
-        if (!exHasDate && pHasDate) return true;
-        if (exHasDate && !pHasDate) return false;
+        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
+        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
+        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
         return (p.events||[]).length > (ex.events||[]).length;
       }
 
       plantsArr.forEach(function(p) {
+        if (!p || !p.name) return;
         var key = 'name:' + p.name.trim();
         if (_seen[key] !== undefined) {
           var idx = _seen[key];
           var ex  = _deduped[idx];
           if (_betterPlant(ex, p)) {
+            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
             _deduped[idx] = Object.assign({}, ex, p, {
               dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
               events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
               no:      ex.no || p.no,
             });
           } else {
+            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
             if (!_hasRealDate(ex) && _hasRealDate(p)) {
               _deduped[idx].dateStr = p.dateStr;
             }
@@ -1026,18 +3627,24 @@ async function loadAllData() {
           _deduped.push(Object.assign({}, p));
         }
       });
-
-      APP.plants = _deduped.map(function(p) {
+      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
+      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+        // dateStr ↔ plantDate 양방향 동기화
         if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
         if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
+        // 숫자 필드 보장
+        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
         p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
         p.totalDays = parseInt(p.totalDays) || 0;
         p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
         p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
+        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
         if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
+        // loc → zone 변환
         if (p.loc && !p.zone) p.zone = String(p.loc);
+        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
         if (typeof p.events === 'string') {
           if (p.events.startsWith('[')) {
             try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
@@ -1046,37 +3653,347 @@ async function loadAllData() {
           }
         }
         if (!Array.isArray(p.events)) p.events = [];
+        // status 기본값 — GAS 데이터에 없으면 'active'
         if (!p.status) p.status = 'active';
+        // category 보완 — GAS에 없으면 MASTER_DB에서
         if (!p.category) {
-          var _mp = (defaultPlants).find(function(m){ return m.id===p.id || m.name===p.name; });
+          var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+            return m.id===p.id || m.name===p.name;
+          });
           if (_mp && _mp.category) p.category = _mp.category;
         }
+        // location 정규화
         if (!p.location && p.loc) p.location = p.loc;
         if (!p.loc && p.location) p.loc = p.location;
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+      console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
+      if (APP.plants.length > 0) {
+        var _p0 = APP.plants[0];
+        console.log('[loadAllData] 첫 식물:', _p0.name,
+          '| status:', _p0.status, '| category:', _p0.category,
+          '| plantDate:', _p0.plantDate, '| dateStr:', _p0.dateStr,
+          '| fruitDays:', _p0.fruitDays, '| totalDays:', _p0.totalDays);
+      }
     }
-
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
     (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
       return Object.assign({_key:k}, doneRaw[k]);
     })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
+    var wlRaw = await _gasGet('getWorkLogs', { limit:'80' }).catch(function(){ return []; });
+    var grRaw = await _gasGet('getGrowRecords', { limit:'80' }).catch(function(){ return []; });
+    var _swl = (Array.isArray(wlRaw)?wlRaw:[]).map(function(d){ return Object.assign({_col:'workLogs'}, d); });
+    var _sgr = (Array.isArray(grRaw)?grRaw:[]).map(function(d){
+      return Object.assign({_col:'growRecords',
+        date:(d.date||'').slice(0,10), plantName:d.plantName||d.name||'',
+        type:d.eventType||d.type||'기타', material:d.material||'',
+        detail:d.note||d.detail||'', time:d.time||''}, d);
+    });
+    var _sSeen = {};
+    APP.logs = _swl.concat(_sgr).filter(function(l) {
+      var _d = (l.detail||l.note||'').slice(0,30);
+      var k = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_d;
+      if (_sSeen[k]) return false;
+      _sSeen[k] = true;
+      return true;
+    }).sort(function(a,b){
+      var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+      if(da!==db_) return da>db_?-1:1;
+      return (a.time||'')>(b.time||'')?-1:1;
+    });
+    try{renderToday();}catch(e){}
+    try{renderPlants();}catch(e){}
+    try{renderLogs();}catch(e){}
+    if(dot)   dot.className     = 'sync-dot';
+    if(label) { label.textContent='동기화됨'; label.style.color='var(--green-dark)'; }
+    showToast('✅ 동기화 완료 — 식물 '+APP.plants.length+'개');
+  } catch(e) {
+    console.warn('[syncNow] 오류:', e.message);
+    if(dot)   dot.className     = 'sync-dot offline';
+    if(label) { label.textContent='동기화 실패'; label.style.color='#C62828'; }
+    showToast('동기화 실패: '+e.message);
+  }
+}
+function setupSync(){ setInterval(syncNow, 5*60*1000); }
 
+async function launchApp(){
+  if (_slowTimer){ clearTimeout(_slowTimer); _slowTimer=null; }
+  var slwEl = document.getElementById('loading-slow-msg');
+  if (slwEl) slwEl.style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  // 초기 패널 명시적 표시
+  document.querySelectorAll('.panel').forEach(function(p){ p.style.display='none'; });
+  var initPanel = document.getElementById('panel-today');
+  if(initPanel){ initPanel.style.display='block'; initPanel.classList.add('active'); }
+  var days=['일','월','화','수','목','금','토'];
+  document.getElementById('topbar-date').textContent =
+    TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일 ('+days[TODAY.getDay()]+')';
+  setLoadingStep(1, 25, '데이터 로드 중...');
+  try { await loadAllData(); } catch(e){ console.warn('loadAllData 오류:',e.message); hideLoading(); }
+  try { await loadGasUrlSetting(); }   catch(e){}
+  try { await loadMyPesticideList(); } catch(e){}
+  try { await loadUserCropUsage(); }   catch(e){}
+  try { await initOfflineSystem(); }   catch(e){}
+  try { setupSync(); }                 catch(e){}
+}
+
+var HARVEST_DB = {
+  
+  '수박':    [{days:80,  label:'소형 수박 (씨없는)'},{days:90,  label:'일반 수박'},{days:100, label:'대형 수박'}],
+  '참외':    [{days:55,  label:'조생종'},{days:65,  label:'일반'},{days:75,  label:'만생종'}],
+  '멜론':    [{days:80,  label:'얼스 멜론'},{days:90,  label:'네트멜론'},{days:100, label:'만생종'}],
+  '호박':    [{days:45,  label:'애호박·주키니'},{days:90,  label:'단호박'},{days:120, label:'늙은호박'}],
+  '토마토':  [{days:70,  label:'방울토마토'},{days:80,  label:'일반 토마토'},{days:90,  label:'대형 토마토'}],
+  '고추':    [{days:75,  label:'풋고추'},{days:90,  label:'홍고추 (건고추 120일)'}],
+  '가지':    [{days:65,  label:'가지'}],
+  '오이':    [{days:45,  label:'오이'}],
+  '파프리카':[{days:80,  label:'파프리카'}],
+  
+  '콩':      [{days:100, label:'조생종'},{days:120, label:'중생종'},{days:140, label:'만생종'}],
+  '팥':      [{days:100, label:'조생종'},{days:120, label:'일반'}],
+  '옥수수':  [{days:75,  label:'초당 옥수수'},{days:85,  label:'일반 찰옥수수'}],
+  '땅콩':    [{days:120, label:'조생종'},{days:150, label:'일반'}],
+  '동부콩':  [{days:70,  label:'동부콩'}],
+  '작두콩':  [{days:90,  label:'작두콩'}],
+  
+  '고구마':  [{days:100, label:'조생종'},{days:120, label:'일반'},{days:140, label:'만생종'}],
+  '감자':    [{days:70,  label:'조생종'},{days:90,  label:'일반'},{days:110, label:'만생종'}],
+  '생강':    [{days:150, label:'생강'}],
+  
+  '사과':    [{days:150, label:'조생종 (홍로)'},{days:170, label:'중생종 (후지)'},{days:200, label:'만생종'}],
+  '배':      [{days:140, label:'조생종'},{days:160, label:'신고배'},{days:180, label:'만생종'}],
+  '포도':    [{days:90,  label:'캠벨 (색택기 30일)'},{days:110, label:'거봉'},{days:130, label:'샤인머스켓'}],
+  '복숭아':  [{days:75,  label:'조생종'},{days:100, label:'중생종'},{days:130, label:'만생종'}],
+  '자두':    [{days:80,  label:'조생종'},{days:100, label:'중생종'}],
+  '블루베리':[{days:70,  label:'하이부시 조생'},{days:90,  label:'하이부시 중생'},{days:110, label:'래빗아이'}],
+  '살구':    [{days:80,  label:'살구'}],
+  '매실':    [{days:70,  label:'청매실'},{days:90,  label:'황매실'}],
+  '감':      [{days:150, label:'단감 조생'},{days:180, label:'단감 일반'},{days:210, label:'홍시·곶감용'}],
+  '키위':    [{days:150, label:'키위 (헤이워드)'}],
+  '무화과':  [{days:90,  label:'여름 무화과'},{days:180, label:'가을 무화과'}],
+  '대추':    [{days:120, label:'대추'}],
+  '모과':    [{days:150, label:'모과'}],
+  '다래':    [{days:120, label:'다래'}],
+  '블랙베리':[{days:60,  label:'블랙베리'}],
+  '머루포도':[{days:110, label:'머루포도'}],
+  
+  '배추':    [{days:60,  label:'봄배추'},{days:70,  label:'가을배추'}],
+  '무':      [{days:60,  label:'봄·여름무'},{days:70,  label:'가을무'}],
+  '양파':    [{days:150, label:'조생종'},{days:180, label:'중만생종'}],
+  '마늘':    [{days:180, label:'한지형 마늘'},{days:210, label:'난지형 마늘'}],
+  '대파':    [{days:90,  label:'여름 대파'},{days:120, label:'겨울 대파'}],
+};
+
+function onPlantNameInput() {
+  var name = (document.getElementById('pm-name').value||'').trim();
+  var lookupDiv = document.getElementById('pm-harvest-lookup');
+  var hint = document.getElementById('pm-harvest-lookup-hint');
+  if (!name) { lookupDiv.style.display='none'; return; }
+  
+  var localKey = findHarvestKey(name);
+  if (localKey) {
+    lookupDiv.style.display = '';
+    hint.textContent = localKey+' 데이터 있음 — 조회 클릭';
+  } else {
+    lookupDiv.style.display = '';
+    hint.textContent = name+' — 인터넷 조회';
+  }
+  
+  document.getElementById('pm-harvest-presets').style.display = 'none';
+}
+
+function findHarvestKey(name) {
+  var keys = Object.keys(HARVEST_DB);
+  return keys.find(function(k){ return name.includes(k)||k.includes(name); }) || null;
+}
+
+async function lookupHarvestDays() {
+  var name = (document.getElementById('pm-name').value||'').trim();
+  if (!name) { showToast('식물명을 먼저 입력하세요'); return; }
+
+  var btn = document.querySelector('.harvest-lookup-btn');
+  btn.textContent = '🔍 조회 중...'; btn.classList.add('loading');
+
+  var presets = [];
+
+  
+  var localKey = findHarvestKey(name);
+  if (localKey) {
+    presets = HARVEST_DB[localKey].map(function(p){ return Object.assign({source:'로컬DB'}, p); });
+  }
+
+  
+  if (presets.length === 0) {
+    try {
+      var prompt = '한국 농업에서 "'+name+'"의 파종·정식 후 수확까지 걸리는 일수를 품종별로 알려주세요.\n'
+        + '60일 미만은 제외하고, 대표 3~5개 품종·유형을 JSON 배열로만 반환하세요:\n'
+        + '[{"days":80,"label":"품종명 또는 유형 설명"},...]';
+            var res = await callClaude(prompt, 300);
+      if (res.ok) {
+        var parsed = parseAiJson(res.text);
+        if (Array.isArray(parsed)) {
+          presets = parsed.map(function(p){ return Object.assign({source:'AI 검색'}, p); });
+        }
+      }
+      if (Array.isArray(parsed)) {
+        presets = parsed.map(function(p){ return Object.assign({source:'AI 검색'}, p); });
+      }
+    } catch(e) { console.warn('harvest lookup error', e); }
+  }
+
+  btn.textContent = '🔍 수확기간 자동 조회'; btn.classList.remove('loading');
+
+  if (presets.length === 0) {
+    showToast(name+' 수확기간 정보를 찾지 못했습니다. 직접 입력해 주세요.');
+    return;
+  }
+  renderHarvestPresets(presets);
+}
+
+function renderHarvestPresets(presets) {
+  var container = document.getElementById('pm-harvest-preset-list');
+  var section   = document.getElementById('pm-harvest-presets');
+  container.innerHTML = presets.map(function(p, i){
+    return '<div class="harvest-preset-chip" data-days="'+p.days+'" data-total="'+(p.totalDays||p.days)+'" onclick="selectHarvestPreset(this)">'
+      + '<span class="hpc-days">'+p.days+'일</span>'
+      + '<span class="hpc-label">'+esc(p.label)+'</span>'
+      + (p.source==='AI 검색' ? '<span style="font-size:9px;color:var(--blue-dark);">AI</span>' : '')
+      + '</div>';
+  }).join('');
+  section.style.display = '';
+}
+
+function selectHarvestPreset(chip) {
+  document.querySelectorAll('.harvest-preset-chip').forEach(function(c){ c.classList.remove('selected'); });
+  chip.classList.add('selected');
+  var days  = parseInt(chip.getAttribute('data-days'))||0;
+  var total = parseInt(chip.getAttribute('data-total'))||days;
+  document.getElementById('pm-fdays').value = days;
+  if (!document.getElementById('pm-tdays').value || document.getElementById('pm-tdays').value==='0') {
+    document.getElementById('pm-tdays').value = total;
+  }
+  showToast('✅ 수확까지 '+days+'일 적용');
+}
+
+function resetHarvestLookup() {
+  var lup = document.getElementById('pm-harvest-lookup');
+  var pre = document.getElementById('pm-harvest-presets');
+  if (lup) lup.style.display='none';
+  if (pre) pre.style.display='none';
+}
+
+async function loadAllData() {
+  setLoadingStep(1, 30, '로컬 DB 로드 중...');
+  if (APP.plants.length === 0) {
+    // status: 'active' 를 강제로 부여하여 할 일 목록에 표시되게 함
+    APP.plants = MASTER_DB.plants.map(function(p){ 
+        return Object.assign({ status: 'active' }, p, { _local: true }); 
+    });
+    try { renderToday(); renderPlants(); } catch(e){}
+  }
+  setLoadingStep(1, 45, 'Google Sheets에서 데이터 로드 중...');
+  try {
+    var raw = await _gasGet('getPlants');
+    var plantsArr = Array.isArray(raw) ? raw
+      : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
+    if (plantsArr.length === 0) {
+      setLoadingStep(2, 55, '식물 DB 초기화 중...');
+      await seedPlants();
+      raw = await _gasGet('getPlants');
+      plantsArr = Array.isArray(raw) ? raw
+        : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
+    }
+    if (plantsArr.length > 0) {
+      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
+      var _seen = {};
+      var _deduped = [];
+      var today = new Date().toISOString().slice(0,10);
+
+      function _hasRealDate(p) {
+        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
+        var d = p.dateStr || '';
+        return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
+      }
+
+      function _betterPlant(ex, p) {
+        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
+        var exHasDate = _hasRealDate(ex);
+        var pHasDate  = _hasRealDate(p);
+        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
+        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
+        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
+        return (p.events||[]).length > (ex.events||[]).length;
+      }
+
+      plantsArr.forEach(function(p) {
+        if (!p || !p.name) return;
+        var key = 'name:' + p.name.trim();
+        if (_seen[key] !== undefined) {
+          var idx = _seen[key];
+          var ex  = _deduped[idx];
+          if (_betterPlant(ex, p)) {
+            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
+            _deduped[idx] = Object.assign({}, ex, p, {
+              dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
+              events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
+              no:      ex.no || p.no,
+            });
+          } else {
+            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
+            if (!_hasRealDate(ex) && _hasRealDate(p)) {
+              _deduped[idx].dateStr = p.dateStr;
+            }
+          }
+        } else {
+          _seen[key] = _deduped.length;
+          _deduped.push(Object.assign({}, p));
+        }
+      });
+      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
+      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+        // dateStr ↔ plantDate 양방향 동기화
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
+        if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
+        // 숫자 필드 보장
+        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
+        p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
+        p.totalDays = parseInt(p.totalDays) || 0;
+        p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
+        p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
+        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
+        if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
+        // loc → zone 변환
+        if (p.loc && !p.zone) p.zone = String(p.loc);
+        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
+        if (typeof p.events === 'string') {
+          if (p.events.startsWith('[')) {
+            try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
+          } else if (p.events === '' || p.events.includes('[object')) {
+            p.events = [];
+          }
+        }
+        if (!Array.isArray(p.events)) p.events = [];
+        return p;
+      });
+      APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+    }
+    var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
+    APP.doneTasks = {};
+    (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
+      return Object.assign({_key:k}, doneRaw[k]);
+    })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
     setLoadingStep(2, 70, 'Google Sheets 동기화 완료!');
     try { renderToday(); renderPlants(); } catch(e){}
-
-    var dot = document.getElementById('sync-dot');
-    var lbl = document.getElementById('sync-label');
-    if (dot) dot.className = 'sync-dot';
-    if (lbl) { lbl.textContent = '온라인 (Sheets)'; lbl.style.color = 'var(--green-dark)'; }
-
+    setSyncStatus(true);
     setTimeout(function(){ hideLoading(); }, 300);
-
     Promise.all([
       _gasGet('getWorkLogs',    { limit: '80' }).catch(function(){ return []; }),
       _gasGet('getGrowRecords', { limit: '80' }).catch(function(){ return []; }),
+      loadUserDb(),
     ]).then(function(results2) {
       var wlRows = (Array.isArray(results2[0]) ? results2[0] : []).map(function(d){
         return Object.assign({_col:'workLogs'}, d);
@@ -1089,12 +4006,15 @@ async function loadAllData() {
         }, d);
       });
       var _allLogs = wlRows.concat(grRows);
+      // id 기준 중복 제거 (같은 기록이 workLogs/growRecords 양쪽에 있는 경우)
       var _logSeen = {};
       APP.logs = _allLogs.filter(function(l) {
+        // 중복 키: 날짜+식물명+종류+내용 조합 (id가 달라도 내용 같으면 중복)
         var _detail = (l.detail||l.note||'').slice(0,30);
         var _cont = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_detail;
-        if (_logSeen[_cont]) return false;
-        _logSeen[_cont] = true;
+        var k = _cont; // 내용 기반으로만 중복 판단
+        if (_logSeen[k]) return false;
+        _logSeen[k] = true;
         return true;
       }).sort(function(a,b){
         var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
@@ -1104,7 +4024,6 @@ async function loadAllData() {
       setLoadingStep(3, 100, '완료!');
       try { renderToday(); renderPlants(); renderLogs(); renderDb(); } catch(e){}
     }).catch(function(e){ console.warn('로그 로드 오류:', e.message); });
-
   } catch(e) {
     console.warn('[loadAllData] 오류:', e.message);
     setLoadingStep(2, 100, '로컬 모드');
@@ -1120,6 +4039,7 @@ function setLoadingStep(step, pct, msg) {
   var barEl  = document.getElementById('loading-progress-bar');
   if (msgEl) msgEl.textContent = msg || '';
   if (barEl) barEl.style.width = (pct||0) + '%';
+
   
   for (var i = 0; i <= 3; i++) {
     var el = document.getElementById('ls-' + i);
@@ -1128,13 +4048,27 @@ function setLoadingStep(step, pct, msg) {
   }
 }
 
+function startSlowTimers() {
+  // Firebase 연결 타이머 (로딩 화면 전용)
+  _slowTimer = setTimeout(function() {
+    var el = document.getElementById('loading-slow-msg');
+    if (el) el.style.display = '';
+  }, 10000);
+}
+
+function clearSlowTimers() {
+  if (_slowTimer)   { clearTimeout(_slowTimer);   _slowTimer   = null; }
+
+}
+
 function hideLoading() {
-  if (_slowTimer) { clearTimeout(_slowTimer); _slowTimer = null; }
+  clearSlowTimers();
   var overlay = document.getElementById('loading');
   if (!overlay) return;
   overlay.classList.add('fade-out');
   setTimeout(function() { overlay.classList.add('hidden'); }, 400);
 }
+
 
 function setLoadingMsg(msg) { setLoadingStep(2, 60, msg); }
 function hideLoadingMsg()    {  }
@@ -3446,38 +6380,43 @@ async function smartSave(collection, data) {
 }
 
 async function syncPendingToFirebase() {
-  if (_syncInProgress || !_isOnline) return;
+  if (_syncInProgress || !_isOnline || !db) return;
   _syncInProgress = true;
+
   var pending = await idbGetAll('pendingSync');
   if (!pending.length) { _syncInProgress=false; return; }
+
   showToast('🔄 오프라인 데이터 '+pending.length+'건 동기화 중...');
   var success=0; var fail=0;
+
   for (var i=0; i<pending.length; i++) {
     var item = pending[i];
     try {
       var dataToSave = Object.assign({}, item.data);
       delete dataToSave._pendingSync;
-      var r = await _gasPost(Object.assign({ action:'addUserDb', tab:item.collection.replace('userDb_','') }, dataToSave));
+      var ref = await db.collection(item.collection).add(dataToSave);
       await idbDelete('pendingSync', item.localId);
       success++;
     } catch(e) {
+      
       item.retryCount = (item.retryCount||0) + 1;
-      if (item.retryCount >= 5) { await idbDelete('pendingSync', item.localId); fail++; }
-      else { await idbPut('pendingSync', item); }
+      if (item.retryCount >= 5) {
+        await idbDelete('pendingSync', item.localId); 
+        fail++;
+      } else {
+        await idbPut('pendingSync', item);
+      }
     }
   }
+
   _syncInProgress = false;
   updatePendingBadge();
   if (success > 0) {
-    showToast('✅ '+success+'건 동기화 완료');
+    showToast('✅ '+success+'건 Firebase 동기화 완료'+(fail>0?' (실패:'+fail+'건)':''));
+    await loadUserDb();
     renderDb();
   }
 }
-
-// 앱 시작 트리거 (파일의 진짜 마지막 줄)
-window.addEventListener('load', function() {
-  startApp();
-});
 
 async function updatePendingBadge() {
   var pending = await idbGetAll('pendingSync');
