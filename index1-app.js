@@ -3625,6 +3625,12 @@ async function syncNow(){
     console.log('[DEBUG_FIX] _gasGet 결과:', (Array.isArray(raw) ? raw.length : Object.keys(raw||{}).length), '개');
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
+    
+    // 🔥 DEBUG: plantsArr 검증
+    console.log('[DEBUG_FIX] plantsArr 첫 항목:', plantsArr[0]);
+    var validCount = plantsArr.filter(function(p){ return p && p.name; }).length;
+    console.log('[DEBUG_FIX] 유효한 name 있는 항목:', validCount, '개 / 전체:', plantsArr.length, '개');
+    
     if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
@@ -3672,7 +3678,16 @@ async function syncNow(){
         }
       });
       // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
-      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
+      
+      // 🔥 핵심 수정: _deduped가 비어있으면 기존 APP.plants 유지!
+      console.log('[DEBUG_FIX] syncNow _deduped 완성: ', _deduped.length, '개');
+      if (_deduped.length === 0) {
+        console.warn('[DEBUG_FIX] ⚠️ 경고: GAS 데이터가 필터링으로 모두 제거됨! 기존 데이터 유지');
+        console.warn('[DEBUG_FIX] 원인: plantsArr의 name 필드 없음 또는 중복 제거 로직에서 제거됨');
+        // APP.plants를 그대로 유지
+        console.log('[DEBUG_FIX] 현재 유지되는 APP.plants:', APP.plants.length, '개');
+      } else {
+        APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
         // 🔥 DEBUG: 첫 번째 식물의 데이터 로깅
         if (p === _deduped[0]) {
           console.log('[DEBUG_FIX] GAS 식물 원본 데이터:', {
