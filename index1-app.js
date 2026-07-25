@@ -848,10 +848,13 @@ function renderPlants() {
       // 그 외 category가 있으면 이름 키워드로 판단하지 않음
       return false;
     }
-    // 2) category 없을 때만 이름 키워드로 판단
-    // 채소 키워드가 먼저 매칭되면 채소
+    // 2) category 없을 때: MASTER_DB에서 확인
+    var _mP = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){ return m.name===p.name||m.id===p.id; });
+    if (_mP && _mP.category) {
+      return _mP.category==='유실수'||_mP.category==='과수';
+    }
+    // 3) 이름 키워드 (채소 먼저)
     if (vegKw.some(function(k){ return nm.includes(k.toLowerCase()); })) return false;
-    // 유실수 키워드 매칭
     return fruitKw.some(function(k){ return nm.includes(k.toLowerCase()); });
   }
 
@@ -3510,6 +3513,18 @@ async function syncNow(){
           }
         }
         if (!Array.isArray(p.events)) p.events = [];
+        // status 기본값 — GAS 데이터에 없으면 'active'
+        if (!p.status) p.status = 'active';
+        // category 보완 — GAS에 없으면 MASTER_DB에서
+        if (!p.category) {
+          var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+            return m.id===p.id || m.name===p.name;
+          });
+          if (_mp && _mp.category) p.category = _mp.category;
+        }
+        // location 정규화
+        if (!p.location && p.loc) p.location = p.loc;
+        if (!p.loc && p.location) p.loc = p.location;
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
@@ -3521,17 +3536,25 @@ async function syncNow(){
     })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
     var wlRaw = await _gasGet('getWorkLogs', { limit:'80' }).catch(function(){ return []; });
     var grRaw = await _gasGet('getGrowRecords', { limit:'80' }).catch(function(){ return []; });
-    APP.logs = (Array.isArray(wlRaw)?wlRaw:[]).map(function(d){ return Object.assign({_col:'workLogs'}, d); })
-      .concat((Array.isArray(grRaw)?grRaw:[]).map(function(d){
-        return Object.assign({_col:'growRecords',
-          date:(d.date||'').slice(0,10), plantName:d.plantName||d.name||'',
-          type:d.eventType||d.type||'기타', material:d.material||'',
-          detail:d.note||d.detail||'', time:d.time||''}, d);
-      })).sort(function(a,b){
-        var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
-        if(da!==db_) return da>db_?-1:1;
-        return (a.time||'')>(b.time||'')?-1:1;
-      });
+    var _swl = (Array.isArray(wlRaw)?wlRaw:[]).map(function(d){ return Object.assign({_col:'workLogs'}, d); });
+    var _sgr = (Array.isArray(grRaw)?grRaw:[]).map(function(d){
+      return Object.assign({_col:'growRecords',
+        date:(d.date||'').slice(0,10), plantName:d.plantName||d.name||'',
+        type:d.eventType||d.type||'기타', material:d.material||'',
+        detail:d.note||d.detail||'', time:d.time||''}, d);
+    });
+    var _sSeen = {};
+    APP.logs = _swl.concat(_sgr).filter(function(l) {
+      var _d = (l.detail||l.note||'').slice(0,30);
+      var k = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_d;
+      if (_sSeen[k]) return false;
+      _sSeen[k] = true;
+      return true;
+    }).sort(function(a,b){
+      var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+      if(da!==db_) return da>db_?-1:1;
+      return (a.time||'')>(b.time||'')?-1:1;
+    });
     try{renderToday();}catch(e){}
     try{renderPlants();}catch(e){}
     try{renderLogs();}catch(e){}
@@ -3835,7 +3858,10 @@ async function loadAllData() {
       // id 기준 중복 제거 (같은 기록이 workLogs/growRecords 양쪽에 있는 경우)
       var _logSeen = {};
       APP.logs = _allLogs.filter(function(l) {
-        var k = l.id ? String(l.id) : (l.date||'')+(l.plantName||'')+(l.type||'')+(l.detail||'');
+        // 중복 키: 날짜+식물명+종류+내용 조합 (id가 달라도 내용 같으면 중복)
+        var _detail = (l.detail||l.note||'').slice(0,30);
+        var _cont = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_detail;
+        var k = _cont; // 내용 기반으로만 중복 판단
         if (_logSeen[k]) return false;
         _logSeen[k] = true;
         return true;
