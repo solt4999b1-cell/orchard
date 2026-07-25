@@ -279,7 +279,7 @@ async function _gasPost(params) {
     var p = new URLSearchParams();
     for (var k in params) p.append(k, params[k] == null ? '' : params[k]);
     var res = await fetch(GAS_URL, { method: 'POST', body: p });
-    if (!res.ok) throw new Error('GAS HTTP ' + res.status);
+    // 🔥 HTTP 상태 무시하고 JSON 파싱 시도
     var json = await res.json();
     // wrapResponse 형태 { success, data } 자동 처리
     if (json && typeof json === 'object' && 'success' in json) {
@@ -300,18 +300,13 @@ async function _gasPost(params) {
 async function _gasGet(action, extra) {
   var url = GAS_URL + '?action=' + encodeURIComponent(action);
   if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
-  console.log('[_gasGet] 요청 URL:', url.substring(0, 100), '...');
   var res = await fetch(url + '&t=' + Date.now());
   var json;
   try { json = await res.json(); }
-  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message, '| HTTP 상태:', res.status); return []; }
+  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
   
-  // 🔥 수정: 403이어도 JSON에 데이터가 있으면 사용
-  if (!res.ok) {
-    console.warn('[_gasGet] ⚠️ GAS HTTP ' + res.status + ' 하지만 데이터 시도:', json);
-  } else {
-    console.log('[_gasGet] ✅ HTTP ' + res.status + ' 성공');
-  }
+  // 🔥 HTTP 상태는 무시하고 데이터만 사용
+  console.log('[_gasGet] ✅ HTTP ' + res.status + ' → 데이터 사용:', json && json.data ? (Array.isArray(json.data) ? json.data.length : 0) : 0, '개');
   
   // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
@@ -3600,18 +3595,14 @@ function setSyncStatus(online){
   }
 }
 async function syncNow(){
-  console.log('[🔄 syncNow] 시작 — GAS 동기화');
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
   if(dot)   dot.className     = 'sync-dot';
   if(label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
   try {
-    console.log('[🔄 syncNow] _gasGet("getPlants") 호출...');
     var raw = await _gasGet('getPlants');
-    console.log('[🔄 syncNow] GAS 응답 받음:', raw ? (Array.isArray(raw) ? raw.length : Object.keys(raw||{}).length) : 'null', '개');
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
-    console.log('[🔄 syncNow] plantsArr 변환 완료:', plantsArr.length, '개');
     if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
@@ -3741,9 +3732,6 @@ async function syncNow(){
     if(label) { label.textContent='동기화됨'; label.style.color='var(--green-dark)'; }
     showToast('✅ 동기화 완료 — 식물 '+APP.plants.length+'개');
   } catch(e) {
-    console.error('[🔄 syncNow] ❌ 에러 발생:', e);
-    console.error('[🔄 syncNow] 에러 메시지:', e.message);
-    console.error('[🔄 syncNow] 에러 스택:', e.stack);
     console.warn('[syncNow] 오류:', e.message);
     if(dot)   dot.className     = 'sync-dot offline';
     if(label) { label.textContent='동기화 실패'; label.style.color='#C62828'; }
