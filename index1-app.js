@@ -443,6 +443,19 @@ async function _gasPost(params) {
 
 function initGAS() {
   console.log('🔖 index1-app.js 버전: 2026-07-25-v3 (status/category/dedup 수정본)');
+  // 화면 디버그 패널에 즉시 표시
+  var dbgEl = document.getElementById('early-debug');
+  function dbgLog(msg, color) {
+    console.log('[initGAS] ' + msg);
+    if (dbgEl) {
+      var line = document.createElement('div');
+      line.style.color = color || '#0ff';
+      line.textContent = '[initGAS] ' + msg;
+      dbgEl.appendChild(line);
+    }
+  }
+  dbgLog('④ initGAS() 실행됨');
+  dbgLog('  loading el: ' + (document.getElementById('loading') ? '있음' : '없음'));
   document.getElementById('loading').classList.remove('hidden');
   setLoadingStep(0, 5, '앱 초기화 중...');
   // index5와 동일: GAS_OCR_URL이 있으면 우선 사용
