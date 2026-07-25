@@ -3601,9 +3601,16 @@ async function syncNow(){
   if(label) { label.textContent='동기화 중...'; label.style.color='var(--gray-400)'; }
   try {
     var raw = await _gasGet('getPlants');
+    console.log('[syncNow] GAS 데이터 받음:', raw);
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
-    if (plantsArr.length > 0) {
+    console.log('[syncNow] plantsArr:', plantsArr.length, '개');
+    
+    // 🔥 데이터가 0개면 기존 APP.plants 유지
+    if (plantsArr.length === 0) {
+      console.warn('[syncNow] ⚠️ GAS에서 0개 데이터 반환 → 기존 APP.plants 유지 (현재:', APP.plants.length, '개)');
+      // APP.plants를 그대로 둠
+    } else if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
