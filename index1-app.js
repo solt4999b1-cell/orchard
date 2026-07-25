@@ -11713,3 +11713,147 @@ function _onCropInputChange(inp, slotIdx) {
       : '<span style="font-size:11px;color:var(--gray-400);">작물을 선택하세요</span>';
   }
 }
+async function loadAllData() {
+  setLoadingStep(1, 30, '로컬 DB 로드 중...');
+  if (APP.plants.length === 0) {
+    // 식물 데이터가 로드될 때 기본 상태를 'active'로 설정합니다.
+    APP.plants = MASTER_DB.plants.map(function(p){ 
+        return Object.assign({ status: 'active' }, p, { _local: true }); 
+    });
+    try { renderToday(); renderPlants(); } catch(e){}
+  }
+  setLoadingStep(1, 45, 'Google Sheets에서 데이터 로드 중...');
+  try {
+    var raw = await _gasGet('getPlants');
+    
+    // 배열로 변환 시도
+    var plantsArr = Array.isArray(raw) ? raw : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
+
+    // 🔥 핵심 안전장치: 응답 데이터 중 '이름(name)'이 있는 진짜 식물 데이터만 걸러냅니다. 
+    // 에러 객체가 넘어오면 빈 배열([])이 되어 기존 데이터를 지우지 않습니다.
+    plantsArr = plantsArr.filter(function(p) { return p && typeof p === 'object' && p.name; });
+
+    // 진짜 식물 데이터가 구글 시트에서 넘어왔을 때만 병합을 수행합니다.
+    if (plantsArr.length > 0) {
+      var _seen = {};
+      var _deduped = [];
+      var today = new Date().toISOString().slice(0,10);
+
+      function _hasRealDate(p) {
+        var d = p.dateStr || '';
+        return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
+      }
+
+      function _betterPlant(ex, p) {
+        var exHasDate = _hasRealDate(ex);
+        var pHasDate  = _hasRealDate(p);
+        if (!exHasDate && pHasDate) return true;  
+        if (exHasDate && !pHasDate) return false; 
+        return (p.events||[]).length > (ex.events||[]).length;
+      }
+
+      plantsArr.forEach(function(p) {
+        var key = 'name:' + p.name.trim();
+        if (_seen[key] !== undefined) {
+          var idx = _seen[key];
+          var ex  = _deduped[idx];
+          if (_betterPlant(ex, p)) {
+            _deduped[idx] = Object.assign({}, ex, p, {
+              dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
+              events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
+              no:      ex.no || p.no,
+            });
+          } else {
+            if (!_hasRealDate(ex) && _hasRealDate(p)) {
+              _deduped[idx].dateStr = p.dateStr;
+            }
+          }
+        } else {
+          _seen[key] = _deduped.length;
+          _deduped.push(Object.assign({}, p));
+        }
+      });
+
+      APP.plants = _deduped.map(function(p) {
+        if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
+        if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
+        if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
+        if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
+        p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
+        p.totalDays = parseInt(p.totalDays) || 0;
+        p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
+        p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
+        if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
+        if (p.loc && !p.zone) p.zone = String(p.loc);
+        if (typeof p.events === 'string') {
+          if (p.events.startsWith('[')) {
+            try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
+          } else if (p.events === '' || p.events.includes('[object')) {
+            p.events = [];
+          }
+        }
+        if (!Array.isArray(p.events)) p.events = [];
+        if (!p.status) p.status = 'active'; 
+        if (!p.category) {
+          var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+            return m.id===p.id || m.name===p.name;
+          });
+          if (_mp && _mp.category) p.category = _mp.category;
+        }
+        if (!p.location && p.loc) p.location = p.loc;
+        if (!p.loc && p.location) p.loc = p.location;
+        return p;
+      });
+      APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
+    }
+
+    // 작업 완료 내역 및 로그 가져오기
+    var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
+    APP.doneTasks = {};
+    (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
+      return Object.assign({_key:k}, doneRaw[k]);
+    })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
+    
+    setLoadingStep(2, 70, 'Google Sheets 동기화 완료!');
+    try { renderToday(); renderPlants(); } catch(e){}
+    setSyncStatus(true);
+    setTimeout(function(){ hideLoading(); }, 300);
+
+    Promise.all([
+      _gasGet('getWorkLogs',    { limit: '80' }).catch(function(){ return []; }),
+      _gasGet('getGrowRecords', { limit: '80' }).catch(function(){ return []; }),
+    ]).then(function(results2) {
+      var wlRows = (Array.isArray(results2[0]) ? results2[0] : []).map(function(d){
+        return Object.assign({_col:'workLogs'}, d);
+      });
+      var grRows = (Array.isArray(results2[1]) ? results2[1] : []).map(function(d){
+        return Object.assign({_col:'growRecords',
+          date: typeof d.date==='string'?d.date.slice(0,10):d.date||'',
+          plantName: d.plantName||d.name||'', type: d.eventType||d.type||'기타',
+          material: d.material||'', detail: d.note||d.detail||'', time: d.time||'',
+        }, d);
+      });
+      var _allLogs = wlRows.concat(grRows);
+      var _logSeen = {};
+      APP.logs = _allLogs.filter(function(l) {
+        var _detail = (l.detail||l.note||'').slice(0,30);
+        var _cont = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_detail;
+        if (_logSeen[_cont]) return false;
+        _logSeen[_cont] = true;
+        return true;
+      }).sort(function(a,b){
+        var da=(a.date||'').slice(0,10), db_=(b.date||'').slice(0,10);
+        if(da!==db_) return da>db_?-1:1;
+        return (a.time||'')>(b.time||'')?-1:1;
+      });
+      setLoadingStep(3, 100, '완료!');
+      try { renderToday(); renderPlants(); renderLogs(); renderDb(); } catch(e){}
+    }).catch(function(e){ console.warn('로그 로드 오류:', e.message); });
+
+  } catch(e) {
+    console.warn('[loadAllData] 오류:', e.message);
+    setLoadingStep(2, 100, '로컬 모드');
+    try { renderToday(); renderPlants(); renderLogs(); renderDb(); } catch(e2){}
+    setTimeout(function(){ hideLoading(); }, 300);
+  }
+}
