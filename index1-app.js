@@ -285,17 +285,26 @@ let GAS_URL = localStorage.getItem('_runtimeGasUrl') ||
               'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
 async function _gasPost(params) {
-  var p = new URLSearchParams();
-  for (var k in params) p.append(k, params[k] == null ? '' : params[k]);
-  var res = await fetch(GAS_URL, { method: 'POST', body: p });
-  if (!res.ok) throw new Error('GAS HTTP ' + res.status);
-  var json = await res.json();
-  // wrapResponse 형태 { success, data } 자동 처리
-  if (json && typeof json === 'object' && 'success' in json) {
-    if (json.data && json.data.id) return json.data;
+  try {
+    var p = new URLSearchParams();
+    for (var k in params) p.append(k, params[k] == null ? '' : params[k]);
+    var res = await fetch(GAS_URL, { method: 'POST', body: p });
+    if (!res.ok) throw new Error('GAS HTTP ' + res.status);
+    var json = await res.json();
+    // wrapResponse 형태 { success, data } 자동 처리
+    if (json && typeof json === 'object' && 'success' in json) {
+      if (!json.success) {
+        console.warn('[_gasPost] GAS 오류:', json.message || '알 수 없는 오류', params.action||'');
+        return json; // throw 대신 반환 (promise rejection 방지)
+      }
+      if (json.data && json.data.id) return json.data;
+      return json;
+    }
     return json;
+  } catch(e) {
+    console.warn('[_gasPost] 네트워크 오류:', e.message, params && params.action ? params.action : '');
+    return { success: false, error: e.message };
   }
-  return json;
 }
 
 async function _gasGet(action, extra) {
@@ -303,7 +312,9 @@ async function _gasGet(action, extra) {
   if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
   var res = await fetch(url + '&t=' + Date.now());
   if (!res.ok) throw new Error('GAS HTTP ' + res.status);
-  var json = await res.json();
+  var json;
+  try { json = await res.json(); }
+  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
   // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
     ? json.data : json;
@@ -11103,8 +11114,12 @@ function renderHarvestPanel(){
     '/ plantDate 있는 것:', all.filter(function(p){return p.plantDate;}).length,
     '/ fruitDays>0:', all.filter(function(p){return parseInt(p.fruitDays)>0;}).length);
   // fruitDays OR totalDays 가 있으면 달력 표시
+  // plantDate 또는 dateStr 중 하나라도 있으면 포함
   var planted=all.filter(function(p){
-    return p.plantDate && (parseInt(p.fruitDays)>0 || parseInt(p.totalDays)>0);
+    var hasDate = !!(p.plantDate || p.dateStr);
+    var hasDays = parseInt(p.fruitDays)>0 || parseInt(p.totalDays)>0 ||
+                  parseInt(p.pinchDays)>0;
+    return hasDate && hasDays;
   });var h='<div style="padding:10px 0;"><div style="font-size:14px;font-weight:700;color:#1B5E20;margin-bottom:8px;">🍎 수확 달력 (심은 날짜 기준)</div>';if(planted.length){planted.forEach(function(p){h+='<div style="background:#fff;border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;box-shadow:0 1px 3px rgba(0,0,0,.06);"><div style="font-size:12px;font-weight:600;">'+_plantEmoji(p)+' '+esc(p.name||'')+'</div><button onclick="toggleHarvestDetail(this,\''+p.id+'\')" style="padding:5px 12px;background:#1B5E20;color:#fff;border-radius:7px;border:none;font-size:11px;cursor:pointer;">📅 달력보기</button></div><div id="harvest-detail-'+p.id+'" style="display:none;padding:0 12px 8px;"></div>';});}else{h+='<div style="padding:20px;text-align:center;color:var(--gray-400);font-size:13px;">심은 날짜가 등록된 작물이 없습니다.</div>';}h+='</div>';container.innerHTML=h;}
 function toggleHarvestDetail(btn,pid){var el=document.getElementById('harvest-detail-'+pid);if(!el)return;if(el.style.display!=='none'){el.style.display='none';btn.textContent='📅 달력보기';btn.style.background='#1B5E20';return;}var plant=(APP.plants||[]).find(function(p){return p.id===pid;});if(!plant){el.innerHTML='<div style="color:#aaa;font-size:12px;">정보 없음</div>';el.style.display='block';return;}var hs=typeof buildHarvestSchedule==='function'?buildHarvestSchedule(plant,'nearest'):null;el.innerHTML=hs&&typeof renderHarvestSchedule==='function'?renderHarvestSchedule(hs):'<div style="color:#aaa;font-size:12px;">수확 예정일 계산 불가</div>';el.style.display='block';btn.textContent='🔼 접기';btn.style.background='#388E3C';}
 
