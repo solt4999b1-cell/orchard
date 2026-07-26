@@ -551,7 +551,6 @@ function calcTodayTasks() {
   if (window._myPesticideList && Array.isArray(window._myPesticideList)) {
     window._myPesticideList.forEach(function(p) {
       if (p.name && p.status !== 'empty' && !p.excluded) {
-        // 공백 제거하고 저장 (비교 시 공백 차이 방지)
         var cleanName = p.name.trim().replace(/\s+/g, '');
         myPesticideMap[cleanName] = true;
       }
@@ -570,7 +569,7 @@ function calcTodayTasks() {
       'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
   }
   APP.plants.forEach(function(plant){
-    // 🔥 수확 완료된 작물은 제외 (status가 'harvest'면 스킵)
+    // 🔥 수확 완료된 작물은 제외
     if (!plant.plantDate || plant.status!=='active') return;
     if (plant.status === 'harvest' || plant.status === 'completed') return;
     
@@ -599,7 +598,6 @@ function calcTodayTasks() {
       if (daysSince < intDays) return;
 
       if (!sprayMap[spray.pesticide]) {
-        // 공백 제거하고 비교 (정확한 매칭)
         var cleanPesticideName = spray.pesticide.trim().replace(/\s+/g, '');
         var hasIt = myPesticideMap[cleanPesticideName];  // 🔥 공백 제거해서 비교
         sprayMap[spray.pesticide] = {
@@ -4073,20 +4071,22 @@ async function loadAllData() {
         }
         if (!Array.isArray(p.events)) p.events = [];
 
-        // 🔥 핵심: 비어있는 속성 복구
+        // 🔥 핵심: 비어있는 속성 복구 + 수확 완료 판정
         if (!p.status || p.status === 'undefined') {
-          // 수확 여부 자동 판정
           if (p.plantDate && p.fruitDays && p.fruitDays > 0) {
-            var planted = parseDate(p.plantDate);
-            if (planted) {
-              var daysFromPlant = daysBetween(planted, TODAY);
-              // 수확기를 넘었으면 'harvest'로 변경
-              if (daysFromPlant > p.fruitDays) {
-                p.status = 'harvest';
+            try {
+              var planted = parseDate(p.plantDate);
+              if (planted) {
+                var daysFromPlant = daysBetween(planted, TODAY);
+                if (daysFromPlant > p.fruitDays) {
+                  p.status = 'harvest';
+                } else {
+                  p.status = 'active';
+                }
               } else {
                 p.status = 'active';
               }
-            } else {
+            } catch(e) {
               p.status = 'active';
             }
           } else {
@@ -4094,18 +4094,24 @@ async function loadAllData() {
           }
         }
         
-        // 이미 status가 있으면 그대로 유지하되, 수확 완료 체크
-        if (p.status === 'active' && p.plantDate && p.fruitDays && p.fruitDays > 0) {
-          var planted = parseDate(p.plantDate);
-          if (planted) {
-            var daysFromPlant = daysBetween(planted, TODAY);
-            // 수확기를 훨씬 넘었으면 'harvest'로 변경
-            if (daysFromPlant > p.fruitDays * 1.5) {
-              p.status = 'harvest';
-            }
-          }
+        // 🔥 감자(봄재배) 수동으로 'harvest'로 변경 (사용자 수확 완료)
+        if (p.name && p.name.includes('감자') && p.name.includes('봄')) {
+          p.status = 'harvest';
+          console.log('[loadAllData] ✓ 감자(봄재배) → harvest로 변경 (사용자 수확 완료)');
         }
         
+        // 수확 완료 후속 체크
+        if (p.status === 'active' && p.plantDate && p.fruitDays && p.fruitDays > 0) {
+          try {
+            var planted = parseDate(p.plantDate);
+            if (planted) {
+              var daysFromPlant = daysBetween(planted, TODAY);
+              if (daysFromPlant > p.fruitDays * 1.5) {
+                p.status = 'harvest';
+              }
+            }
+          } catch(e) {}
+        }
         if (!p.category || p.category === 'undefined') {
           var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
             return m.id===p.id || m.name===p.name;
@@ -4126,7 +4132,6 @@ async function loadAllData() {
       return Object.assign({_key:k}, doneRaw[k]);
     })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
     setLoadingStep(2, 70, '농약 데이터 로드 중...');
-    // 🔥 농약 데이터 로드 추가
     try {
       await loadMyPesticideList();
       console.log('[loadAllData] 농약 로드 완료:', window._myPesticideList ? window._myPesticideList.length : 0, '개');
@@ -4143,7 +4148,7 @@ async function loadAllData() {
       _gasGet('getWorkLogs',    { limit: '80' }).catch(function(){ return []; }),
       _gasGet('getGrowRecords', { limit: '80' }).catch(function(){ return []; }),
       loadUserDb(),
-      loadMyPesticideList(),  // 🔥 농약 데이터 백그라운드 재로드
+      loadMyPesticideList(),
     ]).then(function(results2) {
       var wlRows = (Array.isArray(results2[0]) ? results2[0] : []).map(function(d){
         return Object.assign({_col:'workLogs'}, d);
