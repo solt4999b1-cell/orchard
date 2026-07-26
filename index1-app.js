@@ -1023,9 +1023,16 @@ function plantCardHTML(p) {
   var pct          = (total>0&&dfp>=0) ? Math.min(100,Math.round(dfp/total*100)) : 0;
   var barCls       = pct<40?'bar-early':pct<75?'bar-mid':'bar-late';
 
-  
+  // 🔥 추가된 부분: 작업 기록(APP.logs)에 '수확'이 있는지 확인
+  var nm = p.name.toLowerCase();
+  var isHarvested = APP.logs.some(function(l){
+    return (l.plantName||l.plant||'').toLowerCase() === nm && (l.type === '수확' || l.eventType === '수확');
+  });
+  // ── 수확 뱃지 로직 (수확 완료 확인 우선) ──  
   var hBadge='';
-  if (p.pollDate&&p.pollDays>0) {
+  if (isHarvested) {
+    hBadge = '<span class="pi-badge pi-harvest-ok" style="background:#E8F5E9;color:#2E7D32;">✅ 수확 완료</span>';
+  } else if (p.pollDate&&p.pollDays>0) {
     var polled=parseDate(p.pollDate), hd=addDays(polled,p.pollDays), dL=daysBetween(TODAY,hd), sinceP=daysBetween(polled,TODAY);
     hBadge = dL===0 ? '<span class="pi-badge pi-harvest-today">🍎 수확 D-day!</span>'
            : dL>0  ? '<span class="pi-badge pi-harvest-days">🍎 수확 D-'+dL+'일 (착과 '+sinceP+'일째)</span>'
@@ -1103,7 +1110,14 @@ function plantStatusBadges(p) {
       +'<span>'+esc(p.plantDate)+' 심음</span><span>'+pct+'% · '+dfp+'/'+total+'일</span></div>'
       +'<div class="plant-bar-wrap" style="margin:0;"><div class="plant-bar '+barCls+'" style="width:'+pct+'%;"></div></div></div>';
   }
+  var nm=p.name.toLowerCase();
+  
+  // 🔥 추가된 부분: 수확 여부 확인
+  var isHarvested = APP.logs.some(function(l){
+    return (l.plantName||l.plant||'').toLowerCase() === nm && (l.type === '수확' || l.eventType === '수확');
+  });
 
+  // ── 수확 뱃지 로직 ──
   var hb='';
   if(p.pollDate&&p.pollDays>0){
     var polled=parseDate(p.pollDate),hd=addDays(polled,p.pollDays),dL=daysBetween(TODAY,hd),sinceP=daysBetween(polled,TODAY);
