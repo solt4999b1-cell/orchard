@@ -523,6 +523,11 @@ function showSetupError(msg) {
 
 async function seedPlants() {
   var plants = MASTER_DB.plants;
+  
+  // 🔥 전체 데이터를 우선 앱에 할당하여 화면에 즉시 렌더링
+  APP.plants = plants.map(function(p){ return Object.assign({status: 'active'}, p); });
+  renderToday(); renderPlants();
+
   var chunkSize = 20;  
   for (var i=0; i<plants.length; i+=chunkSize) {
     var chunk = plants.slice(i, i+chunkSize);
@@ -531,17 +536,11 @@ async function seedPlants() {
       batch.set(db.collection('plants').doc(p.id), p, {merge:true});
     });
     await batch.commit().catch(function(e){ console.warn('seed chunk',e); });
-    
-    if (i === 0) {
-      APP.plants = chunk.map(function(p){ return Object.assign({},p); });
-      renderToday(); renderPlants();
-    }
   }
   showToast('식물 DB 초기화 완료 ('+plants.length+'개)');
 }
 
 function calcTodayTasks() {
-  
   var sprayMap = {};   
   var fertMap  = {};   
   var taskList = [];   
@@ -556,14 +555,16 @@ function calcTodayTasks() {
     console.log('[calcTodayTasks] 첫식물 샘플 status:', _s.status,
       'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
   }
+
   APP.plants.forEach(function(plant){
-    if (!plant.plantDate || plant.status!=='active') return;
+    // 🔥 수정: plantDate가 없어도 활성 상태면 통과
+    if (plant.status!=='active') return;
+    
     var planted = parseDate(plant.plantDate);
-    if (!planted) return;
-    var dfp = daysBetween(planted, TODAY);
+    var dfp = planted ? daysBetween(planted, TODAY) : 0;
     var nm  = plant.name;
 
-    
+    // --- 농약(Spray) 스케줄 ---
     MASTER_DB.spraySchedule.forEach(function(spray){
       var crops = spray.crop.split('·');
       var match = crops.some(function(c){
@@ -596,7 +597,7 @@ function calcTodayTasks() {
       });
     });
 
-    
+    // --- 시비(Fertilizer) 스케줄 ---
     MASTER_DB.fertSchedule.forEach(function(fert){
       var crops = fert.crop.split('·');
       var match = crops.some(function(c){
@@ -629,68 +630,65 @@ function calcTodayTasks() {
       });
     });
 
-    
-    if (plant.pollDate && plant.pollDays>0) {
-      var polled = parseDate(plant.pollDate);
-      var hd     = addDays(polled, plant.pollDays);
-      var dLeft  = daysBetween(TODAY, hd);
-      if (dLeft<=3 && dLeft>=0) {
-        var tk='poll_harvest_'+plant.id+'_'+TODAY_STR;
+    // --- 파종일(plantDate)이 명확한 경우에만 실행되는 수확/순치기 로직 ---
+    if (planted) {
+      if (plant.pollDate && plant.pollDays>0) {
+        var polled = parseDate(plant.pollDate);
+        var hd     = addDays(polled, plant.pollDays);
+        var dLeft  = daysBetween(TODAY, hd);
+        if (dLeft<=3 && dLeft>=0) {
+          var tk='poll_harvest_'+plant.id+'_'+TODAY_STR;
+          taskList.push({
+            key:tk, type:'task', groupType:'harvest',
+            plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
+            action: dLeft===0?'수확 D-day! (착과)':'수확 D-'+dLeft+'일 (착과)',
+            subAction:'착과 후 '+daysBetween(polled,TODAY)+'일째',
+            urgent:dLeft<=1, dfp:dfp, done:!!APP.doneTasks[tk],
+          });
+        }
+      }
+
+      if (plant.fruitDays>0) {
+        var dL2 = plant.fruitDays - dfp;
+        if (dL2<=7 && dL2>=0) {
+          var tk2='fruit_'+plant.id+'_'+TODAY_STR;
+          taskList.push({
+            key:tk2, type:'task', groupType:'harvest',
+            plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
+            action: dL2===0?'수확 D-day!':'수확 D-'+dL2+'일',
+            subAction:'심은 후 '+(plant.fruitDays-dL2)+'/'+plant.fruitDays+'일',
+            urgent:dL2<=2, dfp:dfp, done:!!APP.doneTasks[tk2],
+          });
+        }
+      }
+
+      if (plant.pinchDays>0 && dfp===plant.pinchDays) {
+        var tk3='pinch_'+plant.id+'_'+TODAY_STR;
         taskList.push({
-          key:tk, type:'task', groupType:'harvest',
+          key:tk3, type:'task', groupType:'pinch',
           plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
-          action: dLeft===0?'수확 D-day! (착과)':'수확 D-'+dLeft+'일 (착과)',
-          subAction:'착과 후 '+daysBetween(polled,TODAY)+'일째',
-          urgent:dLeft<=1, dfp:dfp, done:!!APP.doneTasks[tk],
+          action:'순치기 (적심) 시기', subAction:'심은 후 '+plant.pinchDays+'일',
+          urgent:true, dfp:dfp, done:!!APP.doneTasks[tk3],
         });
       }
-    }
 
-    
-    if (plant.fruitDays>0) {
-      var dL2 = plant.fruitDays - dfp;
-      if (dL2<=7 && dL2>=0) {
-        var tk2='fruit_'+plant.id+'_'+TODAY_STR;
-        taskList.push({
-          key:tk2, type:'task', groupType:'harvest',
-          plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
-          action: dL2===0?'수확 D-day!':'수확 D-'+dL2+'일',
-          subAction:'심은 후 '+(plant.fruitDays-dL2)+'/'+plant.fruitDays+'일',
-          urgent:dL2<=2, dfp:dfp, done:!!APP.doneTasks[tk2],
-        });
-      }
-    }
-
-    
-    if (plant.pinchDays>0 && dfp===plant.pinchDays) {
-      var tk3='pinch_'+plant.id+'_'+TODAY_STR;
-      taskList.push({
-        key:tk3, type:'task', groupType:'pinch',
-        plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
-        action:'순치기 (적심) 시기', subAction:'심은 후 '+plant.pinchDays+'일',
-        urgent:true, dfp:dfp, done:!!APP.doneTasks[tk3],
-      });
-    }
-
-    
-    if (plant.totalDays>0) {
-      var dL3 = plant.totalDays-dfp;
-      if (dL3<=7 && dL3>0) {
-        var tk4='harvest_warning_'+plant.id+'_'+TODAY_STR;
-        taskList.push({
-          key:tk4, type:'task', groupType:'harvest',
-          plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
-          action:'수확 D-'+dL3+'일 (재배기간)', subAction:'재배기간 종료 임박',
-          urgent:dL3<=3, dfp:dfp, done:!!APP.doneTasks[tk4],
-        });
+      if (plant.totalDays>0) {
+        var dL3 = plant.totalDays-dfp;
+        if (dL3<=7 && dL3>0) {
+          var tk4='harvest_warning_'+plant.id+'_'+TODAY_STR;
+          taskList.push({
+            key:tk4, type:'task', groupType:'harvest',
+            plantId:plant.id, plantName:nm, emoji:plant.emoji||'🌱', location:plant.location||'',
+            action:'수확 D-'+dL3+'일 (재배기간)', subAction:'재배기간 종료 임박',
+            urgent:dL3<=3, dfp:dfp, done:!!APP.doneTasks[tk4],
+          });
+        }
       }
     }
   });
 
-  
+  // 배열 합치기 및 정렬 (기존과 동일)
   var tasks = [];
-
-  
   Object.keys(sprayMap).forEach(function(pestName){
     var g = sprayMap[pestName];
     var taskKey = 'spray_group_'+pestName.replace(/\s/g,'')+'_'+TODAY_STR;
@@ -698,43 +696,29 @@ function calcTodayTasks() {
     var done = !!APP.doneTasks[taskKey];
     tasks.push({
       key: taskKey, type: 'spray', groupType: 'spray',
-      action: pestName+' 살포',
-      subAction: g.target,
-      pestType: g.pestType,
-      interval: g.interval,
-      preharvest: g.preharvest,
-      plants: g.plants,           
-      plantName: g.plants.map(function(p){ return p.name; }).join(', '),
+      action: pestName+' 살포', subAction: g.target,
+      pestType: g.pestType, interval: g.interval, preharvest: g.preharvest,
+      plants: g.plants, plantName: g.plants.map(function(p){ return p.name; }).join(', '),
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌿',
-      location: '',
-      urgent: anyUrgent,
-      done: done,
+      location: '', urgent: anyUrgent, done: done,
     });
   });
 
-  
   Object.keys(fertMap).forEach(function(fertName){
     var g = fertMap[fertName];
     var taskKey = 'fert_group_'+fertName.replace(/\s/g,'')+'_'+TODAY_STR;
     var done = !!APP.doneTasks[taskKey];
     tasks.push({
       key: taskKey, type: 'fert', groupType: 'fert',
-      action: fertName+' 시비',
-      subAction: g.desc,
-      interval: g.interval,
-      amount: g.amount,
-      plants: g.plants,
-      plantName: g.plants.map(function(p){ return p.name; }).join(', '),
+      action: fertName+' 시비', subAction: g.desc,
+      interval: g.interval, amount: g.amount,
+      plants: g.plants, plantName: g.plants.map(function(p){ return p.name; }).join(', '),
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌱',
-      location: '',
-      urgent: false,
-      done: done,
+      location: '', urgent: false, done: done,
     });
   });
 
-  
   tasks = tasks.concat(taskList);
-
   tasks.sort(function(a,b){
     if(a.done!==b.done) return a.done?1:-1;
     if(a.urgent!==b.urgent) return a.urgent?-1:1;
@@ -993,7 +977,10 @@ function renderPlants() {
   var _rMap   = {};
   (APP.plants||[]).forEach(function(p) {
     if (!p || !p.name) return;
-    var k   = p.name.trim();
+    
+    // 🔥 수정된 부분: 이름 대신 고유 ID를 우선으로 사용하여 같은 이름의 작물 증발 방지
+    var k   = p.id || p.name.trim(); 
+    
     var d   = p.dateStr || '';
     var hasDate = d && d !== _today0 && d.length === 10;
     if (!_rMap[k]) {
@@ -1028,6 +1015,7 @@ function renderPlants() {
     grid.innerHTML = plants.map(plantCardHTML).join('');
   }
 }
+
 function plantCardHTML(p) {
   var planted      = parseDate(p.plantDate);
   var dfp          = planted ? daysBetween(planted,TODAY) : -1;
@@ -3647,7 +3635,7 @@ async function syncNow(){
 
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = 'name:' + p.name.trim();
+        var key = p.id || p.name.trim(); // 🔥 2026-07-26 15:24 변경됨 var key = 'name:' + p.name.trim();
         if (_seen[key] !== undefined) {
           var idx = _seen[key];
           var ex  = _deduped[idx];
@@ -3971,7 +3959,7 @@ async function loadAllData() {
 
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = 'name:' + p.name.trim();
+        var key = p.id || p.name.trim(); // 🔥 2026-07-26 15:22변경됨
         if (_seen[key] !== undefined) {
           var idx = _seen[key];
           var ex  = _deduped[idx];
