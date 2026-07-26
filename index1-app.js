@@ -527,6 +527,7 @@ async function seedPlants() {
   // 🔥 전체 데이터를 우선 앱에 할당하여 화면에 즉시 렌더링
   APP.plants = plants.map(function(p){ return Object.assign({status: 'active'}, p); });
   renderToday(); renderPlants();
+  await loadPreparation();  // 📌 준비사항/팁 로드 (2026-07-26)
 
   var chunkSize = 20;  
   for (var i=0; i<plants.length; i+=chunkSize) {
@@ -546,14 +547,11 @@ function calcTodayTasks() {
   var fertMap  = {};   
   var taskList = [];
   
-  // 🔥 보유한 농약 맵 생성 (window._myPesticideList 사용)
+  // 🔥 보유한 농약 맵 생성
   var myPesticideMap = {};
-  if (window._myPesticideList && Array.isArray(window._myPesticideList)) {
-    window._myPesticideList.forEach(function(p) {
-      if (p.name && p.status !== 'empty' && !p.excluded) {
-        var cleanName = p.name.trim().replace(/\s+/g, '');
-        myPesticideMap[cleanName] = true;
-      }
+  if (APP.myPesticides) {
+    Object.values(APP.myPesticides).forEach(function(p) {
+      if (p.name) myPesticideMap[p.name.trim()] = true;
     });
   }
   console.log('[calcTodayTasks] 보유 농약:', Object.keys(myPesticideMap).join(', '));
@@ -569,10 +567,7 @@ function calcTodayTasks() {
       'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
   }
   APP.plants.forEach(function(plant){
-    // 🔥 수확 완료된 작물은 제외
     if (!plant.plantDate || plant.status!=='active') return;
-    if (plant.status === 'harvest' || plant.status === 'completed') return;
-    
     var planted = parseDate(plant.plantDate);
     if (!planted) return;
     var dfp = daysBetween(planted, TODAY);
@@ -598,8 +593,7 @@ function calcTodayTasks() {
       if (daysSince < intDays) return;
 
       if (!sprayMap[spray.pesticide]) {
-        var cleanPesticideName = spray.pesticide.trim().replace(/\s+/g, '');
-        var hasIt = myPesticideMap[cleanPesticideName];  // 🔥 공백 제거해서 비교
+        var hasIt = myPesticideMap[spray.pesticide.trim()];  // 🔥 보유 여부 확인
         sprayMap[spray.pesticide] = {
           pesticide: spray.pesticide, pestType: spray.pestType,
           target: spray.target, interval: spray.interval, preharvest: spray.preharvest,
@@ -841,7 +835,13 @@ function calcWeekTasks() {
   return tasks;
 }
 
-function renderAll(){ renderToday(); renderPlants(); renderLogs(); renderDb(); }
+async function renderAll(){ 
+  renderToday(); 
+  renderPlants(); 
+  renderLogs(); 
+  renderDb(); 
+  await loadPreparation();  // 📌 준비사항/팁 로드 (2026-07-26)
+}
 
 // ── 작물 이모지 자동 매핑 ────────────────────────────────────
 function _plantEmoji(p) {
@@ -911,34 +911,13 @@ function renderToday() {
   } else {
     el.innerHTML = filtered.map(taskCardHTML).join('');
   }
-
-  var week = calcWeekTasks();
-  var wel  = document.getElementById('week-list');
-  wel.innerHTML = week.length===0
-    ? '<div class="empty-state" style="padding:1rem 0;"><p style="font-size:12px;">이번 주 예정 없음</p></div>'
-    : week.map(function(t){
-        return '<div class="task-card" style="border-left-color:var(--amber);opacity:.8;">'
-          +'<div class="task-top"><div>'
-          +'<div class="task-plant"><span class="emoji">'+esc_plantEmoji({emoji:t.emoji,name:t.plantName,category:''})+'</span>'+esc(t.plantName)+'</div>'
-          +'<div class="task-action">'+esc(t.action)+'</div>'
-          +'<div class="task-meta"><span>📅 '+esc(t.date)+'</span></div>'
-          +'</div><span class="badge badge-soon">예정</span></div></div>';
-      }).join('');
+  
+  // 📌 "이번 주 예정" 섹션 제거됨 (2026-07-26)
 }
 
 function taskCardHTML(t) {
-  // 🔥 농약 보유/구입 배지
-  var pesticideBadge = '';
-  if (t.type === 'spray') {
-    if (t.hasIt) {
-      pesticideBadge = ' <span class="badge" style="background:#4CAF50;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">✓ 보유</span>';
-    } else if (t.needBuy) {
-      pesticideBadge = ' <span class="badge" style="background:#f44336;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">🛒 구입필요</span>';
-    }
-  }
-  
   var typeBadge = t.type==='spray'
-    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'+pesticideBadge
+    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'
     : t.type==='fert'
     ? '<span class="badge badge-fert">🌱 시비</span>'
     : '<span class="badge badge-log">✅ 작업</span>';
@@ -4071,47 +4050,8 @@ async function loadAllData() {
         }
         if (!Array.isArray(p.events)) p.events = [];
 
-        // 🔥 핵심: 비어있는 속성 복구 + 수확 완료 판정
-        if (!p.status || p.status === 'undefined') {
-          if (p.plantDate && p.fruitDays && p.fruitDays > 0) {
-            try {
-              var planted = parseDate(p.plantDate);
-              if (planted) {
-                var daysFromPlant = daysBetween(planted, TODAY);
-                if (daysFromPlant > p.fruitDays) {
-                  p.status = 'harvest';
-                } else {
-                  p.status = 'active';
-                }
-              } else {
-                p.status = 'active';
-              }
-            } catch(e) {
-              p.status = 'active';
-            }
-          } else {
-            p.status = 'active';
-          }
-        }
-        
-        // 🔥 감자(봄재배) 수동으로 'harvest'로 변경 (사용자 수확 완료)
-        if (p.name && p.name.includes('감자') && p.name.includes('봄')) {
-          p.status = 'harvest';
-          console.log('[loadAllData] ✓ 감자(봄재배) → harvest로 변경 (사용자 수확 완료)');
-        }
-        
-        // 수확 완료 후속 체크
-        if (p.status === 'active' && p.plantDate && p.fruitDays && p.fruitDays > 0) {
-          try {
-            var planted = parseDate(p.plantDate);
-            if (planted) {
-              var daysFromPlant = daysBetween(planted, TODAY);
-              if (daysFromPlant > p.fruitDays * 1.5) {
-                p.status = 'harvest';
-              }
-            }
-          } catch(e) {}
-        }
+        // 🔥 핵심: 비어있는 속성 복구
+        if (!p.status || p.status === 'undefined') p.status = 'active';
         if (!p.category || p.category === 'undefined') {
           var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
             return m.id===p.id || m.name===p.name;
@@ -4131,18 +4071,7 @@ async function loadAllData() {
     (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
       return Object.assign({_key:k}, doneRaw[k]);
     })).forEach(function(d){ APP.doneTasks[d._key||d.key||d.id] = d; });
-    setLoadingStep(2, 70, '농약 데이터 로드 중...');
-    try {
-      await loadMyPesticideList();
-      console.log('[loadAllData] 농약 로드 완료:', window._myPesticideList ? window._myPesticideList.length : 0, '개');
-    } catch(e) {
-      console.warn('[loadAllData] 농약 로드 오류:', e.message);
-    }
-    
-    setLoadingStep(2, 75, '준비사항 로드 중...');
-    try { await loadPreparation(); } catch(e){ console.warn('[loadAllData] 준비사항 로드 오류:', e.message); }
-    
-    setLoadingStep(2, 78, 'Google Sheets 동기화 완료!');
+    setLoadingStep(2, 70, 'Google Sheets 동기화 완료!');
     try { renderToday(); renderPlants(); } catch(e){}
     setSyncStatus(true);
     setTimeout(function(){ hideLoading(); }, 300);
@@ -4151,7 +4080,6 @@ async function loadAllData() {
       _gasGet('getWorkLogs',    { limit: '80' }).catch(function(){ return []; }),
       _gasGet('getGrowRecords', { limit: '80' }).catch(function(){ return []; }),
       loadUserDb(),
-      loadMyPesticideList(),
     ]).then(function(results2) {
       var wlRows = (Array.isArray(results2[0]) ? results2[0] : []).map(function(d){
         return Object.assign({_col:'workLogs'}, d);
@@ -11851,135 +11779,106 @@ function _onCropInputChange(inp, slotIdx) {
   }
 }
 
-// ============================================
-// 📌 준비사항 + 팁 로드 및 렌더링 함수
-// ============================================
-
-// 전역 변수
-var APP_PREPARATION = { prep: [], tips: [] };
+// ============================================================================
+// 📌 준비사항/팁 동적 로드 (2026-07-26 추가)
+// ============================================================================
 
 /**
- * 준비사항 데이터 로드 (GAS에서)
+ * loadPreparation - GAS API에서 준비사항/팁 데이터 로드
  */
-
 async function loadPreparation() {
   try {
+    Logger.log('[loadPreparation] 로드 시작');
+    
     const now = new Date();
-    const month = now.getMonth() + 1;  // 1~12
-    const week = Math.ceil(now.getDate() / 7);  // 1~4
+    const month = now.getMonth() + 1;  // 1-12
+    const week = Math.ceil(now.getDate() / 7);  // 1-4
     
     console.log('[loadPreparation] 로드 시작: ' + month + '월 ' + week + '주');
     
-    // 📌 GAS에서 데이터 로드
-    const response = await _gasGet('getPreparation', { 
-      month: month.toString(), 
-      week: week.toString() 
+    const response = await _gasGet('getPreparation', {
+      month: month,
+      week: week
     });
     
-    if (response && response.prep !== undefined) {
-      APP_PREPARATION = response;
-      console.log('[loadPreparation] 로드 완료: 준비사항 ' + response.prep.length + '개, 팁 ' + response.tips.length + '개');
-      renderPreparation();
-      return true;
-    } else {
-      // 🔄 데이터가 없으면 기본값 설정
-      console.warn('[loadPreparation] 데이터 없음 → 기본값 사용');
-      APP_PREPARATION = { 
-        prep: [], 
-        tips: [] 
-      };
-      renderPreparation();
-      return false;
+    if (!response || !response.success) {
+      console.log('[loadPreparation] API 실패:', response);
+      APP.PREPARATION = { prep: [], tips: [] };
+      return;
     }
-  } catch(e) {
-    console.error('[loadPreparation] 오류:', e.message);
-    APP_PREPARATION = { prep: [], tips: [] };
+    
+    APP.PREPARATION = response.data || { prep: [], tips: [] };
+    console.log('[loadPreparation] 로드 완료: 준비사항 ' + APP.PREPARATION.prep.length + '개, 팁 ' + APP.PREPARATION.tips.length + '개');
+    
     renderPreparation();
-    return false;
+  } catch (err) {
+    console.error('[loadPreparation] 오류:', err.message);
+    APP.PREPARATION = { prep: [], tips: [] };
   }
 }
 
 /**
- * 준비사항 + 팁 렌더링
+ * renderPreparation - HTML에 렌더링
  */
 function renderPreparation() {
   try {
-    // 📌 준비사항 렌더링
-    const prepHtml = renderPrepHtml();
-    const prepEl = document.getElementById('weekly-prep');
-    if (prepEl) prepEl.innerHTML = prepHtml;
+    console.log('[renderPreparation] 렌더링 시작');
     
-    // 💡 팁 렌더링
-    const tipsHtml = renderTipsHtml();
+    const prep = APP.PREPARATION.prep || [];
+    const tips = APP.PREPARATION.tips || [];
+    
+    // 준비사항 렌더링
+    const prepEl = document.getElementById('weekly-prep');
+    if (prepEl) {
+      if (prep.length === 0) {
+        prepEl.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
+      } else {
+        prepEl.innerHTML = prep.map(p => renderPrepHtml(p)).join('');
+      }
+    }
+    
+    // 팁 렌더링
     const tipsEl = document.getElementById('monthly-tips');
-    if (tipsEl) tipsEl.innerHTML = tipsHtml;
+    if (tipsEl) {
+      if (tips.length === 0) {
+        tipsEl.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;">이달의 핵심 없음</div>';
+      } else {
+        tipsEl.innerHTML = tips.map(t => renderTipsHtml(t)).join('');
+      }
+    }
     
     console.log('[renderPreparation] 렌더링 완료');
-  } catch(e) {
-    console.error('[renderPreparation] 오류:', e.message);
+  } catch (err) {
+    console.error('[renderPreparation] 오류:', err.message);
   }
 }
 
 /**
- * 준비사항 HTML 생성
+ * renderPrepHtml - 준비사항 카드 HTML
  */
-function renderPrepHtml() {
-  if (!APP_PREPARATION.prep || APP_PREPARATION.prep.length === 0) {
-    return '<div style="color:#999;font-size:12px;text-align:center;">이번 주 준비사항이 없습니다.</div>';
-  }
-  
-  let html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">';
-  
-  APP_PREPARATION.prep.forEach(function(item, idx) {
-    const isFullWidth = idx === APP_PREPARATION.prep.length - 1 && APP_PREPARATION.prep.length % 2 === 1;
-    const gridColSpan = isFullWidth ? 'grid-column:1 / -1;' : '';
-    
-    html += '<div style="background:white;border-radius:8px;padding:10px;border-left:4px solid #4CAF50;' + gridColSpan + '">';
-    html += '<div style="font-weight:700;color:#1B5E20;font-size:13px;margin-bottom:4px;">' + (item.emoji || '') + ' ' + (item.title || '') + '</div>';
-    
-    if (item.contentLines && item.contentLines.length > 0) {
-      html += '<div style="font-size:11px;color:#558B2F;line-height:1.6;">';
-      item.contentLines.forEach(function(line) {
-        html += (line || '') + '<br>';
-      });
-      html = html.slice(0, -4); // 마지막 <br> 제거
-      html += '</div>';
-    }
-    
-    html += '</div>';
-  });
-  
-  html += '</div>';
-  return html;
+function renderPrepHtml(prep) {
+  return '<div style="background:#fff;border-left:4px solid #1B5E20;padding:12px;margin-bottom:10px;border-radius:6px;">'
+    + '<div style="font-weight:600;margin-bottom:6px;color:#1B5E20;">' + esc(prep.emoji || '') + ' ' + esc(prep.title || '') + '</div>'
+    + '<div style="color:#666;font-size:12px;line-height:1.5;">'
+    + (prep.contentLines || []).map(line => '<div>• ' + esc(line) + '</div>').join('')
+    + '</div>'
+    + '</div>';
 }
 
 /**
- * 팁 HTML 생성
+ * renderTipsHtml - 팁 카드 HTML
  */
-function renderTipsHtml() {
-  if (!APP_PREPARATION.tips || APP_PREPARATION.tips.length === 0) {
-    return '<div style="color:#999;font-size:12px;text-align:center;">이달의 팁이 없습니다.</div>';
-  }
-  
-  let html = '<div style="display:grid;grid-template-columns:1fr;gap:8px;">';
-  
-  APP_PREPARATION.tips.forEach(function(item) {
-    html += '<div style="background:white;border-radius:8px;padding:10px;border-left:4px solid #FF9800;">';
-    html += '<div style="font-weight:700;color:#E65100;font-size:13px;margin-bottom:4px;">' + (item.emoji || '') + ' ' + (item.title || '') + '</div>';
-    
-    if (item.contentLines && item.contentLines.length > 0) {
-      html += '<div style="font-size:11px;color:#E0A575;line-height:1.6;">';
-      item.contentLines.forEach(function(line) {
-        html += (line || '') + '<br>';
-      });
-      html = html.slice(0, -4); // 마지막 <br> 제거
-      html += '</div>';
-    }
-    
-    html += '</div>';
-  });
-  
-  html += '</div>';
-  return html;
+function renderTipsHtml(tip) {
+  return '<div style="background:#fff;border-left:4px solid #E65100;padding:12px;margin-bottom:10px;border-radius:6px;">'
+    + '<div style="font-weight:600;margin-bottom:6px;color:#E65100;">' + esc(tip.emoji || '') + ' ' + esc(tip.title || '') + '</div>'
+    + '<div style="color:#666;font-size:12px;line-height:1.5;">'
+    + (tip.contentLines || []).map(line => '<div>• ' + esc(line) + '</div>').join('')
+    + '</div>'
+    + '</div>';
 }
 
+// APP.PREPARATION 초기화
+if (!window.APP) window.APP = {};
+APP.PREPARATION = { prep: [], tips: [] };
+
+console.log('[index1-app.js] 준비사항/팁 함수 로드 완료');
