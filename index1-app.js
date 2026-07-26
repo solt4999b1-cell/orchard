@@ -920,8 +920,18 @@ function renderToday() {
 }
 
 function taskCardHTML(t) {
+  // 🔥 농약 보유/구입 배지
+  var pesticideBadge = '';
+  if (t.type === 'spray') {
+    if (t.hasIt) {
+      pesticideBadge = ' <span class="badge" style="background:#4CAF50;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">✓ 보유</span>';
+    } else if (t.needBuy) {
+      pesticideBadge = ' <span class="badge" style="background:#f44336;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">🛒 구입필요</span>';
+    }
+  }
+  
   var typeBadge = t.type==='spray'
-    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'
+    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'+pesticideBadge
     : t.type==='fert'
     ? '<span class="badge badge-fert">🌱 시비</span>'
     : '<span class="badge badge-log">✅ 작업</span>';
