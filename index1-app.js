@@ -3917,7 +3917,6 @@ function resetHarvestLookup() {
 async function loadAllData() {
   setLoadingStep(1, 30, '로컬 DB 로드 중...');
   if (APP.plants.length === 0) {
-    // status: 'active' 를 강제로 부여하여 할 일 목록에 표시되게 함
     APP.plants = MASTER_DB.plants.map(function(p){ 
         return Object.assign({ status: 'active' }, p, { _local: true }); 
     });
@@ -3928,6 +3927,7 @@ async function loadAllData() {
     var raw = await _gasGet('getPlants');
     var plantsArr = Array.isArray(raw) ? raw
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
+    
     if (plantsArr.length === 0) {
       setLoadingStep(2, 55, '식물 DB 초기화 중...');
       await seedPlants();
@@ -3935,82 +3935,84 @@ async function loadAllData() {
       plantsArr = Array.isArray(raw) ? raw
         : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     }
-    if (plantsArr.length > 0) {
-      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
+
+    // 🔥 수정: GAS 데이터와 기존 114개 데이터를 병합하고 누락 속성 복구
+    if (plantsArr.length > 0 || APP.plants.length > 0) {
       var _seen = {};
-      var _deduped = [];
+      var _merged = [];
       var today = new Date().toISOString().slice(0,10);
 
       function _hasRealDate(p) {
-        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
-        var d = p.dateStr || '';
+        var d = p.dateStr || p.plantDate || '';
         return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
       }
 
-      function _betterPlant(ex, p) {
-        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
-        var exHasDate = _hasRealDate(ex);
-        var pHasDate  = _hasRealDate(p);
-        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
-        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
-        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
-        return (p.events||[]).length > (ex.events||[]).length;
-      }
+      // 1. 기존 데이터(MASTER_DB 등) 114개 먼저 맵에 넣기
+      APP.plants.forEach(function(p) {
+        if (!p || !p.name) return;
+        var key = p.id || p.name.trim();
+        _seen[key] = _merged.length;
+        _merged.push(Object.assign({status: 'active'}, p));
+      });
 
+      // 2. GAS에서 가져온 데이터(41개) 덮어쓰기 및 추가
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = p.id || p.name.trim(); // 🔥 2026-07-26 15:22변경됨
-        if (_seen[key] !== undefined) {
-          var idx = _seen[key];
-          var ex  = _deduped[idx];
-          if (_betterPlant(ex, p)) {
-            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
-            _deduped[idx] = Object.assign({}, ex, p, {
-              dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
-              events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
-              no:      ex.no || p.no,
-            });
-          } else {
-            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
-            if (!_hasRealDate(ex) && _hasRealDate(p)) {
-              _deduped[idx].dateStr = p.dateStr;
-            }
-          }
+        var key = p.id || p.name.trim();
+        var idx = _seen[key];
+        
+        if (idx !== undefined) {
+          var ex = _merged[idx];
+          _merged[idx] = Object.assign({}, ex, p, {
+            dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
+            plantDate: _hasRealDate(p) ? (p.plantDate || p.dateStr) : (ex.plantDate || ex.dateStr || p.plantDate),
+            events: (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
+            status: p.status || ex.status || 'active',
+            category: p.category || ex.category
+          });
         } else {
-          _seen[key] = _deduped.length;
-          _deduped.push(Object.assign({}, p));
+          _seen[key] = _merged.length;
+          _merged.push(Object.assign({status: 'active'}, p));
         }
       });
-      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
-      APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // dateStr ↔ plantDate 양방향 동기화
+
+      // 3. 누락된 속성 강제 할당 및 데이터 정제
+      APP.plants = _merged.filter(function(p) { return p; }).map(function(p) {
         if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
         if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
-        // 숫자 필드 보장
-        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
+        
         p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
         p.totalDays = parseInt(p.totalDays) || 0;
         p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
         p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
-        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
         if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
-        // loc → zone 변환
         if (p.loc && !p.zone) p.zone = String(p.loc);
-        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
+        
         if (typeof p.events === 'string') {
           if (p.events.startsWith('[')) {
             try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
-          } else if (p.events === '' || p.events.includes('[object')) {
-            p.events = [];
-          }
+          } else { p.events = []; }
         }
         if (!Array.isArray(p.events)) p.events = [];
+
+        // 🔥 핵심: 비어있는 속성 복구
+        if (!p.status || p.status === 'undefined') p.status = 'active';
+        if (!p.category || p.category === 'undefined') {
+          var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
+            return m.id===p.id || m.name===p.name;
+          });
+          p.category = (_mp && _mp.category) ? _mp.category : '재배중';
+        }
+        if (!p.location && p.loc) p.location = p.loc;
+        if (!p.loc && p.location) p.loc = p.location;
+        
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
     }
+
     var doneRaw = await _gasGet('getDoneTasks', { date: TODAY_STR });
     APP.doneTasks = {};
     (Array.isArray(doneRaw) ? doneRaw : Object.keys(doneRaw||{}).map(function(k){
@@ -4020,6 +4022,7 @@ async function loadAllData() {
     try { renderToday(); renderPlants(); } catch(e){}
     setSyncStatus(true);
     setTimeout(function(){ hideLoading(); }, 300);
+    
     Promise.all([
       _gasGet('getWorkLogs',    { limit: '80' }).catch(function(){ return []; }),
       _gasGet('getGrowRecords', { limit: '80' }).catch(function(){ return []; }),
@@ -4036,13 +4039,11 @@ async function loadAllData() {
         }, d);
       });
       var _allLogs = wlRows.concat(grRows);
-      // id 기준 중복 제거 (같은 기록이 workLogs/growRecords 양쪽에 있는 경우)
       var _logSeen = {};
       APP.logs = _allLogs.filter(function(l) {
-        // 중복 키: 날짜+식물명+종류+내용 조합 (id가 달라도 내용 같으면 중복)
         var _detail = (l.detail||l.note||'').slice(0,30);
         var _cont = (l.date||'').slice(0,10)+'|'+(l.plantName||'')+'|'+(l.type||l.eventType||'')+'|'+_detail;
-        var k = _cont; // 내용 기반으로만 중복 판단
+        var k = _cont; 
         if (_logSeen[k]) return false;
         _logSeen[k] = true;
         return true;
