@@ -2,7 +2,7 @@
 // ════════════════════════════════════════════════════════════════
 
 // Google Sheets 설정
-let SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
+let SHEET_ID = 'AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b';
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
 // 컬렉션 매핑
