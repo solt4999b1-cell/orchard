@@ -84,8 +84,8 @@ const _FC = 'eyJhcGlLZXkiOiAiQUl6YVN5QUtqUVJSalh3bWJsclpQcXY4RHhOZm8xNUUyQjU4a0t
 const FIREBASE_CONFIG = JSON.parse(atob(_FC));
 window.FIREBASE_CONFIG = FIREBASE_CONFIG;
 
-const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";  
-
+//const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec";  
+const GAS_OCR_URL = "https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec";
 const CLAUDE_API_KEY = ""; 
 //const PSIS_URL = "http://psis.rda.go.kr/openApi/service.do";
 
