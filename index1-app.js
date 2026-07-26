@@ -318,6 +318,12 @@ async function _gasGet(action, extra) {
   // wrapResponse 형태 { success, data } 자동 처리
   var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
     ? json.data : json;
+  
+  // 🔥 에러 응답이면 빈 배열 반환
+  if (json && json.error) {
+    console.warn('[_gasGet] GAS 에러:', json.error);
+    return [];
+  }
   // 배열 데이터 타입 정규화
   if (Array.isArray(data)) {
     // 숫자로 저장해야 할 필드
