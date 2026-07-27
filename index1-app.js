@@ -3724,50 +3724,42 @@ async function syncNow(){
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     console.log('[syncNow] plantsArr:', plantsArr.length, '개');
     
-    // 🔥 데이터가 0개면 기존 APP.plants 유지
-    // 🔥 방어 코드: GAS에서 가져온 데이터가 너무 적거나(예: 50개 미만) 없으면 기존 APP.plants를 보존
     if (plantsArr.length < 50) {
       console.warn('[syncNow] ⚠️ GAS 데이터가 너무 적음 (' + plantsArr.length + '개) → 기존 데이터 보존');
-      return; // 기존 데이터를 덮어쓰지 않고 중단
+      return;
     }
-      // APP.plants를 그대로 둠
+     
     if (plantsArr.length > 0) {
-      // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
       var today = new Date().toISOString().slice(0,10);
 
       function _hasRealDate(p) {
-        // 오늘 날짜이거나 비어있으면 '날짜 없음'으로 취급
         var d = p.dateStr || '';
         return d && d !== today && /^\d{4}-\d{2}-\d{2}$/.test(d);
       }
 
       function _betterPlant(ex, p) {
-        // 우선순위: 1) 심은날짜 있는 것  2) events 많은 것  3) 기존 유지
         var exHasDate = _hasRealDate(ex);
         var pHasDate  = _hasRealDate(p);
-        if (!exHasDate && pHasDate) return true;   // 새 것에 날짜 있음 → 교체
-        if (exHasDate && !pHasDate) return false;  // 기존에 날짜 있음 → 유지
-        // 둘 다 날짜 있거나 둘 다 없으면 events 많은 것 우선
+        if (!exHasDate && pHasDate) return true;   
+        if (exHasDate && !pHasDate) return false;  
         return (p.events||[]).length > (ex.events||[]).length;
       }
 
       plantsArr.forEach(function(p) {
         if (!p || !p.name) return;
-        var key = p.id || p.name.trim(); // 🔥 2026-07-26 15:24 변경됨 var key = 'name:' + p.name.trim();
+        var key = p.id || p.name.trim(); 
         if (_seen[key] !== undefined) {
           var idx = _seen[key];
           var ex  = _deduped[idx];
           if (_betterPlant(ex, p)) {
-            // 더 좋은 것으로 교체, dateStr과 events는 최선값 합치기
             _deduped[idx] = Object.assign({}, ex, p, {
               dateStr: _hasRealDate(p) ? p.dateStr : (ex.dateStr || p.dateStr),
               events:  (p.events||[]).length >= (ex.events||[]).length ? (p.events||[]) : (ex.events||[]),
               no:      ex.no || p.no,
             });
           } else {
-            // 기존 유지하되 dateStr이 없으면 새 것 날짜로 보완
             if (!_hasRealDate(ex) && _hasRealDate(p)) {
               _deduped[idx].dateStr = p.dateStr;
             }
@@ -3777,24 +3769,18 @@ async function syncNow(){
           _deduped.push(Object.assign({}, p));
         }
       });
-      // _local(MASTER_DB) 항목은 GAS 데이터와 이름 중복이면 이미 제거됨
+
       APP.plants = _deduped.filter(function(p) { return p; }).map(function(p) {
-        // dateStr ↔ plantDate 양방향 동기화
         if (!p.dateStr && p.plantDate) p.dateStr = String(p.plantDate).slice(0,10);
         if (!p.dateStr && p.addedDate) p.dateStr = String(p.addedDate).slice(0,10);
         if (p.dateStr && p.dateStr.includes('T')) p.dateStr = p.dateStr.slice(0,10);
         if (p.dateStr && !p.plantDate) p.plantDate = p.dateStr;
-        // 숫자 필드 보장
-        // fruitDay(s없음) / pinchDay(s없음) 등 구버전 필드명도 처리
         p.fruitDays = parseInt(p.fruitDays || p.fruitDay) || 0;
         p.totalDays = parseInt(p.totalDays) || 0;
         p.pinchDays = parseInt(p.pinchDays || p.pinchDay) || 0;
         p.pollDays  = parseInt(p.pollDays  || p.pollDay)  || 0;
-        // fruitDays가 0이고 totalDays가 있으면 totalDays를 fruitDays로 사용
         if (!p.fruitDays && p.totalDays) p.fruitDays = p.totalDays;
-        // loc → zone 변환
         if (p.loc && !p.zone) p.zone = String(p.loc);
-        // events 필드 파싱 (문자열 또는 "[object Object]" 처리)
         if (typeof p.events === 'string') {
           if (p.events.startsWith('[')) {
             try { p.events = JSON.parse(p.events); } catch(e) { p.events = []; }
@@ -3803,22 +3789,23 @@ async function syncNow(){
           }
         }
         if (!Array.isArray(p.events)) p.events = [];
-        // status 기본값 — GAS 데이터에 없으면 'active'
         if (!p.status) p.status = 'active';
-        // category 보완 — GAS에 없으면 MASTER_DB에서
         if (!p.category) {
           var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
             return m.id===p.id || m.name===p.name;
           });
           if (_mp && _mp.category) p.category = _mp.category;
         }
-        // location 정규화
         if (!p.location && p.loc) p.location = p.loc;
         if (!p.loc && p.location) p.loc = p.location;
         return p;
       });
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
       console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
+
+      // 🔥 [추가됨] 동기화 과정에서 내 농약장(보유 농약) 목록도 반드시 함께 불러오도록 호출
+      await loadMyPesticideList();
+
       if (APP.plants.length > 0) {
         var _p0 = APP.plants[0];
         console.log('[loadAllData] 첫 식물:', _p0.name,
@@ -3866,6 +3853,8 @@ async function syncNow(){
     showToast('동기화 실패: '+e.message);
   }
 }
+
+
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
 
 async function launchApp(){
