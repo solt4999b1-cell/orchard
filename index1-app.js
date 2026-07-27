@@ -910,16 +910,21 @@ function renderToday() {
 }
 
 function taskCardHTML(t) {
-  // 🔥 수정: plantNames 속성(또는 plants 배열 조합)을 확실하게 가져옴
-  var displayName = t.plantNames || t.plantName;
-  if (!displayName || displayName === 'undefined' || displayName.includes('undefined')) {
+  // 1. 작물 이름 정리 및 중복 제거
+  var rawNames = t.plantNames || t.plantName;
+  if (!rawNames || rawNames === 'undefined' || rawNames.includes('undefined')) {
     if (t.plants && t.plants.length > 0) {
-      displayName = t.plants.map(function(p){ return p.name; }).join(', ');
+      rawNames = t.plants.map(function(p){ return p.name; }).join(', ');
     } else {
-      displayName = '관련 작물';
+      rawNames = '관련 작물';
     }
   }
-    
+  
+  // 작물 이름이 쉼표로 중복 나열되는 경우를 깔끔하게 유니크 처리
+  var nameList = rawNames.split(',').map(function(n){ return n.trim(); }).filter(Boolean);
+  var uniqueNames = Array.from(new Set(nameList));
+  var displayName = uniqueNames.join(', ');
+
   var pesticideBadge = '';
   if (t.type === 'spray') {
     if (t.hasIt) {
@@ -929,7 +934,6 @@ function taskCardHTML(t) {
     }
   }
   
-  // 🔥 수정: pesticideBadge가 typeBadge 뒤에 렌더링되도록 반영
   var typeBadge = t.type==='spray'
     ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>' + pesticideBadge
     : t.type==='fert'
@@ -954,17 +958,19 @@ function taskCardHTML(t) {
       + more + '</div>';
   }
 
-  var actionLine = t.plants && t.plants.length>1
-    ? '<div class="task-action">'+esc(t.action)+' <span style="color:var(--gray-400);font-size:11px;">('+t.plants.length+'개 작물)</span></div>'
-    : '<div class="task-action">'+esc(t.action)+'</div>';
-
+  // 🔥 수정: 1행에는 농약/비료 이름(t.action), 2행에는 대상 작물 이름들이 오도록 위치 교체 및 정렬
   return '<div class="'+cardCls+'" id="tc-'+esc(t.key)+'">'
     +'<div class="task-top">'
     +'<div style="flex:1;">'
+    
+    // 1행: 이모지 + 농약/비료 이름 (예: 라이몬 살포) + 뱃지류
     +'<div class="task-plant">'
-    + '<span class="emoji">'+esc(t.emoji||'🌱')+'</span>'+esc(displayName)+' '
+    +'<span class="emoji">'+esc(t.emoji||'🌿')+'</span><b>'+esc(t.action)+'</b> '
     +typeBadge+urgBadge+doneBadge+'</div>'
-    +actionLine
+    
+    // 2행: 대상 작물 이름들 (예: 아주까리콩, 고구마 등)
+    +'<div class="task-action" style="font-size:13px; color:var(--gray-600); margin-top:4px;">🌱 대상 작물: '+esc(displayName)+'</div>'
+    
     +plantsHtml
     +'<div class="task-meta">'
     +(t.subAction  ? '<span>🎯 '+esc(t.subAction.substring(0,50))+'</span>' : '')
