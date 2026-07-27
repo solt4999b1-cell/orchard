@@ -1069,10 +1069,12 @@ async function loadWorklogsFromGAS() {
     
     if (Array.isArray(response)) {
       APP.logs = response;
+      console.log('[loadWorklogsFromGAS] ✅ 성공:', APP.logs.length);
     } else {
       APP.logs = [];
     }
   } catch (error) {
+    console.error('[loadWorklogsFromGAS] 예외:', error);
     APP.logs = [];
   }
 }
@@ -1086,10 +1088,15 @@ async function loadCheckedTasksFromGAS() {
     
     if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
       APP.doneTasks = response;
+      console.log('[loadCheckedTasksFromGAS] ✅ 성공');
+    } else if (Array.isArray(response)) {
+      // 만약 배열이면
+      APP.doneTasks = {};
     } else {
       APP.doneTasks = {};
     }
   } catch (error) {
+    console.error('[loadCheckedTasksFromGAS] 예외:', error);
     APP.doneTasks = {};
   }
 }
@@ -1101,16 +1108,12 @@ async function loadPesticidesFromGAS() {
   try {
     const response = await _gasGet('getPesticides');
     
-    console.log('[loadPesticidesFromGAS] 응답:', response);
-    
     if (Array.isArray(response)) {
       APP.pesticides = response;
       console.log('[loadPesticidesFromGAS] ✅ 성공:', APP.pesticides.length);
     } else {
-      console.warn('[loadPesticidesFromGAS] 배열 아님, 빈 배열 설정');
       APP.pesticides = [];
     }
-    
   } catch (error) {
     console.error('[loadPesticidesFromGAS] 예외:', error);
     APP.pesticides = [];
@@ -1137,55 +1140,17 @@ function getWeekKey() {
 
 async function loadPreparationFromGAS() {
   try {
-    const week = getWeekKey(); // 예: "7월 4주"
-    console.log('[loadPreparation] 로드 시작:', week);
-
-    // GAS에서 전체 준비사항 로드 (week 필터링은 클라이언트에서)
     const response = await _gasGet('getPreparations');
-
-    if (!response.success || !Array.isArray(response.data)) {
-      console.warn('[loadPreparation] 로드 실패');
-      APP.tips = [];
-      APP.preparations = [];
-      return;
+    
+    if (Array.isArray(response)) {
+      APP.allPreparations = response;
+      console.log('[loadPreparationFromGAS] ✅ 성공:', APP.allPreparations.length);
+    } else {
+      APP.allPreparations = [];
     }
-
-    // 현재 주차에 해당하는 데이터 필터링
-    APP.preparations = [];
-    APP.tips = [];
-
-    response.data.forEach(item => {
-      // GAS 시트 구조: [month, week, category, emoji, title, content]
-      // item = { month, week, category, emoji, title, content }
-      
-      const weekStr = `${item.month || ''}월 ${item.week || ''}주`;
-      
-      if (weekStr === week) {
-        if (item.category === 'prep') {
-          APP.preparations.push({
-            emoji: item.emoji || '📋',
-            title: item.title || '',
-            content: item.content || ''
-          });
-        } else if (item.category === 'tip') {
-          APP.tips.push({
-            emoji: item.emoji || '💡',
-            title: item.title || '',
-            content: item.content || ''
-          });
-        }
-      }
-    });
-
-    console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
-    if (APP.preparations.length === 0 && APP.tips.length === 0) {
-      console.warn(`[loadPreparation] ⚠️ '${week}'에 해당하는 데이터 없음`);
-    }
-
   } catch (error) {
-    console.error('[loadPreparation] 오류:', error);
-    APP.tips = [];
-    APP.preparations = [];
+    console.error('[loadPreparationFromGAS] 예외:', error);
+    APP.allPreparations = [];
   }
 }
 
