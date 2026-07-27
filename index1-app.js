@@ -548,6 +548,13 @@ function calcTodayTasks() {
   
   // 보유한 농약 맵 생성 (공백 제거 및 대소문자 무시 매칭 강화)
   var myPesticideMap = {};
+  // APP.myPesticides가 비어있다면 로컬 스토리지에서 복구 시도
+  if (!APP.myPesticides || Object.keys(APP.myPesticides).length === 0) {
+    try {
+      var savedPest = localStorage.getItem('APP_MY_PESTICIDES');
+      if (savedPest) APP.myPesticides = JSON.parse(savedPest);
+    } catch(e) {}
+  }  
   if (APP.myPesticides) {
     if (Array.isArray(APP.myPesticides)) {
       APP.myPesticides.forEach(function(p) {
@@ -11888,15 +11895,13 @@ async function loadPreparation() {
 function renderPreparation() {
   console.log('[renderPreparation] 렌더링 시작');
   
-  // 1. 준비사항 및 팁 데이터 안전하게 가져오기
   var prepList = (window.APP_PREPARATION && APP_PREPARATION.prep) ? APP_PREPARATION.prep : [];
   var tipList = (window.APP_PREPARATION && APP_PREPARATION.tips) ? APP_PREPARATION.tips : [];
 
-  // 2. HTML DOM 요소 찾기 (다양한 id/class 명칭 대응)
-  var prepEl = document.getElementById('preparation-container') || document.getElementById('weekly-prep') || document.querySelector('.preparation-section');
-  var tipEl = document.getElementById('tip-container') || document.getElementById('monthly-tip') || document.querySelector('.tip-section');
+  // HTML에 존재하는 정확한 ID(weekly-prep, monthly-tips)를 타겟팅
+  var prepEl = document.getElementById('weekly-prep');
+  var tipEl = document.getElementById('monthly-tips');
 
-  // 3. 이번 주 준비사항 렌더링
   if (prepEl) {
     if (prepList.length > 0) {
       prepEl.innerHTML = prepList.map(function(item) {
@@ -11904,11 +11909,10 @@ function renderPreparation() {
         return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '📌') + ' ' + (item.title || '이번 주 준비사항') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
       }).join('');
     } else {
-      prepEl.innerHTML = '<div style="color:var(--gray-400);">이번 주 준비사항 없음</div>';
+      prepEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
     }
   }
 
-  // 4. 이달의 핵심 렌더링
   if (tipEl) {
     if (tipList.length > 0) {
       tipEl.innerHTML = tipList.map(function(item) {
@@ -11916,7 +11920,7 @@ function renderPreparation() {
         return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '💡') + ' ' + (item.title || '이달의 핵심') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
       }).join('');
     } else {
-      tipEl.innerHTML = '<div style="color:var(--gray-400);">이달의 핵심 없음</div>';
+      tipEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이달의 핵심 없음</div>';
     }
   }
 
