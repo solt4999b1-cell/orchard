@@ -955,6 +955,7 @@ async function initGAS() {
     APP.doneTasks = {};
     APP.pesticides = [];
     APP.allPreparations = [];
+    window._myPesticideList = []; // 보유 농약 목록 초기화
     
     // 1️⃣ 캐시 확인
     console.log('[initGAS] 캐시 확인 중...');
@@ -986,6 +987,10 @@ async function initGAS() {
       console.log('[initGAS] 캐시 저장 완료');
     }
     
+    // ⬇️ [필수 추가] 캐시 여부와 무관하게 구글 시트의 myPesticides(보유 농약)를 항상 로드
+    console.log('[initGAS] 보유 농약 목록(myPesticides) 로드 중...');
+    await loadMyPesticideList();
+    
     // 2️⃣ UI 렌더링
     console.log('[initGAS] UI 렌더링 중...');
     renderToday();
@@ -998,7 +1003,7 @@ async function initGAS() {
     renderPreparation();
     
     console.log('[initGAS] ✅ 완료');
-    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}`);
+    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}, 보유농약: ${(window._myPesticideList||[]).length}`);
     
   } catch (error) {
     console.error('[initGAS] 오류:', error);
@@ -11713,7 +11718,8 @@ async function loadMyPesticideList() {
     USER_DB['pest'] = window._myPesticideList.map(function(p){
       return Object.assign({}, p, {_src:'user'});
     });
-  } catch(e){ console.warn('loadMyPesticideList 오류:', e.message); }
+    console.log('[loadMyPesticideList] ✅ 성공:', window._myPesticideList.length);
+  } catch(e){ console.warn('loadMyPesticideList 오류:', e.message); window._myPesticideList = []; }
 }
 
 async function registerMyPesticide(data) {
