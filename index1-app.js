@@ -542,12 +542,11 @@ async function seedPlants() {
 }
 
 function calcTodayTasks() {
-  
   var sprayMap = {};   
   var fertMap  = {};   
   var taskList = [];
   
-  // 🔥 보유한 농약 맵 생성
+  // 보유한 농약 맵 생성
   var myPesticideMap = {};
   if (APP.myPesticides) {
     Object.values(APP.myPesticides).forEach(function(p) {
@@ -561,11 +560,7 @@ function calcTodayTasks() {
   console.log('[calcTodayTasks] 전체식물:', APP.plants.length,
     '/ status=active:', _activeCount,
     '/ plantDate있음:', _dateCount);
-  if (APP.plants.length > 0) {
-    var _s = APP.plants[0];
-    console.log('[calcTodayTasks] 첫식물 샘플 status:', _s.status,
-      'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
-  }
+    
   APP.plants.forEach(function(plant){
     // 🔥 수정: active 상태가 아니거나, 수확/완료 상태면 오늘 할 일에서 무조건 제외
     if (plant.status !== 'active' || plant.status === 'harvest' || plant.status === 'completed') return;
@@ -579,7 +574,6 @@ function calcTodayTasks() {
     var dfp = daysBetween(planted, TODAY);
     var nm  = plant.name;
 
-    
     MASTER_DB.spraySchedule.forEach(function(spray){
       var crops = spray.crop.split('·');
       var match = crops.some(function(c){
@@ -599,23 +593,22 @@ function calcTodayTasks() {
       if (daysSince < intDays) return;
 
       if (!sprayMap[spray.pesticide]) {
-        var hasIt = myPesticideMap[spray.pesticide.trim()];  // 🔥 보유 여부 확인
+        var hasIt = myPesticideMap[spray.pesticide.trim()];
         sprayMap[spray.pesticide] = {
           pesticide: spray.pesticide, pestType: spray.pestType,
           target: spray.target, interval: spray.interval, preharvest: spray.preharvest,
-          hasIt: hasIt,  // 🔥 보유 여부
-          needBuy: !hasIt,  // 🔥 구입 필요 여부
+          hasIt: hasIt,
+          needBuy: !hasIt,
           plants: []
         };
       }
       sprayMap[spray.pesticide].plants.push({
-        id:plant.id, name:nm, emoji:plant.emoji||'🌱',
-        location:plant.location||'', dfp:dfp, daysSince:daysSince,
+        id: plant.id, name: nm, emoji: plant.emoji||'🌱',
+        location: plant.location||'', dfp: dfp, daysSince: daysSince,
         urgent: daysSince>=intDays*1.5
       });
     });
 
-    
     MASTER_DB.fertSchedule.forEach(function(fert){
       var crops = fert.crop.split('·');
       var match = crops.some(function(c){
@@ -642,13 +635,12 @@ function calcTodayTasks() {
         };
       }
       fertMap[fert.fertilizer].plants.push({
-        id:plant.id, name:nm, emoji:plant.emoji||'🌱',
-        location:plant.location||'', dfp:dfp, daysSince:daysSince,
+        id: plant.id, name: nm, emoji: plant.emoji||'🌱',
+        location: plant.location||'', dfp: dfp, daysSince: daysSince,
         urgent: false
       });
     });
 
-    
     if (plant.pollDate && plant.pollDays>0) {
       var polled = parseDate(plant.pollDate);
       var hd     = addDays(polled, plant.pollDays);
@@ -665,7 +657,6 @@ function calcTodayTasks() {
       }
     }
 
-    
     if (plant.fruitDays>0) {
       var dL2 = plant.fruitDays - dfp;
       if (dL2<=7 && dL2>=0) {
@@ -680,7 +671,6 @@ function calcTodayTasks() {
       }
     }
 
-    
     if (plant.pinchDays>0 && dfp===plant.pinchDays) {
       var tk3='pinch_'+plant.id+'_'+TODAY_STR;
       taskList.push({
@@ -691,7 +681,6 @@ function calcTodayTasks() {
       });
     }
 
-    
     if (plant.totalDays>0) {
       var dL3 = plant.totalDays-dfp;
       if (dL3<=7 && dL3>0) {
@@ -706,15 +695,18 @@ function calcTodayTasks() {
     }
   });
 
-  
   var tasks = [];
 
-  
+  // 농약 살포 태스크 생성
   Object.keys(sprayMap).forEach(function(pestName){
     var g = sprayMap[pestName];
     var taskKey = 'spray_group_'+pestName.replace(/\s/g,'')+'_'+TODAY_STR;
     var anyUrgent = g.plants.some(function(p){ return p.urgent; });
     var done = !!APP.doneTasks[taskKey];
+    
+    // 🔥 수정: 작물 이름이 undefined로 깨지지 않도록 방어 코드 적용
+    var namesStr = g.plants.map(function(p){ return p.name || '알수없는작물'; }).join(', ');
+
     tasks.push({
       key: taskKey, type: 'spray', groupType: 'spray',
       action: pestName+' 살포',
@@ -722,10 +714,10 @@ function calcTodayTasks() {
       pestType: g.pestType,
       interval: g.interval,
       preharvest: g.preharvest,
-      hasIt: g.hasIt,  // 🔥 보유 여부
-      needBuy: g.needBuy,  // 🔥 구입 필요
+      hasIt: g.hasIt,
+      needBuy: g.needBuy,
       plants: g.plants,           
-      plantName: g.plants.map(function(p){ return p.name; }).join(', '),
+      plantName: namesStr, // 👈 undefined 방지용 이름열 지정
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌿',
       location: '',
       urgent: anyUrgent,
@@ -733,11 +725,15 @@ function calcTodayTasks() {
     });
   });
 
-  
+  // 비료/시비 태스크 생성
   Object.keys(fertMap).forEach(function(fertName){
     var g = fertMap[fertName];
     var taskKey = 'fert_group_'+fertName.replace(/\s/g,'')+'_'+TODAY_STR;
     var done = !!APP.doneTasks[taskKey];
+    
+    // 🔥 수정: 비료 파트에도 동일하게 이름 적용
+    var namesStr = g.plants.map(function(p){ return p.name || '알수없는작물'; }).join(', ');
+
     tasks.push({
       key: taskKey, type: 'fert', groupType: 'fert',
       action: fertName+' 시비',
@@ -745,7 +741,7 @@ function calcTodayTasks() {
       interval: g.interval,
       amount: g.amount,
       plants: g.plants,
-      plantName: g.plants.map(function(p){ return p.name; }).join(', '),
+      plantName: namesStr, // 👈 undefined 방지용 이름열 지정
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌱',
       location: '',
       urgent: false,
@@ -753,28 +749,22 @@ function calcTodayTasks() {
     });
   });
 
-  
   tasks = tasks.concat(taskList);
 
   tasks.sort(function(a,b){
-    // 🔥 Step 1: 미완료 우선
     if(a.done!==b.done) return a.done?1:-1;
     
-    // 🔥 Step 2: 보유한 농약 최우선 (농약만 해당)
     var aHasIt = a.type==='spray' && a.hasIt ? 0 : 1;
     var bHasIt = b.type==='spray' && b.hasIt ? 0 : 1;
     if(aHasIt !== bHasIt) return aHasIt - bHasIt;
     
-    // Step 3: 긴급 작업
     if(a.urgent!==b.urgent) return a.urgent?-1:1;
     
-    // Step 4: 작업 유형
     if(a.type!==b.type){
       var order={harvest:0,pinch:1,spray:2,fert:3,task:4};
       return (order[a.groupType||a.type]||5)-(order[b.groupType||b.type]||5);
     }
     
-    // Step 5: 액션명 정렬
     return (a.action||'').localeCompare(b.action||'');
   });
   return tasks;
@@ -11822,29 +11812,36 @@ async function loadPreparation() {
     
     console.log('[loadPreparation] 로드 시작: ' + month + '월 ' + week + '주');
     
-    const response = await _gasGet('getPreparation', {
-      month: month,
-      week: week
+    const response = await _gasGet('getPreparation', { 
+      month: month.toString(), 
+      week: week.toString() 
     });
     
-    // 데이터 형태 확인
-    if (response && response.data && typeof response.data === 'object' && 
-        response.data.prep !== undefined && response.data.tips !== undefined) {
-      APP.PREPARATION = response.data;
+    // 서버 응답에서 실제 data 추출 (response.data 또는 response 자체)
+    var rawData = (response && response.data) ? response.data : response;
+    
+    if (rawData) {
+      // 서버에서 보내주는 키값(prep, preparation, tips 등)을 유연하게 매핑
+      APP_PREPARATION = {
+        prep: rawData.prep || rawData.preparation || rawData.weeklyPrep || [],
+        tips: rawData.tips || rawData.monthlyTips || []
+      };
+      console.log('[loadPreparation] 로드 완료: 준비사항 ' + APP_PREPARATION.prep.length + '개, 팁 ' + APP_PREPARATION.tips.length + '개');
+      renderPreparation();
+      return true;
     } else {
-      console.log('[loadPreparation] 데이터 형태 오류:', response ? response.data : 'no response');
-      APP.PREPARATION = { prep: [], tips: [] };
+      console.warn('[loadPreparation] 데이터 형태 오류: undefined');
+      APP_PREPARATION = { prep: [], tips: [] };
+      renderPreparation();
+      return false;
     }
-    
-    console.log('[loadPreparation] 로드 완료: 준비사항 ' + (APP.PREPARATION.prep ? APP.PREPARATION.prep.length : 0) + '개, 팁 ' + (APP.PREPARATION.tips ? APP.PREPARATION.tips.length : 0) + '개');
-    
+  } catch(e) {
+    console.error('[loadPreparation] 오류:', e.message);
+    APP_PREPARATION = { prep: [], tips: [] };
     renderPreparation();
-  } catch (err) {
-    console.error('[loadPreparation] 오류:', err.message);
-    APP.PREPARATION = { prep: [], tips: [] };
+    return false;
   }
 }
-
 /**
  * renderPreparation - HTML에 렌더링
  */
