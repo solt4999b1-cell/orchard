@@ -546,34 +546,50 @@ function calcTodayTasks() {
   var fertMap  = {};   
   var taskList = [];
   
-  // 🔥 확실한 보유 농약 데이터 복구 로직
-  if (!APP.myPesticides || (Array.isArray(APP.myPesticides) && APP.myPesticides.length === 0) || (typeof APP.myPesticides === 'object' && Object.keys(APP.myPesticides).length === 0)) {
+  // 🔥 가능한 모든 변수와 저장소에서 보유 농약(내 농약장) 데이터를 광범위하게 탐색하여 복구
+  if (!window.APP) window.APP = {};
+  
+  var rawPests = APP.myPesticides || APP.myPest || APP.mypest || window.MY_PESTICIDES || window.myPesticides;
+  
+  if (!rawPests || (Array.isArray(rawPests) && rawPests.length === 0) || (typeof rawPests === 'object' && Object.keys(rawPests).length === 0)) {
     try {
-      // 1순위: 로컬 스토리지에서 가져오기
-      var stored = localStorage.getItem('APP_MY_PESTICIDES') || localStorage.getItem('myPesticides') || localStorage.getItem('mypesticides');
-      if (stored) {
-        APP.myPesticides = JSON.parse(stored);
-      } else if (window.MASTER_DB && MASTER_DB.mypest) {
-        // 2순위: MASTER_DB에 내 농약장 데이터가 있다면 활용
-        APP.myPesticides = MASTER_DB.mypest;
+      // 로컬 스토리지의 모든 후보 키 검사
+      var keysToCheck = ['APP_MY_PESTICIDES', 'myPesticides', 'mypesticides', 'MY_PESTICIDES', 'app_my_pesticides', 'mypest'];
+      for (var i = 0; i < keysToCheck.length; i++) {
+        var stored = localStorage.getItem(keysToCheck[i]);
+        if (stored) {
+          rawPests = JSON.parse(stored);
+          break;
+        }
       }
     } catch(e) {}
   }
+  
+  // 만약 여전히 없다면 MASTER_DB 등 다른 곳 탐색
+  if (!rawPests && window.MASTER_DB) {
+    rawPests = MASTER_DB.mypest || MASTER_DB.myPesticides;
+  }
 
-  // 보유한 농약 맵 생성
+  // APP.myPesticides에 정상적으로 할당
+  APP.myPesticides = rawPests || {};
+
+  // 보유한 농약 맵 생성 (매칭 성공 여부 로그 출력)
   var myPesticideMap = {};
+  var pestListLog = [];
+  
   if (APP.myPesticides) {
     var pestArray = Array.isArray(APP.myPesticides) ? APP.myPesticides : Object.values(APP.myPesticides);
     pestArray.forEach(function(p) {
-      var pName = (p.name || p.material || p.pesticide || '').trim();
+      var pName = (p.name || p.material || p.pesticide || p.title || '').trim();
       if (pName) {
         myPesticideMap[pName] = true;
-        // 제품명에 공백이나 특수문자가 있을 경우를 대비해 변형 버전도 함께 등록
-        myPesticideMap[pName.replace(/\s+/g, '')] = true;
+        myPesticideMap[pName.replace(/\s+/g, '')] = true; // 공백 제거 버전
+        pestListLog.push(pName);
       }
     });
   }
-  console.log('[calcTodayTasks] 보유 농약 확인됨:', Object.keys(myPesticideMap).join(', '));
+  
+  console.log('[calcTodayTasks] 최종 확인된 보유 농약 목록:', pestListLog.join(', ') || '없음(비어있음)');
 
   var _activeCount = APP.plants.filter(function(p){ return p.status==='active'; }).length;
   var _dateCount   = APP.plants.filter(function(p){ return !!p.plantDate; }).length;
