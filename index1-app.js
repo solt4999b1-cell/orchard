@@ -1042,41 +1042,18 @@ const APP_GAS = {
 /**
  * GAS에서 plants 데이터 로드 및 정규화
  */
+// ✅ After (수정됨):
 async function loadPlantsFromGAS() {
   try {
     const response = await _gasGet('getPlants');
-
-    if (!response.success) {
-      console.error('[loadPlantsFromGAS] 실패:', response.message);
+    
+    // _gasGet()은 배열을 직접 반환합니다!
+    if (Array.isArray(response)) {
+      APP.plants = response;
+      console.log('[loadPlantsFromGAS] ✅ 성공:', APP.plants.length);
+    } else {
       APP.plants = [];
-      return;
     }
-
-    if (!Array.isArray(response.data)) {
-      console.error('[loadPlantsFromGAS] data가 배열이 아님:', typeof response.data);
-      APP.plants = [];
-      return;
-    }
-
-    console.log(`[loadPlantsFromGAS] GAS에서 ${response.data.length}개 식물 받음`);
-
-    // Step 1: 데이터 정규화
-    const normalized = response.data.map((plant, idx) => {
-      try {
-        return normalizeGASPlant(plant);
-      } catch (e) {
-        console.warn(`[loadPlantsFromGAS] ${idx}번 식물 정규화 오류:`, e, plant);
-        return null;
-      }
-    }).filter(p => p !== null);
-
-    console.log(`[loadPlantsFromGAS] 정규화 완료: ${normalized.length}개`);
-
-    // Step 2: 중복 제거
-    APP.plants = deduplicatePlants(normalized);
-
-    console.log(`[loadPlantsFromGAS] 최종: ${APP.plants.length}개 식물`);
-
   } catch (error) {
     console.error('[loadPlantsFromGAS] 예외:', error);
     APP.plants = [];
@@ -1088,39 +1065,15 @@ async function loadPlantsFromGAS() {
  */
 async function loadWorklogsFromGAS() {
   try {
-    const response = await _gasGet('getWorkLogs', { limit: '80' }); // ⚠️ 주의: 'workLog' (no 's')
-
-    if (!response.success) {
-      console.warn('[loadWorklogsFromGAS] 로드 실패:', response.message);
-      APP.workLogs = [];
-      return;
+    const response = await _gasGet('getWorkLogs', { limit: '80' });
+    
+    if (Array.isArray(response)) {
+      APP.logs = response;
+    } else {
+      APP.logs = [];
     }
-
-    if (!Array.isArray(response.data)) {
-      console.warn('[loadWorklogsFromGAS] data가 배열이 아님');
-      APP.workLogs = [];
-      return;
-    }
-
-    // 각 워크로그 정규화
-    APP.workLogs = response.data.map(log => {
-      return {
-        id: log.id || '',
-        plantId: log.plantId || '',
-        date: normalizeDate(log.date) || '',
-        type: log.type || 'work',  // work, spray, fert, etc
-        content: log.content || '',
-        amount: log.amount || '',
-        notes: log.notes || '',
-        timestamp: log.timestamp || new Date().toISOString(),
-      };
-    });
-
-    console.log(`[loadWorklogsFromGAS] ${APP.workLogs.length}개 로그 로드`);
-
   } catch (error) {
-    console.error('[loadWorklogsFromGAS] 예외:', error);
-    APP.workLogs = [];
+    APP.logs = [];
   }
 }
 
@@ -1130,34 +1083,14 @@ async function loadWorklogsFromGAS() {
 async function loadCheckedTasksFromGAS() {
   try {
     const response = await _gasGet('getDoneTasks', { date: TODAY_STR || new Date().toISOString().split('T')[0] });
-
-    if (!response.success) {
-      console.warn('[loadCheckedTasksFromGAS] 로드 실패:', response.message);
-      APP.checkedTasks = [];
-      return;
+    
+    if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
+      APP.doneTasks = response;
+    } else {
+      APP.doneTasks = {};
     }
-
-    if (!Array.isArray(response.data)) {
-      console.warn('[loadCheckedTasksFromGAS] data가 배열이 아님');
-      APP.checkedTasks = [];
-      return;
-    }
-
-    APP.checkedTasks = response.data.map(task => {
-      return {
-        id: task.id || '',
-        plantId: task.plantId || '',
-        taskKey: task.taskKey || '',
-        completedDate: normalizeDate(task.completedDate) || '',
-        timestamp: task.timestamp || new Date().toISOString(),
-      };
-    });
-
-    console.log(`[loadCheckedTasksFromGAS] ${APP.checkedTasks.length}개 체크 로드`);
-
   } catch (error) {
-    console.error('[loadCheckedTasksFromGAS] 예외:', error);
-    APP.checkedTasks = [];
+    APP.doneTasks = {};
   }
 }
 
