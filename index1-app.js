@@ -1043,13 +1043,18 @@ const APP_GAS = {
  * GAS에서 plants 데이터 로드 및 정규화
  */
 // ✅ After (수정됨):
+// loadPlantsFromGAS 함수 수정 예시
 async function loadPlantsFromGAS() {
   try {
     const response = await _gasGet('getPlants');
-    
-    // _gasGet()은 배열을 직접 반환합니다!
     if (Array.isArray(response)) {
-      APP.plants = response;
+      // 💡 데이터가 비어있을 경우 기본 status와 날짜 보정
+      APP.plants = response.map(function(p) {
+        return Object.assign({}, p, {
+          status: p.status || 'active',
+          plantDate: p.plantDate || p.dateStr || ''
+        });
+      });
       console.log('[loadPlantsFromGAS] ✅ 성공:', APP.plants.length);
     } else {
       APP.plants = [];
