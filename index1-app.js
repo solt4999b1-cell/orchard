@@ -1148,6 +1148,26 @@ function getWeekKey() {
   return `${month}월 ${week}주`;
 }
 
+function getPreparationNoteKey() {
+  const today = new Date();
+  const month = today.getMonth() + 1; // 1~12월
+  
+  // 날짜를 기반으로 해당 월의 몇 번째 주인지 계산 (7일 단위)
+  const date = today.getDate();
+  const weekInMonth = Math.ceil(date / 7);
+  
+  // 대략적인 주차 번호 매핑 (7월 4주차인 경우 엑셀 note열의 '7월 27주' 또는 유사 포맷과 매칭)
+  // 혹은 엑셀 note열에 저장된 형식("7월 27주")에 맞게 월별 주차 계산 로직 조정
+  // 7월의 경우 주차 값이 27, 28, 29, 30 등으로 되어 있으므로 날짜 기반으로 동적 계산
+  const startOfYear = new Date(today.getFullYear(), 0, 1);
+  const pastDays = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
+  const currentWeekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
+
+  return `${month}월 ${currentWeekNumber}주`;
+}
+/**
+ * 📥 준비사항 및 팁 데이터 로드 (현재 날짜 기준 이번 주 prep / 이번 달 tip 필터링)
+ */
 async function loadPreparationFromGAS() {
   try {
     const response = await _gasGet('getPreparations');
@@ -1162,8 +1182,9 @@ async function loadPreparationFromGAS() {
     console.error('[loadPreparationFromGAS] 예외:', error);
     APP.allPreparations = [];
   }
+  
+  renderPreparation();
 }
-
 // ============================================
 // 4. 데이터 정규화 함수
 // ============================================
@@ -12794,40 +12815,76 @@ async function loadPreparation() {
   }
 }
 /**
- * renderPreparation - HTML에 렌더링
+ * 🖥️ 준비사항 및 팁 UI 렌더링
+ * - 이번 주 할 일: category가 'prep'이고 현재 날짜/주차(note)에 해당하는 데이터
+ * - 이번 달 할 일: category가 'tip'이고 현재 월(month)에 해당하는 데이터
  */
 function renderPreparation() {
   console.log('[renderPreparation] 렌더링 시작');
   
-  var prepList = (window.APP_PREPARATION && APP_PREPARATION.prep) ? APP_PREPARATION.prep : [];
-  var tipList = (window.APP_PREPARATION && APP_PREPARATION.tips) ? APP_PREPARATION.tips : [];
+  const container = document.getElementById('preparation-container'); // 화면에 표시할 HTML 요소 ID (상황에 맞게 수정)
+  if (!container && !document.getElementById('prep-list')) return;
 
-  // HTML에 존재하는 정확한 ID(weekly-prep, monthly-tips)를 타겟팅
-  var prepEl = document.getElementById('weekly-prep');
-  var tipEl = document.getElementById('monthly-tips');
+  const today = new Date();
+  const currentMonth = today.getMonth() + 1;
+  
+  // 1. 이번 주 노트 키 계산 (예: '7월 27주' 등 엑셀 note 열과 매칭)
+  const targetNote = getPreparationNoteKey(); 
 
-  if (prepEl) {
-    if (prepList.length > 0) {
-      prepEl.innerHTML = prepList.map(function(item) {
-        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
-        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '📌') + ' ' + (item.title || '이번 주 준비사항') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
-      }).join('');
-    } else {
-      prepEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
-    }
+  // 2. 데이터 필터링
+  const rawList = APP.allPreparations || [];
+
+  // 이번 주 할 일: category === 'prep', 그리고 note가 현재 주차와 일치하거나 month가 일치하는 항목
+  const prepList = rawList.filter(item => {
+    return String(item.category).trim() === 'prep' && 
+           (String(item.note).includes(`${currentMonth}월`) || Number(item.month) === currentMonth);
+  });
+
+  // 이번 달 할 일: category === 'tip', 해당 월(month)이 일치하는 항목
+  const tipList = rawList.filter(item => {
+    return String(item.category).trim() === 'tip' && Number(item.month) === currentMonth;
+  });
+
+  console.log(`[renderPreparation] 이번 주(prep) 항목: ${prepList.length개}, 이번 달 팁(tip): ${tipList.length개}`);
+
+  // 화면 렌더링 HTML 구성 예시
+  let html = '<div class="prep-section">';
+  
+  // 이번 주 할 일 렌더링
+  html += '<h3>📌 이번 주 할 일 (준비사항)</h3>';
+  if (prepList.length === 0) {
+    html += '<p class="empty">이번 주 등록된 준비사항이 없습니다.</p>';
+  } else {
+    html += '<ul>' + prepList.map(item => `
+      <li>
+        <span class="emoji">${item.emoji || '🌱'}</span>
+        <strong>${esc(item.title)}</strong>: ${esc(item.content)}
+        <span class="note-tag">(${esc(item.note)})</span>
+      </li>
+    `).join('') + '</ul>';
   }
 
-  if (tipEl) {
-    if (tipList.length > 0) {
-      tipEl.innerHTML = tipList.map(function(item) {
-        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
-        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '💡') + ' ' + (item.title || '이달의 핵심') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
-      }).join('');
-    } else {
-      tipEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이달의 핵심 없음</div>';
-    }
+  // 이번 달 할 일(팁) 렌더링
+  html += '<h3 style="margin-top:20px;">💡 이달의 핵심 팁</h3>';
+  if (tipList.length === 0) {
+    html += '<p class="empty">이번 달 등록된 팁이 없습니다.</p>';
+  } else {
+    html += '<ul>' + tipList.map(item => `
+      <li>
+        <span class="emoji">${item.emoji || '💡'}</span>
+        <strong>${esc(item.title)}</strong>: ${esc(item.content)}
+      </li>
+    `).join('') + '</ul>';
   }
+  
+  html += '</div>';
 
+  // 특정 컨테이너에 주입 (없다면 적절한 DOM 선택자로 변경)
+  const targetEl = document.getElementById('prep-list') || container;
+  if (targetEl) {
+    targetEl.innerHTML = html;
+  }
+  
   console.log('[renderPreparation] 렌더링 완료');
 }
 
