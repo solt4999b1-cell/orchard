@@ -11807,13 +11807,19 @@ async function loadPreparation() {
       week: week.toString() 
     });
     
-    if (response && response.prep !== undefined) {
-      APP_PREPARATION = response;
-      console.log('[loadPreparation] 로드 완료: 준비사항 ' + response.prep.length + '개, 팁 ' + response.tips.length + '개');
+    // 🔥 서버 응답 구조 대응: response.data가 있으면 그 안의 데이터를 사용
+    const actualData = (response && response.data) ? response.data : response;
+    
+    if (actualData && (actualData.prep || actualData.tips)) {
+      APP_PREPARATION = {
+        prep: actualData.prep || actualData.preparation || [],
+        tips: actualData.tips || []
+      };
+      console.log('[loadPreparation] 로드 완료: 준비사항 ' + APP_PREPARATION.prep.length + '개, 팁 ' + APP_PREPARATION.tips.length + '개');
       renderPreparation();
       return true;
     } else {
-      console.warn('[loadPreparation] 데이터 없음 → 기본값 사용');
+      console.warn('[loadPreparation] 데이터 형식 불일치 → 기본값 사용', response);
       APP_PREPARATION = { prep: [], tips: [] };
       renderPreparation();
       return false;
