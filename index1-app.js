@@ -4060,6 +4060,23 @@ async function loadAllData() {
 
         // 🔥 핵심: 비어있는 속성 복구
         if (!p.status || p.status === 'undefined') p.status = 'active';
+        // 시트의 note나 기타 정보에 '수확 완료'가 적혀있거나 재배 기간이 지난 경우 'harvest'로 자동 전환
+        var isNoteHarvested = (p.note && (p.note.includes('수확 완료') || p.note.includes('수확완료') || p.note.includes('종료')));
+        
+        if (p.plantDate && p.fruitDays && p.fruitDays > 0) {
+          try {
+            var planted = parseDate(p.plantDate);
+            if (planted) {
+              var daysFromPlant = daysBetween(planted, TODAY);
+              // 재배 일수(fruitDays)를 채웠거나 넘어선 경우 자동으로 수확(harvest) 처리
+              if (daysFromPlant >= p.fruitDays || isNoteHarvested) {
+                p.status = 'harvest';
+              }
+            }
+          } catch(e) {}
+        } else if (isNoteHarvested) {
+          p.status = 'harvest';
+        }  
         if (!p.category || p.category === 'undefined') {
           var _mp = (MASTER_DB&&MASTER_DB.plants||[]).find(function(m){
             return m.id===p.id || m.name===p.name;
