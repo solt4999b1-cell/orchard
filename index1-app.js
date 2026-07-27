@@ -3667,10 +3667,13 @@ async function syncNow(){
     console.log('[syncNow] plantsArr:', plantsArr.length, '개');
     
     // 🔥 데이터가 0개면 기존 APP.plants 유지
-    if (plantsArr.length === 0) {
-      console.warn('[syncNow] ⚠️ GAS에서 0개 데이터 반환 → 기존 APP.plants 유지 (현재:', APP.plants.length, '개)');
+    // 🔥 방어 코드: GAS에서 가져온 데이터가 너무 적거나(예: 50개 미만) 없으면 기존 APP.plants를 보존
+    if (plantsArr.length < 50) {
+      console.warn('[syncNow] ⚠️ GAS 데이터가 너무 적음 (' + plantsArr.length + '개) → 기존 데이터 보존');
+      return; // 기존 데이터를 덮어쓰지 않고 중단
+    }
       // APP.plants를 그대로 둠
-    } else if (plantsArr.length > 0) {
+    if (plantsArr.length > 0) {
       // 중복 제거: id 우선, 같은 이름은 dateStr/events 많은 것 유지
       var _seen = {};
       var _deduped = [];
