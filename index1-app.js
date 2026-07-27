@@ -1,3 +1,54 @@
+// ============ 신규 추가 구간 ============
+/**
+ * 현재 날짜의 연간 주차 계산 (ISO 8601)
+ * @param {Date} date - 계산할 날짜 (기본: 오늘)
+ * @returns {number} 1~52
+ */
+function getWeekOfYear(date = new Date()) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNum = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return weekNum;
+}
+
+/**
+ * 현재 날짜를 "M월 W주" 형식으로 반환 (연간 주차)
+ * @returns {string} 예: "7월 28주"
+ */
+function getCurrentWeekFormatted() {
+  const today = new Date();
+  const month = today.getMonth() + 1;
+  const weekOfYear = getWeekOfYear(today);
+  return `${month}월 ${weekOfYear}주`;
+}
+// 앱 초기화 시 한 번 로드
+let localPesticides = [];
+
+async function initPesticides() {
+  const data = await fetch(GAS_URL + '?action=read&sheetName=myPesticides').then(r => r.json());
+  localPesticides = data.data || [];
+}
+
+// 필요할 때마다 로컬에서 참조 (즉시)
+function getPesticide(name) {
+  return localPesticides.find(p => p.name === name);
+}
+
+// 수정/삭제 시: 서버에 보내고 → 로컬도 함께 업데이트
+async function updatePesticide(id, updates) {
+  await fetch(GAS_URL, {
+    method: 'POST',
+    body: JSON.stringify({ action: 'update', sheetName: 'myPesticides', id, data: updates })
+  });
+  // 로컬 메모리도 즉시 반영
+  const idx = localPesticides.findIndex(p => p.id === id);
+  if (idx >= 0) localPesticides[idx] = { ...localPesticides[idx], ...updates };
+}
+
+// ============ 추가 끝 ============
+
 
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
@@ -10798,19 +10849,23 @@ function matchMasterDbForCrop(pesticideName, cropName, diseasePest) {
 
 async function loadMyPesticideList() {
   try {
-    var raw = await _gasGet('getMyPesticides');
-    window._myPesticideList = [];
-    var seen = {};
-    var arr = Array.isArray(raw) ? raw
-      : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k,_id:k}, raw[k]); });
-    arr.forEach(function(d){
-      d._id = d._id || d.id;
-      var nm = (d.name||'').trim().replace(/\s/g,'');
-      if (nm && seen[nm]) return;
-      if (nm) seen[nm] = true;
-      if (!d.pest_status) d.pest_status = d.status || 'active';
-      window._myPesticideList.push(d);
-    });
+    // 첫 로드: GAS에서 읽기
+    if (!window._myPesticideList || window._myPesticideList.length === 0) {
+      var raw = await _gasGet('getMyPesticides'); // 또는 'read' + sheetName: 'myPesticides'
+      window._myPesticideList = [];
+      var seen = {};
+      var arr = Array.isArray(raw) ? raw : Object.keys(raw||{}).map(function(k){ 
+        return Object.assign({id:k,_id:k}, raw[k]); 
+      });
+      arr.forEach(function(d){
+        d._id = d._id || d.id;
+        var nm = (d.name||'').trim().replace(/\s/g,'');
+        if (nm && seen[nm]) return;
+        if (nm) seen[nm] = true;
+        if (!d.pest_status) d.pest_status = d.status || 'active';
+        window._myPesticideList.push(d);
+      });
+    }
     // USER_DB도 동기화
     USER_DB['pest'] = window._myPesticideList.map(function(p){
       return Object.assign({}, p, {_src:'user'});
@@ -10820,19 +10875,25 @@ async function loadMyPesticideList() {
 
 async function registerMyPesticide(data) {
   if (!db) return;
-  // 이름 중복 체크
   var nm = (data.name||'').trim().replace(/\s/g,'');
-  var dup = (USER_DB['pest']||[]).find(function(p){
+  var dup = (window._myPesticideList||[]).find(function(p){
     return (p.name||'').replace(/\s/g,'') === nm;
   });
   if (dup) { showToast('이미 등록된 농약입니다: '+data.name); return; }
+  
   data.registeredAt = new Date().toISOString();
   data.status = 'active';
   data.excluded = false;
+  data._id = 'pest_' + Date.now(); // 로컬 ID 생성
+  
+  // ✅ 로컬 메모리에 즉시 추가
+  window._myPesticideList.push(data);
+  USER_DB['pest'] = window._myPesticideList.map(function(p){
+    return Object.assign({}, p, {_src:'user'});
+  });
+  
+  // 서버에도 업데이트 (비동기)
   var ref = await db.collection('myPesticides').add(data);
-  await loadMyPesticideList();
-  await loadUserCropUsage();
-  await initOfflineSystem();
   return ref.id;
 }
 
@@ -10848,10 +10909,17 @@ async function togglePesticideStatus(id, action) {
   } else if (action === 'include') {
     update = {excluded: false};
   }
+  
+  // ✅ 로컬 메모리에 즉시 반영
+  var item = (window._myPesticideList || []).find(function(p){ return p._id === id || p.id === id; });
+  if (item) Object.assign(item, update);
+  
+  USER_DB['pest'] = window._myPesticideList.map(function(p){
+    return Object.assign({}, p, {_src:'user'});
+  });
+  
+  // 서버에도 업데이트 (비동기)
   await db.collection('myPesticides').doc(id).update(update);
-  await loadMyPesticideList();
-  await loadUserCropUsage();
-  await initOfflineSystem();
 }
 
 function getPestCropUsage(pesticideName, cropName) {
