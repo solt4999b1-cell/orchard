@@ -562,10 +562,8 @@ function calcTodayTasks() {
     '/ plantDate있음:', _dateCount);
     
   APP.plants.forEach(function(plant){
-    // 🔥 수정: active 상태가 아니거나, 수확/완료 상태면 오늘 할 일에서 무조건 제외
+    // 수확/완료 상태이거나 감자(봄재배) 수확 완료된 경우 오늘 할 일에서 제외
     if (plant.status !== 'active' || plant.status === 'harvest' || plant.status === 'completed') return;
-    
-    // 추가로 작물 이름에 '감자'가 들어가고 수확 완료 상태인 경우 확실히 차단
     if (plant.name && plant.name.includes('감자') && plant.name.includes('봄')) return;
       
     if (!plant.plantDate || plant.status!=='active') return;
@@ -697,15 +695,14 @@ function calcTodayTasks() {
 
   var tasks = [];
 
-  // 농약 살포 태스크 생성
+  // 농약 살포 태스크 생성 (plantNames 적용)
   Object.keys(sprayMap).forEach(function(pestName){
     var g = sprayMap[pestName];
     var taskKey = 'spray_group_'+pestName.replace(/\s/g,'')+'_'+TODAY_STR;
     var anyUrgent = g.plants.some(function(p){ return p.urgent; });
     var done = !!APP.doneTasks[taskKey];
     
-    // 🔥 수정: 작물 이름이 undefined로 깨지지 않도록 방어 코드 적용
-    var namesStr = g.plants.map(function(p){ return p.name || '알수없는작물'; }).join(', ');
+    var namesStr = g.plants.map(function(p){ return p.name || ''; }).filter(Boolean).join(', ');
 
     tasks.push({
       key: taskKey, type: 'spray', groupType: 'spray',
@@ -717,7 +714,8 @@ function calcTodayTasks() {
       hasIt: g.hasIt,
       needBuy: g.needBuy,
       plants: g.plants,           
-      plantNames: namesStr, // 👈 plantName 대신 plantNames 사용
+      plantNames: namesStr, 
+      plantName: namesStr,
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌿',
       location: '',
       urgent: anyUrgent,
@@ -725,14 +723,13 @@ function calcTodayTasks() {
     });
   });
 
-  // 비료/시비 태스크 생성
+  // 비료/시비 태스크 생성 (plantNames 적용)
   Object.keys(fertMap).forEach(function(fertName){
     var g = fertMap[fertName];
     var taskKey = 'fert_group_'+fertName.replace(/\s/g,'')+'_'+TODAY_STR;
     var done = !!APP.doneTasks[taskKey];
     
-    // 🔥 수정: 비료 파트에도 동일하게 이름 적용
-    var namesStr = g.plants.map(function(p){ return p.name || '알수없는작물'; }).join(', ');
+    var namesStr = g.plants.map(function(p){ return p.name || ''; }).filter(Boolean).join(', ');
 
     tasks.push({
       key: taskKey, type: 'fert', groupType: 'fert',
@@ -741,7 +738,8 @@ function calcTodayTasks() {
       interval: g.interval,
       amount: g.amount,
       plants: g.plants,
-      plantNames: namesStr, // 👈 plantName 대신 plantNames 사용
+      plantNames: namesStr,
+      plantName: namesStr,
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌱',
       location: '',
       urgent: false,
