@@ -11796,32 +11796,33 @@ function _onCropInputChange(inp, slotIdx) {
  */
 async function loadPreparation() {
   try {
-    Logger.log('[loadPreparation] 로드 시작');
-    
     const now = new Date();
-    const month = now.getMonth() + 1;  // 1-12
-    const week = Math.ceil(now.getDate() / 7);  // 1-4
+    const month = now.getMonth() + 1;  // 1~12
+    const week = Math.ceil(now.getDate() / 7);  // 1~4
     
     console.log('[loadPreparation] 로드 시작: ' + month + '월 ' + week + '주');
     
-    const response = await _gasGet('getPreparation', {
-      month: month,
-      week: week
+    const response = await _gasGet('getPreparation', { 
+      month: month.toString(), 
+      week: week.toString() 
     });
     
-    if (!response || !response.success) {
-      console.log('[loadPreparation] API 실패:', response);
-      APP.PREPARATION = { prep: [], tips: [] };
-      return;
+    if (response && response.prep !== undefined) {
+      APP_PREPARATION = response;
+      console.log('[loadPreparation] 로드 완료: 준비사항 ' + response.prep.length + '개, 팁 ' + response.tips.length + '개');
+      renderPreparation();
+      return true;
+    } else {
+      console.warn('[loadPreparation] 데이터 없음 → 기본값 사용');
+      APP_PREPARATION = { prep: [], tips: [] };
+      renderPreparation();
+      return false;
     }
-    
-    APP.PREPARATION = response.data || { prep: [], tips: [] };
-    console.log('[loadPreparation] 로드 완료: 준비사항 ' + APP.PREPARATION.prep.length + '개, 팁 ' + APP.PREPARATION.tips.length + '개');
-    
+  } catch(e) {
+    console.error('[loadPreparation] 오류:', e.message);
+    APP_PREPARATION = { prep: [], tips: [] };
     renderPreparation();
-  } catch (err) {
-    console.error('[loadPreparation] 오류:', err.message);
-    APP.PREPARATION = { prep: [], tips: [] };
+    return false;
   }
 }
 
@@ -11893,14 +11894,14 @@ function renderTipsHtml(tip) {
  */
 function getPreparation(month, week) {
   try {
-    Logger.log('[getPreparation] 시작: ' + month + '월 ' + week + '주');
+    console.log('[getPreparation] 시작: ' + month + '월 ' + week + '주');
  
     // 1. "준비사항" 시트 찾기
     const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     const sheet = spreadsheet.getSheetByName('준비사항');
     
     if (!sheet) {
-      Logger.log('[getPreparation] 오류: "준비사항" 시트 없음');
+      console.log('[getPreparation] 오류: "준비사항" 시트 없음');
       return { prep: [], tips: [] };
     }
  
@@ -11908,7 +11909,7 @@ function getPreparation(month, week) {
     const data = sheet.getDataRange().getValues();
     
     if (!data || data.length < 2) {
-      Logger.log('[getPreparation] 오류: 데이터 없음');
+      console.log('[getPreparation] 오류: 데이터 없음');
       return { prep: [], tips: [] };
     }
  
@@ -11925,7 +11926,7 @@ function getPreparation(month, week) {
     // 헤더 검증
     if (monthIdx === -1 || weekIdx === -1 || categoryIdx === -1 || 
         emojiIdx === -1 || titleIdx === -1 || contentIdx === -1) {
-      Logger.log('[getPreparation] 오류: 헤더 컬럼 누락 (month=' + monthIdx + ', week=' + weekIdx + ', category=' + categoryIdx + ', emoji=' + emojiIdx + ', title=' + titleIdx + ', content=' + contentIdx + ')');
+      console.log('[getPreparation] 오류: 헤더 컬럼 누락 (month=' + monthIdx + ', week=' + weekIdx + ', category=' + categoryIdx + ', emoji=' + emojiIdx + ', title=' + titleIdx + ', content=' + contentIdx + ')');
       return { prep: [], tips: [] };
     }
  
@@ -11964,16 +11965,16 @@ function getPreparation(month, week) {
           }
         }
       } catch (rowErr) {
-        Logger.log('[getPreparation] 행 ' + i + ' 파싱 오류: ' + rowErr.message);
+        console.log('[getPreparation] 행 ' + i + ' 파싱 오류: ' + rowErr.message);
         continue;
       }
     }
  
-    Logger.log('[getPreparation] 완료: prep=' + prep.length + ', tips=' + tips.length);
+    console.log('[getPreparation] 완료: prep=' + prep.length + ', tips=' + tips.length);
     return { prep: prep, tips: tips };
  
   } catch (err) {
-    Logger.log('[getPreparation] 오류: ' + err.message + ' | ' + err.stack);
+    console.log('[getPreparation] 오류: ' + err.message + ' | ' + err.stack);
     return { prep: [], tips: [] };
   }
 }
@@ -11986,7 +11987,7 @@ function getPreparation(month, week) {
  */
 function testGetPreparation() {
   const result = getPreparation(7, 1);  // 7월 1주 테스트
-  Logger.log('테스트 결과: ' + JSON.stringify(result, null, 2));
+  console.log('테스트 결과: ' + JSON.stringify(result, null, 2));
 }
  
 // APP.PREPARATION 초기화
