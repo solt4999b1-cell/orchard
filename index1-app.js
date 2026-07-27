@@ -11877,6 +11877,110 @@ function renderTipsHtml(tip) {
     + '</div>';
 }
 
+/**
+ * 준비사항/팁 조회 함수
+ * @param {number} month - 월 (1~12)
+ * @param {number} week - 주 (1~4)
+ * @returns {Object} {prep: [], tips: []}
+ */
+function getPreparation(month, week) {
+  try {
+    Logger.log('[getPreparation] 시작: ' + month + '월 ' + week + '주');
+ 
+    // 1. "준비사항" 시트 찾기
+    const spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = spreadsheet.getSheetByName('준비사항');
+    
+    if (!sheet) {
+      Logger.log('[getPreparation] 오류: "준비사항" 시트 없음');
+      return { prep: [], tips: [] };
+    }
+ 
+    // 2. 모든 데이터 가져오기
+    const data = sheet.getDataRange().getValues();
+    
+    if (!data || data.length < 2) {
+      Logger.log('[getPreparation] 오류: 데이터 없음');
+      return { prep: [], tips: [] };
+    }
+ 
+    // 3. 헤더 행 파싱 (행 0)
+    // 예상 헤더: [month, week, category, emoji, title, content]
+    const headers = data[0];
+    const monthIdx = headers.indexOf('month');
+    const weekIdx = headers.indexOf('week');
+    const categoryIdx = headers.indexOf('category');
+    const emojiIdx = headers.indexOf('emoji');
+    const titleIdx = headers.indexOf('title');
+    const contentIdx = headers.indexOf('content');
+ 
+    // 헤더 검증
+    if (monthIdx === -1 || weekIdx === -1 || categoryIdx === -1 || 
+        emojiIdx === -1 || titleIdx === -1 || contentIdx === -1) {
+      Logger.log('[getPreparation] 오류: 헤더 컬럼 누락 (month=' + monthIdx + ', week=' + weekIdx + ', category=' + categoryIdx + ', emoji=' + emojiIdx + ', title=' + titleIdx + ', content=' + contentIdx + ')');
+      return { prep: [], tips: [] };
+    }
+ 
+    // 4. 현재 월/주의 데이터 필터링
+    const prep = [];
+    const tips = [];
+ 
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      
+      try {
+        const rowMonth = parseInt(row[monthIdx]);
+        const rowWeek = parseInt(row[weekIdx]);
+        const category = String(row[categoryIdx] || '').trim().toLowerCase();
+        const emoji = String(row[emojiIdx] || '').trim();
+        const title = String(row[titleIdx] || '').trim();
+        const content = String(row[contentIdx] || '').trim();
+ 
+        // 현재 월/주 일치하는지 확인
+        if (rowMonth === month && rowWeek === week) {
+          // content에서 줄바꿈 분리 (구분자: |)
+          const contentLines = content.split('|').map(s => s.trim()).filter(s => s.length > 0);
+ 
+          if (category === 'prep') {
+            prep.push({
+              emoji: emoji,
+              title: title,
+              contentLines: contentLines
+            });
+          } else if (category === 'tip') {
+            tips.push({
+              emoji: emoji,
+              title: title,
+              contentLines: contentLines
+            });
+          }
+        }
+      } catch (rowErr) {
+        Logger.log('[getPreparation] 행 ' + i + ' 파싱 오류: ' + rowErr.message);
+        continue;
+      }
+    }
+ 
+    Logger.log('[getPreparation] 완료: prep=' + prep.length + ', tips=' + tips.length);
+    return { prep: prep, tips: tips };
+ 
+  } catch (err) {
+    Logger.log('[getPreparation] 오류: ' + err.message + ' | ' + err.stack);
+    return { prep: [], tips: [] };
+  }
+}
+ 
+// ============================================================================
+// 테스트 함수 (Google Apps Script 편집기에서 실행 가능)
+// ============================================================================
+/**
+ * getPreparation 함수 테스트 (7월 1주)
+ */
+function testGetPreparation() {
+  const result = getPreparation(7, 1);  // 7월 1주 테스트
+  Logger.log('테스트 결과: ' + JSON.stringify(result, null, 2));
+}
+ 
 // APP.PREPARATION 초기화
 if (!window.APP) window.APP = {};
 APP.PREPARATION = { prep: [], tips: [] };
