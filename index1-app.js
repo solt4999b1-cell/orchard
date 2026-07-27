@@ -686,29 +686,67 @@ async function loadPesticidesFromGAS() {
 /**
  * 준비사항 및 팁 로드
  */
+/**
+ * 현재 날짜의 월별 주차를 계산
+ * 예: 7월 27일 → "7월 4주"
+ */
+function getWeekKey() {
+  const today = new Date();
+  const month = today.getMonth() + 1;  // 1-12
+  const date = today.getDate();        // 1-31
+  
+  // 월별 주차 계산 (7월 1일 = 1주 시작)
+  const week = Math.ceil(date / 7);
+  
+  return `${month}월 ${week}주`;
+}
+
 async function loadPreparationFromGAS() {
   try {
     const week = getWeekKey(); // 예: "7월 4주"
     console.log('[loadPreparation] 로드 시작:', week);
 
-    const response = await _gasGet('read', 'preparation', { week });
+    // GAS에서 전체 준비사항 로드 (week 필터링은 클라이언트에서)
+    const response = await _gasGet('read', '준비사항');
 
-    if (!response.success) {
+    if (!response.success || !Array.isArray(response.data)) {
       console.warn('[loadPreparation] 로드 실패');
       APP.tips = [];
       APP.preparations = [];
       return;
     }
 
-    const data = response.data;
-    if (data.preparations && Array.isArray(data.preparations)) {
-      APP.preparations = data.preparations;
-    }
-    if (data.tips && Array.isArray(data.tips)) {
-      APP.tips = data.tips;
-    }
+    // 현재 주차에 해당하는 데이터 필터링
+    APP.preparations = [];
+    APP.tips = [];
+
+    response.data.forEach(item => {
+      // GAS 시트 구조: [month, week, category, emoji, title, content]
+      // item = { month, week, category, emoji, title, content }
+      
+      const weekStr = `${item.month || ''}월 ${item.week || ''}주`;
+      
+      if (weekStr === week) {
+        if (item.category === 'prep') {
+          APP.preparations.push({
+            emoji: item.emoji || '📋',
+            title: item.title || '',
+            content: item.content || ''
+          });
+        } else if (item.category === 'tip') {
+          APP.tips.push({
+            emoji: item.emoji || '💡',
+            title: item.title || '',
+            content: item.content || ''
+          });
+        }
+      }
+    });
 
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
+    if (APP.preparations.length === 0 && APP.tips.length === 0) {
+      console.warn(`[loadPreparation] ⚠️ '${week}'에 해당하는 데이터 없음`);
+    }
 
   } catch (error) {
     console.error('[loadPreparation] 오류:', error);
@@ -985,7 +1023,7 @@ async function seedPlants() {
   // 🔥 전체 데이터를 우선 앱에 할당하여 화면에 즉시 렌더링
   APP.plants = plants.map(function(p){ return Object.assign({status: 'active'}, p); });
   renderToday(); renderPlants();
-  await loadPreparation();  // 📌 준비사항/팁 로드 (2026-07-26)
+  await loadPreparationFromGAS();  // 📌 준비사항/팁 로드 (2026-07-26)
 
   var chunkSize = 20;  
   for (var i=0; i<plants.length; i+=chunkSize) {
@@ -1318,7 +1356,7 @@ async function renderAll(){
   renderPlants(); 
   renderLogs(); 
   renderDb(); 
-  await loadPreparation();  // 📌 준비사항/팁 로드 (2026-07-26)
+  await loadPreparationFromGAS();  // 📌 준비사항/팁 로드 (2026-07-26)
 }
 
 // ── 작물 이모지 자동 매핑 ────────────────────────────────────
