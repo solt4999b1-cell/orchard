@@ -546,15 +546,16 @@ function calcTodayTasks() {
   var fertMap  = {};   
   var taskList = [];
   
-  // 보유한 농약 맵 생성 (공백 제거 및 대소문자 무시 매칭 강화)
-  var myPesticideMap = {};
-  // APP.myPesticides가 비어있다면 로컬 스토리지에서 복구 시도
+  // 🔥 보유한 농약 데이터가 비어있다면 로컬 스토리지에서 강제로 불러와 복구
   if (!APP.myPesticides || Object.keys(APP.myPesticides).length === 0) {
     try {
       var savedPest = localStorage.getItem('APP_MY_PESTICIDES');
       if (savedPest) APP.myPesticides = JSON.parse(savedPest);
     } catch(e) {}
-  }  
+  }
+
+  // 보유한 농약 맵 생성 (공백 제거 및 대소문자 무시 매칭 강화)
+  var myPesticideMap = {};
   if (APP.myPesticides) {
     if (Array.isArray(APP.myPesticides)) {
       APP.myPesticides.forEach(function(p) {
