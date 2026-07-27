@@ -1100,30 +1100,19 @@ async function loadCheckedTasksFromGAS() {
 async function loadPesticidesFromGAS() {
   try {
     const response = await _gasGet('getPesticides');
-
-    if (!response.success) {
-      console.log('[loadPesticidesFromGAS] 시트 없음 (정상)');
+    
+    console.log('[loadPesticidesFromGAS] 응답:', response);
+    
+    if (Array.isArray(response)) {
+      APP.pesticides = response;
+      console.log('[loadPesticidesFromGAS] ✅ 성공:', APP.pesticides.length);
+    } else {
+      console.warn('[loadPesticidesFromGAS] 배열 아님, 빈 배열 설정');
       APP.pesticides = [];
-      return;
     }
-
-    if (!Array.isArray(response.data)) {
-      APP.pesticides = [];
-      return;
-    }
-
-    APP.pesticides = response.data.map(p => ({
-      name: p.name || '',
-      type: p.type || 'insecticide', // insecticide, fungicide, fertilizer, etc
-      quantity: parseInt(p.quantity) || 0,
-      unit: p.unit || 'ml',
-      notes: p.notes || '',
-    }));
-
-    console.log(`[loadPesticidesFromGAS] ${APP.pesticides.length}개 농약 로드`);
-
+    
   } catch (error) {
-    console.log('[loadPesticidesFromGAS] 오류 무시');
+    console.error('[loadPesticidesFromGAS] 예외:', error);
     APP.pesticides = [];
   }
 }
