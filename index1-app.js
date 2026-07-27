@@ -717,7 +717,7 @@ function calcTodayTasks() {
       hasIt: g.hasIt,
       needBuy: g.needBuy,
       plants: g.plants,           
-      plantName: namesStr, // 👈 undefined 방지용 이름열 지정
+      plantNames: namesStr, // 👈 plantName 대신 plantNames 사용
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌿',
       location: '',
       urgent: anyUrgent,
@@ -741,7 +741,7 @@ function calcTodayTasks() {
       interval: g.interval,
       amount: g.amount,
       plants: g.plants,
-      plantName: namesStr, // 👈 undefined 방지용 이름열 지정
+      plantNames: namesStr, // 👈 plantName 대신 plantNames 사용
       emoji: g.plants.length===1 ? g.plants[0].emoji : '🌱',
       location: '',
       urgent: false,
@@ -912,16 +912,16 @@ function renderToday() {
 }
 
 function taskCardHTML(t) {
-  // 🔥 수정: plantName이 없거나 undefined면 t.plants 배열에서 이름을 조합해서 보여줌
-  var displayName = t.plantName;
+  // 🔥 수정: plantNames 속성(또는 plants 배열 조합)을 확실하게 가져옴
+  var displayName = t.plantNames || t.plantName;
   if (!displayName || displayName === 'undefined' || displayName.includes('undefined')) {
     if (t.plants && t.plants.length > 0) {
       displayName = t.plants.map(function(p){ return p.name; }).join(', ');
     } else {
-      displayName = t.plantName || '관련 작물';
+      displayName = '관련 작물';
     }
   }
-
+    
   var pesticideBadge = '';
   if (t.type === 'spray') {
     if (t.hasIt) {
@@ -931,11 +931,13 @@ function taskCardHTML(t) {
     }
   }
   
+  // 🔥 수정: pesticideBadge가 typeBadge 뒤에 렌더링되도록 반영
   var typeBadge = t.type==='spray'
-    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'+pesticideBadge
+    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>' + pesticideBadge
     : t.type==='fert'
     ? '<span class="badge badge-fert">🌱 시비</span>'
     : '<span class="badge badge-log">✅ 작업</span>';
+    
   var urgBadge  = (t.urgent&&!t.done) ? '<span class="badge badge-today">긴급</span>' : '';
   var doneBadge = t.done ? '<span class="badge badge-done">완료</span>' : '';
   var cardCls   = 'task-card'+(t.done?' done':'')+(t.urgent&&!t.done?' urgent':'')+(t.type==='fert'?' fert':'');
