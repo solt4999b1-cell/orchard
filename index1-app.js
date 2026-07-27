@@ -546,28 +546,31 @@ function calcTodayTasks() {
   var fertMap  = {};   
   var taskList = [];
   
-  // 🔥 USER_DB, window._myPesticideList 등 앱 내 모든 곳에서 보유 농약(내 농약장)을 직접 끌어옴
-  if (!window.APP) window.APP = {};
-  
-  var loadedPests = APP.myPesticides || window._myPesticideList || (window.USER_DB && USER_DB.pest) || [];
-  
-  // 만약 배열 형태가 아니라면 배열로 변환
-  var pestArray = Array.isArray(loadedPests) ? loadedPests : Object.values(loadedPests || {});
-  
-  // 보유한 농약 맵 생성
+  // 🔥 [스마트 연동] 앱 내 '내 농약장' 화면에 표시된 항목들이나 전역 데이터에서 실시간으로 추출
   var myPesticideMap = {};
   var pestListLog = [];
+
+  // 1. window._myPesticideList 우선 탐색
+  var targetList = window._myPesticideList || [];
   
-  pestArray.forEach(function(p) {
-    if (!p) return;
-    var pName = (p.name || p.material || p.pesticide || p.title || '').trim();
+  // 2. 만약 거기가 비어있다면 HTML DOM(내 농약장 관리 목록 화면)에서 직접 글자를 읽어옴
+  if (targetList.length === 0) {
+    var domItems = document.querySelectorAll('#manage-pest-list .pest-item-name, .my-pest-name, [data-pest-name]');
+    domItems.forEach(function(el) {
+      var name = (el.textContent || '').trim();
+      if (name) targetList.push({ name: name });
+    });
+  }
+
+  targetList.forEach(function(p) {
+    var pName = (p.name || p.material || p.pesticide || '').trim();
     if (pName) {
       myPesticideMap[pName] = true;
       myPesticideMap[pName.replace(/\s+/g, '')] = true; // 공백 제거 버전
       pestListLog.push(pName);
     }
   });
-  
+
   console.log('[calcTodayTasks] 최종 확인된 보유 농약 목록:', pestListLog.join(', ') || '없음(비어있음)');
 
   var _activeCount = APP.plants.filter(function(p){ return p.status==='active'; }).length;
