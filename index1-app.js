@@ -11814,38 +11814,31 @@ function _onCropInputChange(inp, slotIdx) {
 async function loadPreparation() {
   try {
     const now = new Date();
-    const month = now.getMonth() + 1;  // 1~12
-    const week = Math.ceil(now.getDate() / 7);  // 1~4
+    const month = now.getMonth() + 1;
+    const week = Math.ceil(now.getDate() / 7);
     
     console.log('[loadPreparation] 로드 시작: ' + month + '월 ' + week + '주');
     
-    const response = await _gasGet('getPreparation', { 
-      month: month.toString(), 
-      week: week.toString() 
+    const response = await _gasGet('getPreparation', {
+      month: month,
+      week: week
     });
     
-    // 🔥 서버 응답 구조 대응: response.data가 있으면 그 안의 데이터를 사용
-    const actualData = (response && response.data) ? response.data : response;
-    
-    if (actualData && (actualData.prep || actualData.tips)) {
-      APP_PREPARATION = {
-        prep: actualData.prep || actualData.preparation || [],
-        tips: actualData.tips || []
-      };
-      console.log('[loadPreparation] 로드 완료: 준비사항 ' + APP_PREPARATION.prep.length + '개, 팁 ' + APP_PREPARATION.tips.length + '개');
-      renderPreparation();
-      return true;
+    // 데이터 형태 확인
+    if (response && response.data && typeof response.data === 'object' && 
+        response.data.prep !== undefined && response.data.tips !== undefined) {
+      APP.PREPARATION = response.data;
     } else {
-      console.warn('[loadPreparation] 데이터 형식 불일치 → 기본값 사용', response);
-      APP_PREPARATION = { prep: [], tips: [] };
-      renderPreparation();
-      return false;
+      console.log('[loadPreparation] 데이터 형태 오류:', response ? response.data : 'no response');
+      APP.PREPARATION = { prep: [], tips: [] };
     }
-  } catch(e) {
-    console.error('[loadPreparation] 오류:', e.message);
-    APP_PREPARATION = { prep: [], tips: [] };
+    
+    console.log('[loadPreparation] 로드 완료: 준비사항 ' + (APP.PREPARATION.prep ? APP.PREPARATION.prep.length : 0) + '개, 팁 ' + (APP.PREPARATION.tips ? APP.PREPARATION.tips.length : 0) + '개');
+    
     renderPreparation();
-    return false;
+  } catch (err) {
+    console.error('[loadPreparation] 오류:', err.message);
+    APP.PREPARATION = { prep: [], tips: [] };
   }
 }
 
