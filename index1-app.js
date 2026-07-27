@@ -567,6 +567,12 @@ function calcTodayTasks() {
       'plantDate:', _s.plantDate, 'dateStr:', _s.dateStr, 'category:', _s.category);
   }
   APP.plants.forEach(function(plant){
+    // 🔥 수정: active 상태가 아니거나, 수확/완료 상태면 오늘 할 일에서 무조건 제외
+    if (plant.status !== 'active' || plant.status === 'harvest' || plant.status === 'completed') return;
+    
+    // 추가로 작물 이름에 '감자'가 들어가고 수확 완료 상태인 경우 확실히 차단
+    if (plant.name && plant.name.includes('감자') && plant.name.includes('봄')) return;
+      
     if (!plant.plantDate || plant.status!=='active') return;
     var planted = parseDate(plant.plantDate);
     if (!planted) return;
@@ -3815,6 +3821,8 @@ async function launchApp(){
     TODAY.getFullYear()+'년 '+(TODAY.getMonth()+1)+'월 '+TODAY.getDate()+'일 ('+days[TODAY.getDay()]+')';
   setLoadingStep(1, 25, '데이터 로드 중...');
   try { await loadAllData(); } catch(e){ console.warn('loadAllData 오류:',e.message); hideLoading(); }
+  // 🔥 추가: 이번 주 준비사항 및 이달의 핵심 로드 함수 실행
+  try { await loadPreparation(); } catch(e){ console.warn('loadPreparation 오류:', e.message); }  
   try { await loadGasUrlSetting(); }   catch(e){}
   try { await loadMyPesticideList(); } catch(e){}
   try { await loadUserCropUsage(); }   catch(e){}
