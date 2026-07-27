@@ -912,8 +912,27 @@ function renderToday() {
 }
 
 function taskCardHTML(t) {
+  // 🔥 수정: plantName이 없거나 undefined면 t.plants 배열에서 이름을 조합해서 보여줌
+  var displayName = t.plantName;
+  if (!displayName || displayName === 'undefined' || displayName.includes('undefined')) {
+    if (t.plants && t.plants.length > 0) {
+      displayName = t.plants.map(function(p){ return p.name; }).join(', ');
+    } else {
+      displayName = t.plantName || '관련 작물';
+    }
+  }
+
+  var pesticideBadge = '';
+  if (t.type === 'spray') {
+    if (t.hasIt) {
+      pesticideBadge = ' <span class="badge" style="background:#4CAF50;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">✓ 보유</span>';
+    } else if (t.needBuy) {
+      pesticideBadge = ' <span class="badge" style="background:#f44336;color:white;padding:2px 8px;border-radius:3px;font-size:11px;font-weight:bold;">🛒 구입필요</span>';
+    }
+  }
+  
   var typeBadge = t.type==='spray'
-    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'
+    ? '<span class="badge badge-ins">🌿 '+(t.pestType||'농약살포')+'</span>'+pesticideBadge
     : t.type==='fert'
     ? '<span class="badge badge-fert">🌱 시비</span>'
     : '<span class="badge badge-log">✅ 작업</span>';
@@ -921,7 +940,6 @@ function taskCardHTML(t) {
   var doneBadge = t.done ? '<span class="badge badge-done">완료</span>' : '';
   var cardCls   = 'task-card'+(t.done?' done':'')+(t.urgent&&!t.done?' urgent':'')+(t.type==='fert'?' fert':'');
 
-  
   var plantsHtml = '';
   if (t.plants && t.plants.length > 0) {
     var shown = t.plants.slice(0, 8);
@@ -930,7 +948,7 @@ function taskCardHTML(t) {
       + shown.map(function(p){
           return '<span class="task-plant-tag'+(p.urgent?' tag-urgent':'')+'">'
             +esc_plantEmoji(p)+' '+esc(p.name)
-            +'<span class="tag-days">D+'+p.dfp+'</span>'
+            +'<span class="tag-days">D+'+p.dfp+'일</span>'
             +'</span>';
         }).join('')
       + more + '</div>';
@@ -944,7 +962,7 @@ function taskCardHTML(t) {
     +'<div class="task-top">'
     +'<div style="flex:1;">'
     +'<div class="task-plant">'
-    +(t.plants && t.plants.length<=1 ? '<span class="emoji">'+esc(t.emoji||'🌱')+'</span>'+esc(t.plantName)+' ' : '')
+    + '<span class="emoji">'+esc(t.emoji||'🌱')+'</span>'+esc(displayName)+' '
     +typeBadge+urgBadge+doneBadge+'</div>'
     +actionLine
     +plantsHtml
@@ -958,7 +976,7 @@ function taskCardHTML(t) {
     +'<button class="check-btn'+(t.done?' checked':'')+'"'
     +' data-key="'+esc(t.key)+'"'
     +' data-pid="'+esc(t.plantId||'')+'"'
-    +' data-name="'+esc(t.plantName)+'"'
+    +' data-name="'+esc(displayName)+'"'
     +' data-action="'+esc(t.action)+'"'
     +' data-type="'+esc(t.type)+'"'
     +' data-mat="'+esc(t.action.split(' ')[0])+'"'
