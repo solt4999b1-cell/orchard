@@ -3691,6 +3691,8 @@ function setSyncStatus(online){
     label.style.color = 'var(--gray-400)';
   }
 }
+
+
 async function syncNow(){
   var dot   = document.getElementById('sync-dot');
   var label = document.getElementById('sync-label');
@@ -3703,6 +3705,7 @@ async function syncNow(){
       : Object.keys(raw||{}).map(function(k){ return Object.assign({id:k}, raw[k]); });
     console.log('[syncNow] plantsArr:', plantsArr.length, '개');
     
+    // 데이터가 0개면 기존 APP.plants 유지
     if (plantsArr.length < 50) {
       console.warn('[syncNow] ⚠️ GAS 데이터가 너무 적음 (' + plantsArr.length + '개) → 기존 데이터 보존');
       return;
@@ -3782,8 +3785,13 @@ async function syncNow(){
       APP.plants.sort(function(a,b){ return (a.no||0)-(b.no||0); });
       console.log('[loadAllData] 정규화 완료. 식물수:', APP.plants.length);
 
-      // 🔥 [추가됨] 동기화 과정에서 내 농약장(보유 농약) 목록도 반드시 함께 불러오도록 호출
-      await loadMyPesticideList();
+      // 🔥 [추가됨] 동기화 시점에 구글 시트의 보유 농약(myPesticides)을 확실히 불러옵니다.
+      try {
+        await loadMyPesticideList();
+        console.log('[syncNow] 보유 농약 목록 로드 완료, 총:', (window._myPesticideList || []).length, '개');
+      } catch(err) {
+        console.warn('[syncNow] 보유 농약 로드 실패:', err.message);
+      }
 
       if (APP.plants.length > 0) {
         var _p0 = APP.plants[0];
