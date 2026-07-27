@@ -11870,36 +11870,41 @@ async function loadPreparation() {
  * renderPreparation - HTML에 렌더링
  */
 function renderPreparation() {
-  try {
-    console.log('[renderPreparation] 렌더링 시작');
-    
-    const prep = APP.PREPARATION.prep || [];
-    const tips = APP.PREPARATION.tips || [];
-    
-    // 준비사항 렌더링
-    const prepEl = document.getElementById('weekly-prep');
-    if (prepEl) {
-      if (prep.length === 0) {
-        prepEl.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
-      } else {
-        prepEl.innerHTML = prep.map(p => renderPrepHtml(p)).join('');
-      }
+  console.log('[renderPreparation] 렌더링 시작');
+  
+  // 1. 준비사항 및 팁 데이터 안전하게 가져오기
+  var prepList = (window.APP_PREPARATION && APP_PREPARATION.prep) ? APP_PREPARATION.prep : [];
+  var tipList = (window.APP_PREPARATION && APP_PREPARATION.tips) ? APP_PREPARATION.tips : [];
+
+  // 2. HTML DOM 요소 찾기 (다양한 id/class 명칭 대응)
+  var prepEl = document.getElementById('preparation-container') || document.getElementById('weekly-prep') || document.querySelector('.preparation-section');
+  var tipEl = document.getElementById('tip-container') || document.getElementById('monthly-tip') || document.querySelector('.tip-section');
+
+  // 3. 이번 주 준비사항 렌더링
+  if (prepEl) {
+    if (prepList.length > 0) {
+      prepEl.innerHTML = prepList.map(function(item) {
+        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
+        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '📌') + ' ' + (item.title || '이번 주 준비사항') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
+      }).join('');
+    } else {
+      prepEl.innerHTML = '<div style="color:var(--gray-400);">이번 주 준비사항 없음</div>';
     }
-    
-    // 팁 렌더링
-    const tipsEl = document.getElementById('monthly-tips');
-    if (tipsEl) {
-      if (tips.length === 0) {
-        tipsEl.innerHTML = '<div style="color:#999;font-size:12px;text-align:center;">이달의 핵심 없음</div>';
-      } else {
-        tipsEl.innerHTML = tips.map(t => renderTipsHtml(t)).join('');
-      }
-    }
-    
-    console.log('[renderPreparation] 렌더링 완료');
-  } catch (err) {
-    console.error('[renderPreparation] 오류:', err.message);
   }
+
+  // 4. 이달의 핵심 렌더링
+  if (tipEl) {
+    if (tipList.length > 0) {
+      tipEl.innerHTML = tipList.map(function(item) {
+        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
+        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '💡') + ' ' + (item.title || '이달의 핵심') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
+      }).join('');
+    } else {
+      tipEl.innerHTML = '<div style="color:var(--gray-400);">이달의 핵심 없음</div>';
+    }
+  }
+
+  console.log('[renderPreparation] 렌더링 완료');
 }
 
 /**
