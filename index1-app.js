@@ -467,7 +467,19 @@ async function _gasPost(params) {
 
 
 // ================================================================
-// 💾 localStorage 캐시 관리 시스템
+// 💾 localStorage 캐시 관리 시스템 (수정본 v1.1)
+// ================================================================
+
+// ================================================================
+// 💾 localStorage 캐시 관리 시스템 (수정본)
+// ================================================================
+// 작성일: 2026-07-27
+// 버전: v1.1 (APP 초기화 문제 수정)
+// 설명: GAS와 localStorage 동기화 시스템 (버그 수정)
+// ================================================================
+
+// ================================================================
+// 📋 캐시 키 정의
 // ================================================================
 
 const CACHE_CONFIG = {
@@ -485,7 +497,7 @@ const CACHE_CONFIG = {
     'cache_checkedTasks',
     'cache_pesticides'
   ],
-  VERSION: '1.0'
+  VERSION: '1.1'
 };
 
 // ================================================================
@@ -536,46 +548,63 @@ function checkCacheValidity() {
 }
 
 // ================================================================
-// 2️⃣ loadFromCache() - localStorage에서 데이터 읽기
+// 2️⃣ loadFromCache() - localStorage에서 데이터 읽기 (수정됨)
 // ================================================================
 
 function loadFromCache() {
   console.log('[loadFromCache] 시작');
   
   try {
-    // plants
+    // ✨ 수정: 반드시 APP 변수를 초기화
+    
+    // plants - 캐시 없으면 빈 배열!
+    APP.plants = [];
     const plantsCache = localStorage.getItem(CACHE_CONFIG.KEYS.plants);
     if (plantsCache) {
       APP.plants = JSON.parse(plantsCache);
       console.log(`[loadFromCache] ✓ plants: ${APP.plants.length}개`);
+    } else {
+      console.warn(`[loadFromCache] cache_plants 없음, 빈 배열 설정`);
     }
     
-    // workLog
+    // workLog - 캐시 없으면 빈 배열!
+    APP.logs = [];
     const logsCache = localStorage.getItem(CACHE_CONFIG.KEYS.workLog);
     if (logsCache) {
       APP.logs = JSON.parse(logsCache);
       console.log(`[loadFromCache] ✓ workLog: ${APP.logs.length}개`);
+    } else {
+      console.warn(`[loadFromCache] cache_workLog 없음, 빈 배열 설정`);
     }
     
-    // checkedTasks
+    // checkedTasks - 캐시 없으면 빈 객체!
+    APP.doneTasks = {};
     const checkedCache = localStorage.getItem(CACHE_CONFIG.KEYS.checkedTasks);
     if (checkedCache) {
       APP.doneTasks = JSON.parse(checkedCache);
       console.log('[loadFromCache] ✓ checkedTasks');
+    } else {
+      console.warn(`[loadFromCache] cache_checkedTasks 없음, 빈 객체 설정`);
     }
     
-    // pesticides
+    // pesticides - 캐시 없으면 빈 배열!
+    APP.pesticides = [];
     const pesticidesCache = localStorage.getItem(CACHE_CONFIG.KEYS.pesticides);
     if (pesticidesCache) {
       APP.pesticides = JSON.parse(pesticidesCache);
       console.log(`[loadFromCache] ✓ pesticides: ${APP.pesticides.length}개`);
+    } else {
+      console.warn(`[loadFromCache] cache_pesticides 없음, 빈 배열 설정`);
     }
     
     // 준비사항 (선택사항)
+    APP.allPreparations = [];
     const prepCache = localStorage.getItem(CACHE_CONFIG.KEYS.preparation);
     if (prepCache) {
       APP.allPreparations = JSON.parse(prepCache);
       console.log(`[loadFromCache] ✓ 준비사항: ${APP.allPreparations.length}개`);
+    } else {
+      console.warn(`[loadFromCache] cache_preparation 없음, 빈 배열 설정`);
     }
     
     console.log('[loadFromCache] ✅ 완료');
@@ -583,6 +612,12 @@ function loadFromCache() {
     
   } catch (error) {
     console.error('[loadFromCache] 오류:', error);
+    // 에러 발생시 APP 변수 초기화
+    APP.plants = [];
+    APP.logs = [];
+    APP.doneTasks = {};
+    APP.pesticides = [];
+    APP.allPreparations = [];
     return false;
   }
 }
@@ -602,6 +637,8 @@ function saveAllToCache() {
         JSON.stringify(APP.plants)
       );
       console.log(`[saveAllToCache] ✓ plants: ${APP.plants.length}개 저장`);
+    } else {
+      console.warn(`[saveAllToCache] plants 데이터 없음 (길이: ${APP.plants ? APP.plants.length : 'undefined'})`);
     }
     
     // workLog
@@ -611,6 +648,8 @@ function saveAllToCache() {
         JSON.stringify(APP.logs)
       );
       console.log(`[saveAllToCache] ✓ workLog: ${APP.logs.length}개 저장`);
+    } else {
+      console.warn(`[saveAllToCache] workLog 데이터 없음 (길이: ${APP.logs ? APP.logs.length : 'undefined'})`);
     }
     
     // checkedTasks
@@ -629,6 +668,8 @@ function saveAllToCache() {
         JSON.stringify(APP.pesticides)
       );
       console.log(`[saveAllToCache] ✓ pesticides: ${APP.pesticides.length}개 저장`);
+    } else {
+      console.warn(`[saveAllToCache] pesticides 데이터 없음 (길이: ${APP.pesticides ? APP.pesticides.length : 'undefined'})`);
     }
     
     // 준비사항
@@ -638,6 +679,8 @@ function saveAllToCache() {
         JSON.stringify(APP.allPreparations)
       );
       console.log(`[saveAllToCache] ✓ 준비사항: ${APP.allPreparations.length}개 저장`);
+    } else {
+      console.warn(`[saveAllToCache] 준비사항 데이터 없음`);
     }
     
     // 메타데이터
@@ -898,35 +941,53 @@ function showCacheInfo() {
 }
 
 // ================================================================
-// 🔟 initGAS() - 수정된 초기화 함수 ⭐ 중요!
+// 🔟 initGAS() - 수정된 초기화 함수 ⭐ 중요! (버그 수정)
 // ================================================================
 
 async function initGAS() {
-  console.log('[initGAS] 시작 (캐시 기반)');
+  console.log('[initGAS] 시작 (캐시 기반, 버그 수정)');
   
   try {
+    // ✨ 수정: APP 변수 먼저 초기화!
+    console.log('[initGAS] APP 변수 초기화 중...');
+    APP.plants = [];
+    APP.logs = [];
+    APP.doneTasks = {};
+    APP.pesticides = [];
+    APP.allPreparations = [];
+    
     // 1️⃣ 캐시 확인
+    console.log('[initGAS] 캐시 확인 중...');
     const hasCachedData = await initCache();
     
     if (hasCachedData) {
       // 캐시 있음: localStorage에서 로드
       console.log('[initGAS] 캐시에서 로드');
       loadFromCache();
+      console.log(`[initGAS] 로드 완료 - plants: ${APP.plants.length}, logs: ${APP.logs.length}`);
       
     } else {
       // 캐시 없음: GAS에서 로드 후 캐시 저장
       console.log('[initGAS] GAS에서 로드');
       
       await loadPlantsFromGAS();
+      console.log(`[initGAS] loadPlantsFromGAS 후 - plants: ${APP.plants.length}`);
+      
       await loadWorklogsFromGAS();
+      console.log(`[initGAS] loadWorklogsFromGAS 후 - logs: ${APP.logs.length}`);
+      
       await loadCheckedTasksFromGAS();
       await loadPesticidesFromGAS();
+      console.log(`[initGAS] loadPesticidesFromGAS 후 - pesticides: ${APP.pesticides.length}`);
       
       // 로드 완료 후 캐시 저장
+      console.log('[initGAS] 캐시에 저장 중...');
       saveAllToCache();
+      console.log('[initGAS] 캐시 저장 완료');
     }
     
     // 2️⃣ UI 렌더링
+    console.log('[initGAS] UI 렌더링 중...');
     renderToday();
     renderPlants();
     renderLogs();
@@ -937,6 +998,7 @@ async function initGAS() {
     renderPreparation();
     
     console.log('[initGAS] ✅ 완료');
+    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}`);
     
   } catch (error) {
     console.error('[initGAS] 오류:', error);
@@ -944,52 +1006,6 @@ async function initGAS() {
   }
 }
 
-// ================================================================
-// 🔟 initGAS() - 수정된 초기화 함수 ⭐ 중요!
-// ================================================================
-
-async function initGAS() {
-  console.log('[initGAS] 시작 (캐시 기반)');
-  
-  try {
-    // 1️⃣ 캐시 확인
-    const hasCachedData = await initCache();
-    
-    if (hasCachedData) {
-      // 캐시 있음: localStorage에서 로드
-      console.log('[initGAS] 캐시에서 로드');
-      loadFromCache();
-      
-    } else {
-      // 캐시 없음: GAS에서 로드 후 캐시 저장
-      console.log('[initGAS] GAS에서 로드');
-      
-      await loadPlantsFromGAS();
-      await loadWorklogsFromGAS();
-      await loadCheckedTasksFromGAS();
-      await loadPesticidesFromGAS();
-      
-      // 로드 완료 후 캐시 저장
-      saveAllToCache();
-    }
-    
-    // 2️⃣ UI 렌더링
-    renderToday();
-    renderPlants();
-    renderLogs();
-    renderDb();
-    
-    // 3️⃣ 준비사항은 매번 로드 (현재 주차만 필요하므로 캐시 안 함)
-    await loadPreparationFromGAS();
-    renderPreparation();
-    
-    console.log('[initGAS] ✅ 완료');
-    
-  } catch (error) {
-    console.error('[initGAS] 오류:', error);
-    showErrorDialog('앱 초기화 실패');
-  }
-}
 
 
 
@@ -1028,7 +1044,7 @@ const APP_GAS = {
  */
 async function loadPlantsFromGAS() {
   try {
-    const response = await _gasGet('read', 'plants');
+    const response = await _gasGet('getPlants');
 
     if (!response.success) {
       console.error('[loadPlantsFromGAS] 실패:', response.message);
@@ -1072,7 +1088,7 @@ async function loadPlantsFromGAS() {
  */
 async function loadWorklogsFromGAS() {
   try {
-    const response = await _gasGet('read', 'workLog'); // ⚠️ 주의: 'workLog' (no 's')
+    const response = await _gasGet('getWorkLogs', { limit: '80' }); // ⚠️ 주의: 'workLog' (no 's')
 
     if (!response.success) {
       console.warn('[loadWorklogsFromGAS] 로드 실패:', response.message);
@@ -1113,7 +1129,7 @@ async function loadWorklogsFromGAS() {
  */
 async function loadCheckedTasksFromGAS() {
   try {
-    const response = await _gasGet('read', 'checkedTasks');
+    const response = await _gasGet('getDoneTasks', { date: TODAY_STR || new Date().toISOString().split('T')[0] });
 
     if (!response.success) {
       console.warn('[loadCheckedTasksFromGAS] 로드 실패:', response.message);
@@ -1150,7 +1166,7 @@ async function loadCheckedTasksFromGAS() {
  */
 async function loadPesticidesFromGAS() {
   try {
-    const response = await _gasGet('read', 'pesticides');
+    const response = await _gasGet('getPesticides');
 
     if (!response.success) {
       console.log('[loadPesticidesFromGAS] 시트 없음 (정상)');
@@ -1203,7 +1219,7 @@ async function loadPreparationFromGAS() {
     console.log('[loadPreparation] 로드 시작:', week);
 
     // GAS에서 전체 준비사항 로드 (week 필터링은 클라이언트에서)
-    const response = await _gasGet('read', '준비사항');
+    const response = await _gasGet('getPreparations');
 
     if (!response.success || !Array.isArray(response.data)) {
       console.warn('[loadPreparation] 로드 실패');
