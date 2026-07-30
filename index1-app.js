@@ -873,72 +873,28 @@ function showCacheInfo() {
 // ================================================================
 
 async function initGAS() {
-  console.log('[initGAS] 시작 (캐시 기반, 버그 수정)');
-  
+  console.log('[initGAS] 시작');
   try {
-    // ✨ 수정: APP 변수 먼저 초기화!
-    console.log('[initGAS] APP 변수 초기화 중...');
-    APP.plants = [];
-    APP.logs = [];
-    APP.doneTasks = {};
-    APP.pesticides = [];
-    APP.allPreparations = [];
-    window._myPesticideList = []; // 보유 농약 목록 초기화
+    // 1. 데이터 로드
+    await loadPlantsFromGAS();
+    await loadWorklogsFromGAS();
+    await loadCheckedTasksFromGAS();
+    await loadPesticidesFromGAS();
     
-    // 1️⃣ 캐시 확인
-    console.log('[initGAS] 캐시 확인 중...');
-    const hasCachedData = await initCache();
-    
-    if (hasCachedData) {
-      // 캐시 있음: localStorage에서 로드
-      console.log('[initGAS] 캐시에서 로드');
-      loadFromCache();
-      console.log(`[initGAS] 로드 완료 - plants: ${APP.plants.length}, logs: ${APP.logs.length}`);
-      
-    } else {
-      // 캐시 없음: GAS에서 로드 후 캐시 저장
-      console.log('[initGAS] GAS에서 로드');
-      
-      await loadPlantsFromGAS();
-      console.log(`[initGAS] loadPlantsFromGAS 후 - plants: ${APP.plants.length}`);
-      
-      await loadWorklogsFromGAS();
-      console.log(`[initGAS] loadWorklogsFromGAS 후 - logs: ${APP.logs.length}`);
-      
-      await loadCheckedTasksFromGAS();
-      await loadPesticidesFromGAS();
-      console.log(`[initGAS] loadPesticidesFromGAS 후 - pesticides: ${APP.pesticides.length}`);
-      
-      // 로드 완료 후 캐시 저장
-      console.log('[initGAS] 캐시에 저장 중...');
-      saveAllToCache();
-      console.log('[initGAS] 캐시 저장 완료');
-    }
-    
-    // ⬇️ [필수 추가] 캐시 여부와 무관하게 구글 시트의 myPesticides(보유 농약)를 항상 로드
-    console.log('[initGAS] 보유 농약 목록(myPesticides) 로드 중...');
-    await loadMyPesticideList();
-    
-    // 2️⃣ UI 렌더링
-    console.log('[initGAS] UI 렌더링 중...');
+    // 2. 🌟 이 부분이 반드시 있어야 데이터가 화면에 반영됩니다!
     renderToday();
     renderPlants();
     renderLogs();
     renderDb();
     
-    // 3️⃣ 준비사항은 매번 로드 (현재 주차만 필요하므로 캐시 안 함)
-    await loadPreparationFromGAS();
-    renderPreparation();
-    
     console.log('[initGAS] ✅ 완료');
-    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}, 보유농약: ${(window._myPesticideList||[]).length}`);
-    
   } catch (error) {
     console.error('[initGAS] 오류:', error);
-    showErrorDialog('앱 초기화 실패');
+  } finally {
+    // 3. 로딩 화면 강제 숨김 처리 (안전장치)
+    hideLoading();
   }
 }
-
 
 
 
