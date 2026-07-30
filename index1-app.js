@@ -301,7 +301,7 @@ async function _gasGet(action, extra) {
   var url = GAS_URL + '?action=' + encodeURIComponent(action);
   if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k] || '');
   
-  // ⏱️ 타임아웃 설정 (10초 동안 응답이 없으면 강제로 연결을 끊어 무한 대기 방지)
+  // ⏱️ 타임아웃 설정 (10초 초과 시 강제 중단하여 무한 대기 방지)
   var controller = new AbortController();
   var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
 
@@ -323,7 +323,7 @@ async function _gasGet(action, extra) {
       return [];
     }
     
-    // wrapResponse 형태 ({ success, data }) 자동 처리
+    // wrapResponse 형식 ({ success, data }) 자동 처리
     var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
       ? json.data : json;
       
@@ -332,13 +332,14 @@ async function _gasGet(action, extra) {
   } catch(e) {
     clearTimeout(timeoutId);
     if (e.name === 'AbortError') {
-      console.warn('[_gasGet] ⏱️ 네트워크 요청 타임아웃 (10초 초과) — 오프라인 캐시 모드로 전환됩니다.');
+      console.warn('[_gasGet] ⏱️ 네트워크 요청 타임아웃 (10초 초과) — 로딩이 안전하게 해제됩니다.');
     } else {
       console.warn('[_gasGet] 네트워크 오류:', e.message);
     }
-    return []; // 에러 시 빈 배열을 반환하여 앱이 멈추지 않고 진행되도록 보장
+    return []; // 에러 발생 시 빈 배열을 리턴하여 앱이 멈추지 않고 계속 실행되도록 보장
   }
 }
+
 async function _gasPost(params) {
   try {
     var p = new URLSearchParams();
