@@ -1,3 +1,8 @@
+window.addEventListener('unhandledrejection', function(event) {
+  if (event.reason && (event.reason.code === 403 || String(event.reason).includes('403'))) {
+    event.preventDefault(); // 콘솔에 빨간색 Uncaught (in promise) 에러가 찍히는 것을 방지
+  }
+});
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 🔄 GAS 데이터 로딩 기능 (비활성화 - 기존 initGAS만 사용)
