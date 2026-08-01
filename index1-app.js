@@ -1192,8 +1192,6 @@ async function loadPlantsFromGAS() {
 async function loadWorklogsFromGAS() {
   try {
     const response = await _gasGet('getWorkLogs', { limit: '80' });
-    
-    // 데이터 추출 안전장치 추가
     let rawData = [];
     if (Array.isArray(response)) rawData = response;
     else if (response && Array.isArray(response.data)) rawData = response.data;
@@ -1202,17 +1200,21 @@ async function loadWorklogsFromGAS() {
       id: log.id || '',
       plantId: log.plantId || '',
       date: normalizeDate(log.date) || '',
-      type: log.type || 'work',
-      content: log.content || '',
+      type: log.type || log.eventType || 'work',
+      content: log.content || log.detail || log.note || '',
       amount: log.amount || '',
-      notes: log.notes || '',
+      notes: log.notes || log.detail || '',
       timestamp: log.timestamp || new Date().toISOString(),
     }));
+
+    // 🔥 핵심: APP.logs에도 동기화하여 렌더링 시 참조할 수 있게 함
+    APP.logs = APP.workLogs;
 
     console.log(`[loadWorklogsFromGAS] ${APP.workLogs.length}개 로그 로드 완료`);
   } catch (error) {
     console.error('[loadWorklogsFromGAS] 예외:', error);
     APP.workLogs = [];
+    APP.logs = [];
   }
 }
 
@@ -1296,11 +1298,8 @@ function getWeekKey() {
 
 async function loadPreparationFromGAS() {
   try {
-    const week = getWeekKey(); 
-    console.log('[loadPreparation] 로드 시작:', week);
-
+    const weekKey = getWeekKey(); // 예: "8월 1주"
     const response = await _gasGet('getPreparations');
-    
     let rawData = [];
     if (Array.isArray(response)) rawData = response;
     else if (response && Array.isArray(response.data)) rawData = response.data;
@@ -1309,25 +1308,32 @@ async function loadPreparationFromGAS() {
     APP.tips = [];
 
     rawData.forEach(item => {
-      const weekStr = `${item.month || ''}월 ${item.week || ''}주`;
-      if (weekStr === week) {
-        if (item.category === 'prep') {
+      // 시트의 컬럼 구조에 맞춰 주차 문자열 조합 (예: "8월"과 "1주" 혹은 "월", "주" 필드 대응)
+      const m = item.month || item.월 || '';
+      const w = item.week || item.주 || '';
+      const itemWeekStr = `${m}월 ${w}주`;
+
+      // 주차가 일치하거나, 데이터가 부족할 경우 전체 데이터 중 일부를 유연하게 매칭
+      if (itemWeekStr === weekKey || !m || !w) {
+        const cat = (item.category || item.구분 || '').trim();
+        if (cat === 'prep' || cat === '준비사항') {
           APP.preparations.push({
             emoji: item.emoji || '📋',
-            title: item.title || '',
-            content: item.content || ''
+            title: item.title || item.제목 || '',
+            content: item.content || item.내용 || ''
           });
-        } else if (item.category === 'tip') {
+        } else if (cat === 'tip' || cat === '팁') {
           APP.tips.push({
             emoji: item.emoji || '💡',
-            title: item.title || '',
-            content: item.content || ''
+            title: item.title || item.제목 || '',
+            content: item.content || item.내용 || ''
           });
         }
       }
     });
 
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
+    renderPreparation(); // 데이터 로드 후 즉시 화면 갱신
   } catch (error) {
     console.error('[loadPreparation] 오류:', error);
     APP.tips = [];
