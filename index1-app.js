@@ -1151,22 +1151,26 @@ async function loadPlantsFromGAS() {
   try {
     const response = await _gasGet('getPlants');
 
-    if (!response.success) {
-      console.error('[loadPlantsFromGAS] 실패:', response.message);
+    // 🔥 응답 데이터 구조 유연성 확보 (response 자체가 배열이거나 response.data인 경우 모두 대응)
+    let rawData = [];
+    if (Array.isArray(response)) {
+      rawData = response;
+    } else if (response && Array.isArray(response.data)) {
+      rawData = response.data;
+    } else if (response && response.success && Array.isArray(response.data)) {
+      rawData = response.data;
+    }
+
+    if (rawData.length === 0) {
+      console.warn('[loadPlantsFromGAS] 데이터가 비어있거나 올바르지 않습니다:', response);
       APP.plants = [];
       return;
     }
 
-    if (!Array.isArray(response.data)) {
-      console.error('[loadPlantsFromGAS] data가 배열이 아님:', typeof response.data);
-      APP.plants = [];
-      return;
-    }
-
-    console.log(`[loadPlantsFromGAS] GAS에서 ${response.data.length}개 식물 받음`);
+    console.log(`[loadPlantsFromGAS] GAS에서 ${rawData.length}개 식물 받음`);
 
     // Step 1: 데이터 정규화
-    const normalized = response.data.map((plant, idx) => {
+    const normalized = rawData.map((plant, idx) => {
       try {
         return normalizeGASPlant(plant);
       } catch (e) {
