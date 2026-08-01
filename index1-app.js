@@ -1,8 +1,4 @@
-window.addEventListener('unhandledrejection', function(event) {
-  if (event.reason && (event.reason.code === 403 || String(event.reason).includes('403'))) {
-    event.preventDefault(); // 콘솔에 빨간색 Uncaught (in promise) 에러가 찍히는 것을 방지
-  }
-});
+
 /**
  * ═══════════════════════════════════════════════════════════════════════════
  * 🔄 GAS 데이터 로딩 기능 (비활성화 - 기존 initGAS만 사용)
@@ -1195,36 +1191,25 @@ async function loadPlantsFromGAS() {
  */
 async function loadWorklogsFromGAS() {
   try {
-    const response = await _gasGet('getWorkLogs', { limit: '80' }); // ⚠️ 주의: 'workLog' (no 's')
+    const response = await _gasGet('getWorkLogs', { limit: '80' });
+    
+    // 데이터 추출 안전장치 추가
+    let rawData = [];
+    if (Array.isArray(response)) rawData = response;
+    else if (response && Array.isArray(response.data)) rawData = response.data;
 
-    if (!response.success) {
-      console.warn('[loadWorklogsFromGAS] 로드 실패:', response.message);
-      APP.workLogs = [];
-      return;
-    }
+    APP.workLogs = rawData.map(log => ({
+      id: log.id || '',
+      plantId: log.plantId || '',
+      date: normalizeDate(log.date) || '',
+      type: log.type || 'work',
+      content: log.content || '',
+      amount: log.amount || '',
+      notes: log.notes || '',
+      timestamp: log.timestamp || new Date().toISOString(),
+    }));
 
-    if (!Array.isArray(response.data)) {
-      console.warn('[loadWorklogsFromGAS] data가 배열이 아님');
-      APP.workLogs = [];
-      return;
-    }
-
-    // 각 워크로그 정규화
-    APP.workLogs = response.data.map(log => {
-      return {
-        id: log.id || '',
-        plantId: log.plantId || '',
-        date: normalizeDate(log.date) || '',
-        type: log.type || 'work',  // work, spray, fert, etc
-        content: log.content || '',
-        amount: log.amount || '',
-        notes: log.notes || '',
-        timestamp: log.timestamp || new Date().toISOString(),
-      };
-    });
-
-    console.log(`[loadWorklogsFromGAS] ${APP.workLogs.length}개 로그 로드`);
-
+    console.log(`[loadWorklogsFromGAS] ${APP.workLogs.length}개 로그 로드 완료`);
   } catch (error) {
     console.error('[loadWorklogsFromGAS] 예외:', error);
     APP.workLogs = [];
@@ -1237,31 +1222,20 @@ async function loadWorklogsFromGAS() {
 async function loadCheckedTasksFromGAS() {
   try {
     const response = await _gasGet('getDoneTasks', { date: TODAY_STR || new Date().toISOString().split('T')[0] });
+    
+    let rawData = [];
+    if (Array.isArray(response)) rawData = response;
+    else if (response && Array.isArray(response.data)) rawData = response.data;
 
-    if (!response.success) {
-      console.warn('[loadCheckedTasksFromGAS] 로드 실패:', response.message);
-      APP.checkedTasks = [];
-      return;
-    }
+    APP.checkedTasks = rawData.map(task => ({
+      id: task.id || '',
+      plantId: task.plantId || '',
+      taskKey: task.taskKey || task.key || '',
+      completedDate: normalizeDate(task.completedDate || task.date) || '',
+      timestamp: task.timestamp || new Date().toISOString(),
+    }));
 
-    if (!Array.isArray(response.data)) {
-      console.warn('[loadCheckedTasksFromGAS] data가 배열이 아님');
-      APP.checkedTasks = [];
-      return;
-    }
-
-    APP.checkedTasks = response.data.map(task => {
-      return {
-        id: task.id || '',
-        plantId: task.plantId || '',
-        taskKey: task.taskKey || '',
-        completedDate: normalizeDate(task.completedDate) || '',
-        timestamp: task.timestamp || new Date().toISOString(),
-      };
-    });
-
-    console.log(`[loadCheckedTasksFromGAS] ${APP.checkedTasks.length}개 체크 로드`);
-
+    console.log(`[loadCheckedTasksFromGAS] ${APP.checkedTasks.length}개 체크 로드 완료`);
   } catch (error) {
     console.error('[loadCheckedTasksFromGAS] 예외:', error);
     APP.checkedTasks = [];
@@ -1322,29 +1296,20 @@ function getWeekKey() {
 
 async function loadPreparationFromGAS() {
   try {
-    const week = getWeekKey(); // 예: "7월 4주"
+    const week = getWeekKey(); 
     console.log('[loadPreparation] 로드 시작:', week);
 
-    // GAS에서 전체 준비사항 로드 (week 필터링은 클라이언트에서)
     const response = await _gasGet('getPreparations');
+    
+    let rawData = [];
+    if (Array.isArray(response)) rawData = response;
+    else if (response && Array.isArray(response.data)) rawData = response.data;
 
-    if (!response.success || !Array.isArray(response.data)) {
-      console.warn('[loadPreparation] 로드 실패');
-      APP.tips = [];
-      APP.preparations = [];
-      return;
-    }
-
-    // 현재 주차에 해당하는 데이터 필터링
     APP.preparations = [];
     APP.tips = [];
 
-    response.data.forEach(item => {
-      // GAS 시트 구조: [month, week, category, emoji, title, content]
-      // item = { month, week, category, emoji, title, content }
-      
+    rawData.forEach(item => {
       const weekStr = `${item.month || ''}월 ${item.week || ''}주`;
-      
       if (weekStr === week) {
         if (item.category === 'prep') {
           APP.preparations.push({
@@ -1363,10 +1328,6 @@ async function loadPreparationFromGAS() {
     });
 
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
-    if (APP.preparations.length === 0 && APP.tips.length === 0) {
-      console.warn(`[loadPreparation] ⚠️ '${week}'에 해당하는 데이터 없음`);
-    }
-
   } catch (error) {
     console.error('[loadPreparation] 오류:', error);
     APP.tips = [];
