@@ -1058,7 +1058,7 @@ async function initGAS() {
   console.log('[initGAS] 시작 (캐시 기반, 버그 수정)');
   
   try {
-    // ✨ 수정: APP 변수 먼저 초기화!
+    // APP 변수 먼저 초기화
     console.log('[initGAS] APP 변수 초기화 중...');
     APP.plants = [];
     APP.logs = [];
@@ -1071,48 +1071,41 @@ async function initGAS() {
     const hasCachedData = await initCache();
     
     if (hasCachedData) {
-      // 캐시 있음: localStorage에서 로드
       console.log('[initGAS] 캐시에서 로드');
       loadFromCache();
-      console.log(`[initGAS] 로드 완료 - plants: ${APP.plants.length}, logs: ${APP.logs.length}`);
-      
     } else {
-      // 캐시 없음: GAS에서 로드 후 캐시 저장
       console.log('[initGAS] GAS에서 로드');
       
-      await loadPlantsFromGAS();
-      console.log(`[initGAS] loadPlantsFromGAS 후 - plants: ${APP.plants.length}`);
+      try { await loadPlantsFromGAS(); } catch(e) { console.warn('plants 로드 오류 무시', e); }
+      try { await loadWorklogsFromGAS(); } catch(e) { console.warn('workLogs 로드 오류 무시', e); }
+      try { await loadCheckedTasksFromGAS(); } catch(e) { console.warn('checkedTasks 로드 오류 무시', e); }
+      try { await loadPesticidesFromGAS(); } catch(e) { console.warn('pesticides 로드 오류 무시', e); }
       
-      await loadWorklogsFromGAS();
-      console.log(`[initGAS] loadWorklogsFromGAS 후 - logs: ${APP.logs.length}`);
-      
-      await loadCheckedTasksFromGAS();
-      await loadPesticidesFromGAS();
-      console.log(`[initGAS] loadPesticidesFromGAS 후 - pesticides: ${APP.pesticides.length}`);
-      
-      // 로드 완료 후 캐시 저장
-      console.log('[initGAS] 캐시에 저장 중...');
-      saveAllToCache();
-      console.log('[initGAS] 캐시 저장 완료');
+      // 캐시 저장 시도
+      try { saveAllToCache(); } catch(e) { console.warn('캐시 저장 오류 무시', e); }
     }
     
-    // 2️⃣ UI 렌더링
+    // 2️⃣ UI 렌더링 (데이터가 없어도 빈 상태로 안전하게 렌더링)
     console.log('[initGAS] UI 렌더링 중...');
-    renderToday();
-    renderPlants();
-    renderLogs();
-    renderDb();
+    try { renderToday(); } catch(e) {}
+    try { renderPlants(); } catch(e) {}
+    try { renderLogs(); } catch(e) {}
+    try { renderDb(); } catch(e) {}
     
-    // 3️⃣ 준비사항은 매번 로드 (현재 주차만 필요하므로 캐시 안 함)
-    await loadPreparationFromGAS();
-    renderPreparation();
+    // 3️⃣ 준비사항 로드 (실패해도 앱 구동에 지장 없도록 안전장치)
+    try {
+      await loadPreparationFromGAS();
+      renderPreparation();
+    } catch(e) {
+      console.warn('[initGAS] 준비사항 로드 실패 무시:', e);
+    }
     
     console.log('[initGAS] ✅ 완료');
-    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}`);
     
   } catch (error) {
-    console.error('[initGAS] 오류:', error);
-    showErrorDialog('앱 초기화 실패');
+    console.error('[initGAS] 오류 발생:', error);
+    // 최후의 보루: 에러가 나도 기본 렌더링 시도
+    try { renderToday(); renderPlants(); } catch(e2) {}
   }
 }
 
