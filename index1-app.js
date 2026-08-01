@@ -448,31 +448,32 @@ async function _gasPost(params) {
   }
 }
 
-async function _gasGet(params, isAsync) {
+function _gasGet(params, isAsync) {
   try {
-    console.log('[_gasGet] 호출:', params);
+    console.log('[_gasGet] 호출:', params.action || params);
     console.log('[_gasGet] GAS_URL:', GAS_URL);
     
-    const response = await fetch(GAS_URL, {
+    return fetch(GAS_URL, {
       method: 'POST',
       contentType: 'application/json',
-      payload: JSON.stringify(params)
+      body: JSON.stringify(params)  // ← 이것이 중요!
+    }).then(response => {
+      console.log('[_gasGet] fetch 응답 상태:', response.status);
+      return response.json();
+    }).then(data => {
+      console.log('[_gasGet] JSON 파싱 성공');
+      console.log('[_gasGet] 응답 타입:', typeof data);
+      console.log('[_gasGet] 응답 배열?:', Array.isArray(data));
+      console.log('[_gasGet] 응답 데이터:', JSON.stringify(data).substring(0, 300));
+      return data;
+    }).catch(err => {
+      console.error('[_gasGet] 오류:', err);
+      throw err;
     });
     
-    console.log('[_gasGet] fetch 응답 상태:', response.status);
-    
-    const data = await response.json();
-    
-    console.log('[_gasGet] JSON 파싱 성공');
-    console.log('[_gasGet] 응답 타입:', typeof data);
-    console.log('[_gasGet] 응답 배열?:', Array.isArray(data));
-    console.log('[_gasGet] 응답 데이터:', JSON.stringify(data).substring(0, 200));
-    
-    return data;
-    
   } catch (err) {
-    console.error('[_gasGet] ❌ 오류:', err.message);
-    throw err;
+    console.error('[_gasGet] 예외:', err);
+    return Promise.reject(err);
   }
 }
 
