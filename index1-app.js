@@ -1468,8 +1468,11 @@ function inferCategory(name) {
 /**
  * 식물 배열에서 중복 제거
  */
+/**
+ * 식물 배열에서 중복 제거
+ */
 function deduplicatePlants(plants) {
-  const seen = new Map();  // key: "name|plantDate" → plant
+  const seen = new Map();  // 🔥 반드시 new Map()으로 선언해야 .set()과 .has()를 쓸 수 있습니다.
 
   for (const plant of plants) {
     const key = `${plant.name}|${plant.plantDate}`;
@@ -1481,7 +1484,7 @@ function deduplicatePlants(plants) {
         seen.set(key, plant);
       }
     } else {
-      seen.add(key, plant);
+      seen.set(key, plant);
     }
   }
 
