@@ -1362,12 +1362,15 @@ async function loadPreparationFromGAS() {
     const now = new Date();
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
-    // 이번 주 범위 (일요일 ~ 토요일)
-    const dayOfWeek = now.getDay();
+    // 이번 주 범위 계산 (일요일 ~ 토요일)
+    const dayOfWeek = now.getDay();  // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
+    
+    // 이번 주 일요일
     const weekStartDate = new Date(now);
     weekStartDate.setDate(now.getDate() - dayOfWeek);
     weekStartDate.setHours(0, 0, 0, 0);
     
+    // 이번 주 토요일
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekStartDate.getDate() + 6);
     weekEndDate.setHours(23, 59, 59, 999);
@@ -1375,14 +1378,10 @@ async function loadPreparationFromGAS() {
     console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStartDate)} ~ ${formatDateForLog(weekEndDate)}`);
     
     // GAS에서 준비사항 데이터 로드
-    const response = await fetch(GAS_URL, {
-      method: 'POST',
-      contentType: 'application/json',
-      payload: JSON.stringify({
-        action: 'read',
-        sheetName: '준비사항'
-      })
-    }).then(r => r.json());
+    const response = await _gasGet({
+      action: 'read',
+      sheetName: '준비사항'
+    });
     
     let allData = [];
     if (Array.isArray(response)) {
@@ -1395,7 +1394,7 @@ async function loadPreparationFromGAS() {
     
     // 이번 주 데이터만 필터링
     const filtered = allData.filter(item => {
-      let dateStr = item['날짜'] || item.date || item['Date'] || (Object.values(item)[0]);
+      const dateStr = item['날짜'] || item.date || Object.values(item)[0];
       if (!dateStr) return false;
       
       let itemDate;
@@ -1412,11 +1411,12 @@ async function loadPreparationFromGAS() {
     });
     
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${filtered.length}개, 팁 0개`);
+    
     APP.preparationData = filtered;
     renderPreparation(filtered);
     
   } catch (error) {
-    console.error('[loadPreparationFromGAS]', error);
+    console.error('[loadPreparationFromGASError]', error);
     APP.preparationData = [];
   }
 }
