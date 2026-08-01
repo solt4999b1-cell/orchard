@@ -1,64 +1,32 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * 🔄 GAS 데이터 로딩 기능 (수정 v2 - 기존 _gasGet 함수 사용)
+ * 🔄 GAS 데이터 로딩 기능 (비활성화 - 기존 initGAS만 사용)
  * ═══════════════════════════════════════════════════════════════════════════
  * 
- * 문제: 새로운 fetch 코드가 GAS API 호출 방식 오류
- * 해결: 기존 _gasGet 함수 사용 + 기존 초기화 함수 호출
+ * 문제: GAS 스크립트가 action=read&sheetName 파라미터 미지원
+ * 해결: 새 로딩 함수 비활성화 → 기존 initGAS 함수만 실행
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
 async function initializeAppWithGasData() {
   try {
-    console.log('🔄 GAS 데이터 로딩 시작...');
+    console.log('🔄 Window load 완료 - 기존 initGAS 호출');
     
     const loadingOverlay = document.getElementById('loading');
     if (loadingOverlay) {
       loadingOverlay.style.display = 'flex';
     }
 
-    // Step 1: 로컬 데이터 로드
+    // Step 1: 기존 캐시 확인
     updateLoadingStep(1, '로컬 데이터 로드');
     await new Promise(r => setTimeout(r, 500));
 
-    // Step 2: GAS 데이터 동기화
-    updateLoadingStep(2, 'Google Sheets 동기화 중...');
-    
-    // 기존 GAS 함수 호출 (action=read&sheetName 방식)
-    const sheetsToLoad = [
-      { sheetName: '준비사항', key: 'orchard_prep_준비사항' },
-      { sheetName: 'growPlants', key: 'orchard_prep_growPlants' },
-      { sheetName: 'supplies', key: 'orchard_prep_supplies' },
-      { sheetName: 'myPesticides', key: 'orchard_prep_myPesticides' }
-    ];
+    // Step 2: 기존 GAS 시스템
+    updateLoadingStep(2, '데이터 시스템 로드 중...');
+    await new Promise(r => setTimeout(r, 500));
 
-    let successCount = 0;
-    
-    // 순차 로드 (병렬은 GAS 제한으로 실패 가능)
-    for (const sheet of sheetsToLoad) {
-      try {
-        const data = await _gasGet({
-          action: 'read',
-          sheetName: sheet.sheetName
-        });
-
-        if (data && Array.isArray(data)) {
-          localStorage.setItem(sheet.key, JSON.stringify(data));
-          localStorage.setItem(sheet.key + '_lastUpdate', new Date().toISOString());
-          console.log(`✅ ${sheet.sheetName}: ${data.length}개 항목`);
-          successCount++;
-        } else {
-          console.warn(`⚠️ ${sheet.sheetName}: 데이터 형식 오류`);
-        }
-      } catch (error) {
-        console.error(`❌ ${sheet.sheetName} 로드 오류:`, error.message);
-      }
-    }
-
-    console.log(`✅ GAS 동기화 완료: ${successCount}/${sheetsToLoad.length}개 시트`);
-
-    // Step 3: 작업 일정 계산
-    updateLoadingStep(3, '작업 일정 계산 중...');
+    // Step 3: UI 준비
+    updateLoadingStep(3, '화면 준비 중...');
     await new Promise(r => setTimeout(r, 300));
 
     // Step 4: 완료
@@ -71,24 +39,22 @@ async function initializeAppWithGasData() {
 
     // 기존 초기화 함수 호출
     try {
-      // 기존 initGAS가 있으면 사용
       if (typeof initGAS === 'function') {
         console.log('✅ 기존 initGAS 호출');
-        initGAS();
-      } else if (typeof initializeAppUI === 'function') {
-        console.log('✅ initializeAppUI 호출');
-        initializeAppUI();
+        await initGAS();
+        console.log('✅ initGAS 완료');
       } else {
-        console.warn('⚠️ 초기화 함수를 찾을 수 없습니다');
+        console.error('❌ initGAS 함수를 찾을 수 없습니다');
       }
     } catch (err) {
-      console.error('❌ 초기화 오류:', err);
+      console.error('❌ initGAS 실행 오류:', err);
     }
 
     return true;
 
   } catch (error) {
-    console.error('❌ GAS 로딩 오류:', error);
+    console.error('❌ 초기화 오류:', error);
+    const loadingOverlay = document.getElementById('loading');
     if (loadingOverlay) {
       loadingOverlay.style.display = 'none';
     }
@@ -96,7 +62,7 @@ async function initializeAppWithGasData() {
     // 에러 발생해도 기본 초기화 진행
     try {
       if (typeof initGAS === 'function') {
-        initGAS();
+        await initGAS();
       }
     } catch (err) {
       console.error('❌ 폴백 초기화 실패:', err);
@@ -130,23 +96,6 @@ function updateLoadingStep(stepNum, message) {
   }
 
   console.log(`📊 Step ${stepNum}/4: ${message}`);
-}
-
-// 데이터 조회 함수들
-function getStoredPrepData() {
-  return JSON.parse(localStorage.getItem('orchard_prep_준비사항') || '[]');
-}
-
-function getStoredPlants() {
-  return JSON.parse(localStorage.getItem('orchard_prep_growPlants') || '[]');
-}
-
-function getStoredSupplies() {
-  return JSON.parse(localStorage.getItem('orchard_prep_supplies') || '[]');
-}
-
-function getStoredPesticides() {
-  return JSON.parse(localStorage.getItem('orchard_prep_myPesticides') || '[]');
 }
 
 
