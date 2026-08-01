@@ -1347,69 +1347,232 @@ function getWeekKey() {
   return `${month}월 ${week}주`;
 }
 
+/**
+ * ✨ loadPreparationFromGAS 함수 (수정된 버전)
+ * 현재 날짜 기반으로 이번 주 준비사항만 필터링
+ * 
+ * 위치: index1-app.js의 loadPreparationFromGAS 함수를 완전히 교체하세요
+ * 대략 Line 1216 근처
+ */
+
 async function loadPreparationFromGAS() {
   try {
-    const weekKey = getWeekKey(); // 예: "8월 1주"
-    var displayEl = document.getElementById('current-week-display');
-    if (displayEl) {
-      displayEl.textContent = `(기준 주차: ${weekKey})`;
-    }
-
+    // 현재 날짜 계산 (한국 시간대)
+    const now = new Date();
+    now.setHours(now.getHours() + 9);  // UTC → KST
     
-    console.log('[loadPreparation] 로드 시작:', weekKey);
-
-    const response = await _gasGet('getPreparations');
-    let rawData = [];
-    if (Array.isArray(response)) rawData = response;
-    else if (response && Array.isArray(response.data)) rawData = response.data;
-
-    APP.preparations = [];
-    APP.tips = [];
-
-    // 1차 시도: 현재 주차("8월 1주" 등)와 정확히 일치하는 항목 필터링
-    rawData.forEach(item => {
-      const m = String(item.month || item.월 || '').trim();
-      const w = String(item.week || item.주 || '').trim();
-      const itemWeekStr = `${m}월 ${w}주`;
-
-      if (itemWeekStr === weekKey) {
-        const cat = (item.category || item.구분 || '').trim();
-        if (cat === 'prep' || cat === '준비사항') {
-          APP.preparations.push({
-            emoji: item.emoji || '📋',
-            title: item.title || item.제목 || '',
-            content: item.content || item.내용 || ''
-          });
-        } else if (cat === 'tip' || cat === '팁') {
-          APP.tips.push({
-            emoji: item.emoji || '💡',
-            title: item.title || item.제목 || '',
-            content: item.content || item.내용 || ''
-          });
-        }
-      }
+    console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
+    
+    // 이번 주 범위 계산 (일요일 ~ 토요일)
+    const todayDayOfWeek = now.getDay();  // 0=일, 1=월, ..., 6=토
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - todayDayOfWeek);  // 이번 주 일요일
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);  // 토요일
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStart)} ~ ${formatDateForLog(weekEnd)}`);
+    
+    // 준비사항 데이터 조회
+    const response = await _gasGet({
+      action: 'read',
+      sheetName: '준비사항'
     });
-
-    // 2차 안전장치: 만약 정확히 일치하는 주차가 없다면, 데이터 중 첫 몇 개를 가져와서 화면이 비어 보이지 않도록 함
-    if (APP.preparations.length === 0 && APP.tips.length === 0 && rawData.length > 0) {
-      console.warn('[loadPreparation] 현재 주차 데이터 없음, 대체 데이터 로드');
-      rawData.slice(0, 5).forEach(item => {
-        const cat = (item.category || item.구분 || '').trim();
-        APP.preparations.push({
-          emoji: item.emoji || '📋',
-          title: item.title || item.제목 || '준비사항',
-          content: item.content || item.내용 || ''
-        });
-      });
+    
+    let allData = [];
+    if (Array.isArray(response)) {
+      allData = response;
+    } else if (response && response.data && Array.isArray(response.data)) {
+      allData = response.data;
     }
-
-    console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
-    renderPreparation();
+    
+    console.log(`[loadPreparation] 전체 데이터: ${allData.length}개`);
+    
+    // 이번 주 데이터만 필터링
+    const filtered = allData.filter(item => {
+      // 날짜 필드 찾기 (여러 가능성 확인)
+      let dateStr = item.date || 
+                    item['날짜'] || 
+                    item['Date'] || 
+                    item['DATE'] ||
+                    (Object.values(item)[0]);  // 첫 번째 열이 날짜라고 가정
+      
+      if (!dateStr) return false;
+      
+      // 날짜 파싱
+      let itemDate;
+      if (typeof dateStr === 'string') {
+        itemDate = new Date(dateStr);
+      } else if (dateStr instanceof Date) {
+        itemDate = dateStr;
+      } else {
+        return false;
+      }
+      
+      // 유효한 날짜인지 확인
+      if (isNaN(itemDate.getTime())) return false;
+      
+      // 이번 주 범위에 포함되는지 확인
+      return itemDate >= weekStart && itemDate <= weekEnd;
+    });
+    
+    console.log(`[loadPreparation] 로드 완료: 준비사항 ${filtered.length}개, 팁 0개`);
+    
+    // 데이터 저장
+    APP.preparationData = filtered;
+    
+    // 렌더링
+    renderPreparationWithDate(filtered);
+    
   } catch (error) {
-    console.error('[loadPreparation] 오류:', error);
-    APP.tips = [];
-    APP.preparations = [];
+    console.error('[loadPreparationFromGAS]', error);
+    APP.preparationData = [];
   }
+}
+
+/**
+ * ✨ 날짜 기반 준비사항 렌더링
+ */
+function renderPreparationWithDate(data) {
+  try {
+    console.log('[renderPreparation] 렌더링 시작');
+    
+    const container = document.getElementById('weekly-prep');
+    if (!container) return;
+    
+    // 날짜별로 그룹화
+    const byDate = {};
+    data.forEach(item => {
+      const dateStr = item.date || item['날짜'] || Object.values(item)[0] || '미정';
+      const category = item.category || item['분류'] || item['카테고리'] || Object.values(item)[1] || '기타';
+      
+      if (!byDate[dateStr]) {
+        byDate[dateStr] = {};
+      }
+      if (!byDate[dateStr][category]) {
+        byDate[dateStr][category] = [];
+      }
+      byDate[dateStr][category].push(item);
+    });
+    
+    // HTML 생성
+    let html = '';
+    
+    if (Object.keys(byDate).length === 0) {
+      html = `
+        <div style="color:#999;font-size:13px;text-align:center;padding:20px;">
+          📭 이번 주 준비사항이 없습니다
+        </div>
+      `;
+    } else {
+      // 날짜순으로 정렬
+      const sortedDates = Object.keys(byDate).sort();
+      
+      for (const dateStr of sortedDates) {
+        const dayInfo = getDayInfo(new Date(dateStr));
+        
+        html += `
+          <div style="margin-bottom:16px;">
+            <div style="background:#E8F5E9;padding:8px 12px;border-radius:6px;margin-bottom:8px;font-weight:bold;color:#1B5E20;font-size:13px;">
+              📅 ${dateStr} (${dayInfo})
+            </div>
+            <div style="padding-left:12px;border-left:3px solid #81C784;">
+        `;
+        
+        for (const [category, items] of Object.entries(byDate[dateStr])) {
+          const icon = getCategoryIcon(category);
+          
+          html += `
+            <div style="margin-bottom:10px;">
+              <div style="font-size:12px;font-weight:bold;color:#558B2F;margin-bottom:4px;">
+                ${icon} ${category}
+              </div>
+              <div style="font-size:12px;padding-left:12px;color:#333;">
+          `;
+          
+          items.forEach(item => {
+            const description = item.title || item.description || item.memo || item.내용 || '(내용 없음)';
+            html += `<div style="padding:2px 0;">• ${description}</div>`;
+          });
+          
+          html += `
+              </div>
+            </div>
+          `;
+        }
+        
+        html += `
+            </div>
+          </div>
+        `;
+      }
+    }
+    
+    container.innerHTML = html;
+    console.log('[renderPreparation] 렌더링 완료');
+    
+  } catch (error) {
+    console.error('[renderPreparation]', error);
+  }
+}
+
+/**
+ * 요일 정보 반환
+ */
+function getDayInfo(date) {
+  if (isNaN(date.getTime())) return '';
+  
+  const days = ['일', '월', '화', '수', '목', '금', '토'];
+  const dayOfWeek = days[date.getDay()];
+  
+  // 오늘인지 내일인지 표시
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+  
+  const dateOnly = new Date(date);
+  dateOnly.setHours(0, 0, 0, 0);
+  
+  if (dateOnly.getTime() === today.getTime()) {
+    return `${dayOfWeek}요일 (오늘) 🔴`;
+  } else if (dateOnly.getTime() === tomorrow.getTime()) {
+    return `${dayOfWeek}요일 (내일) 🟡`;
+  } else {
+    return `${dayOfWeek}요일`;
+  }
+}
+
+/**
+ * 카테고리별 아이콘
+ */
+function getCategoryIcon(category) {
+  const icons = {
+    '농약': '🌿',
+    '시비': '🌱',
+    '작업관리': '✅',
+    '작업': '✅',
+    '이번달주의점': '⚠️',
+    '이번달 주의점': '⚠️',
+    '주의': '⚠️'
+  };
+  
+  return icons[category] || '📌';
+}
+
+/**
+ * 로그용 날짜 포맷팅
+ */
+function formatDateForLog(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const mins = String(date.getMinutes()).padStart(2, '0');
+  
+  return `${year}-${month}-${day} ${hours}:${mins}`;
 }
 
 // ============================================
