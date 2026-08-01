@@ -1364,10 +1364,25 @@ async function loadPreparationFromGAS() {
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
     // ✨ _gasGet 호출 방식 변경
-    const response = await _gasGet({
-      action: 'read',
-      sheetName: '준비사항'
-    }, false);  // ← 두 번째 파라미터 추가
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        action: 'read',
+        sheetName: '준비사항'
+      })
+    }).then(r => r.json());
+    
+    // 주차 범위 계산
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - now.getDay());
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStart)} ~ ${formatDateForLog(weekEnd)}`);
     
     // 이번 주 범위 계산 (일요일 ~ 토요일)
     const todayDayOfWeek = now.getDay();  // 0=일, 1=월, ..., 6=토
