@@ -1301,23 +1301,26 @@ async function loadPesticidesFromGAS() {
   try {
     console.log('[loadPesticidesFromGAS] 시작');
     
-    // read 액션으로 myPesticides 시트 읽기
     const response = await _gasGet({
       action: 'read',
       sheetName: 'myPesticides'
     });
     
+    console.log('[loadPesticidesFromGAS] 응답:', response);
+    
     let pesticides = [];
     
     if (Array.isArray(response)) {
       pesticides = response;
+      console.log(`[loadPesticidesFromGAS] 배열 형식: ${pesticides.length}개`);
     } else if (response && response.data && Array.isArray(response.data)) {
       pesticides = response.data;
+      console.log(`[loadPesticidesFromGAS] data 필드: ${pesticides.length}개`);
     }
     
     if (pesticides && pesticides.length > 0) {
       APP.pesticides = pesticides;
-      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드`);
+      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드 완료`);
     } else {
       APP.pesticides = [];
       console.log('[loadPesticidesFromGAS] 농약 데이터 없음');
