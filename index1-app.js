@@ -1083,10 +1083,15 @@ async function initGAS() {
     
     // 2️⃣ UI 렌더링 (데이터가 없어도 빈 상태로 안전하게 렌더링)
     console.log('[initGAS] UI 렌더링 중...');
-    try { renderToday(); } catch(e) {}
-    try { renderPlants(); } catch(e) {}
-    try { renderLogs(); } catch(e) {}
-    try { renderDb(); } catch(e) {}
+    try { 
+      renderToday(); 
+      renderPlants(); 
+      renderLogs(); 
+      renderDb(); 
+      
+      // 🔥 추가: 초기 실행 시 '오늘 할 일' 패널을 강제로 화면에 노출
+      setPanel('today', document.getElementById('nav-today'));
+    } catch(e) {}
     
     // 3️⃣ 준비사항 로드 (실패해도 앱 구동에 지장 없도록 안전장치)
     try {
@@ -12991,36 +12996,20 @@ async function loadPreparation() {
  */
 function renderPreparation() {
   console.log('[renderPreparation] 렌더링 시작');
-  
-  var prepList = (window.APP_PREPARATION && APP_PREPARATION.prep) ? APP_PREPARATION.prep : [];
-  var tipList = (window.APP_PREPARATION && APP_PREPARATION.tips) ? APP_PREPARATION.tips : [];
-
-  // HTML에 존재하는 정확한 ID(weekly-prep, monthly-tips)를 타겟팅
   var prepEl = document.getElementById('weekly-prep');
-  var tipEl = document.getElementById('monthly-tips');
-
+  var tipsEl = document.getElementById('monthly-tips');
+  
   if (prepEl) {
-    if (prepList.length > 0) {
-      prepEl.innerHTML = prepList.map(function(item) {
-        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
-        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '📌') + ' ' + (item.title || '이번 주 준비사항') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
-      }).join('');
-    } else {
-      prepEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
-    }
+    prepEl.innerHTML = (APP.preparations && APP.preparations.length > 0) 
+      ? APP.preparations.map(p => `<div style="margin-bottom:6px;">${p.emoji || '📋'} <b>${esc(p.title)}</b>: ${esc(p.content)}</div>`).join('')
+      : '<div style="color:#666;font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
   }
-
-  if (tipEl) {
-    if (tipList.length > 0) {
-      tipEl.innerHTML = tipList.map(function(item) {
-        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
-        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '💡') + ' ' + (item.title || '이달의 핵심') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
-      }).join('');
-    } else {
-      tipEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이달의 핵심 없음</div>';
-    }
+  
+  if (tipsEl) {
+    tipsEl.innerHTML = (APP.tips && APP.tips.length > 0) 
+      ? APP.tips.map(t => `<div style="margin-bottom:6px;">${t.emoji || '💡'} <b>${esc(t.title)}</b>: ${esc(t.content)}</div>`).join('')
+      : '<div style="color:#666;font-size:12px;text-align:center;">이달의 핵심 팁 없음</div>';
   }
-
   console.log('[renderPreparation] 렌더링 완료');
 }
 
