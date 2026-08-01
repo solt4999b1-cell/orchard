@@ -1215,26 +1215,23 @@ async function loadPesticidesFromGAS() {
   try {
     console.log('[loadPesticidesFromGAS] 시작');
     
-    // ✨ 수정: 문자열 action 사용
-    const response = await _gasGet('read', {
+    // ✨ 올바른 방식: 객체로 전달 (action 포함)
+    const response = await _gasGet({
+      action: 'read',
       sheetName: 'myPesticides'
     });
-    
-    console.log('[loadPesticidesFromGAS] 응답:', response);
     
     let pesticides = [];
     
     if (Array.isArray(response)) {
       pesticides = response;
-      console.log(`[loadPesticidesFromGAS] 배열 형식: ${pesticides.length}개`);
     } else if (response && response.data && Array.isArray(response.data)) {
       pesticides = response.data;
-      console.log(`[loadPesticidesFromGAS] data 필드: ${pesticides.length}개`);
     }
     
     if (pesticides && pesticides.length > 0) {
       APP.pesticides = pesticides;
-      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드 완료`);
+      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드`);
     } else {
       APP.pesticides = [];
       console.log('[loadPesticidesFromGAS] 농약 데이터 없음');
@@ -1279,7 +1276,6 @@ async function loadPreparationFromGAS() {
     const now = new Date();
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
-    // 주차 범위
     const dayOfWeek = now.getDay();
     const weekStartDate = new Date(now);
     weekStartDate.setDate(now.getDate() - dayOfWeek);
@@ -1291,8 +1287,9 @@ async function loadPreparationFromGAS() {
     
     console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStartDate)} ~ ${formatDateForLog(weekEndDate)}`);
     
-    // ✨ 수정: 문자열 action 사용
-    const response = await _gasGet('read', {
+    // ✨ 올바른 방식: 객체로 전달 (action 포함)
+    const response = await _gasGet({
+      action: 'read',
       sheetName: '준비사항'
     });
     
@@ -1305,7 +1302,6 @@ async function loadPreparationFromGAS() {
     
     console.log(`[loadPreparation] 전체 데이터: ${allData.length}개`);
     
-    // 필터링
     const filtered = allData.filter(item => {
       const dateStr = item['날짜'] || item.date || Object.values(item)[0];
       if (!dateStr) return false;
@@ -1323,7 +1319,7 @@ async function loadPreparationFromGAS() {
       return itemDate >= weekStartDate && itemDate <= weekEndDate;
     });
     
-    console.log(`[loadPreparation] 로드 완료: 준비사항 ${filtered.length}개, 팁 0개`);
+    console.log(`[loadPreparation] 로드 완료: 준비사항 ${filtered.length}개`);
     
     APP.preparationData = filtered;
     renderPreparation(filtered);
