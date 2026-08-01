@@ -9040,7 +9040,9 @@ async function updatePendingUrlStatus(localId, status) {
       item.data.updatedAt = new Date().toISOString();
       await idbPut('pendingSync', item);
     }
-  } catch(e) {}
+  } catch(e) {
+    console.error('[updatePendingUrlStatus] 오류:', e);
+  }
 }
 
 async function showPendingUrlPanel() {
