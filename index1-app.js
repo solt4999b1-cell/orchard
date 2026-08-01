@@ -1297,37 +1297,64 @@ async function loadCheckedTasksFromGAS() {
 /**
  * GAS에서 pesticides 데이터 로드 (선택)
  */
+// ✨ 디버그 버전 (상세 로깅)
 async function loadPesticidesFromGAS() {
   try {
-    console.log('[loadPesticidesFromGAS] 시작');
+    console.log('═══════════════════════════════════════════');
+    console.log('[DEBUG] loadPesticidesFromGAS 시작');
+    console.log('═══════════════════════════════════════════');
+    
+    // 1️⃣ GAS 호출
+    console.log('[DEBUG] GAS_URL:', GAS_URL);
+    console.log('[DEBUG] _gasGet 호출: action=read, sheetName=myPesticides');
     
     const response = await _gasGet({
       action: 'read',
       sheetName: 'myPesticides'
     });
     
-    console.log('[loadPesticidesFromGAS] 응답:', response);
+    console.log('[DEBUG] GAS 응답 타입:', typeof response);
+    console.log('[DEBUG] GAS 응답 배열?:', Array.isArray(response));
+    console.log('[DEBUG] GAS 응답 내용:', JSON.stringify(response).substring(0, 500));
     
+    // 2️⃣ 응답 처리
     let pesticides = [];
     
     if (Array.isArray(response)) {
       pesticides = response;
-      console.log(`[loadPesticidesFromGAS] 배열 형식: ${pesticides.length}개`);
-    } else if (response && response.data && Array.isArray(response.data)) {
+      console.log('[DEBUG] ✅ 배열 형식 감지:', pesticides.length + '개');
+    } else if (response && response.data) {
       pesticides = response.data;
-      console.log(`[loadPesticidesFromGAS] data 필드: ${pesticides.length}개`);
+      console.log('[DEBUG] ✅ response.data 형식:', pesticides.length + '개');
+    } else if (response && typeof response === 'object') {
+      console.warn('[DEBUG] ⚠️ 예상치 못한 응답 형식:', Object.keys(response));
+    } else {
+      console.error('[DEBUG] ❌ 응답이 배열도 객체도 아님:', response);
     }
     
-    if (pesticides && pesticides.length > 0) {
+    // 3️⃣ 데이터 저장
+    if (pesticides && Array.isArray(pesticides)) {
       APP.pesticides = pesticides;
-      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드 완료`);
+      console.log(`[DEBUG] ✅ APP.pesticides 저장: ${pesticides.length}개`);
+      
+      // 샘플 데이터 확인
+      if (pesticides.length > 0) {
+        console.log('[DEBUG] 첫 번째 농약:', JSON.stringify(pesticides[0]));
+      }
     } else {
       APP.pesticides = [];
-      console.log('[loadPesticidesFromGAS] 농약 데이터 없음');
+      console.log('[DEBUG] ❌ pesticides가 배열이 아님');
     }
     
+    console.log('═══════════════════════════════════════════');
+    console.log(`[DEBUG] 최종 결과: APP.pesticides.length = ${APP.pesticides.length}`);
+    console.log('═══════════════════════════════════════════');
+    
   } catch (error) {
-    console.error('[loadPesticidesFromGAS] 오류:', error);
+    console.error('═══════════════════════════════════════════');
+    console.error('[DEBUG] ❌ 오류 발생:', error.message);
+    console.error('[DEBUG] 오류 스택:', error.stack);
+    console.error('═══════════════════════════════════════════');
     APP.pesticides = [];
   }
 }
