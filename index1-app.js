@@ -1359,7 +1359,7 @@ function getWeekKey() {
 async function loadPreparationFromGAS() {
   try {
     const now = new Date();
-    now.setHours(now.getHours() + 9);
+    now.setHours(now.getHours() + 0);
     
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
