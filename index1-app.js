@@ -1,15 +1,12 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * 🔄 GAS 데이터 로딩 기능 (개선 버전 - 중복 제거)
+ * 🔄 GAS 데이터 로딩 기능 (수정 v2 - 기존 _gasGet 함수 사용)
  * ═══════════════════════════════════════════════════════════════════════════
  * 
- * 기존 GAS_URL을 사용하고, 새로운 로딩 기능 추가
- * 중복 선언 제거
+ * 문제: 새로운 fetch 코드가 GAS API 호출 방식 오류
+ * 해결: 기존 _gasGet 함수 사용 + 기존 초기화 함수 호출
  * ═══════════════════════════════════════════════════════════════════════════
  */
-
-// ⚠️ 기존 GAS_URL 사용 (중복 선언 제거)
-// const GAS_URL은 기존 코드에서 L274에 선언되어 있음
 
 async function initializeAppWithGasData() {
   try {
@@ -27,6 +24,7 @@ async function initializeAppWithGasData() {
     // Step 2: GAS 데이터 동기화
     updateLoadingStep(2, 'Google Sheets 동기화 중...');
     
+    // 기존 GAS 함수 호출 (action=read&sheetName 방식)
     const sheetsToLoad = [
       { sheetName: '준비사항', key: 'orchard_prep_준비사항' },
       { sheetName: 'growPlants', key: 'orchard_prep_growPlants' },
@@ -34,21 +32,28 @@ async function initializeAppWithGasData() {
       { sheetName: 'myPesticides', key: 'orchard_prep_myPesticides' }
     ];
 
-    const promises = sheetsToLoad.map(sheet => 
-      fetchAndStoreSheetData(sheet.sheetName, sheet.key)
-    );
-
-    const results = await Promise.all(promises);
-    
     let successCount = 0;
-    results.forEach((result, index) => {
-      if (result.success) {
-        successCount++;
-        console.log(`✅ ${sheetsToLoad[index].sheetName}: ${result.count}개 항목`);
-      } else {
-        console.warn(`⚠️ ${sheetsToLoad[index].sheetName}: ${result.error}`);
+    
+    // 순차 로드 (병렬은 GAS 제한으로 실패 가능)
+    for (const sheet of sheetsToLoad) {
+      try {
+        const data = await _gasGet({
+          action: 'read',
+          sheetName: sheet.sheetName
+        });
+
+        if (data && Array.isArray(data)) {
+          localStorage.setItem(sheet.key, JSON.stringify(data));
+          localStorage.setItem(sheet.key + '_lastUpdate', new Date().toISOString());
+          console.log(`✅ ${sheet.sheetName}: ${data.length}개 항목`);
+          successCount++;
+        } else {
+          console.warn(`⚠️ ${sheet.sheetName}: 데이터 형식 오류`);
+        }
+      } catch (error) {
+        console.error(`❌ ${sheet.sheetName} 로드 오류:`, error.message);
       }
-    });
+    }
 
     console.log(`✅ GAS 동기화 완료: ${successCount}/${sheetsToLoad.length}개 시트`);
 
@@ -64,59 +69,40 @@ async function initializeAppWithGasData() {
       loadingOverlay.style.display = 'none';
     }
 
-    // 초기 화면 표시 (기존 initializeApp 대신 다른 초기화 호출)
-    await initializeAppUI();
+    // 기존 초기화 함수 호출
+    try {
+      // 기존 initGAS가 있으면 사용
+      if (typeof initGAS === 'function') {
+        console.log('✅ 기존 initGAS 호출');
+        initGAS();
+      } else if (typeof initializeAppUI === 'function') {
+        console.log('✅ initializeAppUI 호출');
+        initializeAppUI();
+      } else {
+        console.warn('⚠️ 초기화 함수를 찾을 수 없습니다');
+      }
+    } catch (err) {
+      console.error('❌ 초기화 오류:', err);
+    }
 
     return true;
 
   } catch (error) {
     console.error('❌ GAS 로딩 오류:', error);
-    if (typeof showToast === 'function') {
-      showToast('⚠️ 데이터 로드 중 오류가 발생했습니다', 'error');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
     }
     
-    // 에러 발생해도 기본 초기화는 진행
-    await initializeAppUI();
+    // 에러 발생해도 기본 초기화 진행
+    try {
+      if (typeof initGAS === 'function') {
+        initGAS();
+      }
+    } catch (err) {
+      console.error('❌ 폴백 초기화 실패:', err);
+    }
+    
     return false;
-  }
-}
-
-async function fetchAndStoreSheetData(sheetName, localStorageKey) {
-  try {
-    // 기존 GAS_URL 사용 (중복 방지)
-    const url = `${GAS_URL}?action=read&sheetName=${encodeURIComponent(sheetName)}`;
-    
-    const response = await fetch(url, {
-      method: 'GET',
-      timeout: 10000
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data || !Array.isArray(data)) {
-      throw new Error('유효하지 않은 데이터 형식');
-    }
-
-    localStorage.setItem(localStorageKey, JSON.stringify(data));
-    localStorage.setItem(localStorageKey + '_lastUpdate', new Date().toISOString());
-
-    return {
-      success: true,
-      count: data.length,
-      sheetName: sheetName
-    };
-
-  } catch (error) {
-    console.error(`❌ ${sheetName} 로드 오류:`, error);
-    return {
-      success: false,
-      error: error.message,
-      sheetName: sheetName
-    };
   }
 }
 
@@ -144,34 +130,6 @@ function updateLoadingStep(stepNum, message) {
   }
 
   console.log(`📊 Step ${stepNum}/4: ${message}`);
-}
-
-// 초기화 UI 함수 (기존 코드와 충돌 방지)
-async function initializeAppUI() {
-  try {
-    // 기존 초기화 함수들 호출
-    updateDate();
-    
-    // 패널 표시
-    const todayPanel = document.getElementById('panel-today');
-    if (todayPanel) {
-      // 모든 패널 숨김
-      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-      // 오늘 할 일 표시
-      todayPanel.classList.add('active');
-    }
-    
-    // 필터 초기화
-    const filterButtons = document.querySelectorAll('.filter-btn');
-    filterButtons.forEach(btn => btn.classList.remove('on'));
-    if (filterButtons.length > 0) {
-      filterButtons[0].classList.add('on');
-    }
-    
-    console.log('✅ UI 초기화 완료');
-  } catch (err) {
-    console.error('❌ UI 초기화 오류:', err);
-  }
 }
 
 // 데이터 조회 함수들
