@@ -1305,6 +1305,12 @@ function getWeekKey() {
 async function loadPreparationFromGAS() {
   try {
     const weekKey = getWeekKey(); // 예: "8월 1주"
+    var displayEl = document.getElementById('current-week-display');
+    if (displayEl) {
+      displayEl.textContent = `(기준 주차: ${weekKey})`;
+    }
+
+    
     console.log('[loadPreparation] 로드 시작:', weekKey);
 
     const response = await _gasGet('getPreparations');
