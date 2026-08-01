@@ -1292,12 +1292,13 @@ async function loadPesticidesFromGAS() {
  */
 function getWeekKey() {
   const today = new Date();
-  const month = today.getMonth() + 1;  // 1-12
-  const date = today.getDate();        // 1-31
+  const month = today.getMonth() + 1;  // 8
+  const date = today.getDate();        // 1
   
-  // 월별 주차 계산 (7월 1일 = 1주 시작)
+  // 날짜 기준으로 월별 주차 계산 (1~7일: 1주, 8~14일: 2주 등)
   const week = Math.ceil(date / 7);
   
+  // 만약 스프레드시트에 "8월 1주" 형태로 저장되어 있다면 아래와 같이 반환
   return `${month}월 ${week}주`;
 }
 
@@ -1316,8 +1317,8 @@ async function loadPreparationFromGAS() {
 
     // 1차 시도: 현재 주차("8월 1주" 등)와 정확히 일치하는 항목 필터링
     rawData.forEach(item => {
-      const m = item.month || item.월 || '';
-      const w = item.week || item.주 || '';
+      const m = String(item.month || item.월 || '').trim();
+      const w = String(item.week || item.주 || '').trim();
       const itemWeekStr = `${m}월 ${w}주`;
 
       if (itemWeekStr === weekKey) {
