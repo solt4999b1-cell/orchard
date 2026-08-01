@@ -9,13 +9,54 @@
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
+// ✨ 로딩 화면 숨기기 함수 (안전)
+function hideLoadingScreenCompletely() {
+  const loading = document.getElementById('loading');
+  if (loading) {
+    loading.style.display = 'none';
+    loading.style.visibility = 'hidden';
+    loading.style.zIndex = '-9999';
+    loading.style.pointerEvents = 'none';
+    loading.classList.remove('show');
+    console.log('✅ 로딩 화면 완벽하게 숨김');
+  }
+}
+
+// ✨ 패널 표시 함수 (안전)
+function showAllPanels() {
+  const panelIds = ['panel-today', 'panel-plants', 'panel-log', 'panel-manage'];
+  panelIds.forEach(id => {
+    const panel = document.getElementById(id);
+    if (panel) {
+      panel.style.display = 'block';
+      panel.style.visibility = 'visible';
+      panel.style.opacity = '1';
+      panel.style.zIndex = '1';
+      panel.style.minHeight = 'calc(100vh - 100px)';
+      console.log(`✅ 패널 표시: ${id}`);
+    }
+  });
+}
+
+// ✨ app 컨테이너 확인
+function ensureAppVisible() {
+  const app = document.getElementById('app');
+  if (app) {
+    app.style.display = 'flex';
+    app.style.flexDirection = 'column';
+    app.style.height = '100vh';
+    console.log('✅ app 컨테이너 확인');
+  }
+}
+
 async function initializeAppWithGasData() {
   try {
-    console.log('🔄 Window load 완료 - 기존 initGAS 호출');
+    console.log('🚀 앱 초기화 시작');
     
     const loadingOverlay = document.getElementById('loading');
     if (loadingOverlay) {
       loadingOverlay.style.display = 'flex';
+      loadingOverlay.style.zIndex = '9999';
     }
 
     // Step 1: 기존 캐시 확인
@@ -34,10 +75,6 @@ async function initializeAppWithGasData() {
     updateLoadingStep(4, '완료!');
     await new Promise(r => setTimeout(r, 500));
 
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-    }
-
     // 기존 초기화 함수 호출
     try {
       if (typeof initGAS === 'function') {
@@ -51,14 +88,22 @@ async function initializeAppWithGasData() {
       console.error('❌ initGAS 실행 오류:', err);
     }
 
+    // ✨ 로딩 화면 숨기기 + 패널 표시 (명시적)
+    await new Promise(r => setTimeout(r, 300));
+    hideLoadingScreenCompletely();
+    ensureAppVisible();
+    showAllPanels();
+    
+    console.log('✅ initializeAppWithGasData 완료!');
     return true;
 
   } catch (error) {
     console.error('❌ 초기화 오류:', error);
-    const loadingOverlay = document.getElementById('loading');
-    if (loadingOverlay) {
-      loadingOverlay.style.display = 'none';
-    }
+    
+    // ✨ 에러 발생해도 화면 표시 (중요!)
+    hideLoadingScreenCompletely();
+    ensureAppVisible();
+    showAllPanels();
     
     // 에러 발생해도 기본 초기화 진행
     try {
