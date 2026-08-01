@@ -1,3 +1,169 @@
+/**
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 🔄 GAS 데이터 로딩 기능 (자동 실행)
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+const GAS_URL = "https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec";
+const SHEET_ID = "12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec";
+
+async function initializeAppWithGasData() {
+  try {
+    console.log('🔄 GAS 데이터 로딩 시작...');
+    
+    const loadingOverlay = document.getElementById('loading');
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'flex';
+    }
+
+    // Step 1: 로컬 데이터 로드
+    updateLoadingStep(1, '로컬 데이터 로드');
+    await new Promise(r => setTimeout(r, 500));
+
+    // Step 2: GAS 데이터 동기화
+    updateLoadingStep(2, 'Google Sheets 동기화 중...');
+    
+    const sheetsToLoad = [
+      { sheetName: '준비사항', key: 'orchard_prep_준비사항' },
+      { sheetName: 'growPlants', key: 'orchard_prep_growPlants' },
+      { sheetName: 'supplies', key: 'orchard_prep_supplies' },
+      { sheetName: 'myPesticides', key: 'orchard_prep_myPesticides' }
+    ];
+
+    const promises = sheetsToLoad.map(sheet => 
+      fetchAndStoreSheetData(sheet.sheetName, sheet.key)
+    );
+
+    const results = await Promise.all(promises);
+    
+    let successCount = 0;
+    results.forEach((result, index) => {
+      if (result.success) {
+        successCount++;
+        console.log(`✅ ${sheetsToLoad[index].sheetName}: ${result.count}개 항목`);
+      } else {
+        console.warn(`⚠️ ${sheetsToLoad[index].sheetName}: ${result.error}`);
+      }
+    });
+
+    console.log(`✅ GAS 동기화 완료: ${successCount}/${sheetsToLoad.length}개 시트`);
+
+    // Step 3: 작업 일정 계산
+    updateLoadingStep(3, '작업 일정 계산 중...');
+    await new Promise(r => setTimeout(r, 300));
+
+    // Step 4: 완료
+    updateLoadingStep(4, '완료!');
+    await new Promise(r => setTimeout(r, 500));
+
+    if (loadingOverlay) {
+      loadingOverlay.style.display = 'none';
+    }
+
+    // 초기 화면 표시
+    if (typeof initializeApp === 'function') {
+      initializeApp();
+    }
+
+    return true;
+
+  } catch (error) {
+    console.error('❌ GAS 로딩 오류:', error);
+    showToast('⚠️ 데이터 로드 중 오류가 발생했습니다', 'error');
+    
+    if (typeof initializeApp === 'function') {
+      initializeApp();
+    }
+    return false;
+  }
+}
+
+async function fetchAndStoreSheetData(sheetName, localStorageKey) {
+  try {
+    const url = `${GAS_URL}?action=read&sheetName=${encodeURIComponent(sheetName)}`;
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      timeout: 10000
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data || !Array.isArray(data)) {
+      throw new Error('유효하지 않은 데이터 형식');
+    }
+
+    localStorage.setItem(localStorageKey, JSON.stringify(data));
+    localStorage.setItem(localStorageKey + '_lastUpdate', new Date().toISOString());
+
+    return {
+      success: true,
+      count: data.length,
+      sheetName: sheetName
+    };
+
+  } catch (error) {
+    console.error(`❌ ${sheetName} 로드 오류:`, error);
+    return {
+      success: false,
+      error: error.message,
+      sheetName: sheetName
+    };
+  }
+}
+
+function updateLoadingStep(stepNum, message) {
+  const msgEl = document.getElementById('loading-step-msg');
+  if (msgEl) {
+    msgEl.textContent = message;
+  }
+
+  const progressBar = document.getElementById('loading-progress-bar');
+  if (progressBar) {
+    const percentage = (stepNum / 4) * 100;
+    progressBar.style.width = percentage + '%';
+  }
+
+  for (let i = 0; i < 4; i++) {
+    const stepEl = document.getElementById(`ls-${i}`);
+    if (stepEl) {
+      if (i < stepNum) {
+        stepEl.classList.add('active');
+      } else {
+        stepEl.classList.remove('active');
+      }
+    }
+  }
+
+  console.log(`📊 Step ${stepNum}/4: ${message}`);
+}
+
+// 데이터 조회 함수들
+function getStoredPrepData() {
+  return JSON.parse(localStorage.getItem('orchard_prep_준비사항') || '[]');
+}
+
+function getStoredPlants() {
+  return JSON.parse(localStorage.getItem('orchard_prep_growPlants') || '[]');
+}
+
+function getStoredSupplies() {
+  return JSON.parse(localStorage.getItem('orchard_prep_supplies') || '[]');
+}
+
+function getStoredPesticides() {
+  return JSON.parse(localStorage.getItem('orchard_prep_myPesticides') || '[]');
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 기존 index1-app 코드 시작
+// ══════════════════════════════════════════════════════════
+
 
 // 서버에서 온 select 태그를 분해하여 선택된 텍스트만 추출하는 함수
 function extractSelectedText(htmlStr) {
@@ -299,47 +465,119 @@ async function _gasPost(params) {
 
 async function _gasGet(action, extra) {
   var url = GAS_URL + '?action=' + encodeURIComponent(action);
-  if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k] || '');
+  if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
+  var res = await fetch(url + '&t=' + Date.now());
+  var json;
+  try { json = await res.json(); }
+  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
   
-  // ⏱️ 타임아웃 설정 (10초 초과 시 강제 중단하여 무한 대기 방지)
-  var controller = new AbortController();
-  var timeoutId = setTimeout(function() { controller.abort(); }, 10000);
-
-  try {
-    var res = await fetch(url + '&t=' + Date.now(), { signal: controller.signal });
-    clearTimeout(timeoutId);
-    
-    var json;
-    try { 
-      json = await res.json(); 
-    } catch(e) { 
-      console.warn('[_gasGet] JSON 파싱 실패:', e.message); 
-      return []; 
-    }
-    
-    // 에러 응답 처리
-    if (json && json.error) {
-      console.warn('[_gasGet] GAS 에러:', json.error);
-      return [];
-    }
-    
-    // wrapResponse 형식 ({ success, data }) 자동 처리
-    var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
-      ? json.data : json;
-      
-    return Array.isArray(data) ? data : (data || []);
-
-  } catch(e) {
-    clearTimeout(timeoutId);
-    if (e.name === 'AbortError') {
-      console.warn('[_gasGet] ⏱️ 네트워크 요청 타임아웃 (10초 초과) — 로딩이 안전하게 해제됩니다.');
-    } else {
-      console.warn('[_gasGet] 네트워크 오류:', e.message);
-    }
-    return []; // 에러 발생 시 빈 배열을 리턴하여 앱이 멈추지 않고 계속 실행되도록 보장
+  // 🔥 HTTP 상태는 무시하고 데이터만 사용
+  console.log('[_gasGet] 🔍 GAS 응답 분석:');
+  console.log('[_gasGet]   HTTP 상태:', res.status);
+  console.log('[_gasGet]   응답 타입:', typeof json);
+  console.log('[_gasGet]   응답 객체 키:', json ? Object.keys(json).join(', ') : 'null');
+  console.log('[_gasGet]   success:', json ? json.success : undefined);
+  console.log('[_gasGet]   data 타입:', json && json.data ? (Array.isArray(json.data) ? 'array' : typeof json.data) : 'undefined');
+  console.log('[_gasGet]   data 길이:', json && json.data ? (Array.isArray(json.data) ? json.data.length : Object.keys(json.data||{}).length) : 0);
+  console.log('[_gasGet]   전체 응답:', json);
+  
+  // wrapResponse 형태 { success, data } 자동 처리
+  var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
+    ? json.data : json;
+  
+  // 🔥 에러 응답이면 빈 배열 반환
+  if (json && json.error) {
+    console.warn('[_gasGet] GAS 에러:', json.error);
+    return [];
   }
+  // 배열 데이터 타입 정규화
+  if (Array.isArray(data)) {
+    // 숫자로 저장해야 할 필드
+    var NUM_FIELDS = ['no','totalDays','pinchDays','fruitDays','pollDays',
+                      'qty','quantity','amount','price','count'];
+    // 날짜 필드 — ISO 문자열을 YYYY-MM-DD로 정규화
+    var DATE_FIELDS2 = ['dateStr','plantDate','addedDate','date','pollDate',
+                        'lastSprayDate','lastFertDate','createdAt','updatedAt','registeredAt'];
+    // 날짜 문자열로 저장해야 할 필드
+    var DATE_FIELDS = ['plantDate','pollDate','lastSprayDate','lastFertDate',
+                       'registeredAt','updatedAt','createdAt','doneAt'];
+    data = data.map(function(row) {
+      var out = {};
+      for (var k in row) {
+        var v = row[k];
+        if (v == null) { out[k] = ''; continue; }
+        // id류는 항상 문자열
+        if (k === 'id' || k === '_key' || k === 'key') {
+          out[k] = String(v);
+        }
+        // time 필드 — "1899-12-30T06:47:08.000Z" → "06:47" 변환
+        else if (k === 'time') {
+          var sv = String(v||'');
+          if (sv.includes('1899') || (sv.includes('T') && sv.length > 10)) {
+            // ISO 형식에서 시:분만 추출
+            var tm = sv.match(/T(\d{2}:\d{2})/);
+            out[k] = tm ? tm[1] : '';
+          } else if (typeof v === 'number' && v > 0 && v < 1) {
+            // Excel 시간 소수(0.282 = 06:47) → HH:MM
+            var totalMin = Math.round(v * 24 * 60);
+            var hh = Math.floor(totalMin / 60), mm = totalMin % 60;
+            out[k] = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+          } else {
+            out[k] = sv.slice(0, 5); // 이미 HH:MM 형태면 5자만
+          }
+        }
+        // 날짜 필드 — ISO 형식 → YYYY-MM-DD
+        else if (DATE_FIELDS2.indexOf(k) >= 0) {
+          if (!v || v === '') { out[k] = ''; }
+          else if (typeof v === 'number' && v > 40000 && v < 60000) {
+            // Excel 날짜 시리얼 → YYYY-MM-DD
+            var _d = new Date(Math.round((v - 25569) * 86400 * 1000));
+            out[k] = isNaN(_d.getTime()) ? '' : _d.toISOString().slice(0, 10);
+          } else {
+            var _s = String(v);
+            // "2026-05-26T23:59:10.140Z" → "2026-05-26"
+            if (_s.includes('T')) _s = _s.slice(0, 10);
+            // "026-05-26..." 앞자리 누락 보정
+            if (/^\d{3}-\d{2}-\d{2}/.test(_s)) _s = '2' + _s;
+            out[k] = _s.slice(0, 10);
+          }
+        }
+        // 숫자 필드
+        else if (NUM_FIELDS.indexOf(k) >= 0) {
+          out[k] = v === '' ? 0 : Number(v) || 0;
+        }
+        // 날짜 필드 안전 처리
+        else if (DATE_FIELDS.indexOf(k) >= 0) {
+          try {
+            if (!v || v === '') { out[k] = ''; continue; }
+            if (typeof v === 'number') {
+              // Excel 날짜 시리얼 넘버 → YYYY-MM-DD
+              if (v > 40000 && v < 60000) {
+                var d = new Date(Math.round((v - 25569) * 86400 * 1000));
+                if (!isNaN(d.getTime())) {
+                  out[k] = d.toISOString().slice(0, 10);
+                } else { out[k] = ''; }
+              } else { out[k] = ''; }
+            } else {
+              var s = String(v);
+              // "026-05-11T..." → "2026-05-11T..." (앞자리 누락 보정)
+              if (/^\d{3}-\d{2}-\d{2}/.test(s)) s = '2' + s;
+              // 날짜 부분만 추출 (YYYY-MM-DD)
+              var dateMatch = s.match(/(\d{4}-\d{2}-\d{2})/);
+              out[k] = dateMatch ? dateMatch[1] : '';
+            }
+          } catch(dateErr) { out[k] = ''; }
+        }
+        // 나머지
+        else {
+          out[k] = typeof v === 'number' ? v : (v === '' ? '' : String(v));
+        }
+      }
+      return out;
+    });
+  }
+  return data;
 }
-
 async function _gasPost(params) {
   try {
     var p = new URLSearchParams();
@@ -873,28 +1111,67 @@ function showCacheInfo() {
 // ================================================================
 
 async function initGAS() {
-  console.log('[initGAS] 시작');
+  console.log('[initGAS] 시작 (캐시 기반, 버그 수정)');
+  
   try {
-    // 1. 데이터 로드
-    await loadPlantsFromGAS();
-    await loadWorklogsFromGAS();
-    await loadCheckedTasksFromGAS();
-    await loadPesticidesFromGAS();
+    // ✨ 수정: APP 변수 먼저 초기화!
+    console.log('[initGAS] APP 변수 초기화 중...');
+    APP.plants = [];
+    APP.logs = [];
+    APP.doneTasks = {};
+    APP.pesticides = [];
+    APP.allPreparations = [];
     
-    // 2. 🌟 이 부분이 반드시 있어야 데이터가 화면에 반영됩니다!
+    // 1️⃣ 캐시 확인
+    console.log('[initGAS] 캐시 확인 중...');
+    const hasCachedData = await initCache();
+    
+    if (hasCachedData) {
+      // 캐시 있음: localStorage에서 로드
+      console.log('[initGAS] 캐시에서 로드');
+      loadFromCache();
+      console.log(`[initGAS] 로드 완료 - plants: ${APP.plants.length}, logs: ${APP.logs.length}`);
+      
+    } else {
+      // 캐시 없음: GAS에서 로드 후 캐시 저장
+      console.log('[initGAS] GAS에서 로드');
+      
+      await loadPlantsFromGAS();
+      console.log(`[initGAS] loadPlantsFromGAS 후 - plants: ${APP.plants.length}`);
+      
+      await loadWorklogsFromGAS();
+      console.log(`[initGAS] loadWorklogsFromGAS 후 - logs: ${APP.logs.length}`);
+      
+      await loadCheckedTasksFromGAS();
+      await loadPesticidesFromGAS();
+      console.log(`[initGAS] loadPesticidesFromGAS 후 - pesticides: ${APP.pesticides.length}`);
+      
+      // 로드 완료 후 캐시 저장
+      console.log('[initGAS] 캐시에 저장 중...');
+      saveAllToCache();
+      console.log('[initGAS] 캐시 저장 완료');
+    }
+    
+    // 2️⃣ UI 렌더링
+    console.log('[initGAS] UI 렌더링 중...');
     renderToday();
     renderPlants();
     renderLogs();
     renderDb();
     
+    // 3️⃣ 준비사항은 매번 로드 (현재 주차만 필요하므로 캐시 안 함)
+    await loadPreparationFromGAS();
+    renderPreparation();
+    
     console.log('[initGAS] ✅ 완료');
+    console.log(`[initGAS] 최종 상태 - plants: ${APP.plants.length}, logs: ${APP.logs.length}, pesticides: ${APP.pesticides.length}`);
+    
   } catch (error) {
     console.error('[initGAS] 오류:', error);
-  } finally {
-    // 3. 로딩 화면 강제 숨김 처리 (안전장치)
-    hideLoading();
+    showErrorDialog('앱 초기화 실패');
   }
 }
+
 
 
 
@@ -931,23 +1208,41 @@ const APP_GAS = {
 /**
  * GAS에서 plants 데이터 로드 및 정규화
  */
-// ✅ After (수정됨):
-// loadPlantsFromGAS 함수 수정 예시
 async function loadPlantsFromGAS() {
   try {
     const response = await _gasGet('getPlants');
-    if (Array.isArray(response)) {
-      // 💡 데이터가 비어있을 경우 기본 status와 날짜 보정
-      APP.plants = response.map(function(p) {
-        return Object.assign({}, p, {
-          status: p.status || 'active',
-          plantDate: p.plantDate || p.dateStr || ''
-        });
-      });
-      console.log('[loadPlantsFromGAS] ✅ 성공:', APP.plants.length);
-    } else {
+
+    if (!response.success) {
+      console.error('[loadPlantsFromGAS] 실패:', response.message);
       APP.plants = [];
+      return;
     }
+
+    if (!Array.isArray(response.data)) {
+      console.error('[loadPlantsFromGAS] data가 배열이 아님:', typeof response.data);
+      APP.plants = [];
+      return;
+    }
+
+    console.log(`[loadPlantsFromGAS] GAS에서 ${response.data.length}개 식물 받음`);
+
+    // Step 1: 데이터 정규화
+    const normalized = response.data.map((plant, idx) => {
+      try {
+        return normalizeGASPlant(plant);
+      } catch (e) {
+        console.warn(`[loadPlantsFromGAS] ${idx}번 식물 정규화 오류:`, e, plant);
+        return null;
+      }
+    }).filter(p => p !== null);
+
+    console.log(`[loadPlantsFromGAS] 정규화 완료: ${normalized.length}개`);
+
+    // Step 2: 중복 제거
+    APP.plants = deduplicatePlants(normalized);
+
+    console.log(`[loadPlantsFromGAS] 최종: ${APP.plants.length}개 식물`);
+
   } catch (error) {
     console.error('[loadPlantsFromGAS] 예외:', error);
     APP.plants = [];
@@ -959,17 +1254,39 @@ async function loadPlantsFromGAS() {
  */
 async function loadWorklogsFromGAS() {
   try {
-    const response = await _gasGet('getWorkLogs', { limit: '80' });
-    
-    if (Array.isArray(response)) {
-      APP.logs = response;
-      console.log('[loadWorklogsFromGAS] ✅ 성공:', APP.logs.length);
-    } else {
-      APP.logs = [];
+    const response = await _gasGet('getWorkLogs', { limit: '80' }); // ⚠️ 주의: 'workLog' (no 's')
+
+    if (!response.success) {
+      console.warn('[loadWorklogsFromGAS] 로드 실패:', response.message);
+      APP.workLogs = [];
+      return;
     }
+
+    if (!Array.isArray(response.data)) {
+      console.warn('[loadWorklogsFromGAS] data가 배열이 아님');
+      APP.workLogs = [];
+      return;
+    }
+
+    // 각 워크로그 정규화
+    APP.workLogs = response.data.map(log => {
+      return {
+        id: log.id || '',
+        plantId: log.plantId || '',
+        date: normalizeDate(log.date) || '',
+        type: log.type || 'work',  // work, spray, fert, etc
+        content: log.content || '',
+        amount: log.amount || '',
+        notes: log.notes || '',
+        timestamp: log.timestamp || new Date().toISOString(),
+      };
+    });
+
+    console.log(`[loadWorklogsFromGAS] ${APP.workLogs.length}개 로그 로드`);
+
   } catch (error) {
     console.error('[loadWorklogsFromGAS] 예외:', error);
-    APP.logs = [];
+    APP.workLogs = [];
   }
 }
 
@@ -979,19 +1296,34 @@ async function loadWorklogsFromGAS() {
 async function loadCheckedTasksFromGAS() {
   try {
     const response = await _gasGet('getDoneTasks', { date: TODAY_STR || new Date().toISOString().split('T')[0] });
-    
-    if (typeof response === 'object' && response !== null && !Array.isArray(response)) {
-      APP.doneTasks = response;
-      console.log('[loadCheckedTasksFromGAS] ✅ 성공');
-    } else if (Array.isArray(response)) {
-      // 만약 배열이면
-      APP.doneTasks = {};
-    } else {
-      APP.doneTasks = {};
+
+    if (!response.success) {
+      console.warn('[loadCheckedTasksFromGAS] 로드 실패:', response.message);
+      APP.checkedTasks = [];
+      return;
     }
+
+    if (!Array.isArray(response.data)) {
+      console.warn('[loadCheckedTasksFromGAS] data가 배열이 아님');
+      APP.checkedTasks = [];
+      return;
+    }
+
+    APP.checkedTasks = response.data.map(task => {
+      return {
+        id: task.id || '',
+        plantId: task.plantId || '',
+        taskKey: task.taskKey || '',
+        completedDate: normalizeDate(task.completedDate) || '',
+        timestamp: task.timestamp || new Date().toISOString(),
+      };
+    });
+
+    console.log(`[loadCheckedTasksFromGAS] ${APP.checkedTasks.length}개 체크 로드`);
+
   } catch (error) {
     console.error('[loadCheckedTasksFromGAS] 예외:', error);
-    APP.doneTasks = {};
+    APP.checkedTasks = [];
   }
 }
 
@@ -1001,15 +1333,30 @@ async function loadCheckedTasksFromGAS() {
 async function loadPesticidesFromGAS() {
   try {
     const response = await _gasGet('getPesticides');
-    
-    if (Array.isArray(response)) {
-      APP.pesticides = response;
-      console.log('[loadPesticidesFromGAS] ✅ 성공:', APP.pesticides.length);
-    } else {
+
+    if (!response.success) {
+      console.log('[loadPesticidesFromGAS] 시트 없음 (정상)');
       APP.pesticides = [];
+      return;
     }
+
+    if (!Array.isArray(response.data)) {
+      APP.pesticides = [];
+      return;
+    }
+
+    APP.pesticides = response.data.map(p => ({
+      name: p.name || '',
+      type: p.type || 'insecticide', // insecticide, fungicide, fertilizer, etc
+      quantity: parseInt(p.quantity) || 0,
+      unit: p.unit || 'ml',
+      notes: p.notes || '',
+    }));
+
+    console.log(`[loadPesticidesFromGAS] ${APP.pesticides.length}개 농약 로드`);
+
   } catch (error) {
-    console.error('[loadPesticidesFromGAS] 예외:', error);
+    console.log('[loadPesticidesFromGAS] 오류 무시');
     APP.pesticides = [];
   }
 }
@@ -1032,43 +1379,60 @@ function getWeekKey() {
   return `${month}월 ${week}주`;
 }
 
-function getPreparationNoteKey() {
-  const today = new Date();
-  const month = today.getMonth() + 1; // 1~12월
-  
-  // 날짜를 기반으로 해당 월의 몇 번째 주인지 계산 (7일 단위)
-  const date = today.getDate();
-  const weekInMonth = Math.ceil(date / 7);
-  
-  // 대략적인 주차 번호 매핑 (7월 4주차인 경우 엑셀 note열의 '7월 27주' 또는 유사 포맷과 매칭)
-  // 혹은 엑셀 note열에 저장된 형식("7월 27주")에 맞게 월별 주차 계산 로직 조정
-  // 7월의 경우 주차 값이 27, 28, 29, 30 등으로 되어 있으므로 날짜 기반으로 동적 계산
-  const startOfYear = new Date(today.getFullYear(), 0, 1);
-  const pastDays = Math.floor((today - startOfYear) / (24 * 60 * 60 * 1000));
-  const currentWeekNumber = Math.ceil((pastDays + startOfYear.getDay() + 1) / 7);
-
-  return `${month}월 ${currentWeekNumber}주`;
-}
-/**
- * 📥 준비사항 및 팁 데이터 로드 (현재 날짜 기준 이번 주 prep / 이번 달 tip 필터링)
- */
 async function loadPreparationFromGAS() {
   try {
+    const week = getWeekKey(); // 예: "7월 4주"
+    console.log('[loadPreparation] 로드 시작:', week);
+
+    // GAS에서 전체 준비사항 로드 (week 필터링은 클라이언트에서)
     const response = await _gasGet('getPreparations');
-    
-    if (Array.isArray(response)) {
-      APP.allPreparations = response;
-      console.log('[loadPreparationFromGAS] ✅ 성공:', APP.allPreparations.length);
-    } else {
-      APP.allPreparations = [];
+
+    if (!response.success || !Array.isArray(response.data)) {
+      console.warn('[loadPreparation] 로드 실패');
+      APP.tips = [];
+      APP.preparations = [];
+      return;
     }
+
+    // 현재 주차에 해당하는 데이터 필터링
+    APP.preparations = [];
+    APP.tips = [];
+
+    response.data.forEach(item => {
+      // GAS 시트 구조: [month, week, category, emoji, title, content]
+      // item = { month, week, category, emoji, title, content }
+      
+      const weekStr = `${item.month || ''}월 ${item.week || ''}주`;
+      
+      if (weekStr === week) {
+        if (item.category === 'prep') {
+          APP.preparations.push({
+            emoji: item.emoji || '📋',
+            title: item.title || '',
+            content: item.content || ''
+          });
+        } else if (item.category === 'tip') {
+          APP.tips.push({
+            emoji: item.emoji || '💡',
+            title: item.title || '',
+            content: item.content || ''
+          });
+        }
+      }
+    });
+
+    console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
+    if (APP.preparations.length === 0 && APP.tips.length === 0) {
+      console.warn(`[loadPreparation] ⚠️ '${week}'에 해당하는 데이터 없음`);
+    }
+
   } catch (error) {
-    console.error('[loadPreparationFromGAS] 예외:', error);
-    APP.allPreparations = [];
+    console.error('[loadPreparation] 오류:', error);
+    APP.tips = [];
+    APP.preparations = [];
   }
-  
-  renderPreparation();
 }
+
 // ============================================
 // 4. 데이터 정규화 함수
 // ============================================
@@ -4658,16 +5022,6 @@ async function syncNow(){
 function setupSync(){ setInterval(syncNow, 5*60*1000); }
 
 async function launchApp(){
-  // 🛡️ [안전장치] 어떤 이유로든 8초 이상 지나도 로딩 화면이 안 닫히면 강제로 닫기
-  setTimeout(function() {
-    var overlay = document.getElementById('loading');
-    if (overlay && !overlay.classList.contains('hidden')) {
-      console.warn('[Safety] 로딩 강제 해제 실행');
-      hideLoading();
-      // 데이터가 없어도 앱 UI를 최소한으로 렌더링
-      try { renderToday(); renderPlants(); } catch(err){}
-    }
-  }, 8000);  
   if (_slowTimer){ clearTimeout(_slowTimer); _slowTimer=null; }
   var slwEl = document.getElementById('loading-slow-msg');
   if (slwEl) slwEl.style.display = 'none';
@@ -11633,8 +11987,7 @@ async function loadMyPesticideList() {
     USER_DB['pest'] = window._myPesticideList.map(function(p){
       return Object.assign({}, p, {_src:'user'});
     });
-    console.log('[loadMyPesticideList] ✅ 성공:', window._myPesticideList.length);
-  } catch(e){ console.warn('loadMyPesticideList 오류:', e.message); window._myPesticideList = []; }
+  } catch(e){ console.warn('loadMyPesticideList 오류:', e.message); }
 }
 
 async function registerMyPesticide(data) {
@@ -12709,76 +13062,40 @@ async function loadPreparation() {
   }
 }
 /**
- * 🖥️ 준비사항 및 팁 UI 렌더링
- * - 이번 주 할 일: category가 'prep'이고 현재 날짜/주차(note)에 해당하는 데이터
- * - 이번 달 할 일: category가 'tip'이고 현재 월(month)에 해당하는 데이터
+ * renderPreparation - HTML에 렌더링
  */
 function renderPreparation() {
   console.log('[renderPreparation] 렌더링 시작');
   
-  const container = document.getElementById('preparation-container'); // 화면에 표시할 HTML 요소 ID (상황에 맞게 수정)
-  if (!container && !document.getElementById('prep-list')) return;
+  var prepList = (window.APP_PREPARATION && APP_PREPARATION.prep) ? APP_PREPARATION.prep : [];
+  var tipList = (window.APP_PREPARATION && APP_PREPARATION.tips) ? APP_PREPARATION.tips : [];
 
-  const today = new Date();
-  const currentMonth = today.getMonth() + 1;
-  
-  // 1. 이번 주 노트 키 계산 (예: '7월 27주' 등 엑셀 note 열과 매칭)
-  const targetNote = getPreparationNoteKey(); 
+  // HTML에 존재하는 정확한 ID(weekly-prep, monthly-tips)를 타겟팅
+  var prepEl = document.getElementById('weekly-prep');
+  var tipEl = document.getElementById('monthly-tips');
 
-  // 2. 데이터 필터링
-  const rawList = APP.allPreparations || [];
-
-  // 이번 주 할 일: category === 'prep', 그리고 note가 현재 주차와 일치하거나 month가 일치하는 항목
-  const prepList = rawList.filter(item => {
-    return String(item.category).trim() === 'prep' && 
-           (String(item.note).includes(`${currentMonth}월`) || Number(item.month) === currentMonth);
-  });
-
-  // 이번 달 할 일: category === 'tip', 해당 월(month)이 일치하는 항목
-  const tipList = rawList.filter(item => {
-    return String(item.category).trim() === 'tip' && Number(item.month) === currentMonth;
-  });
-
-  console.log(`[renderPreparation] 이번 주(prep) 항목: ${prepList.length개}, 이번 달 팁(tip): ${tipList.length개}`);
-
-  // 화면 렌더링 HTML 구성 예시
-  let html = '<div class="prep-section">';
-  
-  // 이번 주 할 일 렌더링
-  html += '<h3>📌 이번 주 할 일 (준비사항)</h3>';
-  if (prepList.length === 0) {
-    html += '<p class="empty">이번 주 등록된 준비사항이 없습니다.</p>';
-  } else {
-    html += '<ul>' + prepList.map(item => `
-      <li>
-        <span class="emoji">${item.emoji || '🌱'}</span>
-        <strong>${esc(item.title)}</strong>: ${esc(item.content)}
-        <span class="note-tag">(${esc(item.note)})</span>
-      </li>
-    `).join('') + '</ul>';
+  if (prepEl) {
+    if (prepList.length > 0) {
+      prepEl.innerHTML = prepList.map(function(item) {
+        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
+        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '📌') + ' ' + (item.title || '이번 주 준비사항') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
+      }).join('');
+    } else {
+      prepEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이번 주 준비사항 없음</div>';
+    }
   }
 
-  // 이번 달 할 일(팁) 렌더링
-  html += '<h3 style="margin-top:20px;">💡 이달의 핵심 팁</h3>';
-  if (tipList.length === 0) {
-    html += '<p class="empty">이번 달 등록된 팁이 없습니다.</p>';
-  } else {
-    html += '<ul>' + tipList.map(item => `
-      <li>
-        <span class="emoji">${item.emoji || '💡'}</span>
-        <strong>${esc(item.title)}</strong>: ${esc(item.content)}
-      </li>
-    `).join('') + '</ul>';
+  if (tipEl) {
+    if (tipList.length > 0) {
+      tipEl.innerHTML = tipList.map(function(item) {
+        var lines = item.contentLines ? item.contentLines.join('<br>') : (item.content || '');
+        return '<div style="margin-bottom:8px;"><strong>' + (item.emoji || '💡') + ' ' + (item.title || '이달의 핵심') + '</strong><p style="margin:4px 0 0 0; color:var(--gray-600);">' + lines + '</p></div>';
+      }).join('');
+    } else {
+      tipEl.innerHTML = '<div style="color:var(--gray-400);font-size:12px;text-align:center;">이달의 핵심 없음</div>';
+    }
   }
-  
-  html += '</div>';
 
-  // 특정 컨테이너에 주입 (없다면 적절한 DOM 선택자로 변경)
-  const targetEl = document.getElementById('prep-list') || container;
-  if (targetEl) {
-    targetEl.innerHTML = html;
-  }
-  
   console.log('[renderPreparation] 렌더링 완료');
 }
 
