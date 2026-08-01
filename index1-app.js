@@ -1301,28 +1301,46 @@ async function loadPesticidesFromGAS() {
   try {
     console.log('[loadPesticidesFromGAS] 시작');
     
-    // read 액션으로 myPesticides 시트 직접 읽기
+    // ✨ read 액션으로 myPesticides 시트 직접 읽기
     const response = await _gasGet({
       action: 'read',
-      sheetName: 'myPesticides'  // ← 직접 시트명 지정
+      sheetName: 'myPesticides'
     });
+    
+    console.log('[loadPesticidesFromGAS] 응답:', response);
     
     let pesticides = [];
     
-    // 응답 형식 처리
+    // 응답 형식 다양성 처리
     if (Array.isArray(response)) {
+      // 배열 직접 반환
       pesticides = response;
+      console.log(`[loadPesticidesFromGAS] 배열 형식: ${pesticides.length}개`);
     } else if (response && response.data && Array.isArray(response.data)) {
+      // { data: [...] } 형식
       pesticides = response.data;
+      console.log(`[loadPesticidesFromGAS] data 필드: ${pesticides.length}개`);
+    } else if (response && Array.isArray(response)) {
+      // 다른 배열 형식
+      pesticides = response;
+      console.log(`[loadPesticidesFromGAS] 다른 배열: ${pesticides.length}개`);
     }
     
-    // 데이터 저장
+    // 농약 데이터 저장
     if (pesticides && pesticides.length > 0) {
       APP.pesticides = pesticides;
-      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드`);
+      
+      // 농약 목록 로깅
+      const pestNames = pesticides
+        .map(p => p.name || p['농약명'] || p['이름'] || Object.values(p)[1])
+        .filter(Boolean)
+        .join(', ');
+      
+      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드 완료`);
+      console.log(`[loadPesticidesFromGAS] 농약 목록: ${pestNames}`);
     } else {
       APP.pesticides = [];
-      console.log('[loadPesticidesFromGAS] 농약 데이터 없음');
+      console.warn('[loadPesticidesFromGAS] 농약 데이터 없음 - myPesticides 시트 확인 필요');
     }
     
   } catch (error) {
@@ -1330,7 +1348,6 @@ async function loadPesticidesFromGAS() {
     APP.pesticides = [];
   }
 }
-
 /**
  * 준비사항 및 팁 로드
  */
