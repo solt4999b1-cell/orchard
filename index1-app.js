@@ -1356,14 +1356,25 @@ function getWeekKey() {
  */
 
 // ✅ 수정된 코드
+// ✅ 새로운 코드 (기존 코드 전체 교체)
 async function loadPreparationFromGAS() {
   try {
     const now = new Date();
-    now.setHours(now.getHours() + 0);
-    
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
-    // ✨ _gasGet 호출 방식 변경
+    // 이번 주 범위 (일요일 ~ 토요일)
+    const dayOfWeek = now.getDay();
+    const weekStartDate = new Date(now);
+    weekStartDate.setDate(now.getDate() - dayOfWeek);
+    weekStartDate.setHours(0, 0, 0, 0);
+    
+    const weekEndDate = new Date(weekStartDate);
+    weekEndDate.setDate(weekStartDate.getDate() + 6);
+    weekEndDate.setHours(23, 59, 59, 999);
+    
+    console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStartDate)} ~ ${formatDateForLog(weekEndDate)}`);
+    
+    // GAS에서 준비사항 데이터 로드
     const response = await fetch(GAS_URL, {
       method: 'POST',
       contentType: 'application/json',
@@ -1372,31 +1383,6 @@ async function loadPreparationFromGAS() {
         sheetName: '준비사항'
       })
     }).then(r => r.json());
-    
-    // 주차 범위 계산
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - now.getDay());
-    weekStart.setHours(0, 0, 0, 0);
-    
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);
-    weekEnd.setHours(23, 59, 59, 999);
-    
-    console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStart)} ~ ${formatDateForLog(weekEnd)}`);
-    
-    // 이번 주 범위 계산 (일요일 ~ 토요일)
-    const todayDayOfWeek = now.getDay();  // 0=일, 1=월, ..., 6=토
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - todayDayOfWeek);  // 이번 주 일요일
-    weekStart.setHours(0, 0, 0, 0);
-    
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekStart.getDate() + 6);  // 토요일
-    weekEnd.setHours(23, 59, 59, 999);
-    
-    console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStart)} ~ ${formatDateForLog(weekEnd)}`);
-    
-
     
     let allData = [];
     if (Array.isArray(response)) {
@@ -1409,16 +1395,9 @@ async function loadPreparationFromGAS() {
     
     // 이번 주 데이터만 필터링
     const filtered = allData.filter(item => {
-      // 날짜 필드 찾기 (여러 가능성 확인)
-      let dateStr = item.date || 
-                    item['날짜'] || 
-                    item['Date'] || 
-                    item['DATE'] ||
-                    (Object.values(item)[0]);  // 첫 번째 열이 날짜라고 가정
-      
+      let dateStr = item['날짜'] || item.date || item['Date'] || (Object.values(item)[0]);
       if (!dateStr) return false;
       
-      // 날짜 파싱
       let itemDate;
       if (typeof dateStr === 'string') {
         itemDate = new Date(dateStr);
@@ -1428,20 +1407,13 @@ async function loadPreparationFromGAS() {
         return false;
       }
       
-      // 유효한 날짜인지 확인
       if (isNaN(itemDate.getTime())) return false;
-      
-      // 이번 주 범위에 포함되는지 확인
-      return itemDate >= weekStart && itemDate <= weekEnd;
+      return itemDate >= weekStartDate && itemDate <= weekEndDate;
     });
     
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${filtered.length}개, 팁 0개`);
-    
-    // 데이터 저장
     APP.preparationData = filtered;
-    
-    // 렌더링
-    renderPreparationWithDate(filtered);
+    renderPreparation(filtered);
     
   } catch (error) {
     console.error('[loadPreparationFromGAS]', error);
