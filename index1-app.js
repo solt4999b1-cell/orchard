@@ -1355,13 +1355,19 @@ function getWeekKey() {
  * 대략 Line 1216 근처
  */
 
+// ✅ 수정된 코드
 async function loadPreparationFromGAS() {
   try {
-    // 현재 날짜 계산 (한국 시간대)
     const now = new Date();
-    now.setHours(now.getHours() + 9);  // UTC → KST
+    now.setHours(now.getHours() + 9);
     
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
+    
+    // ✨ _gasGet 호출 방식 변경
+    const response = await _gasGet({
+      action: 'read',
+      sheetName: '준비사항'
+    }, false);  // ← 두 번째 파라미터 추가
     
     // 이번 주 범위 계산 (일요일 ~ 토요일)
     const todayDayOfWeek = now.getDay();  // 0=일, 1=월, ..., 6=토
@@ -1375,11 +1381,7 @@ async function loadPreparationFromGAS() {
     
     console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStart)} ~ ${formatDateForLog(weekEnd)}`);
     
-    // 준비사항 데이터 조회
-    const response = await _gasGet({
-      action: 'read',
-      sheetName: '준비사항'
-    });
+
     
     let allData = [];
     if (Array.isArray(response)) {
