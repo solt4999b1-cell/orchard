@@ -448,121 +448,34 @@ async function _gasPost(params) {
   }
 }
 
-async function _gasGet(action, extra) {
-  var url = GAS_URL + '?action=' + encodeURIComponent(action);
-  if (extra) for (var k in extra) url += '&' + k + '=' + encodeURIComponent(extra[k]||'');
-  var res = await fetch(url + '&t=' + Date.now());
-  var json;
-  try { json = await res.json(); }
-  catch(e) { console.warn('[_gasGet] JSON 파싱 실패:', e.message); return []; }
-  
-  // 🔥 HTTP 상태는 무시하고 데이터만 사용
-  console.log('[_gasGet] 🔍 GAS 응답 분석:');
-  console.log('[_gasGet]   HTTP 상태:', res.status);
-  console.log('[_gasGet]   응답 타입:', typeof json);
-  console.log('[_gasGet]   응답 객체 키:', json ? Object.keys(json).join(', ') : 'null');
-  console.log('[_gasGet]   success:', json ? json.success : undefined);
-  console.log('[_gasGet]   data 타입:', json && json.data ? (Array.isArray(json.data) ? 'array' : typeof json.data) : 'undefined');
-  console.log('[_gasGet]   data 길이:', json && json.data ? (Array.isArray(json.data) ? json.data.length : Object.keys(json.data||{}).length) : 0);
-  console.log('[_gasGet]   전체 응답:', json);
-  
-  // wrapResponse 형태 { success, data } 자동 처리
-  var data = (json && typeof json === 'object' && 'success' in json && 'data' in json)
-    ? json.data : json;
-  
-  // 🔥 에러 응답이면 빈 배열 반환
-  if (json && json.error) {
-    console.warn('[_gasGet] GAS 에러:', json.error);
-    return [];
-  }
-  // 배열 데이터 타입 정규화
-  if (Array.isArray(data)) {
-    // 숫자로 저장해야 할 필드
-    var NUM_FIELDS = ['no','totalDays','pinchDays','fruitDays','pollDays',
-                      'qty','quantity','amount','price','count'];
-    // 날짜 필드 — ISO 문자열을 YYYY-MM-DD로 정규화
-    var DATE_FIELDS2 = ['dateStr','plantDate','addedDate','date','pollDate',
-                        'lastSprayDate','lastFertDate','createdAt','updatedAt','registeredAt'];
-    // 날짜 문자열로 저장해야 할 필드
-    var DATE_FIELDS = ['plantDate','pollDate','lastSprayDate','lastFertDate',
-                       'registeredAt','updatedAt','createdAt','doneAt'];
-    data = data.map(function(row) {
-      var out = {};
-      for (var k in row) {
-        var v = row[k];
-        if (v == null) { out[k] = ''; continue; }
-        // id류는 항상 문자열
-        if (k === 'id' || k === '_key' || k === 'key') {
-          out[k] = String(v);
-        }
-        // time 필드 — "1899-12-30T06:47:08.000Z" → "06:47" 변환
-        else if (k === 'time') {
-          var sv = String(v||'');
-          if (sv.includes('1899') || (sv.includes('T') && sv.length > 10)) {
-            // ISO 형식에서 시:분만 추출
-            var tm = sv.match(/T(\d{2}:\d{2})/);
-            out[k] = tm ? tm[1] : '';
-          } else if (typeof v === 'number' && v > 0 && v < 1) {
-            // Excel 시간 소수(0.282 = 06:47) → HH:MM
-            var totalMin = Math.round(v * 24 * 60);
-            var hh = Math.floor(totalMin / 60), mm = totalMin % 60;
-            out[k] = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
-          } else {
-            out[k] = sv.slice(0, 5); // 이미 HH:MM 형태면 5자만
-          }
-        }
-        // 날짜 필드 — ISO 형식 → YYYY-MM-DD
-        else if (DATE_FIELDS2.indexOf(k) >= 0) {
-          if (!v || v === '') { out[k] = ''; }
-          else if (typeof v === 'number' && v > 40000 && v < 60000) {
-            // Excel 날짜 시리얼 → YYYY-MM-DD
-            var _d = new Date(Math.round((v - 25569) * 86400 * 1000));
-            out[k] = isNaN(_d.getTime()) ? '' : _d.toISOString().slice(0, 10);
-          } else {
-            var _s = String(v);
-            // "2026-05-26T23:59:10.140Z" → "2026-05-26"
-            if (_s.includes('T')) _s = _s.slice(0, 10);
-            // "026-05-26..." 앞자리 누락 보정
-            if (/^\d{3}-\d{2}-\d{2}/.test(_s)) _s = '2' + _s;
-            out[k] = _s.slice(0, 10);
-          }
-        }
-        // 숫자 필드
-        else if (NUM_FIELDS.indexOf(k) >= 0) {
-          out[k] = v === '' ? 0 : Number(v) || 0;
-        }
-        // 날짜 필드 안전 처리
-        else if (DATE_FIELDS.indexOf(k) >= 0) {
-          try {
-            if (!v || v === '') { out[k] = ''; continue; }
-            if (typeof v === 'number') {
-              // Excel 날짜 시리얼 넘버 → YYYY-MM-DD
-              if (v > 40000 && v < 60000) {
-                var d = new Date(Math.round((v - 25569) * 86400 * 1000));
-                if (!isNaN(d.getTime())) {
-                  out[k] = d.toISOString().slice(0, 10);
-                } else { out[k] = ''; }
-              } else { out[k] = ''; }
-            } else {
-              var s = String(v);
-              // "026-05-11T..." → "2026-05-11T..." (앞자리 누락 보정)
-              if (/^\d{3}-\d{2}-\d{2}/.test(s)) s = '2' + s;
-              // 날짜 부분만 추출 (YYYY-MM-DD)
-              var dateMatch = s.match(/(\d{4}-\d{2}-\d{2})/);
-              out[k] = dateMatch ? dateMatch[1] : '';
-            }
-          } catch(dateErr) { out[k] = ''; }
-        }
-        // 나머지
-        else {
-          out[k] = typeof v === 'number' ? v : (v === '' ? '' : String(v));
-        }
-      }
-      return out;
+async function _gasGet(params, isAsync) {
+  try {
+    console.log('[_gasGet] 호출:', params);
+    console.log('[_gasGet] GAS_URL:', GAS_URL);
+    
+    const response = await fetch(GAS_URL, {
+      method: 'POST',
+      contentType: 'application/json',
+      payload: JSON.stringify(params)
     });
+    
+    console.log('[_gasGet] fetch 응답 상태:', response.status);
+    
+    const data = await response.json();
+    
+    console.log('[_gasGet] JSON 파싱 성공');
+    console.log('[_gasGet] 응답 타입:', typeof data);
+    console.log('[_gasGet] 응답 배열?:', Array.isArray(data));
+    console.log('[_gasGet] 응답 데이터:', JSON.stringify(data).substring(0, 200));
+    
+    return data;
+    
+  } catch (err) {
+    console.error('[_gasGet] ❌ 오류:', err.message);
+    throw err;
   }
-  return data;
 }
+
 async function _gasPost(params) {
   try {
     var p = new URLSearchParams();
