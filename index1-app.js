@@ -1,11 +1,15 @@
 /**
  * ═══════════════════════════════════════════════════════════════════════════
- * 🔄 GAS 데이터 로딩 기능 (자동 실행)
+ * 🔄 GAS 데이터 로딩 기능 (개선 버전 - 중복 제거)
+ * ═══════════════════════════════════════════════════════════════════════════
+ * 
+ * 기존 GAS_URL을 사용하고, 새로운 로딩 기능 추가
+ * 중복 선언 제거
  * ═══════════════════════════════════════════════════════════════════════════
  */
 
-const GAS_URL = "https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec";
-const SHEET_ID = "12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec";
+// ⚠️ 기존 GAS_URL 사용 (중복 선언 제거)
+// const GAS_URL은 기존 코드에서 L274에 선언되어 있음
 
 async function initializeAppWithGasData() {
   try {
@@ -60,26 +64,26 @@ async function initializeAppWithGasData() {
       loadingOverlay.style.display = 'none';
     }
 
-    // 초기 화면 표시
-    if (typeof initializeApp === 'function') {
-      initializeApp();
-    }
+    // 초기 화면 표시 (기존 initializeApp 대신 다른 초기화 호출)
+    await initializeAppUI();
 
     return true;
 
   } catch (error) {
     console.error('❌ GAS 로딩 오류:', error);
-    showToast('⚠️ 데이터 로드 중 오류가 발생했습니다', 'error');
-    
-    if (typeof initializeApp === 'function') {
-      initializeApp();
+    if (typeof showToast === 'function') {
+      showToast('⚠️ 데이터 로드 중 오류가 발생했습니다', 'error');
     }
+    
+    // 에러 발생해도 기본 초기화는 진행
+    await initializeAppUI();
     return false;
   }
 }
 
 async function fetchAndStoreSheetData(sheetName, localStorageKey) {
   try {
+    // 기존 GAS_URL 사용 (중복 방지)
     const url = `${GAS_URL}?action=read&sheetName=${encodeURIComponent(sheetName)}`;
     
     const response = await fetch(url, {
@@ -142,6 +146,34 @@ function updateLoadingStep(stepNum, message) {
   console.log(`📊 Step ${stepNum}/4: ${message}`);
 }
 
+// 초기화 UI 함수 (기존 코드와 충돌 방지)
+async function initializeAppUI() {
+  try {
+    // 기존 초기화 함수들 호출
+    updateDate();
+    
+    // 패널 표시
+    const todayPanel = document.getElementById('panel-today');
+    if (todayPanel) {
+      // 모든 패널 숨김
+      document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+      // 오늘 할 일 표시
+      todayPanel.classList.add('active');
+    }
+    
+    // 필터 초기화
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    filterButtons.forEach(btn => btn.classList.remove('on'));
+    if (filterButtons.length > 0) {
+      filterButtons[0].classList.add('on');
+    }
+    
+    console.log('✅ UI 초기화 완료');
+  } catch (err) {
+    console.error('❌ UI 초기화 오류:', err);
+  }
+}
+
 // 데이터 조회 함수들
 function getStoredPrepData() {
   return JSON.parse(localStorage.getItem('orchard_prep_준비사항') || '[]');
@@ -161,7 +193,7 @@ function getStoredPesticides() {
 
 
 // ══════════════════════════════════════════════════════════
-// 기존 index1-app 코드 시작
+// ↓ 기존 index1-app.js 코드 시작
 // ══════════════════════════════════════════════════════════
 
 

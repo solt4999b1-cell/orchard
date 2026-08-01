@@ -37,7 +37,7 @@
 <link rel="stylesheet" href="index1-style.css">
 <script src="index1-vendor.js"></script>
 </head>
-<body onload="initializeAppWithGasData()">
+<body>
 
 <!-- 메인 앱 -->
 <div id="app">
@@ -1109,5 +1109,18 @@
 
 <script src="index1-app.js"></script>
 <script src="index1-iframe.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════
+// 🔄 GAS 데이터 자동 로딩 (window.onload에서 호출)
+// ════════════════════════════════════════════════════════════
+window.addEventListener('load', function() {
+  console.log('🔄 Window load 완료 - GAS 데이터 로딩 시작');
+  if (typeof initializeAppWithGasData === 'function') {
+    initializeAppWithGasData();
+  } else {
+    console.error('❌ initializeAppWithGasData 함수를 찾을 수 없습니다');
+  }
+});
+</script>
 </body>
 </html>
