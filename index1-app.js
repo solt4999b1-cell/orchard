@@ -1299,6 +1299,8 @@ function getWeekKey() {
 async function loadPreparationFromGAS() {
   try {
     const weekKey = getWeekKey(); // 예: "8월 1주"
+    console.log('[loadPreparation] 로드 시작:', weekKey);
+
     const response = await _gasGet('getPreparations');
     let rawData = [];
     if (Array.isArray(response)) rawData = response;
@@ -1307,14 +1309,13 @@ async function loadPreparationFromGAS() {
     APP.preparations = [];
     APP.tips = [];
 
+    // 1차 시도: 현재 주차("8월 1주" 등)와 정확히 일치하는 항목 필터링
     rawData.forEach(item => {
-      // 시트의 컬럼 구조에 맞춰 주차 문자열 조합 (예: "8월"과 "1주" 혹은 "월", "주" 필드 대응)
       const m = item.month || item.월 || '';
       const w = item.week || item.주 || '';
       const itemWeekStr = `${m}월 ${w}주`;
 
-      // 주차가 일치하거나, 데이터가 부족할 경우 전체 데이터 중 일부를 유연하게 매칭
-      if (itemWeekStr === weekKey || !m || !w) {
+      if (itemWeekStr === weekKey) {
         const cat = (item.category || item.구분 || '').trim();
         if (cat === 'prep' || cat === '준비사항') {
           APP.preparations.push({
@@ -1332,8 +1333,21 @@ async function loadPreparationFromGAS() {
       }
     });
 
+    // 2차 안전장치: 만약 정확히 일치하는 주차가 없다면, 데이터 중 첫 몇 개를 가져와서 화면이 비어 보이지 않도록 함
+    if (APP.preparations.length === 0 && APP.tips.length === 0 && rawData.length > 0) {
+      console.warn('[loadPreparation] 현재 주차 데이터 없음, 대체 데이터 로드');
+      rawData.slice(0, 5).forEach(item => {
+        const cat = (item.category || item.구분 || '').trim();
+        APP.preparations.push({
+          emoji: item.emoji || '📋',
+          title: item.title || item.제목 || '준비사항',
+          content: item.content || item.내용 || ''
+        });
+      });
+    }
+
     console.log(`[loadPreparation] 로드 완료: 준비사항 ${APP.preparations.length}개, 팁 ${APP.tips.length}개`);
-    renderPreparation(); // 데이터 로드 후 즉시 화면 갱신
+    renderPreparation();
   } catch (error) {
     console.error('[loadPreparation] 오류:', error);
     APP.tips = [];
