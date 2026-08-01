@@ -1213,61 +1213,35 @@ async function loadCheckedTasksFromGAS() {
 // ✨ 디버그 버전 (상세 로깅)
 async function loadPesticidesFromGAS() {
   try {
-    console.log('═══════════════════════════════════════════');
-    console.log('[DEBUG] loadPesticidesFromGAS 시작');
-    console.log('═══════════════════════════════════════════');
+    console.log('[loadPesticidesFromGAS] 시작');
     
-    // 1️⃣ GAS 호출
-    console.log('[DEBUG] GAS_URL:', GAS_URL);
-    console.log('[DEBUG] _gasGet 호출: action=read, sheetName=myPesticides');
-    
-    const response = await _gasGet({
-      action: 'read',
+    // ✨ 수정: 문자열 action 사용
+    const response = await _gasGet('read', {
       sheetName: 'myPesticides'
     });
     
-    console.log('[DEBUG] GAS 응답 타입:', typeof response);
-    console.log('[DEBUG] GAS 응답 배열?:', Array.isArray(response));
-    console.log('[DEBUG] GAS 응답 내용:', JSON.stringify(response).substring(0, 500));
+    console.log('[loadPesticidesFromGAS] 응답:', response);
     
-    // 2️⃣ 응답 처리
     let pesticides = [];
     
     if (Array.isArray(response)) {
       pesticides = response;
-      console.log('[DEBUG] ✅ 배열 형식 감지:', pesticides.length + '개');
-    } else if (response && response.data) {
+      console.log(`[loadPesticidesFromGAS] 배열 형식: ${pesticides.length}개`);
+    } else if (response && response.data && Array.isArray(response.data)) {
       pesticides = response.data;
-      console.log('[DEBUG] ✅ response.data 형식:', pesticides.length + '개');
-    } else if (response && typeof response === 'object') {
-      console.warn('[DEBUG] ⚠️ 예상치 못한 응답 형식:', Object.keys(response));
-    } else {
-      console.error('[DEBUG] ❌ 응답이 배열도 객체도 아님:', response);
+      console.log(`[loadPesticidesFromGAS] data 필드: ${pesticides.length}개`);
     }
     
-    // 3️⃣ 데이터 저장
-    if (pesticides && Array.isArray(pesticides)) {
+    if (pesticides && pesticides.length > 0) {
       APP.pesticides = pesticides;
-      console.log(`[DEBUG] ✅ APP.pesticides 저장: ${pesticides.length}개`);
-      
-      // 샘플 데이터 확인
-      if (pesticides.length > 0) {
-        console.log('[DEBUG] 첫 번째 농약:', JSON.stringify(pesticides[0]));
-      }
+      console.log(`✅ [loadPesticidesFromGAS] ${pesticides.length}개 농약 로드 완료`);
     } else {
       APP.pesticides = [];
-      console.log('[DEBUG] ❌ pesticides가 배열이 아님');
+      console.log('[loadPesticidesFromGAS] 농약 데이터 없음');
     }
     
-    console.log('═══════════════════════════════════════════');
-    console.log(`[DEBUG] 최종 결과: APP.pesticides.length = ${APP.pesticides.length}`);
-    console.log('═══════════════════════════════════════════');
-    
   } catch (error) {
-    console.error('═══════════════════════════════════════════');
-    console.error('[DEBUG] ❌ 오류 발생:', error.message);
-    console.error('[DEBUG] 오류 스택:', error.stack);
-    console.error('═══════════════════════════════════════════');
+    console.error('[loadPesticidesFromGAS] 오류:', error);
     APP.pesticides = [];
   }
 }
@@ -1305,24 +1279,20 @@ async function loadPreparationFromGAS() {
     const now = new Date();
     console.log(`[loadPreparation] 오늘 날짜: ${formatDateForLog(now)}`);
     
-    // 이번 주 범위 계산 (일요일 ~ 토요일)
-    const dayOfWeek = now.getDay();  // 0=일, 1=월, 2=화, 3=수, 4=목, 5=금, 6=토
-    
-    // 이번 주 일요일
+    // 주차 범위
+    const dayOfWeek = now.getDay();
     const weekStartDate = new Date(now);
     weekStartDate.setDate(now.getDate() - dayOfWeek);
     weekStartDate.setHours(0, 0, 0, 0);
     
-    // 이번 주 토요일
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekStartDate.getDate() + 6);
     weekEndDate.setHours(23, 59, 59, 999);
     
     console.log(`[loadPreparation] 이번 주 범위: ${formatDateForLog(weekStartDate)} ~ ${formatDateForLog(weekEndDate)}`);
     
-    // GAS에서 준비사항 데이터 로드
-    const response = await _gasGet({
-      action: 'read',
+    // ✨ 수정: 문자열 action 사용
+    const response = await _gasGet('read', {
       sheetName: '준비사항'
     });
     
@@ -1335,7 +1305,7 @@ async function loadPreparationFromGAS() {
     
     console.log(`[loadPreparation] 전체 데이터: ${allData.length}개`);
     
-    // 이번 주 데이터만 필터링
+    // 필터링
     const filtered = allData.filter(item => {
       const dateStr = item['날짜'] || item.date || Object.values(item)[0];
       if (!dateStr) return false;
@@ -1359,7 +1329,7 @@ async function loadPreparationFromGAS() {
     renderPreparation(filtered);
     
   } catch (error) {
-    console.error('[loadPreparationFromGASError]', error);
+    console.error('[loadPreparationFromGAS]', error);
     APP.preparationData = [];
   }
 }
