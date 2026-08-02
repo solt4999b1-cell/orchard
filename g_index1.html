@@ -771,7 +771,7 @@
                     return;
                 }
 
-                const response = await fetchFromGAS('read_all');
+                const response = await fetchFromGAS('read_all_web');
                 
                 if (response.success && response.data) {
                     // 객체 배열 → 2차원 배열로 변환
