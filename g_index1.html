@@ -239,6 +239,10 @@
             line-height: 1.6;
         }
 
+        .card-content p {
+            margin-bottom: 10px;
+        }
+
         .card-content li {
             margin-left: 20px;
             margin-bottom: 6px;
@@ -533,11 +537,11 @@
                         <thead>
                             <tr>
                                 <th>농약명</th>
-                                <th>효능</th>
+                                <th>종류</th>
+                                <th>성분</th>
                                 <th>보유량</th>
                                 <th>단위</th>
                                 <th>상태</th>
-                                <th>구매일</th>
                             </tr>
                         </thead>
                         <tbody id="pesticides-tbody"></tbody>
@@ -561,10 +565,10 @@
                             <tr>
                                 <th>비료명</th>
                                 <th>종류</th>
+                                <th>성분</th>
                                 <th>보유량</th>
-                                <th>단위</th>
+                                <th>용도</th>
                                 <th>상태</th>
-                                <th>구매일</th>
                             </tr>
                         </thead>
                         <tbody id="supplies-tbody"></tbody>
@@ -589,8 +593,8 @@
                                 <th>작물명</th>
                                 <th>품종</th>
                                 <th>파종일</th>
-                                <th>정식일</th>
-                                <th>예상 수확일</th>
+                                <th>비고</th>
+                                <th>위치</th>
                                 <th>상태</th>
                             </tr>
                         </thead>
@@ -614,9 +618,9 @@
                         <thead>
                             <tr>
                                 <th>작물명</th>
-                                <th>작업내용</th>
+                                <th>작업종류</th>
                                 <th>작업일</th>
-                                <th>담당자</th>
+                                <th>작업내용</th>
                                 <th>비고</th>
                             </tr>
                         </thead>
@@ -667,7 +671,6 @@
         // 🔧 앱 설정
         // ════════════════════════════════════════════════════════════
         const APP = {
-            // ⚠️ 자신의 GAS 배포 URL로 변경하세요!
             gasUrl: 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec',
             
             data: {
@@ -771,10 +774,9 @@
                     return;
                 }
 
-                const response = await fetchFromGAS('read_all_web');
+                const response = await fetchFromGAS('read_all');
                 
                 if (response.success && response.data) {
-                    // 객체 배열 → 2차원 배열로 변환
                     APP.data = convertObjectArrayTo2DArray(response.data);
                 } else {
                     console.log('개별 로드 시작...');
@@ -792,7 +794,6 @@
             }
         }
 
-        // ✅ 객체 배열 → 2차원 배열 변환
         function convertObjectArrayTo2DArray(objectData) {
             const result = {};
             
@@ -802,15 +803,12 @@
                     continue;
                 }
                 
-                // 첫 항목이 객체인지 배열인지 확인
                 if (typeof rows[0] === 'object' && !Array.isArray(rows[0])) {
-                    // 객체 배열 → 2차원 배열
                     const keys = Object.keys(rows[0]);
                     result[sheetName] = rows.map(obj => 
                         keys.map(key => obj[key])
                     );
                 } else {
-                    // 이미 2차원 배열
                     result[sheetName] = rows;
                 }
             }
@@ -846,20 +844,32 @@
         }
 
         // ════════════════════════════════════════════════════════════
-        // 🎨 렌더링
+        // 🎨 렌더링 함수 (수정됨)
         // ════════════════════════════════════════════════════════════
+        
         function renderWeekly() {
-            const { month, week } = getCurrentWeekInfo();
             const prepList = document.getElementById('weekly-prep-list');
             const tipsList = document.getElementById('weekly-tips-list');
             
-            const preps = (APP.data.준비사항 || []).filter(r => r[0] == month && r[1] == week && r[2] === 'prep') || [];
-            const tips = (APP.data.준비사항 || []).filter(r => r[0] == month && r[1] == week && r[2] === 'tip') || [];
+            const preps = (APP.data.준비사항 || []).filter(r => {
+                if (!r[1]) return false;
+                const category = String(r[1]).toLowerCase();
+                return category.includes('prep') || category.includes('관리') || category.includes('작업');
+            }) || [];
+            
+            const tips = (APP.data.준비사항 || []).filter(r => {
+                if (!r[1]) return false;
+                const category = String(r[1]).toLowerCase();
+                return category.includes('tip') || category.includes('팁') || category.includes('정보');
+            }) || [];
 
             prepList.innerHTML = preps.length ? preps.map(r => `
                 <div class="card">
-                    <div class="card-title">${r[3] || ''} ${r[4] || ''}</div>
-                    <div class="card-content"><ul>${(r[5] || '').split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul></div>
+                    <div class="card-title">${r[2] || ''}</div>
+                    <div class="card-content">
+                        ${r[3] ? `<p><strong>설명:</strong> ${r[3]}</p>` : ''}
+                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
+                    </div>
                     <div class="checkbox-container">
                         <input type="checkbox">
                         <label>완료</label>
@@ -869,8 +879,11 @@
 
             tipsList.innerHTML = tips.length ? tips.map(r => `
                 <div class="card">
-                    <div class="card-title">${r[3] || ''} ${r[4] || ''}</div>
-                    <div class="card-content"><ul>${(r[5] || '').split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul></div>
+                    <div class="card-title">${r[2] || ''}</div>
+                    <div class="card-content">
+                        ${r[3] ? `<p><strong>설명:</strong> ${r[3]}</p>` : ''}
+                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
+                    </div>
                 </div>
             `).join('') : '<div class="empty-state"><p>팁이 없습니다.</p></div>';
         }
@@ -894,8 +907,14 @@
                 if (qty === 0) { cls = 'empty'; status = '없음'; }
                 else if (qty < 10) { cls = 'low'; status = '부족'; }
 
-                return `<tr><td>${r[0]||'-'}</td><td>${r[1]||'-'}</td><td>${qty}</td><td>${r[4]||'-'}</td>
-                <td><span class="badge ${cls}">${status}</span></td><td>${formatDate(r[5])}</td></tr>`;
+                return `<tr>
+                    <td>${r[1]||'-'}</td>
+                    <td>${r[2]||'-'}</td>
+                    <td>${r[5]||'-'}</td>
+                    <td>${qty}</td>
+                    <td>${r[4]||'-'}</td>
+                    <td><span class="badge ${cls}">${status}</span></td>
+                </tr>`;
             }).join('');
         }
 
@@ -913,13 +932,19 @@
             empty.style.display = 'none';
 
             tbody.innerHTML = APP.data.supplies.map(r => {
-                const qty = parseFloat(r[3] || 0);
+                const qty = parseFloat(r[6] || 0);
                 let cls = 'available', status = '정상';
                 if (qty === 0) { cls = 'empty'; status = '없음'; }
                 else if (qty < 10) { cls = 'low'; status = '부족'; }
 
-                return `<tr><td>${r[0]||'-'}</td><td>${r[1]||'-'}</td><td>${qty}</td><td>${r[4]||'-'}</td>
-                <td><span class="badge ${cls}">${status}</span></td><td>${formatDate(r[5])}</td></tr>`;
+                return `<tr>
+                    <td>${r[7]||'-'}</td>
+                    <td>${r[3]||'-'}</td>
+                    <td>${r[4]||'-'}</td>
+                    <td>${qty}</td>
+                    <td>${r[5]||'-'}</td>
+                    <td><span class="badge ${cls}">${status}</span></td>
+                </tr>`;
             }).join('');
         }
 
@@ -936,10 +961,16 @@
             document.getElementById('plants-table').style.display = 'table';
             empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.growPlants.map(r => 
-                `<tr><td>${r[0]||'-'}</td><td>${r[1]||'-'}</td><td>${formatDate(r[4])}</td><td>${formatDate(r[5])}</td>
-                <td>${formatDate(r[6])}</td><td><span class="badge available">${r[7]||'정상'}</span></td></tr>`
-            ).join('');
+            tbody.innerHTML = APP.data.growPlants.map(r => {
+                return `<tr>
+                    <td>${r[1]||'-'}</td>
+                    <td>${r[4]||'-'}</td>
+                    <td>${formatDate(r[2])}</td>
+                    <td>${r[6]||'-'}</td>
+                    <td>${r[7]||'-'}</td>
+                    <td><span class="badge available">${r[10]||'정상'}</span></td>
+                </tr>`;
+            }).join('');
         }
 
         function renderRecords() {
@@ -955,32 +986,48 @@
             document.getElementById('records-table').style.display = 'table';
             empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.growRecords.map(r => 
-                `<tr><td>${r[0]||'-'}</td><td>${r[1]||'-'}</td><td>${formatDate(r[2])}</td><td>${r[3]||'-'}</td><td>${r[4]||'-'}</td></tr>`
-            ).join('');
+            tbody.innerHTML = APP.data.growRecords.map(r => {
+                return `<tr>
+                    <td>${r[1]||'-'}</td>
+                    <td>${r[3]||'-'}</td>
+                    <td>${formatDate(r[2])}</td>
+                    <td>${r[4]||'-'}</td>
+                    <td>${r[8]||'-'}</td>
+                </tr>`;
+            }).join('');
         }
 
         function renderWeeklyWithSupplies() {
-            const { month, week } = getCurrentWeekInfo();
-            const tasks = (APP.data.준비사항 || []).filter(r => r[0] == month && r[1] == week && r[2] === 'prep') || [];
+            const tasks = (APP.data.준비사항 || []).filter(r => {
+                if (!r[1]) return false;
+                const category = String(r[1]).toLowerCase();
+                return category.includes('prep') || category.includes('관리') || category.includes('작업');
+            }) || [];
             
             document.getElementById('tasks-with-supplies-list').innerHTML = tasks.length ? tasks.map(r => `
                 <div class="card">
-                    <div class="card-title">✅ ${r[4] || ''}</div>
-                    <div class="card-content"><ul>${(r[5] || '').split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul></div>
+                    <div class="card-title">✅ ${r[2] || ''}</div>
+                    <div class="card-content">
+                        ${r[3] ? `<p>${r[3]}</p>` : ''}
+                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
+                    </div>
                 </div>
             `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
 
             document.getElementById('needed-pesticides-list').innerHTML = APP.data.myPesticides && APP.data.myPesticides.length ? APP.data.myPesticides.map(r => {
                 const qty = parseFloat(r[3] || 0);
-                return `<div class="card"><div class="card-title">🧪 ${r[0]}</div>
-                <div class="card-content">효능: ${r[1]||'-'} | 보유: <strong>${qty} ${r[4]||'-'}</strong></div></div>`;
+                return `<div class="card">
+                    <div class="card-title">🧪 ${r[1]}</div>
+                    <div class="card-content">종류: ${r[2]||'-'} | 보유: <strong>${qty} ${r[4]||'-'}</strong></div>
+                </div>`;
             }).join('') : '<div class="empty-state"><p>농약이 없습니다.</p></div>';
 
             document.getElementById('needed-supplies-list').innerHTML = APP.data.supplies && APP.data.supplies.length ? APP.data.supplies.map(r => {
-                const qty = parseFloat(r[3] || 0);
-                return `<div class="card"><div class="card-title">🌱 ${r[0]}</div>
-                <div class="card-content">종류: ${r[1]||'-'} | 보유: <strong>${qty} ${r[4]||'-'}</strong></div></div>`;
+                const qty = parseFloat(r[6] || 0);
+                return `<div class="card">
+                    <div class="card-title">🌱 ${r[7]}</div>
+                    <div class="card-content">종류: ${r[3]||'-'} | 보유: <strong>${qty}</strong></div>
+                </div>`;
             }).join('') : '<div class="empty-state"><p>비료가 없습니다.</p></div>';
         }
 
