@@ -6,6 +6,8 @@
     <meta name="description" content="새솔동 과수원 - 과수 관리 시스템">
     <meta name="theme-color" content="#2a5f2a">
     <title>새솔동 과수원 - 과수 관리 시스템</title>
+    <!-- ✅ Favicon: Data URI SVG로 설정 (에러 없음) -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>" type="image/svg+xml">
     <style>
         * {
             margin: 0;
@@ -205,49 +207,94 @@
             margin-left: auto;
         }
 
+        /* ✅ 카테고리별 카드 스타일 */
+        .category-section {
+            margin-bottom: 28px;
+            padding: 20px;
+            background: #fafafa;
+            border-radius: 10px;
+            border-left: 5px solid var(--primary-color);
+        }
+
+        .category-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .category-header .emoji {
+            font-size: 20px;
+        }
+
         .card {
-            background: var(--bg-light);
+            background: white;
             border-left: 4px solid var(--primary-color);
-            padding: 16px;
-            margin-bottom: 12px;
-            border-radius: 6px;
+            padding: 18px;
+            margin-bottom: 14px;
+            border-radius: 8px;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
 
         .card:hover {
-            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.15);
-            transform: translateX(2px);
+            box-shadow: 0 6px 16px rgba(42, 95, 42, 0.15);
+            transform: translateY(-2px);
         }
 
         .card-title {
-            font-weight: 600;
+            font-weight: 700;
             color: var(--primary-color);
             margin-bottom: 10px;
-            font-size: 16px;
+            font-size: 17px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .card-content {
             color: var(--text-light);
             font-size: 14px;
-            line-height: 1.6;
+            line-height: 1.7;
         }
 
-        .card-content p {
+        .card-description {
+            background: #f0f8f0;
+            padding: 10px 12px;
+            border-radius: 6px;
             margin-bottom: 10px;
+            border-left: 3px solid #4caf50;
+            font-weight: 500;
         }
 
-        .card-content li {
+        .card-details {
+            background: #fff9e6;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 10px;
+            border-left: 3px solid #ff9800;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .card-details ul {
+            list-style: none;
+            margin-left: 0;
+        }
+
+        .card-details li {
             margin-left: 20px;
             margin-bottom: 6px;
         }
 
-        .card-content ul {
-            list-style: none;
-        }
-
-        .card-content ul li::before {
+        .card-details li::before {
             content: "▪ ";
-            color: var(--primary-color);
+            color: #ff9800;
             font-weight: bold;
             margin-right: 8px;
         }
@@ -399,6 +446,14 @@
                 margin-bottom: 12px;
             }
 
+            .category-section {
+                padding: 15px;
+            }
+
+            .category-header {
+                font-size: 16px;
+            }
+
             table {
                 font-size: 12px;
             }
@@ -450,6 +505,14 @@
             th, td {
                 padding: 8px;
             }
+
+            .card-title {
+                font-size: 13px;
+            }
+
+            .card-description, .card-details {
+                font-size: 13px;
+            }
         }
 
         footer {
@@ -481,25 +544,17 @@
         </div>
 
         <div class="content">
+            <!-- ✅ 이번 주 할일 탭 (카테고리별로 개선됨) -->
             <div id="weekly-tasks" class="tab-content active">
-                <div class="section">
-                    <div class="section-title" id="weekly-prep-title">
-                        <span class="emoji">✅</span>
-                        <span>이번 주 관리 사항</span>
-                        <small style="color: #999; font-size: 12px;">(로딩중...)</small>
-                    </div>
-                    <div id="weekly-prep-list"></div>
+                <div class="section-title" id="weekly-prep-title">
+                    <span class="emoji">✅</span>
+                    <span>이번 주 관리 사항</span>
+                    <small style="color: #999; font-size: 12px;">(로딩중...)</small>
                 </div>
-
-                <div class="section">
-                    <div class="section-title">
-                        <span class="emoji">💡</span>
-                        <span>이번 주 팁</span>
-                    </div>
-                    <div id="weekly-tips-list"></div>
-                </div>
+                <div id="weekly-prep-list"></div>
             </div>
 
+            <!-- 🧪 보유 농약 -->
             <div id="pesticides" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🧪</span>
@@ -526,6 +581,7 @@
                 </div>
             </div>
 
+            <!-- 🌱 보유 비료 -->
             <div id="supplies" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌱</span>
@@ -552,6 +608,7 @@
                 </div>
             </div>
 
+            <!-- 🌾 재배 작물 -->
             <div id="plants" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌾</span>
@@ -578,6 +635,7 @@
                 </div>
             </div>
 
+            <!-- 📋 기록 일지 -->
             <div id="records" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">📋</span>
@@ -603,33 +661,32 @@
                 </div>
             </div>
 
+            <!-- 📌 할일+자재 -->
             <div id="weekly-with-supplies" class="tab-content">
+                <div class="section-title">
+                    <span class="emoji">📌</span>
+                    <span>이번 주 할일 - 농약/비료 활용</span>
+                </div>
+
                 <div class="section">
-                    <div class="section-title">
-                        <span class="emoji">📌</span>
-                        <span>이번 주 할일 - 농약/비료 활용</span>
-                    </div>
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">📋 할일 목록</h3>
+                    <div id="tasks-with-supplies-list"></div>
+                </div>
 
-                    <div class="section">
-                        <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">📋 할일 목록</h3>
-                        <div id="tasks-with-supplies-list"></div>
-                    </div>
+                <div class="section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🧪 필요한 농약</h3>
+                    <div id="needed-pesticides-list"></div>
+                </div>
 
-                    <div class="section">
-                        <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🧪 필요한 농약</h3>
-                        <div id="needed-pesticides-list"></div>
-                    </div>
-
-                    <div class="section">
-                        <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🌱 필요한 비료</h3>
-                        <div id="needed-supplies-list"></div>
-                    </div>
+                <div class="section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🌱 필요한 비료</h3>
+                    <div id="needed-supplies-list"></div>
                 </div>
             </div>
         </div>
 
         <footer>
-            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v1.0</p>
+            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v2.0</p>
         </footer>
     </div>
 
@@ -646,6 +703,16 @@
             },
             isLoading: false,
             lastUpdateTime: null
+        };
+
+        // 카테고리별 설정
+        const CATEGORY_CONFIG = {
+            '농약': { emoji: '🧪', label: '농약 관리' },
+            '시비': { emoji: '🌱', label: '시비 관리' },
+            '작업관리': { emoji: '🔧', label: '작업 관리' },
+            '미리 준비해야 할 일': { emoji: '⏰', label: '사전 준비' },
+            '이번주 할 일': { emoji: '✅', label: '이번 주 할 일' },
+            '이번달 주의점': { emoji: '⚠️', label: '월간 주의점' }
         };
 
         function formatDate(date) {
@@ -783,11 +850,10 @@
             }
         }
 
-        // ✅ 수정된 renderWeekly() - 날짜 기반 필터링
+        // ✅ 개선된 renderWeekly() - 카테고리별로 분류
         function renderWeekly() {
             const { month, week, date, day } = getCurrentWeekInfo();
             const prepList = document.getElementById('weekly-prep-list');
-            const tipsList = document.getElementById('weekly-tips-list');
             const weekTitle = document.getElementById('weekly-prep-title');
             
             const today = new Date();
@@ -810,8 +876,8 @@
                 `;
             }
             
-            // ✅ 날짜 기반 필터링으로 모든 카테고리 포함
-            const preps = (APP.data.준비사항 || []).filter(r => {
+            // 이번 주 데이터 필터링
+            const thisWeekData = (APP.data.준비사항 || []).filter(r => {
                 if (!r[0]) return false;
                 try {
                     const itemDate = new Date(r[0]);
@@ -821,44 +887,46 @@
                     return false;
                 }
             }) || [];
-            
-            const tips = (APP.data.준비사항 || []).filter(r => {
-                if (!r[0]) return false;
-                if (!r[1]) return false;
-                try {
-                    const itemDate = new Date(r[0]);
-                    if (isNaN(itemDate.getTime())) return false;
-                    const category = String(r[1]).toLowerCase();
-                    return itemDate >= weekStartDate && itemDate <= weekEndDate &&
-                           (category.includes('tip') || category.includes('팁') || category.includes('정보'));
-                } catch (e) {
-                    return false;
-                }
-            }) || [];
 
-            prepList.innerHTML = preps.length ? preps.map(r => `
-                <div class="card">
-                    <div class="card-title">${r[2] || ''}</div>
-                    <div class="card-content">
-                        ${r[3] ? `<p><strong>설명:</strong> ${r[3]}</p>` : ''}
-                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
-                    </div>
-                    <div class="checkbox-container">
-                        <input type="checkbox">
-                        <label>완료</label>
-                    </div>
-                </div>
-            `).join('') : '<div class="empty-state"><p>관리 사항이 없습니다.</p></div>';
+            // 카테고리별로 그룹화
+            const grouped = {};
+            thisWeekData.forEach(r => {
+                const category = r[1] || '기타';
+                if (!grouped[category]) grouped[category] = [];
+                grouped[category].push(r);
+            });
 
-            tipsList.innerHTML = tips.length ? tips.map(r => `
-                <div class="card">
-                    <div class="card-title">${r[2] || ''}</div>
-                    <div class="card-content">
-                        ${r[3] ? `<p><strong>설명:</strong> ${r[3]}</p>` : ''}
-                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
+            // 카테고리 순서 정의
+            const categoryOrder = ['작업관리', '미리 준비해야 할 일', '이번주 할 일', '농약', '시비', '이번달 주의점'];
+            const orderedCategories = Object.keys(grouped).sort((a, b) => {
+                const aIdx = categoryOrder.indexOf(a);
+                const bIdx = categoryOrder.indexOf(b);
+                return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+            });
+
+            // HTML 생성
+            prepList.innerHTML = orderedCategories.length ? orderedCategories.map(category => {
+                const config = CATEGORY_CONFIG[category] || { emoji: '📌', label: category };
+                const items = grouped[category];
+                
+                return `
+                    <div class="category-section">
+                        <div class="category-header">
+                            <span class="emoji">${config.emoji}</span>
+                            <span>${config.label}</span>
+                        </div>
+                        ${items.map(r => `
+                            <div class="card">
+                                <div class="card-title">${r[2] || ''}</div>
+                                <div class="card-content">
+                                    ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                    ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                </div>
+                            </div>
+                        `).join('')}
                     </div>
-                </div>
-            `).join('') : '<div class="empty-state"><p>팁이 없습니다.</p></div>';
+                `;
+            }).join('') : '<div class="empty-state"><span class="empty-state-icon">📭</span><p>이번 주 관리 사항이 없습니다.</p></div>';
         }
 
         function renderPesticides() {
@@ -996,7 +1064,7 @@
                     <div class="card-title">✅ ${r[2] || ''}</div>
                     <div class="card-content">
                         ${r[3] ? `<p>${r[3]}</p>` : ''}
-                        ${r[4] ? `<ul>${String(r[4]).split('|').map(l => `<li>${l.trim()}</li>`).join('')}</ul>` : ''}
+                        ${r[4] ? `<p>${String(r[4]).split('|').join(', ')}</p>` : ''}
                     </div>
                 </div>
             `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
