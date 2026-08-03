@@ -5,13 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="description" content="새솔동 과수원 - 과수 관리 시스템">
     <meta name="theme-color" content="#2a5f2a">
-    <!-- ✅ PWA 메타 태그 (모든 기기 호환) -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="새솔동 과수원">
     <title>새솔동 과수원 - 과수 관리 시스템</title>
-    <!-- ✅ Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>" type="image/svg+xml">
     <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232a5f2a' width='180' height='180'/><text x='90' y='135' font-size='120' text-anchor='middle'>🌳</text></svg>">
     <style>
@@ -58,7 +56,7 @@
         }
 
         /* ═══════════════════════════════════════ */
-        /* 헤더 (축소 가능) */
+        /* 헤더 */
         /* ═══════════════════════════════════════ */
         header {
             background: white;
@@ -106,13 +104,6 @@
             display: none;
         }
 
-        .date-info span {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        /* ✅ 메뉴 토글 버튼 */
         .menu-toggle-btn {
             position: absolute;
             top: 16px;
@@ -140,7 +131,7 @@
         }
 
         /* ═══════════════════════════════════════ */
-        /* 탭 메뉴 (축소 가능) */
+        /* 탭 메뉴 */
         /* ═══════════════════════════════════════ */
         .tabs {
             display: flex;
@@ -231,14 +222,6 @@
             to { opacity: 1; }
         }
 
-        .section {
-            margin-bottom: 32px;
-        }
-
-        .section:last-child {
-            margin-bottom: 0;
-        }
-
         .section-title {
             display: flex;
             align-items: center;
@@ -257,92 +240,321 @@
             display: block;
         }
 
-        .section-title small {
-            color: #999;
-            font-size: 11px;
-            font-weight: normal;
-            margin-left: auto;
-        }
-
         /* ═══════════════════════════════════════ */
-        /* 카테고리별 카드 */
+        /* 테이블 개선 */
         /* ═══════════════════════════════════════ */
-        .category-section {
-            margin-bottom: 28px;
-            padding: 18px;
-            background: #fafafa;
-            border-radius: 12px;
-            border-left: 5px solid var(--primary-color);
-        }
-
-        .category-header {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 16px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid var(--primary-color);
-        }
-
-        .category-header .emoji {
-            font-size: 24px;
-        }
-
-        .card {
-            background: white;
-            border-left: 4px solid var(--primary-color);
-            padding: 16px;
-            margin-bottom: 14px;
+        .table-container {
+            overflow-x: auto;
+            margin-top: 15px;
             border-radius: 10px;
-            transition: all 0.3s ease;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
-        .card:active {
-            box-shadow: 0 6px 16px rgba(42, 95, 42, 0.15);
-            transform: translateY(-2px);
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
         }
 
-        .card-title {
+        th {
+            background: var(--primary-color);
+            color: white;
+            padding: 14px;
+            text-align: left;
+            font-weight: 700;
+            font-size: 13px;
+            user-select: none;
+        }
+
+        td {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        tbody tr:active {
+            background: var(--bg-light);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 농약명 링크 스타일 */
+        /* ═══════════════════════════════════════ */
+        .pesticide-name {
+            color: var(--primary-color);
+            font-weight: 600;
+            cursor: pointer;
+            border-bottom: 2px dotted var(--primary-color);
+            transition: all 0.3s ease;
+            -webkit-user-select: text;
+            user-select: text;
+        }
+
+        .pesticide-name:active {
+            opacity: 0.8;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 상태 드롭다운 */
+        /* ═══════════════════════════════════════ */
+        .status-select {
+            padding: 6px 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            background: white;
+            color: var(--text-dark);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-appearance: none;
+            appearance: none;
+            padding-right: 24px;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232a5f2a' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 6px center;
+            background-size: 16px;
+            padding-right: 28px;
+        }
+
+        .status-select:active {
+            outline: 2px solid var(--primary-color);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 삭제 버튼 */
+        /* ═══════════════════════════════════════ */
+        .delete-btn {
+            padding: 6px 10px;
+            border: 1px solid var(--danger-color);
+            background: white;
+            color: var(--danger-color);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .delete-btn:active {
+            background: var(--danger-color);
+            color: white;
+            transform: scale(0.95);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 배지 */
+        /* ═══════════════════════════════════════ */
+        .badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            user-select: none;
+        }
+
+        .badge.available {
+            background: #e8f5e9;
+            color: #2a5f2a;
+        }
+
+        .badge.low {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge.empty {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 모달 (팝업) 스타일 */
+        /* ═══════════════════════════════════════ */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                transform: translateY(-30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 3px solid var(--primary-color);
+            padding-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-color);
+            font-size: 22px;
+            margin: 0;
+            flex: 1;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 28px;
+            color: var(--text-light);
+            cursor: pointer;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .modal-close:active {
+            color: var(--text-dark);
+        }
+
+        .modal-body {
+            color: var(--text-dark);
+        }
+
+        .modal-section {
+            margin-bottom: 20px;
+        }
+
+        .modal-section-title {
+            font-size: 16px;
             font-weight: 700;
             color: var(--primary-color);
             margin-bottom: 10px;
-            font-size: 17px;
             display: flex;
             align-items: center;
             gap: 8px;
-            line-height: 1.4;
         }
 
-        .card-content {
-            color: var(--text-light);
-            font-size: 14px;
-            line-height: 1.7;
-        }
-
-        .card-description {
-            background: #f0f8f0;
-            padding: 10px 12px;
-            border-radius: 6px;
-            margin-bottom: 10px;
-            border-left: 3px solid #4caf50;
-            font-weight: 500;
-            font-size: 14px;
-        }
-
-        .card-details {
-            background: #fff9e6;
+        .modal-info {
+            background: #f5f5f5;
             padding: 12px;
-            border-radius: 6px;
-            margin-top: 10px;
-            border-left: 3px solid #ff9800;
-            white-space: pre-wrap;
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.8;
+            border-left: 3px solid var(--primary-color);
+        }
+
+        .modal-info-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+
+        .modal-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .modal-info-label {
+            font-weight: 600;
+            min-width: 70px;
+            color: var(--primary-color);
+        }
+
+        .modal-info-value {
+            flex: 1;
             word-break: break-word;
+            color: var(--text-dark);
+        }
+
+        .crop-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .crop-item {
+            background: white;
+            border: 1px solid var(--border-color);
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            border-radius: 6px;
             font-size: 13px;
             line-height: 1.6;
+        }
+
+        .crop-name {
+            font-weight: 600;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .crop-usage {
+            color: var(--text-light);
+            font-size: 12px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 30px 20px;
+            color: var(--text-light);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-light);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            display: block;
         }
 
         /* ═══════════════════════════════════════ */
@@ -380,102 +592,6 @@
         }
 
         /* ═══════════════════════════════════════ */
-        /* 테이블 */
-        /* ═══════════════════════════════════════ */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        th {
-            background: var(--primary-color);
-            color: white;
-            padding: 14px;
-            text-align: left;
-            font-weight: 700;
-            font-size: 13px;
-            user-select: none;
-        }
-
-        td {
-            padding: 12px 14px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        tbody tr:active {
-            background: var(--bg-light);
-        }
-
-        /* ═══════════════════════════════════════ */
-        /* 배지 */
-        /* ═══════════════════════════════════════ */
-        .badge {
-            display: inline-block;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            user-select: none;
-        }
-
-        .badge.available {
-            background: #e8f5e9;
-            color: #2a5f2a;
-        }
-
-        .badge.low {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .badge.empty {
-            background: #ffebee;
-            color: #c62828;
-        }
-
-        /* ═══════════════════════════════════════ */
-        /* 상태 메시지 */
-        /* ═══════════════════════════════════════ */
-        .empty-state {
-            text-align: center;
-            padding: 50px 20px;
-            color: var(--text-light);
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            display: block;
-        }
-
-        /* ═══════════════════════════════════════ */
-        /* 로딩 스피너 */
-        /* ═══════════════════════════════════════ */
-        .spinner {
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid var(--primary-color);
-            border-top-color: transparent;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            margin-left: 8px;
-            vertical-align: middle;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* ═══════════════════════════════════════ */
         /* 푸터 */
         /* ═══════════════════════════════════════ */
         footer {
@@ -500,10 +616,6 @@
                 margin-bottom: 10px;
             }
 
-            header.collapsed h1 {
-                font-size: 22px;
-            }
-
             .menu-toggle-btn {
                 width: 44px;
                 height: 44px;
@@ -512,14 +624,8 @@
                 right: 12px;
             }
 
-            .date-info {
-                font-size: 12px;
-                gap: 10px;
-            }
-
             .content {
                 padding: 16px;
-                border-radius: 16px 16px 0 0;
             }
 
             .section-title {
@@ -531,53 +637,13 @@
                 font-size: 26px;
             }
 
-            .category-header {
-                font-size: 18px;
+            .modal-content {
+                max-width: 95vw;
+                padding: 20px;
             }
 
-            .category-header .emoji {
-                font-size: 22px;
-            }
-
-            .card {
-                padding: 14px;
-                margin-bottom: 12px;
-            }
-
-            .card-title {
-                font-size: 16px;
-                margin-bottom: 8px;
-                font-weight: 700;
-            }
-
-            .card-content {
-                font-size: 14px;
-            }
-
-            .card-description {
-                font-size: 13px;
-                padding: 9px 11px;
-            }
-
-            .card-details {
-                font-size: 12px;
-                padding: 10px;
-            }
-
-            .tab-btn {
-                min-width: 100px;
-                padding: 11px 12px;
-                font-size: 12px;
-                font-weight: 600;
-                border-radius: 8px;
-            }
-
-            .scroll-to-top {
-                width: 48px;
-                height: 48px;
-                bottom: 25px;
-                right: 16px;
-                font-size: 22px;
+            .modal-header h2 {
+                font-size: 20px;
             }
 
             table {
@@ -593,6 +659,12 @@
                 padding: 10px 12px;
             }
 
+            .status-select,
+            .delete-btn {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+
             .tabs {
                 padding: 10px;
                 gap: 6px;
@@ -601,41 +673,36 @@
     </style>
 </head>
 <body>
+    <!-- ✅ 콘솔 경고 억제 -->
+    <script>
+        if (typeof window.rhwpDev !== 'undefined') {
+            console.log = function() {};
+        }
+    </script>
+
     <!-- 헤더 -->
     <header id="main-header">
         <h1>🌳 새솔동 과수원</h1>
         <div class="date-info">
             <span>📅 오늘: <strong id="today-date"></strong></span>
-            <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
+            <span>📊 상태: <strong id="load-status">초기화 중</strong></span>
         </div>
         <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
     </header>
 
     <!-- 탭 메뉴 -->
     <div class="tabs" id="tabs-container">
-        <button class="tab-btn active" data-tab="weekly-tasks">✅ 이번 주 할일</button>
-        <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
+        <button class="tab-btn active" data-tab="pesticides">🧪 보유 농약</button>
         <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
         <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
         <button class="tab-btn" data-tab="records">📋 기록 일지</button>
-        <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
     </div>
 
     <div class="container">
         <!-- 콘텐츠 -->
         <div class="content">
-            <!-- ✅ 이번 주 할일 탭 -->
-            <div id="weekly-tasks" class="tab-content active">
-                <div class="section-title" id="weekly-prep-title">
-                    <span class="emoji">✅</span>
-                    <span>이번 주 관리</span>
-                    <small style="color: #999; font-size: 11px;">(로딩중...)</small>
-                </div>
-                <div id="weekly-prep-list"></div>
-            </div>
-
-            <!-- 🧪 보유 농약 -->
-            <div id="pesticides" class="tab-content">
+            <!-- 🧪 보유 농약 (개선됨) -->
+            <div id="pesticides" class="tab-content active">
                 <div class="section-title">
                     <span class="emoji">🧪</span>
                     <span>보유 농약</span>
@@ -646,9 +713,9 @@
                             <tr>
                                 <th>농약명</th>
                                 <th>종류</th>
-                                <th>성분</th>
                                 <th>보유량</th>
                                 <th>상태</th>
+                                <th>삭제</th>
                             </tr>
                         </thead>
                         <tbody id="pesticides-tbody"></tbody>
@@ -672,9 +739,9 @@
                             <tr>
                                 <th>비료명</th>
                                 <th>종류</th>
-                                <th>성분</th>
                                 <th>보유량</th>
                                 <th>상태</th>
+                                <th>삭제</th>
                             </tr>
                         </thead>
                         <tbody id="supplies-tbody"></tbody>
@@ -699,7 +766,6 @@
                                 <th>작물명</th>
                                 <th>품종</th>
                                 <th>파종일</th>
-                                <th>비고</th>
                                 <th>위치</th>
                             </tr>
                         </thead>
@@ -736,46 +802,33 @@
                     <p>작물 기록이 없습니다.</p>
                 </div>
             </div>
-
-            <!-- 📌 할일+자재 -->
-            <div id="weekly-with-supplies" class="tab-content">
-                <div class="section-title">
-                    <span class="emoji">📌</span>
-                    <span>할일+자재</span>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">📋 할일</h3>
-                    <div id="tasks-with-supplies-list"></div>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🧪 농약</h3>
-                    <div id="needed-pesticides-list"></div>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🌱 비료</h3>
-                    <div id="needed-supplies-list"></div>
-                </div>
-            </div>
         </div>
 
         <!-- 푸터 -->
         <footer>
-            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v3.0</p>
+            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v4.0</p>
         </footer>
     </div>
 
     <!-- ✅ 스크롤 탑 버튼 -->
     <button class="scroll-to-top" id="scroll-to-top-btn" title="위로 가기">↑</button>
 
-    <script>
-        // ✅ 콘솔 경고 억제 (외부 스크립트 주입 방지)
-        if (typeof window.rhwpDev !== 'undefined') {
-            console.log = function() {};
-        }
+    <!-- ✅ PSIS 농약 정보 모달 팝업 -->
+    <div class="modal" id="psis-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">농약 정보</h2>
+                <button class="modal-close" id="modal-close">✕</button>
+            </div>
+            <div class="modal-body" id="modal-body">
+                <div class="loading">
+                    <span class="loading-spinner"></span>로딩 중...
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <script>
         const APP = {
             gasUrl: 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec',
             data: {
@@ -791,15 +844,6 @@
             menuExpanded: true
         };
 
-        const CATEGORY_CONFIG = {
-            '농약': { emoji: '🧪', label: '농약 관리' },
-            '시비': { emoji: '🌱', label: '시비 관리' },
-            '작업관리': { emoji: '🔧', label: '작업 관리' },
-            '미리 준비해야 할 일': { emoji: '⏰', label: '사전 준비' },
-            '이번주 할 일': { emoji: '✅', label: '이번 주 할 일' },
-            '이번달 주의점': { emoji: '⚠️', label: '월간 주의점' }
-        };
-
         // ════════════════════════════════════════════════════════════
         // ✅ 메뉴 토글 기능
         // ════════════════════════════════════════════════════════════
@@ -809,7 +853,6 @@
 
         menuToggleBtn.addEventListener('click', () => {
             APP.menuExpanded = !APP.menuExpanded;
-            
             if (APP.menuExpanded) {
                 tabsContainer.classList.remove('hidden');
                 header.classList.remove('collapsed');
@@ -835,10 +878,23 @@
         });
 
         scrollToTopBtn.addEventListener('click', () => {
-            window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // ✅ 모달 팝업 제어
+        // ════════════════════════════════════════════════════════════
+        const modal = document.getElementById('psis-modal');
+        const modalClose = document.getElementById('modal-close');
+
+        modalClose.addEventListener('click', () => {
+            modal.classList.remove('show');
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('show');
+            }
         });
 
         // ════════════════════════════════════════════════════════════
@@ -852,19 +908,6 @@
             } catch {
                 return '-';
             }
-        }
-
-        function getDayName(date) {
-            const days = ['일', '월', '화', '수', '목', '금', '토'];
-            return days[new Date(date).getDay()];
-        }
-
-        function getCurrentWeekInfo() {
-            const today = new Date();
-            const month = today.getMonth() + 1;
-            const date = today.getDate();
-            const week = Math.ceil(date / 7);
-            return { month, week, date, day: getDayName(today) };
         }
 
         async function fetchFromGAS(action, params = {}) {
@@ -907,11 +950,11 @@
 
         async function loadAllData() {
             APP.isLoading = true;
-            updateStatus('로딩 중');
+            document.getElementById('load-status').textContent = '로딩 중...';
 
             try {
                 if (loadData()) {
-                    updateStatus('✅ 로드 완료');
+                    document.getElementById('load-status').textContent = '✅ 로드 완료';
                     render();
                     return;
                 }
@@ -925,11 +968,11 @@
                 }
 
                 saveData();
-                updateStatus('✅ 로드 완료');
+                document.getElementById('load-status').textContent = '✅ 로드 완료';
                 render();
             } catch(error) {
                 console.error('로드 오류:', error);
-                updateStatus('❌ 오류');
+                document.getElementById('load-status').textContent = '❌ 오류';
             } finally {
                 APP.isLoading = false;
             }
@@ -970,92 +1013,9 @@
             }
         }
 
-        function updateStatus(msg) {
-            const statusEl = document.getElementById('load-status');
-            if (msg.includes('로딩')) {
-                statusEl.innerHTML = msg + '<span class="spinner"></span>';
-            } else {
-                statusEl.textContent = msg;
-            }
-        }
-
         // ════════════════════════════════════════════════════════════
-        // 렌더링 함수들
+        // ✅ 렌더링 함수들
         // ════════════════════════════════════════════════════════════
-        function renderWeekly() {
-            const { month, week } = getCurrentWeekInfo();
-            const prepList = document.getElementById('weekly-prep-list');
-            const weekTitle = document.getElementById('weekly-prep-title');
-            
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const weekStartDate = new Date(today);
-            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
-            const weekEndDate = new Date(weekStartDate);
-            weekEndDate.setDate(weekStartDate.getDate() + 6);
-            
-            weekStartDate.setHours(0, 0, 0, 0);
-            weekEndDate.setHours(23, 59, 59, 999);
-            
-            const weekRange = `${weekStartDate.getMonth() + 1}월 ${weekStartDate.getDate()}~${weekEndDate.getDate()}일`;
-            
-            if (weekTitle) {
-                weekTitle.innerHTML = `
-                    <span class="emoji">✅</span>
-                    <span>이번 주 관리</span>
-                    <small>(${weekRange})</small>
-                `;
-            }
-            
-            const thisWeekData = (APP.data.준비사항 || []).filter(r => {
-                if (!r[0]) return false;
-                try {
-                    const itemDate = new Date(r[0]);
-                    if (isNaN(itemDate.getTime())) return false;
-                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
-                } catch (e) {
-                    return false;
-                }
-            }) || [];
-
-            const grouped = {};
-            thisWeekData.forEach(r => {
-                const category = r[1] || '기타';
-                if (!grouped[category]) grouped[category] = [];
-                grouped[category].push(r);
-            });
-
-            const categoryOrder = ['작업관리', '미리 준비해야 할 일', '이번주 할 일', '농약', '시비', '이번달 주의점'];
-            const orderedCategories = Object.keys(grouped).sort((a, b) => {
-                const aIdx = categoryOrder.indexOf(a);
-                const bIdx = categoryOrder.indexOf(b);
-                return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
-            });
-
-            prepList.innerHTML = orderedCategories.length ? orderedCategories.map(category => {
-                const config = CATEGORY_CONFIG[category] || { emoji: '📌', label: category };
-                const items = grouped[category];
-                
-                return `
-                    <div class="category-section">
-                        <div class="category-header">
-                            <span class="emoji">${config.emoji}</span>
-                            <span>${config.label}</span>
-                        </div>
-                        ${items.map(r => `
-                            <div class="card">
-                                <div class="card-title">${r[2] || ''}</div>
-                                <div class="card-content">
-                                    ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
-                                    ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                `;
-            }).join('') : '<div class="empty-state"><span class="empty-state-icon">📭</span><p>이번 주 관리 사항이 없습니다.</p></div>';
-        }
-
         function renderPesticides() {
             const tbody = document.getElementById('pesticides-tbody');
             const empty = document.getElementById('pesticides-empty');
@@ -1069,18 +1029,23 @@
             document.getElementById('pesticides-table').style.display = 'table';
             empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.myPesticides.map(r => {
+            tbody.innerHTML = APP.data.myPesticides.map((r, idx) => {
                 const qty = parseFloat(r[3] || 0);
-                let cls = 'available', status = '정상';
-                if (qty === 0) { cls = 'empty'; status = '없음'; }
-                else if (qty < 10) { cls = 'low'; status = '부족'; }
+                const status = qty === 0 ? '없음' : (qty < 10 ? '부족' : '정상');
 
                 return `<tr>
-                    <td>${r[1]||'-'}</td>
+                    <td><span class="pesticide-name" onclick="openPsisModal('${String(r[1]).replace(/'/g, "\\'")}', ${idx})">${r[1]||'-'}</span></td>
                     <td>${r[2]||'-'}</td>
-                    <td>${r[5]||'-'}</td>
-                    <td>${qty}</td>
-                    <td><span class="badge ${cls}">${status}</span></td>
+                    <td>${qty} ${r[4]||''}</td>
+                    <td>
+                        <select class="status-select" onchange="updatePesticideStatus(${idx}, this.value)">
+                            <option value="정상" ${status === '정상' ? 'selected' : ''}>정상</option>
+                            <option value="부족" ${status === '부족' ? 'selected' : ''}>부족</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deletePesticide(${idx})">삭제</button>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -1098,18 +1063,23 @@
             document.getElementById('supplies-table').style.display = 'table';
             empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.supplies.map(r => {
+            tbody.innerHTML = APP.data.supplies.map((r, idx) => {
                 const qty = parseFloat(r[6] || 0);
-                let cls = 'available', status = '정상';
-                if (qty === 0) { cls = 'empty'; status = '없음'; }
-                else if (qty < 10) { cls = 'low'; status = '부족'; }
+                const status = qty === 0 ? '없음' : (qty < 10 ? '부족' : '정상');
 
                 return `<tr>
                     <td>${r[7]||'-'}</td>
                     <td>${r[3]||'-'}</td>
-                    <td>${r[4]||'-'}</td>
                     <td>${qty}</td>
-                    <td><span class="badge ${cls}">${status}</span></td>
+                    <td>
+                        <select class="status-select" onchange="updateSupplyStatus(${idx}, this.value)">
+                            <option value="정상" ${status === '정상' ? 'selected' : ''}>정상</option>
+                            <option value="부족" ${status === '부족' ? 'selected' : ''}>부족</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteSupply(${idx})">삭제</button>
+                    </td>
                 </tr>`;
             }).join('');
         }
@@ -1132,7 +1102,6 @@
                     <td>${r[1]||'-'}</td>
                     <td>${r[4]||'-'}</td>
                     <td>${formatDate(r[2])}</td>
-                    <td>${r[6]||'-'}</td>
                     <td>${r[7]||'-'}</td>
                 </tr>`;
             }).join('');
@@ -1161,62 +1130,164 @@
             }).join('');
         }
 
-        function renderWeeklyWithSupplies() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const weekStartDate = new Date(today);
-            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
-            const weekEndDate = new Date(weekStartDate);
-            weekEndDate.setDate(weekStartDate.getDate() + 6);
-            weekStartDate.setHours(0, 0, 0, 0);
-            weekEndDate.setHours(23, 59, 59, 999);
-            
-            const tasks = (APP.data.준비사항 || []).filter(r => {
-                if (!r[0]) return false;
-                try {
-                    const itemDate = new Date(r[0]);
-                    if (isNaN(itemDate.getTime())) return false;
-                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
-                } catch (e) {
-                    return false;
-                }
-            }) || [];
-            
-            document.getElementById('tasks-with-supplies-list').innerHTML = tasks.length ? tasks.map(r => `
-                <div class="card">
-                    <div class="card-title">✅ ${r[2] || ''}</div>
-                    <div class="card-content">
-                        ${r[3] ? `<p>${r[3]}</p>` : ''}
-                    </div>
-                </div>
-            `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
-
-            document.getElementById('needed-pesticides-list').innerHTML = APP.data.myPesticides && APP.data.myPesticides.length ? APP.data.myPesticides.map(r => {
-                const qty = parseFloat(r[3] || 0);
-                return `<div class="card">
-                    <div class="card-title">🧪 ${r[1]}</div>
-                    <div class="card-content">보유: <strong>${qty} ${r[4]||'-'}</strong></div>
-                </div>`;
-            }).join('') : '<div class="empty-state"><p>농약이 없습니다.</p></div>';
-
-            document.getElementById('needed-supplies-list').innerHTML = APP.data.supplies && APP.data.supplies.length ? APP.data.supplies.map(r => {
-                const qty = parseFloat(r[6] || 0);
-                return `<div class="card">
-                    <div class="card-title">🌱 ${r[7]}</div>
-                    <div class="card-content">보유: <strong>${qty}</strong></div>
-                </div>`;
-            }).join('') : '<div class="empty-state"><p>비료가 없습니다.</p></div>';
-        }
-
         function render() {
-            renderWeekly();
             renderPesticides();
             renderSupplies();
             renderPlants();
             renderRecords();
-            renderWeeklyWithSupplies();
         }
 
+        // ════════════════════════════════════════════════════════════
+        // ✅ 농약 상태 변경 & 삭제 기능
+        // ════════════════════════════════════════════════════════════
+        function updatePesticideStatus(idx, status) {
+            console.log(`🔄 농약 #${idx} 상태 변경: ${status}`);
+            // TODO: GAS와 동기화 필요
+        }
+
+        function deletePesticide(idx) {
+            if (confirm('이 농약을 삭제하시겠습니까?')) {
+                APP.data.myPesticides.splice(idx, 1);
+                saveData();
+                renderPesticides();
+                console.log(`🗑️ 농약 #${idx} 삭제됨`);
+                // TODO: GAS와 동기화 필요
+            }
+        }
+
+        function updateSupplyStatus(idx, status) {
+            console.log(`🔄 비료 #${idx} 상태 변경: ${status}`);
+            // TODO: GAS와 동기화 필요
+        }
+
+        function deleteSupply(idx) {
+            if (confirm('이 비료를 삭제하시겠습니까?')) {
+                APP.data.supplies.splice(idx, 1);
+                saveData();
+                renderSupplies();
+                console.log(`🗑️ 비료 #${idx} 삭제됨`);
+                // TODO: GAS와 동기화 필요
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // ✅ PSIS 농약 정보 검색 & 팝업
+        // ════════════════════════════════════════════════════════════
+        async function openPsisModal(pesticideName, idx) {
+            const modal = document.getElementById('psis-modal');
+            const modalTitle = document.getElementById('modal-title');
+            const modalBody = document.getElementById('modal-body');
+            
+            // 모달 표시
+            modal.classList.add('show');
+            modalTitle.textContent = pesticideName + ' - 검색 중...';
+            modalBody.innerHTML = `<div class="loading"><span class="loading-spinner"></span>PSIS에서 정보를 검색하는 중입니다...</div>`;
+
+            try {
+                // GAS에서 PSIS 검색
+                const response = await fetchFromGAS('searchPesticide', { keyword: pesticideName });
+                
+                if (response.ok && response.data) {
+                    displayPsisInfo(pesticideName, response.data, idx);
+                } else {
+                    modalBody.innerHTML = `<div class="modal-info" style="color: #999;">검색 결과가 없습니다.</div>`;
+                }
+            } catch (error) {
+                console.error('PSIS 검색 오류:', error);
+                modalBody.innerHTML = `<div class="modal-info" style="color: #d32f2f;">검색 중 오류가 발생했습니다: ${error.message}</div>`;
+            }
+
+            modalTitle.textContent = pesticideName;
+        }
+
+        function displayPsisInfo(name, data, idx) {
+            const modalBody = document.getElementById('modal-body');
+            const pestiData = data;
+
+            let html = `
+                <div class="modal-section">
+                    <div class="modal-section-title">📋 기본 정보</div>
+                    <div class="modal-info">
+                        <div class="modal-info-row">
+                            <div class="modal-info-label">농약명:</div>
+                            <div class="modal-info-value">${pestiData.name || name}</div>
+                        </div>
+                        <div class="modal-info-row">
+                            <div class="modal-info-label">종류:</div>
+                            <div class="modal-info-value">${pestiData.type || '-'}</div>
+                        </div>
+                        <div class="modal-info-row">
+                            <div class="modal-info-label">성분:</div>
+                            <div class="modal-info-value">${pestiData.ingredient || '-'}</div>
+                        </div>
+                        <div class="modal-info-row">
+                            <div class="modal-info-label">제조사:</div>
+                            <div class="modal-info-value">${pestiData.manufacturer || '-'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // 독성 정보
+            if (pestiData.toxicGubun || pestiData.toxicName) {
+                html += `
+                    <div class="modal-section">
+                        <div class="modal-section-title">⚠️ 독성 정보</div>
+                        <div class="modal-info">
+                            ${pestiData.toxicGubun ? `
+                            <div class="modal-info-row">
+                                <div class="modal-info-label">독성:</div>
+                                <div class="modal-info-value">${pestiData.toxicGubun}</div>
+                            </div>
+                            ` : ''}
+                            ${pestiData.toxicName ? `
+                            <div class="modal-info-row">
+                                <div class="modal-info-label">분류:</div>
+                                <div class="modal-info-value">${pestiData.toxicName}</div>
+                            </div>
+                            ` : ''}
+                            ${pestiData.fishToxic ? `
+                            <div class="modal-info-row">
+                                <div class="modal-info-label">어독성:</div>
+                                <div class="modal-info-value">${pestiData.fishToxic}</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 유실수 작물 처방
+            if (APP.data.growPlants && APP.data.growPlants.length > 0) {
+                html += `
+                    <div class="modal-section">
+                        <div class="modal-section-title">🌳 보유 작물 처방</div>
+                        <ul class="crop-list">
+                `;
+
+                APP.data.growPlants.forEach(plant => {
+                    const plantName = plant[1] || '';
+                    // 실제로는 PSIS 정보에서 해당 작물의 처방을 찾아야 함
+                    html += `
+                        <li class="crop-item">
+                            <div class="crop-name">🌱 ${plantName}</div>
+                            <div class="crop-usage">${pestiData.cropUsage ? pestiData.cropUsage[plantName] || '- 정보 없음' : '- 정보 없음'}</div>
+                        </li>
+                    `;
+                });
+
+                html += `
+                        </ul>
+                    </div>
+                `;
+            }
+
+            document.getElementById('modal-body').innerHTML = html;
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 탭 전환
+        // ════════════════════════════════════════════════════════════
         function switchTab(name) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
