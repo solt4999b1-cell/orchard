@@ -45,9 +45,6 @@
             padding: 20px;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 헤더 */
-        /* ═══════════════════════════════════════ */
         header {
             background: white;
             padding: 25px;
@@ -82,9 +79,6 @@
             gap: 6px;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 탭 메뉴 */
-        /* ═══════════════════════════════════════ */
         .tabs {
             display: flex;
             gap: 8px;
@@ -144,9 +138,6 @@
             font-weight: 600;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 콘텐츠 영역 */
-        /* ═══════════════════════════════════════ */
         .content {
             background: white;
             border-radius: 12px;
@@ -181,9 +172,6 @@
             to { opacity: 1; }
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 섹션 */
-        /* ═══════════════════════════════════════ */
         .section {
             margin-bottom: 30px;
         }
@@ -202,6 +190,7 @@
             margin-bottom: 18px;
             padding-bottom: 12px;
             border-bottom: 3px solid var(--primary-color);
+            flex-wrap: wrap;
         }
 
         .section-title .emoji {
@@ -209,9 +198,13 @@
             display: block;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 카드 */
-        /* ═══════════════════════════════════════ */
+        .section-title small {
+            color: #999;
+            font-size: 12px;
+            font-weight: normal;
+            margin-left: auto;
+        }
+
         .card {
             background: var(--bg-light);
             border-left: 4px solid var(--primary-color);
@@ -259,9 +252,6 @@
             margin-right: 8px;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 테이블 */
-        /* ═══════════════════════════════════════ */
         .table-container {
             overflow-x: auto;
             margin-top: 15px;
@@ -296,9 +286,6 @@
             border-bottom: none;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 배지 */
-        /* ═══════════════════════════════════════ */
         .badge {
             display: inline-block;
             padding: 6px 12px;
@@ -323,9 +310,6 @@
             color: #c62828;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 상태 메시지 */
-        /* ═══════════════════════════════════════ */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -338,9 +322,6 @@
             display: block;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 로딩 스피너 */
-        /* ═══════════════════════════════════════ */
         .spinner {
             display: inline-block;
             width: 16px;
@@ -357,9 +338,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 체크박스 */
-        /* ═══════════════════════════════════════ */
         .checkbox-container {
             display: flex;
             align-items: center;
@@ -381,9 +359,6 @@
             -webkit-user-select: none;
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 반응형 디자인 */
-        /* ═══════════════════════════════════════ */
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -441,6 +416,12 @@
                 font-size: 14px;
                 margin-bottom: 8px;
             }
+
+            .section-title small {
+                display: block;
+                margin-left: 0;
+                margin-top: 4px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -471,9 +452,6 @@
             }
         }
 
-        /* ═══════════════════════════════════════ */
-        /* 푸터 */
-        /* ═══════════════════════════════════════ */
         footer {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
@@ -485,7 +463,6 @@
 </head>
 <body>
     <div class="container">
-        <!-- 헤더 -->
         <header>
             <h1>🌳 새솔동 과수원 - 과수 관리 시스템</h1>
             <div class="date-info">
@@ -494,7 +471,6 @@
             </div>
         </header>
 
-        <!-- 탭 메뉴 -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="weekly-tasks">✅ 이번 주 할일</button>
             <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
@@ -504,15 +480,13 @@
             <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
         </div>
 
-        <!-- 콘텐츠 -->
         <div class="content">
-            
-            <!-- 1️⃣ 이번 주 할일 -->
             <div id="weekly-tasks" class="tab-content active">
                 <div class="section">
-                    <div class="section-title">
+                    <div class="section-title" id="weekly-prep-title">
                         <span class="emoji">✅</span>
                         <span>이번 주 관리 사항</span>
+                        <small style="color: #999; font-size: 12px;">(로딩중...)</small>
                     </div>
                     <div id="weekly-prep-list"></div>
                 </div>
@@ -526,7 +500,6 @@
                 </div>
             </div>
 
-            <!-- 2️⃣ 보유 농약 -->
             <div id="pesticides" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🧪</span>
@@ -553,7 +526,6 @@
                 </div>
             </div>
 
-            <!-- 3️⃣ 보유 비료 -->
             <div id="supplies" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌱</span>
@@ -580,7 +552,6 @@
                 </div>
             </div>
 
-            <!-- 4️⃣ 재배 작물 -->
             <div id="plants" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌾</span>
@@ -607,7 +578,6 @@
                 </div>
             </div>
 
-            <!-- 5️⃣ 작물 기록 일지 -->
             <div id="records" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">📋</span>
@@ -633,7 +603,6 @@
                 </div>
             </div>
 
-            <!-- 6️⃣ 이번 주 할일 (농약/비료) -->
             <div id="weekly-with-supplies" class="tab-content">
                 <div class="section">
                     <div class="section-title">
@@ -657,22 +626,16 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- 푸터 -->
         <footer>
             <p>🌳 새솔동 과수원 - 과수 관리 시스템 v1.0</p>
         </footer>
     </div>
 
     <script>
-        // ════════════════════════════════════════════════════════════
-        // 🔧 앱 설정
-        // ════════════════════════════════════════════════════════════
         const APP = {
             gasUrl: 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec',
-            
             data: {
                 준비사항: [],
                 growPlants: [],
@@ -681,14 +644,10 @@
                 growRecords: [],
                 workLog: []
             },
-            
             isLoading: false,
             lastUpdateTime: null
         };
 
-        // ════════════════════════════════════════════════════════════
-        // 📅 날짜 유틸
-        // ════════════════════════════════════════════════════════════
         function formatDate(date) {
             if (!date) return '-';
             try {
@@ -709,24 +668,17 @@
             const month = today.getMonth() + 1;
             const date = today.getDate();
             const week = Math.ceil(date / 7);
-            
             return { month, week, date, day: getDayName(today) };
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 🌐 GAS 통신
-        // ════════════════════════════════════════════════════════════
         async function fetchFromGAS(action, params = {}) {
             try {
                 const query = new URLSearchParams({ action, ...params });
                 const url = `${APP.gasUrl}?${query.toString()}`;
-                
                 const response = await fetch(url);
                 if (!response.ok) throw new Error(`HTTP ${response.status}`);
-                
                 const data = await response.json();
                 console.log(`✓ ${action}:`, data);
-                
                 return data;
             } catch(error) {
                 console.error(`✗ ${action}:`, error);
@@ -734,9 +686,6 @@
             }
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 💾 localStorage
-        // ════════════════════════════════════════════════════════════
         function saveData() {
             try {
                 localStorage.setItem('orchard_data', JSON.stringify(APP.data));
@@ -760,9 +709,6 @@
             return false;
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 🔄 데이터 로드
-        // ════════════════════════════════════════════════════════════
         async function loadAllData() {
             APP.isLoading = true;
             updateStatus('로딩 중');
@@ -775,7 +721,6 @@
                 }
 
                 const response = await fetchFromGAS('read_all');
-                
                 if (response.success && response.data) {
                     APP.data = convertObjectArrayTo2DArray(response.data);
                 } else {
@@ -796,23 +741,18 @@
 
         function convertObjectArrayTo2DArray(objectData) {
             const result = {};
-            
             for (const [sheetName, rows] of Object.entries(objectData)) {
                 if (!Array.isArray(rows) || rows.length === 0) {
                     result[sheetName] = [];
                     continue;
                 }
-                
                 if (typeof rows[0] === 'object' && !Array.isArray(rows[0])) {
                     const keys = Object.keys(rows[0]);
-                    result[sheetName] = rows.map(obj => 
-                        keys.map(key => obj[key])
-                    );
+                    result[sheetName] = rows.map(obj => keys.map(key => obj[key]));
                 } else {
                     result[sheetName] = rows;
                 }
             }
-            
             return result;
         }
 
@@ -843,24 +783,57 @@
             }
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 🎨 렌더링 함수 (수정됨)
-        // ════════════════════════════════════════════════════════════
-        
+        // ✅ 수정된 renderWeekly() - 날짜 기반 필터링
         function renderWeekly() {
+            const { month, week, date, day } = getCurrentWeekInfo();
             const prepList = document.getElementById('weekly-prep-list');
             const tipsList = document.getElementById('weekly-tips-list');
+            const weekTitle = document.getElementById('weekly-prep-title');
             
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const weekStartDate = new Date(today);
+            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+            const weekEndDate = new Date(weekStartDate);
+            weekEndDate.setDate(weekStartDate.getDate() + 6);
+            
+            weekStartDate.setHours(0, 0, 0, 0);
+            weekEndDate.setHours(23, 59, 59, 999);
+            
+            const weekRange = `${weekStartDate.getMonth() + 1}월 ${weekStartDate.getDate()}일(월) ~ ${weekEndDate.getMonth() + 1}월 ${weekEndDate.getDate()}일(일)`;
+            
+            if (weekTitle) {
+                weekTitle.innerHTML = `
+                    <span class="emoji">✅</span>
+                    <span>이번 주 관리 사항</span>
+                    <small style="color: #999; font-size: 12px;">(${weekRange})</small>
+                `;
+            }
+            
+            // ✅ 날짜 기반 필터링으로 모든 카테고리 포함
             const preps = (APP.data.준비사항 || []).filter(r => {
-                if (!r[1]) return false;
-                const category = String(r[1]).toLowerCase();
-                return category.includes('prep') || category.includes('관리') || category.includes('작업');
+                if (!r[0]) return false;
+                try {
+                    const itemDate = new Date(r[0]);
+                    if (isNaN(itemDate.getTime())) return false;
+                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
+                } catch (e) {
+                    return false;
+                }
             }) || [];
             
             const tips = (APP.data.준비사항 || []).filter(r => {
+                if (!r[0]) return false;
                 if (!r[1]) return false;
-                const category = String(r[1]).toLowerCase();
-                return category.includes('tip') || category.includes('팁') || category.includes('정보');
+                try {
+                    const itemDate = new Date(r[0]);
+                    if (isNaN(itemDate.getTime())) return false;
+                    const category = String(r[1]).toLowerCase();
+                    return itemDate >= weekStartDate && itemDate <= weekEndDate &&
+                           (category.includes('tip') || category.includes('팁') || category.includes('정보'));
+                } catch (e) {
+                    return false;
+                }
             }) || [];
 
             prepList.innerHTML = preps.length ? preps.map(r => `
@@ -998,10 +971,24 @@
         }
 
         function renderWeeklyWithSupplies() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const weekStartDate = new Date(today);
+            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+            const weekEndDate = new Date(weekStartDate);
+            weekEndDate.setDate(weekStartDate.getDate() + 6);
+            weekStartDate.setHours(0, 0, 0, 0);
+            weekEndDate.setHours(23, 59, 59, 999);
+            
             const tasks = (APP.data.준비사항 || []).filter(r => {
-                if (!r[1]) return false;
-                const category = String(r[1]).toLowerCase();
-                return category.includes('prep') || category.includes('관리') || category.includes('작업');
+                if (!r[0]) return false;
+                try {
+                    const itemDate = new Date(r[0]);
+                    if (isNaN(itemDate.getTime())) return false;
+                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
+                } catch (e) {
+                    return false;
+                }
             }) || [];
             
             document.getElementById('tasks-with-supplies-list').innerHTML = tasks.length ? tasks.map(r => `
@@ -1040,9 +1027,6 @@
             renderWeeklyWithSupplies();
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 🔀 탭 전환
-        // ════════════════════════════════════════════════════════════
         function switchTab(name) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
@@ -1051,9 +1035,6 @@
             document.getElementById(name).classList.add('active');
         }
 
-        // ════════════════════════════════════════════════════════════
-        // 🚀 초기화
-        // ════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             const today = new Date();
             document.getElementById('today-date').textContent = 
