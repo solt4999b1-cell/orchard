@@ -2,17 +2,21 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="description" content="새솔동 과수원 - 과수 관리 시스템">
     <meta name="theme-color" content="#2a5f2a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>새솔동 과수원 - 과수 관리 시스템</title>
-    <!-- ✅ Favicon: Data URI SVG로 설정 (에러 없음) -->
+    <!-- ✅ Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>" type="image/svg+xml">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         :root {
@@ -30,30 +34,43 @@
 
         html {
             scroll-behavior: smooth;
+            height: 100%;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-                'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
             color: var(--text-dark);
             min-height: 100vh;
             line-height: 1.6;
+            padding-top: max(env(safe-area-inset-top), 0px);
+            overflow-x: hidden;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 100%;
             margin: 0 auto;
-            padding: 20px;
+            padding: 0;
         }
 
+        /* ═══════════════════════════════════════ */
+        /* 헤더 (축소 가능) */
+        /* ═══════════════════════════════════════ */
         header {
             background: white;
-            padding: 25px;
-            border-radius: 12px;
-            margin-bottom: 20px;
+            padding: 20px;
+            border-radius: 0 0 16px 16px;
+            margin-bottom: 0;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
             border-left: 6px solid var(--primary-color);
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        header.collapsed {
+            padding: 12px 20px;
+            border-radius: 0;
         }
 
         header h1 {
@@ -64,89 +81,123 @@
             align-items: center;
             gap: 12px;
             letter-spacing: -0.5px;
+            font-weight: 700;
+        }
+
+        header.collapsed h1 {
+            font-size: 24px;
+            margin-bottom: 0;
         }
 
         .date-info {
             color: var(--text-light);
-            font-size: 14px;
+            font-size: 13px;
             margin-top: 12px;
             display: flex;
-            gap: 20px;
+            gap: 12px;
             flex-wrap: wrap;
+        }
+
+        header.collapsed .date-info {
+            display: none;
         }
 
         .date-info span {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 4px;
         }
 
+        /* ✅ 메뉴 토글 버튼 */
+        .menu-toggle-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.3);
+            transition: all 0.3s ease;
+            z-index: 101;
+        }
+
+        .menu-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 탭 메뉴 (축소 가능) */
+        /* ═══════════════════════════════════════ */
         .tabs {
             display: flex;
             gap: 8px;
-            margin-bottom: 20px;
+            margin-bottom: 0;
             background: white;
             padding: 12px;
-            border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             flex-wrap: wrap;
             overflow-x: auto;
             -webkit-overflow-scrolling: touch;
+            transition: all 0.3s ease;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
-        .tabs::-webkit-scrollbar {
-            height: 4px;
-        }
-
-        .tabs::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .tabs::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 2px;
+        .tabs.hidden {
+            max-height: 0;
+            overflow: hidden;
+            padding: 0;
+            margin: 0;
         }
 
         .tab-btn {
             flex: 0 1 auto;
-            min-width: 130px;
-            padding: 11px 16px;
+            min-width: 110px;
+            padding: 12px 14px;
             border: none;
             background: #f5f5f5;
             color: var(--text-light);
-            font-size: 14px;
-            font-weight: 500;
+            font-size: 13px;
+            font-weight: 600;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             user-select: none;
             -webkit-user-select: none;
-        }
-
-        .tab-btn:hover {
-            background: #e8e8e8;
-            transform: translateY(-1px);
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .tab-btn:active {
-            transform: translateY(0);
+            transform: scale(0.98);
         }
 
         .tab-btn.active {
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             color: white;
             box-shadow: 0 4px 12px rgba(42, 95, 42, 0.3);
-            font-weight: 600;
+            font-weight: 700;
         }
 
+        /* ═══════════════════════════════════════ */
+        /* 콘텐츠 영역 */
+        /* ═══════════════════════════════════════ */
         .content {
             background: white;
-            border-radius: 12px;
-            padding: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            min-height: 500px;
+            border-radius: 16px 16px 0 0;
+            padding: 20px;
+            min-height: calc(100vh - 200px);
             animation: slideUp 0.4s ease;
+            margin-top: -10px;
         }
 
         @keyframes slideUp {
@@ -175,7 +226,7 @@
         }
 
         .section {
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
         .section:last-child {
@@ -186,8 +237,8 @@
             display: flex;
             align-items: center;
             gap: 12px;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             color: var(--primary-color);
             margin-bottom: 18px;
             padding-bottom: 12px;
@@ -196,23 +247,25 @@
         }
 
         .section-title .emoji {
-            font-size: 24px;
+            font-size: 28px;
             display: block;
         }
 
         .section-title small {
             color: #999;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: normal;
             margin-left: auto;
         }
 
-        /* ✅ 카테고리별 카드 스타일 */
+        /* ═══════════════════════════════════════ */
+        /* 카테고리별 카드 */
+        /* ═══════════════════════════════════════ */
         .category-section {
             margin-bottom: 28px;
-            padding: 20px;
+            padding: 18px;
             background: #fafafa;
-            border-radius: 10px;
+            border-radius: 12px;
             border-left: 5px solid var(--primary-color);
         }
 
@@ -220,29 +273,29 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             color: var(--primary-color);
-            margin-bottom: 15px;
+            margin-bottom: 16px;
             padding-bottom: 10px;
             border-bottom: 2px solid var(--primary-color);
         }
 
         .category-header .emoji {
-            font-size: 20px;
+            font-size: 24px;
         }
 
         .card {
             background: white;
             border-left: 4px solid var(--primary-color);
-            padding: 18px;
+            padding: 16px;
             margin-bottom: 14px;
-            border-radius: 8px;
+            border-radius: 10px;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
-        .card:hover {
+        .card:active {
             box-shadow: 0 6px 16px rgba(42, 95, 42, 0.15);
             transform: translateY(-2px);
         }
@@ -255,6 +308,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            line-height: 1.4;
         }
 
         .card-content {
@@ -270,6 +324,7 @@
             margin-bottom: 10px;
             border-left: 3px solid #4caf50;
             font-weight: 500;
+            font-size: 14px;
         }
 
         .card-details {
@@ -280,34 +335,58 @@
             border-left: 3px solid #ff9800;
             white-space: pre-wrap;
             word-break: break-word;
+            font-size: 13px;
+            line-height: 1.6;
         }
 
-        .card-details ul {
-            list-style: none;
-            margin-left: 0;
+        /* ═══════════════════════════════════════ */
+        /* 스크롤 탑 버튼 */
+        /* ═══════════════════════════════════════ */
+        .scroll-to-top {
+            position: fixed;
+            bottom: 30px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 20px rgba(42, 95, 42, 0.35);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
         }
 
-        .card-details li {
-            margin-left: 20px;
-            margin-bottom: 6px;
+        .scroll-to-top.show {
+            display: flex;
         }
 
-        .card-details li::before {
-            content: "▪ ";
-            color: #ff9800;
-            font-weight: bold;
-            margin-right: 8px;
+        .scroll-to-top:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.25);
         }
 
+        /* ═══════════════════════════════════════ */
+        /* 테이블 */
+        /* ═══════════════════════════════════════ */
         .table-container {
             overflow-x: auto;
             margin-top: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 14px;
+            font-size: 13px;
         }
 
         th {
@@ -315,8 +394,8 @@
             color: white;
             padding: 14px;
             text-align: left;
-            font-weight: 600;
-            font-size: 14px;
+            font-weight: 700;
+            font-size: 13px;
             user-select: none;
         }
 
@@ -325,20 +404,19 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        tbody tr:hover {
+        tbody tr:active {
             background: var(--bg-light);
         }
 
-        tbody tr:last-child td {
-            border-bottom: none;
-        }
-
+        /* ═══════════════════════════════════════ */
+        /* 배지 */
+        /* ═══════════════════════════════════════ */
         .badge {
             display: inline-block;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
-            font-weight: 500;
+            font-weight: 600;
             user-select: none;
         }
 
@@ -357,6 +435,9 @@
             color: #c62828;
         }
 
+        /* ═══════════════════════════════════════ */
+        /* 상태 메시지 */
+        /* ═══════════════════════════════════════ */
         .empty-state {
             text-align: center;
             padding: 50px 20px;
@@ -369,6 +450,9 @@
             display: block;
         }
 
+        /* ═══════════════════════════════════════ */
+        /* 로딩 스피너 */
+        /* ═══════════════════════════════════════ */
         .spinner {
             display: inline-block;
             width: 16px;
@@ -385,171 +469,161 @@
             to { transform: rotate(360deg); }
         }
 
-        .checkbox-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 12px;
-        }
-
-        .checkbox-container input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-            cursor: pointer;
-            accent-color: var(--primary-color);
-        }
-
-        .checkbox-container label {
-            cursor: pointer;
-            flex: 1;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            header {
-                padding: 15px;
-            }
-
-            header h1 {
-                font-size: 22px;
-                margin-bottom: 10px;
-            }
-
-            .date-info {
-                flex-direction: column;
-                gap: 8px;
-            }
-
-            .content {
-                padding: 15px;
-                min-height: auto;
-            }
-
-            .tabs {
-                gap: 6px;
-                padding: 8px;
-            }
-
-            .tab-btn {
-                min-width: 100px;
-                padding: 9px 12px;
-                font-size: 12px;
-            }
-
-            .section-title {
-                font-size: 18px;
-                margin-bottom: 12px;
-            }
-
-            .category-section {
-                padding: 15px;
-            }
-
-            .category-header {
-                font-size: 16px;
-            }
-
-            table {
-                font-size: 12px;
-            }
-
-            th, td {
-                padding: 10px;
-            }
-
-            .card {
-                padding: 12px;
-                margin-bottom: 10px;
-            }
-
-            .card-title {
-                font-size: 14px;
-                margin-bottom: 8px;
-            }
-
-            .section-title small {
-                display: block;
-                margin-left: 0;
-                margin-top: 4px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            header h1 {
-                font-size: 20px;
-            }
-
-            header h1 .emoji {
-                display: none;
-            }
-
-            .tab-btn {
-                min-width: 80px;
-                padding: 8px 10px;
-                font-size: 11px;
-            }
-
-            .content {
-                padding: 12px;
-            }
-
-            table {
-                font-size: 11px;
-            }
-
-            th, td {
-                padding: 8px;
-            }
-
-            .card-title {
-                font-size: 13px;
-            }
-
-            .card-description, .card-details {
-                font-size: 13px;
-            }
-        }
-
+        /* ═══════════════════════════════════════ */
+        /* 푸터 */
+        /* ═══════════════════════════════════════ */
         footer {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
             padding: 20px;
-            margin-top: 30px;
+            margin-top: 20px;
             font-size: 12px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* iPhone 12 Pro 최적화 (390px) */
+        /* ═══════════════════════════════════════ */
+        @media (max-width: 480px) {
+            header {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 26px;
+                margin-bottom: 10px;
+            }
+
+            header.collapsed h1 {
+                font-size: 22px;
+            }
+
+            .menu-toggle-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+                top: 12px;
+                right: 12px;
+            }
+
+            .date-info {
+                font-size: 12px;
+                gap: 10px;
+            }
+
+            .content {
+                padding: 16px;
+                border-radius: 16px 16px 0 0;
+            }
+
+            .section-title {
+                font-size: 20px;
+                margin-bottom: 16px;
+            }
+
+            .section-title .emoji {
+                font-size: 26px;
+            }
+
+            .category-header {
+                font-size: 18px;
+            }
+
+            .category-header .emoji {
+                font-size: 22px;
+            }
+
+            .card {
+                padding: 14px;
+                margin-bottom: 12px;
+            }
+
+            .card-title {
+                font-size: 16px;
+                margin-bottom: 8px;
+                font-weight: 700;
+            }
+
+            .card-content {
+                font-size: 14px;
+            }
+
+            .card-description {
+                font-size: 13px;
+                padding: 9px 11px;
+            }
+
+            .card-details {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .tab-btn {
+                min-width: 100px;
+                padding: 11px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+
+            .scroll-to-top {
+                width: 48px;
+                height: 48px;
+                bottom: 25px;
+                right: 16px;
+                font-size: 22px;
+            }
+
+            table {
+                font-size: 12px;
+            }
+
+            th {
+                padding: 12px;
+                font-size: 12px;
+            }
+
+            td {
+                padding: 10px 12px;
+            }
+
+            .tabs {
+                padding: 10px;
+                gap: 6px;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>🌳 새솔동 과수원 - 과수 관리 시스템</h1>
-            <div class="date-info">
-                <span>📅 오늘: <strong id="today-date"></strong></span>
-                <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
-            </div>
-        </header>
-
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="weekly-tasks">✅ 이번 주 할일</button>
-            <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
-            <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
-            <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
-            <button class="tab-btn" data-tab="records">📋 기록 일지</button>
-            <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
+    <!-- 헤더 -->
+    <header id="main-header">
+        <h1>🌳 새솔동 과수원</h1>
+        <div class="date-info">
+            <span>📅 오늘: <strong id="today-date"></strong></span>
+            <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
         </div>
+        <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
+    </header>
 
+    <!-- 탭 메뉴 -->
+    <div class="tabs" id="tabs-container">
+        <button class="tab-btn active" data-tab="weekly-tasks">✅ 이번 주 할일</button>
+        <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
+        <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
+        <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
+        <button class="tab-btn" data-tab="records">📋 기록 일지</button>
+        <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
+    </div>
+
+    <div class="container">
+        <!-- 콘텐츠 -->
         <div class="content">
-            <!-- ✅ 이번 주 할일 탭 (카테고리별로 개선됨) -->
+            <!-- ✅ 이번 주 할일 탭 -->
             <div id="weekly-tasks" class="tab-content active">
                 <div class="section-title" id="weekly-prep-title">
                     <span class="emoji">✅</span>
-                    <span>이번 주 관리 사항</span>
-                    <small style="color: #999; font-size: 12px;">(로딩중...)</small>
+                    <span>이번 주 관리</span>
+                    <small style="color: #999; font-size: 11px;">(로딩중...)</small>
                 </div>
                 <div id="weekly-prep-list"></div>
             </div>
@@ -558,7 +632,7 @@
             <div id="pesticides" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🧪</span>
-                    <span>보유 농약 현황</span>
+                    <span>보유 농약</span>
                 </div>
                 <div class="table-container">
                     <table id="pesticides-table">
@@ -568,7 +642,6 @@
                                 <th>종류</th>
                                 <th>성분</th>
                                 <th>보유량</th>
-                                <th>단위</th>
                                 <th>상태</th>
                             </tr>
                         </thead>
@@ -585,7 +658,7 @@
             <div id="supplies" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌱</span>
-                    <span>보유 비료 현황</span>
+                    <span>보유 비료</span>
                 </div>
                 <div class="table-container">
                     <table id="supplies-table">
@@ -595,7 +668,6 @@
                                 <th>종류</th>
                                 <th>성분</th>
                                 <th>보유량</th>
-                                <th>용도</th>
                                 <th>상태</th>
                             </tr>
                         </thead>
@@ -612,7 +684,7 @@
             <div id="plants" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌾</span>
-                    <span>현재 재배 중인 작물</span>
+                    <span>재배 작물</span>
                 </div>
                 <div class="table-container">
                     <table id="plants-table">
@@ -623,7 +695,6 @@
                                 <th>파종일</th>
                                 <th>비고</th>
                                 <th>위치</th>
-                                <th>상태</th>
                             </tr>
                         </thead>
                         <tbody id="plants-tbody"></tbody>
@@ -639,7 +710,7 @@
             <div id="records" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">📋</span>
-                    <span>작물 재배 기록</span>
+                    <span>기록 일지</span>
                 </div>
                 <div class="table-container">
                     <table id="records-table">
@@ -649,7 +720,6 @@
                                 <th>작업종류</th>
                                 <th>작업일</th>
                                 <th>작업내용</th>
-                                <th>비고</th>
                             </tr>
                         </thead>
                         <tbody id="records-tbody"></tbody>
@@ -665,30 +735,34 @@
             <div id="weekly-with-supplies" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">📌</span>
-                    <span>이번 주 할일 - 농약/비료 활용</span>
+                    <span>할일+자재</span>
                 </div>
 
                 <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">📋 할일 목록</h3>
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">📋 할일</h3>
                     <div id="tasks-with-supplies-list"></div>
                 </div>
 
                 <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🧪 필요한 농약</h3>
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🧪 농약</h3>
                     <div id="needed-pesticides-list"></div>
                 </div>
 
                 <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🌱 필요한 비료</h3>
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px; font-size: 18px;">🌱 비료</h3>
                     <div id="needed-supplies-list"></div>
                 </div>
             </div>
         </div>
 
+        <!-- 푸터 -->
         <footer>
-            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v2.0</p>
+            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v3.0</p>
         </footer>
     </div>
+
+    <!-- ✅ 스크롤 탑 버튼 -->
+    <button class="scroll-to-top" id="scroll-to-top-btn" title="위로 가기">↑</button>
 
     <script>
         const APP = {
@@ -702,10 +776,10 @@
                 workLog: []
             },
             isLoading: false,
-            lastUpdateTime: null
+            lastUpdateTime: null,
+            menuExpanded: true
         };
 
-        // 카테고리별 설정
         const CATEGORY_CONFIG = {
             '농약': { emoji: '🧪', label: '농약 관리' },
             '시비': { emoji: '🌱', label: '시비 관리' },
@@ -715,6 +789,50 @@
             '이번달 주의점': { emoji: '⚠️', label: '월간 주의점' }
         };
 
+        // ════════════════════════════════════════════════════════════
+        // ✅ 메뉴 토글 기능
+        // ════════════════════════════════════════════════════════════
+        const menuToggleBtn = document.getElementById('menu-toggle-btn');
+        const tabsContainer = document.getElementById('tabs-container');
+        const header = document.getElementById('main-header');
+
+        menuToggleBtn.addEventListener('click', () => {
+            APP.menuExpanded = !APP.menuExpanded;
+            
+            if (APP.menuExpanded) {
+                tabsContainer.classList.remove('hidden');
+                header.classList.remove('collapsed');
+                menuToggleBtn.textContent = '☰';
+            } else {
+                tabsContainer.classList.add('hidden');
+                header.classList.add('collapsed');
+                menuToggleBtn.textContent = '≡';
+            }
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // ✅ 스크롤 탑 버튼
+        // ════════════════════════════════════════════════════════════
+        const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 300) {
+                scrollToTopBtn.classList.add('show');
+            } else {
+                scrollToTopBtn.classList.remove('show');
+            }
+        });
+
+        scrollToTopBtn.addEventListener('click', () => {
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
+        });
+
+        // ════════════════════════════════════════════════════════════
+        // 기본 유틸 함수들
+        // ════════════════════════════════════════════════════════════
         function formatDate(date) {
             if (!date) return '-';
             try {
@@ -800,7 +918,7 @@
                 render();
             } catch(error) {
                 console.error('로드 오류:', error);
-                updateStatus('❌ 오류: ' + error.message);
+                updateStatus('❌ 오류');
             } finally {
                 APP.isLoading = false;
             }
@@ -850,9 +968,11 @@
             }
         }
 
-        // ✅ 개선된 renderWeekly() - 카테고리별로 분류
+        // ════════════════════════════════════════════════════════════
+        // 렌더링 함수들
+        // ════════════════════════════════════════════════════════════
         function renderWeekly() {
-            const { month, week, date, day } = getCurrentWeekInfo();
+            const { month, week } = getCurrentWeekInfo();
             const prepList = document.getElementById('weekly-prep-list');
             const weekTitle = document.getElementById('weekly-prep-title');
             
@@ -866,17 +986,16 @@
             weekStartDate.setHours(0, 0, 0, 0);
             weekEndDate.setHours(23, 59, 59, 999);
             
-            const weekRange = `${weekStartDate.getMonth() + 1}월 ${weekStartDate.getDate()}일(월) ~ ${weekEndDate.getMonth() + 1}월 ${weekEndDate.getDate()}일(일)`;
+            const weekRange = `${weekStartDate.getMonth() + 1}월 ${weekStartDate.getDate()}~${weekEndDate.getDate()}일`;
             
             if (weekTitle) {
                 weekTitle.innerHTML = `
                     <span class="emoji">✅</span>
-                    <span>이번 주 관리 사항</span>
-                    <small style="color: #999; font-size: 12px;">(${weekRange})</small>
+                    <span>이번 주 관리</span>
+                    <small>(${weekRange})</small>
                 `;
             }
             
-            // 이번 주 데이터 필터링
             const thisWeekData = (APP.data.준비사항 || []).filter(r => {
                 if (!r[0]) return false;
                 try {
@@ -888,7 +1007,6 @@
                 }
             }) || [];
 
-            // 카테고리별로 그룹화
             const grouped = {};
             thisWeekData.forEach(r => {
                 const category = r[1] || '기타';
@@ -896,7 +1014,6 @@
                 grouped[category].push(r);
             });
 
-            // 카테고리 순서 정의
             const categoryOrder = ['작업관리', '미리 준비해야 할 일', '이번주 할 일', '농약', '시비', '이번달 주의점'];
             const orderedCategories = Object.keys(grouped).sort((a, b) => {
                 const aIdx = categoryOrder.indexOf(a);
@@ -904,7 +1021,6 @@
                 return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
             });
 
-            // HTML 생성
             prepList.innerHTML = orderedCategories.length ? orderedCategories.map(category => {
                 const config = CATEGORY_CONFIG[category] || { emoji: '📌', label: category };
                 const items = grouped[category];
@@ -953,7 +1069,6 @@
                     <td>${r[2]||'-'}</td>
                     <td>${r[5]||'-'}</td>
                     <td>${qty}</td>
-                    <td>${r[4]||'-'}</td>
                     <td><span class="badge ${cls}">${status}</span></td>
                 </tr>`;
             }).join('');
@@ -983,7 +1098,6 @@
                     <td>${r[3]||'-'}</td>
                     <td>${r[4]||'-'}</td>
                     <td>${qty}</td>
-                    <td>${r[5]||'-'}</td>
                     <td><span class="badge ${cls}">${status}</span></td>
                 </tr>`;
             }).join('');
@@ -1009,7 +1123,6 @@
                     <td>${formatDate(r[2])}</td>
                     <td>${r[6]||'-'}</td>
                     <td>${r[7]||'-'}</td>
-                    <td><span class="badge available">${r[10]||'정상'}</span></td>
                 </tr>`;
             }).join('');
         }
@@ -1033,7 +1146,6 @@
                     <td>${r[3]||'-'}</td>
                     <td>${formatDate(r[2])}</td>
                     <td>${r[4]||'-'}</td>
-                    <td>${r[8]||'-'}</td>
                 </tr>`;
             }).join('');
         }
@@ -1064,7 +1176,6 @@
                     <div class="card-title">✅ ${r[2] || ''}</div>
                     <div class="card-content">
                         ${r[3] ? `<p>${r[3]}</p>` : ''}
-                        ${r[4] ? `<p>${String(r[4]).split('|').join(', ')}</p>` : ''}
                     </div>
                 </div>
             `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
@@ -1073,7 +1184,7 @@
                 const qty = parseFloat(r[3] || 0);
                 return `<div class="card">
                     <div class="card-title">🧪 ${r[1]}</div>
-                    <div class="card-content">종류: ${r[2]||'-'} | 보유: <strong>${qty} ${r[4]||'-'}</strong></div>
+                    <div class="card-content">보유: <strong>${qty} ${r[4]||'-'}</strong></div>
                 </div>`;
             }).join('') : '<div class="empty-state"><p>농약이 없습니다.</p></div>';
 
@@ -1081,7 +1192,7 @@
                 const qty = parseFloat(r[6] || 0);
                 return `<div class="card">
                     <div class="card-title">🌱 ${r[7]}</div>
-                    <div class="card-content">종류: ${r[3]||'-'} | 보유: <strong>${qty}</strong></div>
+                    <div class="card-content">보유: <strong>${qty}</strong></div>
                 </div>`;
             }).join('') : '<div class="empty-state"><p>비료가 없습니다.</p></div>';
         }
@@ -1103,13 +1214,19 @@
             document.getElementById(name).classList.add('active');
         }
 
+        // ════════════════════════════════════════════════════════════
+        // 초기화
+        // ════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             const today = new Date();
             document.getElementById('today-date').textContent = 
-                `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일 (${getDayName(today)})`;
+                `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.addEventListener('click', e => switchTab(e.target.dataset.tab));
+                btn.addEventListener('click', e => {
+                    switchTab(e.target.dataset.tab);
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                });
             });
 
             await loadAllData();
