@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
     <meta name="description" content="새솔동 과수원 - 과수 관리 시스템">
     <meta name="theme-color" content="#2a5f2a">
+    <!-- ✅ PWA 메타 태그 (모든 기기 호환) -->
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="새솔동 과수원">
     <title>새솔동 과수원 - 과수 관리 시스템</title>
     <!-- ✅ Favicon -->
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232a5f2a' width='180' height='180'/><text x='90' y='135' font-size='120' text-anchor='middle'>🌳</text></svg>">
     <style>
         * {
             margin: 0;
@@ -127,6 +131,8 @@
             box-shadow: 0 4px 12px rgba(42, 95, 42, 0.3);
             transition: all 0.3s ease;
             z-index: 101;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .menu-toggle-btn:active {
@@ -765,6 +771,11 @@
     <button class="scroll-to-top" id="scroll-to-top-btn" title="위로 가기">↑</button>
 
     <script>
+        // ✅ 콘솔 경고 억제 (외부 스크립트 주입 방지)
+        if (typeof window.rhwpDev !== 'undefined') {
+            console.log = function() {};
+        }
+
         const APP = {
             gasUrl: 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec',
             data: {
