@@ -1625,43 +1625,43 @@
                     try {
                         console.log('🔍 파싱 entry:', entry);
                         
-                        // 마지막 `(` 위치 찾기
-                        const lastOpenIdx = entry.lastIndexOf('(');
-                        if (lastOpenIdx === -1) return;
+                        // 정규식으로 파싱: 작물명(품종)(데이터)
+                        // 예: "고추(단고추류 포함)(꽃노랑총채벌레,발생 초부터...,Ⅳ(저독성),Ⅱ급)"
+                        const regex = /^([^(]+)\([^)]*\)\((.+)\)$/;
+                        const match = entry.match(regex);
                         
-                        // 마지막 `(` 부터 `)`까지의 데이터 추출
-                        const cropNamePart = entry.substring(0, lastOpenIdx);
-                        const dataPart = entry.substring(lastOpenIdx + 1, entry.length - 1); // 마지막 `)` 제거
+                        if (!match) {
+                            console.warn('⚠️ 정규식 매칭 실패:', entry);
+                            return;
+                        }
                         
-                        console.log('📝 cropNamePart:', cropNamePart);
+                        const cropNameClean = match[1].trim();
+                        const dataPart = match[2];
+                        
+                        console.log('📝 cropName:', cropNameClean);
                         console.log('📝 dataPart:', dataPart);
                         
-                        // 데이터 파싱 (쉼표로 구분)
-                        let details = dataPart.split(',').map(d => d.trim());
+                        // 데이터를 쉼표로 분리 (주의: Ⅳ(저독성) 내부의 괄호는 문제 아님)
+                        const details = dataPart.split(',').map(d => d.trim());
                         
                         console.log('📝 details:', details);
                         
-                        // 작물명 추출 (첫 번째 괄호 전)
-                        const cropNameClean = cropNamePart.split('(')[0].trim();
+                        if (details.length < 7) {
+                            console.warn('⚠️ 데이터 부족:', details);
+                            return;
+                        }
                         
-                        // 각 필드 추출
-                        const pestName = details[0] || '';
-                        const timing = details[1] || '';
-                        const dilution = details[2] || '';
-                        const harvestDays = details[3] || '';
-                        const times = details[4] || '';
-                        const humanToxic = details[5] || '';
-                        const fishToxic = details[6] || '';
+                        const pestName = details[0];
+                        const timing = details[1];
+                        const dilution = details[2];
+                        const harvestDays = details[3];
+                        const times = details[4];
+                        const humanToxic = details[5];
+                        const fishToxic = details[6];
                         
                         console.log('✅ 파싱 완료:', {
                             cropName: cropNameClean,
-                            pestName: pestName,
-                            timing: timing,
-                            dilution: dilution,
-                            harvestDays: harvestDays,
-                            times: times,
-                            humanToxic: humanToxic,
-                            fishToxic: fishToxic
+                            pestName, timing, dilution, harvestDays, times, humanToxic, fishToxic
                         });
                         
                         crops.push({
@@ -1675,7 +1675,7 @@
                             fishToxic: fishToxic
                         });
                     } catch (e) {
-                        console.error('❌ 작물 파싱 오류:', e.message, 'entry:', entry);
+                        console.error('❌ 작물 파싱 오류:', e.message);
                     }
                 });
                 
