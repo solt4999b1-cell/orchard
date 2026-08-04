@@ -1597,21 +1597,32 @@
         }
 
         function filterOwnedCrops(allCrops, ownedPlantNames) {
-            // 재배 중인 작물만 필터링
-            // 작물명 일부 매칭도 지원 (예: "고추" vs "고추(단고추류 포함)")
+            console.log('🔍 필터링 시작');
+            console.log('📊 allCrops:', allCrops.map(c => c.cropName));
+            console.log('🌳 ownedPlantNames:', ownedPlantNames);
             
-            return allCrops.filter(crop => {
+            const result = allCrops.filter(crop => {
                 const cropName = crop.cropName.toLowerCase();
                 
-                return ownedPlantNames.some(ownedName => {
+                const match = ownedPlantNames.some(ownedName => {
                     const ownedNameLower = ownedName.toLowerCase();
                     
-                    // 정확히 일치하거나 포함 관계
-                    return cropName === ownedNameLower || 
+                    const isMatch = cropName === ownedNameLower || 
                            cropName.includes(ownedNameLower) || 
                            ownedNameLower.includes(cropName);
+                    
+                    if (isMatch) {
+                        console.log('✅ 매칭됨:', cropName, '<=>', ownedNameLower);
+                    }
+                    
+                    return isMatch;
                 });
+                
+                return match;
             });
+            
+            console.log('🎯 필터링 결과 개수:', result.length);
+            return result;
         }
 
         function parsePesticideData(cropsData) {
@@ -1619,67 +1630,67 @@
             
             try {
                 // "/" 기준으로 작물 분리
-                const cropEntries = cropsData.split('/').filter(entry => entry.trim());
+                let cropEntries = cropsData.split('/').filter(entry => entry.trim());
                 
                 cropEntries.forEach(entry => {
                     try {
+                        // 🔧 공백 제거
+                        entry = entry.trim();
+                        
                         console.log('🔍 파싱 entry:', entry);
                         
-                        // 정규식으로 파싱: 작물명(품종)(데이터)
-                        // 예: "고추(단고추류 포함)(꽃노랑총채벌레,발생 초부터...,Ⅳ(저독성),Ⅱ급)"
-                        const regex = /^([^(]+)\([^)]*\)\((.+)\)$/;
-                        const match = entry.match(regex);
+                        // 작물명(품종)(데이터) 형식 파싱
+                        // 괄호 안에 괄호가 있을 수 있으므로 단순하게 처리
+                        let firstParen = entry.indexOf('(');
+                        let lastParen = entry.lastIndexOf(')');
                         
-                        if (!match) {
-                            console.warn('⚠️ 정규식 매칭 실패:', entry);
+                        if (firstParen === -1 || lastParen === -1) {
+                            console.warn('⚠️ 괄호 없음:', entry);
                             return;
                         }
                         
-                        const cropNameClean = match[1].trim();
-                        const dataPart = match[2];
+                        // 작물명 추출 (첫 괄호 전)
+                        let cropNameClean = entry.substring(0, firstParen).trim();
+                        
+                        // 데이터 부분 추출 (마지막 괄호 안)
+                        // 마지막 )를 찾아서 그 전의 (부터 데이터 추출
+                        let secondLastParen = entry.lastIndexOf('(');
+                        if (secondLastParen <= firstParen) {
+                            console.warn('⚠️ 데이터 괄호 찾기 실패:', entry);
+                            return;
+                        }
+                        
+                        let dataPart = entry.substring(secondLastParen + 1, lastParen);
                         
                         console.log('📝 cropName:', cropNameClean);
                         console.log('📝 dataPart:', dataPart);
                         
-                        // 데이터를 쉼표로 분리 (주의: Ⅳ(저독성) 내부의 괄호는 문제 아님)
-                        const details = dataPart.split(',').map(d => d.trim());
-                        
-                        console.log('📝 details:', details);
+                        // 데이터를 쉼표로 분리
+                        let details = dataPart.split(',').map(d => d.trim());
                         
                         if (details.length < 7) {
-                            console.warn('⚠️ 데이터 부족:', details);
+                            console.warn('⚠️ 데이터 부족 (' + details.length + '개):', details);
                             return;
                         }
                         
-                        const pestName = details[0];
-                        const timing = details[1];
-                        const dilution = details[2];
-                        const harvestDays = details[3];
-                        const times = details[4];
-                        const humanToxic = details[5];
-                        const fishToxic = details[6];
-                        
-                        console.log('✅ 파싱 완료:', {
-                            cropName: cropNameClean,
-                            pestName, timing, dilution, harvestDays, times, humanToxic, fishToxic
-                        });
-                        
                         crops.push({
                             cropName: cropNameClean,
-                            pestName: pestName,
-                            timing: timing,
-                            dilution: dilution,
-                            harvestDays: harvestDays,
-                            times: times,
-                            humanToxic: humanToxic,
-                            fishToxic: fishToxic
+                            pestName: details[0],
+                            timing: details[1],
+                            dilution: details[2],
+                            harvestDays: details[3],
+                            times: details[4],
+                            humanToxic: details[5],
+                            fishToxic: details[6]
                         });
+                        
+                        console.log('✅ 파싱 완료:', cropNameClean);
                     } catch (e) {
                         console.error('❌ 작물 파싱 오류:', e.message);
                     }
                 });
                 
-                console.log('✅ 최종 crops:', crops);
+                console.log('✅ 최종 crops 개수:', crops.length);
             } catch (e) {
                 console.error('❌ parsePesticideData 오류:', e.message);
             }
