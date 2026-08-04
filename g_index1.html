@@ -1875,12 +1875,48 @@
         function findCropGroup(cropName) {
             const cropLower = cropName.toLowerCase();
             
-            // 정확한 매칭
-            for (const [main, variants] of Object.entries(cropGroups)) {
-                if (cropLower === main.toLowerCase()) return main;
-                if (variants.some(v => cropLower === v.toLowerCase())) return main;
+            // 1️⃣ 혼동 사전 확인: 제외할 작물
+            for (const [excluded, conflictList] of Object.entries(confusableDictionary)) {
+                if (cropLower === excluded.toLowerCase()) {
+                    // 이 작물은 스킵할 수 있는 작물입니다
+                    console.log('⚠️ 혼동 작물 감지:', cropName);
+                }
             }
-            return cropName; // 그룹에 없으면 자신
+            
+            // 2️⃣ 그룹에서 정확한 매칭
+            for (const [main, variants] of Object.entries(cropGroups)) {
+                if (cropLower === main.toLowerCase()) {
+                    return main;
+                }
+            }
+            
+            // 3️⃣ 변형 매칭 (느슨한 매칭)
+            for (const [main, variants] of Object.entries(cropGroups)) {
+                if (variants.length === 0) continue;
+                
+                // 정확한 매칭
+                if (variants.some(v => cropLower === v.toLowerCase())) {
+                    console.log('✅ 변형 매칭:', cropName, '→', main);
+                    return main;
+                }
+                
+                // 포함 관계 매칭 (2글자 이상)
+                if (variants.some(v => {
+                    const vLower = v.toLowerCase();
+                    if (cropLower.length >= 2 && vLower.length >= 2) {
+                        return cropLower.includes(vLower.replace(/[()①②③④⑤]/g, '')) ||
+                               vLower.includes(cropLower);
+                    }
+                    return false;
+                })) {
+                    console.log('✅ 포함 매칭:', cropName, '→', main);
+                    return main;
+                }
+            }
+            
+            // 4️⃣ 그룹에 없으면 자신
+            console.log('❓ 그룹 없음:', cropName);
+            return cropName;
         }
 
         function getOwnedPlants() {
