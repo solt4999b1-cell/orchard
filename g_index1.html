@@ -1322,11 +1322,15 @@
                 console.log('🔍 농약 정보 조회 응답:', response);
                 
                 if (response.success && response.data) {
+                    // data가 배열이면 첫 번째 요소 가져오기
+                    const dataItem = Array.isArray(response.data) ? response.data[0] : response.data;
+                    
+                    console.log('📦 dataItem:', dataItem);
+                    
                     // 로컬 데이터 형식 감지 (rawCropsData가 있으면 로컬 데이터)
-                    if (response.data.rawCropsData) {
-                        console.log('📝 로컬 데이터 형식 감지');
-                        // rawCropsData 문자열을 처리
-                        displayLocalPesticideData(response.data.rawCropsData, pesticideName);
+                    if (dataItem && dataItem.rawCropsData) {
+                        console.log('📝 로컬 데이터 형식 감지, cropsData:', dataItem.rawCropsData);
+                        displayLocalPesticideData(dataItem.rawCropsData, pesticideName);
                     } else if (Array.isArray(response.data) && response.data.length > 0) {
                         // PSIS 데이터 형식
                         displayPsisData(response.data, pesticideName);
