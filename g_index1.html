@@ -929,6 +929,16 @@
     </div>
 
     <script>
+        // 🔥 캐시 강제 삭제
+        console.log('🧹 localStorage 삭제 중...');
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+            console.log('✅ 캐시 완전 삭제됨!');
+        } catch(e) {
+            console.error('캐시 삭제 실패:', e);
+        }
+
         // ✅ 콘솔 경고 억제 (외부 스크립트 주입 방지)
         if (typeof window.rhwpDev !== 'undefined') {
             console.log = function() {};
@@ -1216,11 +1226,87 @@
                             <span>${config.label}</span>
                         </div>
                         ${items.map(r => {
-                            // 🔧 농약/시비는 기본 형식으로 렌더링
-                            if (category === '농약' || category === '시비') {
+                            // 🔧 농약 관리 - r[4]의 농약명들을 파싱해서 강조
+                            if (category === '농약') {
+                                const details = r[4] || '';
+                                
+                                // 농약명 추출 (·, 또는 등으로 구분)
+                                const pestNames = [];
+                                const detailText = details
+                                    .split('.')
+                                    .map(sentence => {
+                                        // 각 문장에서 농약명 추출
+                                        const matches = sentence.match(/([가-힣A-Za-z0-9]+)/g) || [];
+                                        matches.forEach(name => {
+                                            if (name.length > 1 && APP.data.myPesticides?.some(p => p[1]?.includes(name))) {
+                                                pestNames.push(name);
+                                            }
+                                        });
+                                        return sentence;
+                                    })
+                                    .join('.');
+                                
+                                // myPesticides에서 찾은 농약 강조 표시
+                                const foundPesticides = [];
+                                if (details) {
+                                    const sentenceArray = details.split('.');
+                                    sentenceArray.forEach(sentence => {
+                                        // ·와 또는으로 구분된 농약명들 파싱
+                                        const items = sentence.split(/·|또는|,/).map(s => s.trim()).filter(s => s && s.length > 0);
+                                        items.forEach(item => {
+                                            // myPesticides에서 찾기
+                                            const found = APP.data.myPesticides?.find(p => 
+                                                p[1]?.toLowerCase().includes(item.toLowerCase()) ||
+                                                item.toLowerCase().includes(p[1]?.toLowerCase())
+                                            );
+                                            if (found) {
+                                                foundPesticides.push({
+                                                    name: item,
+                                                    pesticide: found
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
+                                
                                 return `
                                     <div class="card">
-                                        <div class="card-title">${category === '농약' ? '💊' : '🌾'} ${r[2] || ''}</div>
+                                        <div class="card-title">💊 ${r[2] || ''}</div>
+                                        <div class="card-content">
+                                            ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                            
+                                            ${foundPesticides.length > 0 ? `
+                                                <div style="background: #fff3e0; padding: 12px; border-radius: 6px; border-left: 4px solid #ff9800; margin: 8px 0;">
+                                                    <div style="font-weight: bold; color: #ff9800; margin-bottom: 8px;">🎯 사용 농약</div>
+                                                    ${foundPesticides.map(fp => `
+                                                        <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ffe0b2;">
+                                                            <div style="font-weight: bold; color: #ff6f00; margin-bottom: 4px;">${fp.name}</div>
+                                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                                                                <div style="background: white; padding: 6px; border-radius: 4px;">
+                                                                    <div style="color: #666;">희석배수</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.pesticide[6] || '-'}</div>
+                                                                </div>
+                                                                <div style="background: white; padding: 6px; border-radius: 4px;">
+                                                                    <div style="color: #666;">사용횟수</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.pesticide[4] || '-'}회</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${r[4] ? `<div class="card-details" style="color: #666; margin-top: 8px;">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            
+                            // 시비 관리
+                            if (category === '시비') {
+                                return `
+                                    <div class="card">
+                                        <div class="card-title">🌾 ${r[2] || ''}</div>
                                         <div class="card-content">
                                             ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
                                             ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
