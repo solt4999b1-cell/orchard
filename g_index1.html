@@ -1616,7 +1616,6 @@
 
         function parsePesticideData(cropsData) {
             // 형식: "작물명(품종)(병해충,사용시기,희석배수,수확일,회수,인축독성,어독성)/작물명(품종)(...)/..."
-            // 예: "고추(단고추류 포함)(꽃노랑총채벌레,발생 초부터 경엽처리,1000배,수확2일전,2회,Ⅳ(저독성),Ⅱ급)/감자(...)"
             
             const crops = [];
             
@@ -1626,9 +1625,6 @@
                 
                 cropEntries.forEach(entry => {
                     try {
-                        // 정규식: 작물명(품종)(데이터들)
-                        // 예: "고추(단고추류 포함)(꽃노랑총채벌레,발생 초부터 경엽처리,1000배,...)"
-                        
                         // 가장 먼저 나오는 ) 위치 찾기 (품종 끝)
                         const firstCloseIdx = entry.indexOf(')');
                         if (firstCloseIdx === -1) return;
@@ -1640,10 +1636,26 @@
                         const dataMatch = entry.substring(firstCloseIdx + 1).match(/^\(([^\)]*)\)/);
                         if (!dataMatch) return;
                         
-                        const details = dataMatch[1].split(',').map(d => d.trim());
+                        let details = dataMatch[1].split(',').map(d => d.trim());
                         
                         // 작물명만 추출 (괄호 제거)
                         const cropNameClean = cropNameWithVariety.split('(')[0].trim();
+                        
+                        // 🔧 인축독성/어독성 괄호 처리
+                        let humanToxic = details[5] || '';
+                        let fishToxic = details[6] || '';
+                        
+                        // details[5]가 불완전하면 (예: "Ⅳ(저독성")
+                        // 뒷부분을 details[6]에서 가져오기
+                        if (humanToxic.includes('(') && !humanToxic.includes(')')) {
+                            // "Ⅳ(저독성" 형태면 뒷 괄호를 붙여줌
+                            humanToxic = humanToxic + ')';
+                        }
+                        
+                        // fishToxic이 "Ⅱ급)" 형태면 ")" 제거
+                        if (fishToxic.endsWith(')')) {
+                            fishToxic = fishToxic.slice(0, -1);
+                        }
                         
                         crops.push({
                             cropName: cropNameClean,
@@ -1653,8 +1665,8 @@
                             dilution: details[2] || '',
                             harvestDays: details[3] || '',
                             times: details[4] || '',
-                            humanToxic: details[5] || '',
-                            fishToxic: details[6] || ''
+                            humanToxic: humanToxic,
+                            fishToxic: fishToxic
                         });
                     } catch (e) {
                         console.warn('작물 데이터 파싱 오류:', e.message, 'entry:', entry);
