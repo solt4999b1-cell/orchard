@@ -1615,8 +1615,6 @@
         }
 
         function parsePesticideData(cropsData) {
-            // 형식: "작물명(품종)(병해충,사용시기,희석배수,수확일,회수,인축독성,어독성)/작물명(품종)(...)/..."
-            
             const crops = [];
             
             try {
@@ -1625,56 +1623,65 @@
                 
                 cropEntries.forEach(entry => {
                     try {
-                        // 가장 먼저 나오는 ) 위치 찾기 (품종 끝)
-                        const firstCloseIdx = entry.indexOf(')');
-                        if (firstCloseIdx === -1) return;
+                        console.log('🔍 파싱 entry:', entry);
                         
-                        // 작물명(품종) 추출
-                        const cropNameWithVariety = entry.substring(0, firstCloseIdx + 1);
+                        // 마지막 `(` 위치 찾기
+                        const lastOpenIdx = entry.lastIndexOf('(');
+                        if (lastOpenIdx === -1) return;
                         
-                        // 괄호 안의 데이터 추출
-                        const dataMatch = entry.substring(firstCloseIdx + 1).match(/^\(([^\)]*)\)/);
-                        if (!dataMatch) return;
+                        // 마지막 `(` 부터 `)`까지의 데이터 추출
+                        const cropNamePart = entry.substring(0, lastOpenIdx);
+                        const dataPart = entry.substring(lastOpenIdx + 1, entry.length - 1); // 마지막 `)` 제거
                         
-                        let details = dataMatch[1].split(',').map(d => d.trim());
+                        console.log('📝 cropNamePart:', cropNamePart);
+                        console.log('📝 dataPart:', dataPart);
                         
-                        // 작물명만 추출 (괄호 제거)
-                        const cropNameClean = cropNameWithVariety.split('(')[0].trim();
+                        // 데이터 파싱 (쉼표로 구분)
+                        let details = dataPart.split(',').map(d => d.trim());
                         
-                        // 🔧 인축독성/어독성 괄호 처리
-                        let humanToxic = details[5] || '';
-                        let fishToxic = details[6] || '';
+                        console.log('📝 details:', details);
                         
-                        // details[5]가 불완전하면 (예: "Ⅳ(저독성")
-                        // 뒷부분을 details[6]에서 가져오기
-                        if (humanToxic.includes('(') && !humanToxic.includes(')')) {
-                            // "Ⅳ(저독성" 형태면 뒷 괄호를 붙여줌
-                            humanToxic = humanToxic + ')';
-                        }
+                        // 작물명 추출 (첫 번째 괄호 전)
+                        const cropNameClean = cropNamePart.split('(')[0].trim();
                         
-                        // fishToxic이 "Ⅱ급)" 형태면 ")" 제거
-                        if (fishToxic.endsWith(')')) {
-                            fishToxic = fishToxic.slice(0, -1);
-                        }
+                        // 각 필드 추출
+                        const pestName = details[0] || '';
+                        const timing = details[1] || '';
+                        const dilution = details[2] || '';
+                        const harvestDays = details[3] || '';
+                        const times = details[4] || '';
+                        const humanToxic = details[5] || '';
+                        const fishToxic = details[6] || '';
+                        
+                        console.log('✅ 파싱 완료:', {
+                            cropName: cropNameClean,
+                            pestName: pestName,
+                            timing: timing,
+                            dilution: dilution,
+                            harvestDays: harvestDays,
+                            times: times,
+                            humanToxic: humanToxic,
+                            fishToxic: fishToxic
+                        });
                         
                         crops.push({
                             cropName: cropNameClean,
-                            cropNameWithVariety: cropNameWithVariety,
-                            pestName: details[0] || '',
-                            timing: details[1] || '',
-                            dilution: details[2] || '',
-                            harvestDays: details[3] || '',
-                            times: details[4] || '',
+                            pestName: pestName,
+                            timing: timing,
+                            dilution: dilution,
+                            harvestDays: harvestDays,
+                            times: times,
                             humanToxic: humanToxic,
                             fishToxic: fishToxic
                         });
                     } catch (e) {
-                        console.warn('작물 데이터 파싱 오류:', e.message, 'entry:', entry);
+                        console.error('❌ 작물 파싱 오류:', e.message, 'entry:', entry);
                     }
                 });
+                
+                console.log('✅ 최종 crops:', crops);
             } catch (e) {
-                console.error('parsePesticideData 오류:', e.message);
-                return [];
+                console.error('❌ parsePesticideData 오류:', e.message);
             }
             
             return crops;
