@@ -1445,6 +1445,11 @@
         }
 
         function displayLocalPesticideData(cropsData, pesticideName) {
+            // 🧠 첫 실행 시 작물명 학습
+            if (!window.learnedCropDictionary) {
+                window.learnedCropDictionary = learnCropDictionary();
+            }
+            
             const ownedPlantNames = getOwnedPlants();
             const container = document.getElementById('modal-crops-container');
         
@@ -1584,8 +1589,299 @@
         }
 
         // ════════════════════════════════════════════════════════════
-        // 재배 중인 작물 필터링 함수
+        // 재배 중인 작물 필터링 함수 (학습 기반)
         // ════════════════════════════════════════════════════════════
+
+        /**
+         * ❌ 혼동하기 쉬운 단어들 (제외 리스트)
+         * 예: "감" ≠ "감자", "배" ≠ "배추"
+         */
+        let confusableDictionary = {
+            '감': ['감자', '감귤'],              // "감" ≠ "감자"
+            '감자': ['감'],                      // "감자" ≠ "감"
+            '배': ['배추', '양배추'],            // "배" ≠ "배추"
+            '배추': ['양배추', '배'],            // "배추" ≠ "양배추", "배"
+            '양배추': ['배추'],                  // "양배추" ≠ "배추"
+            '파': ['양파', '쪽파', '대파'],     // "파" ≠ "양파"
+            '양파': ['파'],                      // "양파" ≠ "파"
+            '아주까리': ['아주까리콩'],          // ⚠️ "아주까리" ≠ "아주까리콩"
+            '아주까리콩': ['아주까리'],          // ⚠️ "아주까리콩" ≠ "아주까리"
+            '무': ['무화과'],                    // "무" ≠ "무화과"
+            '무화과': ['무'],                    // "무화과" ≠ "무"
+            '고구마': ['감자'],                  // "고구마" ≠ "감자"
+            '감자': ['고구마']                   // "감자" ≠ "고구마"
+        };
+
+        /**
+         * 🧠 myPesticides의 memo에서 작물명을 학습해서
+         * 혼동 사전을 자동 생성합니다.
+         * 예: "감"과 "감자"는 다른 종류
+         */
+        function learnCropDictionary() {
+            console.log('📚 작물명 학습 시작...');
+            
+            // Step 1: 모든 memo에서 작물명 추출
+            const cropSet = new Set();
+            
+            if (APP.data.myPesticides) {
+                APP.data.myPesticides.forEach(row => {
+                    const memo = row[12] || ''; // memo 열
+                    if (!memo) return;
+                    
+                    // "작물명(품종)(데이터)" 형식에서 작물명 추출
+                    const entries = memo.split('/');
+                    entries.forEach(entry => {
+                        const match = entry.trim().match(/^([^(]+)\(/);
+                        if (match) {
+                            const cropName = match[1].trim();
+                            cropSet.add(cropName);
+                        }
+                    });
+                });
+            }
+            
+            const crops = Array.from(cropSet).sort();
+            console.log('📝 추출된 작물(' + crops.length + '개):', crops);
+            
+            // Step 2: 혼동 사전 자동 생성
+            const confusable = {};
+            
+            crops.forEach(crop1 => {
+                const conflicts = [];
+                
+                crops.forEach(crop2 => {
+                    if (crop1 === crop2) return;
+                    
+                    // 🔧 포함 관계 확인
+                    // "감"과 "감자"는 다른 단어, "배추"와 "양배추"도 다름
+                    if (crop2.includes(crop1) && crop2.length > crop1.length + 1) {
+                        conflicts.push(crop2);
+                        console.log('  ❌', crop1, '≠', crop2, '(포함 관계)');
+                    }
+                });
+                
+                if (conflicts.length > 0) {
+                    confusable[crop1] = conflicts;
+                }
+            });
+            
+            console.log('📚 자동 생성된 혼동 사전:', confusable);
+            return confusable;
+        }
+
+        /**
+         * 🌾 같은 종류로 인식할 작물 그룹핑 (현재 재배 작물 기반)
+         * 예: "감"과 "단감", "토마토"와 "방울토마토"
+         * 
+         * 주의: "감" ≠ "감자", "배" ≠ "배추", "아주까리" ≠ "아주까리콩"
+         */
+        const cropGroups = {
+            // 과수류
+            '감': [],  // 단일 작물
+            '배': [],  // 단일 작물
+            
+            '다래': [
+                '다래 일세',
+                '다래 레몬프레시',
+                '다래 참다래(키위)',
+                '다래 용성2호'
+            ],
+            
+            '으름': [
+                '으름 토종',
+                '으름 슈퍼대실',
+                '으름 백화대실',
+                '으름 홍화대실'
+            ],
+            
+            '사과': [
+                '나가노신구 사과',
+                '돌고 사과',
+                '아리수 사과'
+            ],
+            
+            '살구': [
+                '백살구',
+                'B360살구',
+                '대천황살구(킹코트)',
+                '킹코트살구(하코트)',
+                '하코드살구'
+            ],
+            
+            '복분자': [
+                '블랙베리(슈퍼복분자)'
+            ],
+            
+            '무화과': [
+                '무화과 시카고하디',
+                '무화과 롱다우트',
+                '무화과 바나네',
+                '무화과 피코튬'
+            ],
+            
+            '매실': [
+                '남고 매실',
+                '노천 매실'
+            ],
+            
+            '포도': [
+                '머루포도(MBA)'
+            ],
+            
+            // 수박류 (가장 많은 품종)
+            '수박': [
+                '블랙망고수박',
+                '애플수박',
+                '자몽애플수박',
+                '흑피애플미니꼬꼬마수박①',
+                '흑피애플미니꼬꼬마수박②',
+                '애플미니꼬꼬마수박①',
+                '애플미니꼬꼬마수박②',
+                '접목수박',
+                '망고수박①',
+                '망고수박②',
+                '망고수박③',
+                '접목애플수박①',
+                '접목애플수박②',
+                '복수박①',
+                '복수박②'
+            ],
+            
+            // 호박류 (단호박, 애호박 모두 호박)
+            '호박': [
+                '보우짱 단호박①',
+                '보우짱 단호박②',
+                '애호박①',
+                '맷돌호박①',
+                '맷돌호박②',
+                '애호박②',
+                '미니단호박보우짱①'
+            ],
+            
+            // 참외
+            '참외': [
+                '망고참외',
+                '꿀참외',
+                '개구리참외',
+                '베타카로틴참외',
+                '사과참외'
+            ],
+            
+            // 오이
+            '오이': [
+                '백다다기오이'
+            ],
+            
+            '쿠카멜론': [
+                '쿠카멜론①',
+                '쿠카멜론②'
+            ],
+            
+            // 근채류
+            '마늘': [
+                '마늘(3이랑)',
+                '마늘(2이랑 후작)'
+            ],
+            
+            '양파': [
+                '양파',
+                '양파(6이랑)'
+            ],
+            
+            '생강': [
+                '토종생강',
+                '개량생강'
+            ],
+            
+            '무': [
+                '김장무'
+            ],
+            
+            // 특용작물
+            '어수리': [
+                '어수리(5이랑)',
+                '어수리(7이랑)',
+                '어수리(8이랑)',
+                '어수리(9이랑)',
+                '어수리(10이랑)'
+            ],
+            
+            '곤드레': [
+                '곤드레(7이랑)',
+                '곤드레(8이랑)',
+                '곤드레(9이랑)'
+            ],
+            
+            '근대': [
+                '황근대',
+                '황근대(7이랑)',
+                '청근대',
+                '청근대(7이랑)'
+            ],
+            
+            // 두류
+            '동부': [
+                '동부(마늘 후작)',
+                '동부콩'
+            ],
+            
+            '콩': [
+                '선비잡이콩',
+                '작두콩'
+            ],
+            
+            // 기타 작물
+            '고구마': [
+                '고구마',
+                '고구마(2차)'
+            ],
+            
+            '감자': [
+                '감자(봄재배)'
+            ],
+            
+            '배추': [
+                '배추(가을)'
+            ],
+            
+            '토마토': [],
+            '열무': [],
+            '시금치': [],
+            '옥수수': [],
+            '바질': [],
+            '바이오체리': [],
+            '블루베리': ['블루베리 패트리오트'],
+            '헤이즐넛': [
+                '헤이즐넛 바르셀로나',
+                '헤이즐넛 초거대향'
+            ],
+            '앵두': ['앵두(대홍앵)'],
+            '모과': [
+                '마르멜로(서양모과)',
+                '모과(대실모과)'
+            ],
+            '땅콩': [],
+            '머루콩': [],
+            
+            // ⚠️ 중요: 이 둘은 다른 작물!
+            '아주까리': [],        // 피마자유 추출용
+            '아주까리콩': []       // 콩 종류
+        };
+
+        /**
+         * 작물을 그룹으로 매핑
+         * "방울토마토" → "토마토"
+         */
+        function findCropGroup(cropName) {
+            const cropLower = cropName.toLowerCase();
+            
+            // 정확한 매칭
+            for (const [main, variants] of Object.entries(cropGroups)) {
+                if (cropLower === main.toLowerCase()) return main;
+                if (variants.some(v => cropLower === v.toLowerCase())) return main;
+            }
+            return cropName; // 그룹에 없으면 자신
+        }
 
         function getOwnedPlants() {
             // 재배 작물 시트(growPlants)에서 작물명 추출
@@ -1597,31 +1893,31 @@
         }
 
         function filterOwnedCrops(allCrops, ownedPlantNames) {
-            console.log('🔍 필터링 시작');
+            console.log('🔍 필터링 시작 (그룹 기반)');
             console.log('📊 allCrops:', allCrops.map(c => c.cropName));
             console.log('🌳 ownedPlantNames:', ownedPlantNames);
             
-            const result = allCrops.filter(crop => {
-                const cropName = crop.cropName.toLowerCase();
-                
-                const match = ownedPlantNames.some(ownedName => {
-                    const ownedNameLower = ownedName.toLowerCase();
-                    
-                    const isMatch = cropName === ownedNameLower || 
-                           cropName.includes(ownedNameLower) || 
-                           ownedNameLower.includes(cropName);
-                    
-                    if (isMatch) {
-                        console.log('✅ 매칭됨:', cropName, '<=>', ownedNameLower);
-                    }
-                    
-                    return isMatch;
-                });
-                
-                return match;
+            // 재배 중인 작물을 그룹화
+            const ownedGroups = new Set();
+            ownedPlantNames.forEach(name => {
+                const group = findCropGroup(name);
+                ownedGroups.add(group.toLowerCase());
+                console.log('🌳 그룹핑:', name, '→', group);
             });
             
-            console.log('🎯 필터링 결과 개수:', result.length);
+            const result = allCrops.filter(crop => {
+                const cropGroup = findCropGroup(crop.cropName);
+                
+                if (ownedGroups.has(cropGroup.toLowerCase())) {
+                    console.log('✅ 매칭:', crop.cropName, '(그룹:', cropGroup, ')');
+                    return true;
+                }
+                
+                return false;
+            });
+            
+            console.log('🎯 필터링 결과:', result.length + '개');
+            result.forEach(r => console.log('  ✓', r.cropName));
             return result;
         }
 
