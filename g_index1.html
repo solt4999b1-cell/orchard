@@ -1630,46 +1630,41 @@
             
             try {
                 // "/" 기준으로 작물 분리
-                let cropEntries = cropsData.split('/').filter(entry => entry.trim());
+                const cropEntries = cropsData.split('/').map(e => e.trim()).filter(e => e);
                 
                 cropEntries.forEach(entry => {
                     try {
-                        // 🔧 공백 제거
-                        entry = entry.trim();
+                        console.log('🔍 파싱:', entry);
                         
-                        console.log('🔍 파싱 entry:', entry);
+                        // 첫 번째 ( 찾기: 작물명 끝
+                        const firstParen = entry.indexOf('(');
+                        if (firstParen === -1) return;
                         
-                        // 작물명(품종)(데이터) 형식 파싱
-                        // 괄호 안에 괄호가 있을 수 있으므로 단순하게 처리
-                        let firstParen = entry.indexOf('(');
-                        let lastParen = entry.lastIndexOf(')');
+                        // 마지막 ) 찾기: 데이터 끝  
+                        const lastParen = entry.lastIndexOf(')');
+                        if (lastParen === -1) return;
                         
-                        if (firstParen === -1 || lastParen === -1) {
-                            console.warn('⚠️ 괄호 없음:', entry);
+                        // 작물명 추출
+                        const cropNameClean = entry.substring(0, firstParen).trim();
+                        
+                        // 첫 ( 이후에서 두 번째 ( 찾기: 데이터 시작
+                        let dataStart = entry.indexOf('(', firstParen + 1);
+                        if (dataStart === -1) {
+                            console.warn('⚠️ 데이터 괄호 없음:', entry);
                             return;
                         }
                         
-                        // 작물명 추출 (첫 괄호 전)
-                        let cropNameClean = entry.substring(0, firstParen).trim();
+                        // 데이터 추출: 두 번째 ( 다음부터 마지막 ) 전까지
+                        const dataPart = entry.substring(dataStart + 1, lastParen);
                         
-                        // 데이터 부분 추출 (마지막 괄호 안)
-                        // 마지막 )를 찾아서 그 전의 (부터 데이터 추출
-                        let secondLastParen = entry.lastIndexOf('(');
-                        if (secondLastParen <= firstParen) {
-                            console.warn('⚠️ 데이터 괄호 찾기 실패:', entry);
-                            return;
-                        }
+                        console.log('✅ cropName:', cropNameClean);
+                        console.log('✅ dataPart:', dataPart);
                         
-                        let dataPart = entry.substring(secondLastParen + 1, lastParen);
-                        
-                        console.log('📝 cropName:', cropNameClean);
-                        console.log('📝 dataPart:', dataPart);
-                        
-                        // 데이터를 쉼표로 분리
-                        let details = dataPart.split(',').map(d => d.trim());
+                        // 쉼표로 분리
+                        const details = dataPart.split(',').map(d => d.trim());
                         
                         if (details.length < 7) {
-                            console.warn('⚠️ 데이터 부족 (' + details.length + '개):', details);
+                            console.warn('⚠️ 데이터 부족 (' + details.length + '개)');
                             return;
                         }
                         
@@ -1684,13 +1679,12 @@
                             fishToxic: details[6]
                         });
                         
-                        console.log('✅ 파싱 완료:', cropNameClean);
                     } catch (e) {
-                        console.error('❌ 작물 파싱 오류:', e.message);
+                        console.error('❌ 파싱 오류:', e.message);
                     }
                 });
                 
-                console.log('✅ 최종 crops 개수:', crops.length);
+                console.log('✅ 최종 crops:', crops.length + '개');
             } catch (e) {
                 console.error('❌ parsePesticideData 오류:', e.message);
             }
