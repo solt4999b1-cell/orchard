@@ -1230,23 +1230,7 @@
                             if (category === '농약') {
                                 const details = r[4] || '';
                                 
-                                // 농약명 추출 (·, 또는 등으로 구분)
-                                const pestNames = [];
-                                const detailText = details
-                                    .split('.')
-                                    .map(sentence => {
-                                        // 각 문장에서 농약명 추출
-                                        const matches = sentence.match(/([가-힣A-Za-z0-9]+)/g) || [];
-                                        matches.forEach(name => {
-                                            if (name.length > 1 && APP.data.myPesticides?.some(p => p[1]?.includes(name))) {
-                                                pestNames.push(name);
-                                            }
-                                        });
-                                        return sentence;
-                                    })
-                                    .join('.');
-                                
-                                // myPesticides에서 찾은 농약 강조 표시
+                                // myPesticides에서 찾은 농약들
                                 const foundPesticides = [];
                                 if (details) {
                                     const sentenceArray = details.split('.');
@@ -1260,9 +1244,43 @@
                                                 item.toLowerCase().includes(p[1]?.toLowerCase())
                                             );
                                             if (found) {
+                                                // memo에서 재배작물 관련 정보 추출
+                                                const memo = found[12] || '';
+                                                const memoLines = memo.split('/');
+                                                
+                                                // 현재 재배중인 작물 찾기
+                                                const ownedPlants = getOwnedPlants();
+                                                let dilution = '-';
+                                                let usageCount = '-';
+                                                
+                                                memoLines.forEach(line => {
+                                                    const match = line.trim().match(/^([^(]+)\(([^)]+)\)/);
+                                                    if (match) {
+                                                        const cropName = match[1].trim();
+                                                        const details = match[2];
+                                                        
+                                                        // 재배작물인지 확인
+                                                        const isOwnedCrop = ownedPlants.some(o => 
+                                                            cropName.toLowerCase().includes(o.toLowerCase()) ||
+                                                            o.toLowerCase().includes(cropName.toLowerCase())
+                                                        );
+                                                        
+                                                        if (isOwnedCrop) {
+                                                            const parts = details.split(',');
+                                                            if (parts.length >= 4) {
+                                                                // [3]번 인덱스가 희석배수
+                                                                dilution = parts[3]?.trim() || '-';
+                                                                // [5]번 인덱스가 사용횟수
+                                                                usageCount = parts[5]?.trim() || '-';
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                                
                                                 foundPesticides.push({
                                                     name: item,
-                                                    pesticide: found
+                                                    dilution: dilution,
+                                                    usageCount: usageCount
                                                 });
                                             }
                                         });
@@ -1284,11 +1302,11 @@
                                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
                                                                 <div style="background: white; padding: 6px; border-radius: 4px;">
                                                                     <div style="color: #666;">희석배수</div>
-                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.pesticide[6] || '-'}</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.dilution}</div>
                                                                 </div>
                                                                 <div style="background: white; padding: 6px; border-radius: 4px;">
                                                                     <div style="color: #666;">사용횟수</div>
-                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.pesticide[4] || '-'}회</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.usageCount}</div>
                                                                 </div>
                                                             </div>
                                                         </div>
