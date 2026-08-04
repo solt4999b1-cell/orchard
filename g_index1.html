@@ -1317,8 +1317,10 @@
                                                     }
                                                 }
                                                 
-                                                // 희석배수 변환: ㎏/10a 형식을 20L 기준으로 변환
+                                                // 희석배수 변환: 다양한 형식을 20L 기준으로 변환
                                                 let convertedDilution = dilution;
+                                                
+                                                // 1️⃣ ㎏/10a 형식 변환
                                                 if (dilution.includes('㎏') && dilution.includes('10a')) {
                                                     const match = dilution.match(/(-?\s*)(\d+(?:\.\d+)?)\s*㎏\s*\/\s*10a/);
                                                     if (match) {
@@ -1327,7 +1329,17 @@
                                                         const gramsPer20L = Math.round((kg * 1000) / 30);
                                                         // 희석배수 계산: 20L(20000g) / 농약량(g)
                                                         const dilutionRatio = Math.round(20000 / gramsPer20L);
-                                                        convertedDilution = `약 ${dilutionRatio}배`;
+                                                        convertedDilution = `약 ${dilutionRatio}배(${gramsPer20L}g/20L)`;
+                                                    }
+                                                }
+                                                // 2️⃣ "배" 형식 변환 (예: "2000배" → "2000배(10g/20L)")
+                                                else if (dilution.includes('배')) {
+                                                    const match = dilution.match(/(\d+(?:\.\d+)?)\s*배/);
+                                                    if (match) {
+                                                        const dilutionRatio = parseFloat(match[1]);
+                                                        // 20L(20000g) / 희석배수 = 농약량(g)
+                                                        const gramsPer20L = Math.round(20000 / dilutionRatio);
+                                                        convertedDilution = `${dilution}(${gramsPer20L}g/20L)`;
                                                     }
                                                 }
                                                 
