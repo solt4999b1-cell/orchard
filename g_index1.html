@@ -1238,10 +1238,13 @@
                                         // ·와 또는으로 구분된 농약명들 파싱
                                         const items = sentence.split(/·|또는|,/).map(s => s.trim()).filter(s => s && s.length > 0);
                                         items.forEach(item => {
+                                            // 농약명 정제 (예: "리도밀골드 병예방" → "리도밀골드")
+                                            const cleanedItem = item.replace(/\s+(병예방|방제|관리|처리|강화|계속|예방)$/, '').trim();
+                                            
                                             // myPesticides에서 찾기
                                             const found = APP.data.myPesticides?.find(p => 
-                                                p[1]?.toLowerCase().includes(item.toLowerCase()) ||
-                                                item.toLowerCase().includes(p[1]?.toLowerCase())
+                                                p[1]?.toLowerCase().includes(cleanedItem.toLowerCase()) ||
+                                                cleanedItem.toLowerCase().includes(p[1]?.toLowerCase())
                                             );
                                             if (found) {
                                                 // memo에서 재배작물 관련 정보 추출
@@ -1252,6 +1255,7 @@
                                                 const ownedPlants = getOwnedPlants();
                                                 let dilution = '-';
                                                 let usageCount = '-';
+                                                let foundCrop = false;
                                                 
                                                 memoLines.forEach(line => {
                                                     const match = line.trim().match(/^([^(]+)\(([^)]+)\)/);
@@ -1266,19 +1270,33 @@
                                                         );
                                                         
                                                         if (isOwnedCrop) {
+                                                            foundCrop = true;
                                                             const parts = details.split(',');
-                                                            if (parts.length >= 4) {
-                                                                // [3]번 인덱스가 희석배수
-                                                                dilution = parts[3]?.trim() || '-';
-                                                                // [5]번 인덱스가 사용횟수
+                                                            if (parts.length >= 6) {
+                                                                // parts[2]가 희석배수/용량
+                                                                dilution = parts[2]?.trim() || '-';
+                                                                // parts[5]가 사용횟수
                                                                 usageCount = parts[5]?.trim() || '-';
                                                             }
                                                         }
                                                     }
                                                 });
                                                 
+                                                // 재배 작물이 없으면 첫 번째 항목으로 표시
+                                                if (!foundCrop && memoLines.length > 0) {
+                                                    const match = memoLines[0].trim().match(/^([^(]+)\(([^)]+)\)/);
+                                                    if (match) {
+                                                        const details = match[2];
+                                                        const parts = details.split(',');
+                                                        if (parts.length >= 6) {
+                                                            dilution = parts[2]?.trim() || '-';
+                                                            usageCount = parts[5]?.trim() || '-';
+                                                        }
+                                                    }
+                                                }
+                                                
                                                 foundPesticides.push({
-                                                    name: item,
+                                                    name: cleanedItem,
                                                     dilution: dilution,
                                                     usageCount: usageCount
                                                 });
