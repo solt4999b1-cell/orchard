@@ -1249,7 +1249,11 @@
                                             if (found) {
                                                 // memo에서 재배작물 관련 정보 추출
                                                 const memo = found[12] || '';
-                                                const memoLines = memo.split('/');
+                                                // `) /` 로 분할해서 불완전한 라인 방지 (6㎏/10a 때문)
+                                                const memoLines = memo.split(/\) \/ /).map((line, idx, arr) => {
+                                                    if (idx === arr.length - 1) return line;  // 마지막은 이미 괄호 닫힘
+                                                    return line + ')';  // 나머지는 괄호 추가
+                                                });
                                                 
                                                 // 현재 재배중인 작물 찾기
                                                 const ownedPlants = getOwnedPlants();
@@ -1272,11 +1276,18 @@
                                                         if (isOwnedCrop) {
                                                             foundCrop = true;
                                                             const parts = details.split(',');
-                                                            if (parts.length >= 6) {
+                                                            if (parts.length >= 3) {
                                                                 // parts[2]가 희석배수/용량
                                                                 dilution = parts[2]?.trim() || '-';
-                                                                // parts[5]가 사용횟수
-                                                                usageCount = parts[5]?.trim() || '-';
+                                                                
+                                                                // 사용횟수를 동적으로 찾기 ("회"를 포함하는 부분)
+                                                                usageCount = '-';
+                                                                for (let i = 0; i < parts.length; i++) {
+                                                                    if (parts[i]?.includes('회')) {
+                                                                        usageCount = parts[i]?.trim();
+                                                                        break;
+                                                                    }
+                                                                }
                                                             }
                                                         }
                                                     }
@@ -1284,20 +1295,45 @@
                                                 
                                                 // 재배 작물이 없으면 첫 번째 항목으로 표시
                                                 if (!foundCrop && memoLines.length > 0) {
-                                                    const match = memoLines[0].trim().match(/^([^(]+)\(([^)]+)\)/);
-                                                    if (match) {
-                                                        const details = match[2];
+                                                    const line = memoLines[0].trim();
+                                                    const firstParen = line.indexOf('(');
+                                                    const lastParen = line.lastIndexOf(')');
+                                                    
+                                                    if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+                                                        const details = line.substring(firstParen + 1, lastParen);
                                                         const parts = details.split(',');
-                                                        if (parts.length >= 6) {
+                                                        if (parts.length >= 3) {
                                                             dilution = parts[2]?.trim() || '-';
-                                                            usageCount = parts[5]?.trim() || '-';
+                                                            
+                                                            // 사용횟수를 동적으로 찾기
+                                                            usageCount = '-';
+                                                            for (let i = 0; i < parts.length; i++) {
+                                                                if (parts[i]?.includes('회')) {
+                                                                    usageCount = parts[i]?.trim();
+                                                                    break;
+                                                                }
+                                                            }
                                                         }
+                                                    }
+                                                }
+                                                
+                                                // 희석배수 변환: ㎏/10a 형식을 20L 기준으로 변환
+                                                let convertedDilution = dilution;
+                                                if (dilution.includes('㎏') && dilution.includes('10a')) {
+                                                    const match = dilution.match(/(-?\s*)(\d+(?:\.\d+)?)\s*㎏\s*\/\s*10a/);
+                                                    if (match) {
+                                                        const kg = parseFloat(match[2]);
+                                                        // 10a 기준 약 600L 살포 → 20L는 1/30
+                                                        const gramsPer20L = Math.round((kg * 1000) / 30);
+                                                        // 희석배수 계산: 20L(20000g) / 농약량(g)
+                                                        const dilutionRatio = Math.round(20000 / gramsPer20L);
+                                                        convertedDilution = `약 ${dilutionRatio}배`;
                                                     }
                                                 }
                                                 
                                                 foundPesticides.push({
                                                     name: cleanedItem,
-                                                    dilution: dilution,
+                                                    dilution: convertedDilution,
                                                     usageCount: usageCount
                                                 });
                                             }
