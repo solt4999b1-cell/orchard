@@ -1319,17 +1319,25 @@
 
             // PSIS API에서 데이터 조회
             fetchFromGAS('searchPesticide', { keyword: pesticideName }).then(response => {
-                console.log('🔍 PSIS 응답:', response);
+                console.log('🔍 농약 정보 조회 응답:', response);
                 
-                if (response.success && response.data && response.data.length > 0) {
-                    // PSIS 데이터 파싱
-                    displayPsisData(response.data, pesticideName);
+                if (response.success && response.data) {
+                    // 로컬 데이터 형식 감지 (rawCropsData가 있으면 로컬 데이터)
+                    if (response.data.rawCropsData) {
+                        console.log('📝 로컬 데이터 형식 감지');
+                        // rawCropsData 문자열을 처리
+                        displayLocalPesticideData(response.data.rawCropsData, pesticideName);
+                    } else if (Array.isArray(response.data) && response.data.length > 0) {
+                        // PSIS 데이터 형식
+                        displayPsisData(response.data, pesticideName);
+                    } else {
+                        displayLocalData(idx);
+                    }
                 } else {
-                    // 로컬 데이터 사용
                     displayLocalData(idx);
                 }
             }).catch(error => {
-                console.error('❌ PSIS 조회 오류:', error);
+                console.error('❌ 조회 오류:', error);
                 displayLocalData(idx);
             });
 
@@ -1432,6 +1440,77 @@
             }
         }
 
+        function displayLocalPesticideData(cropsData, pesticideName) {
+            const ownedPlantNames = getOwnedPlants();
+            const container = document.getElementById('modal-crops-container');
+        
+            if (!cropsData || cropsData.trim() === '') {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 이 농약의 사용 정보가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+        
+            const allCrops = parsePesticideData(cropsData);
+            const ownedCrops = filterOwnedCrops(allCrops, ownedPlantNames);
+        
+            if (ownedCrops.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 현재 재배 중인 작물에 대한 사용 정보가 없습니다.</p>
+                        <p style="font-size: 12px; margin-top: 15px;">
+                            이 농약은 다음 작물에 사용할 수 있습니다:
+                        </p>
+                        <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${allCrops.map(crop => `
+                                <div style="background: #f0f0f0; padding: 8px; border-radius: 6px; font-size: 12px;">
+                                    ${crop.cropName}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = ownedCrops.map(crop => `
+                    <div class="modal-section">
+                        <div class="crop-name">🌳 ${crop.cropName}</div>
+                        <table class="pest-info-table">
+                            <tr>
+                                <td>병해충명</td>
+                                <td>${crop.pestName || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용시기</td>
+                                <td>${crop.timing || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>희석배수</td>
+                                <td>${crop.dilution || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>수확전대기</td>
+                                <td>${crop.harvestDays || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용가능횟수</td>
+                                <td>${crop.times || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>인축독성</td>
+                                <td>${crop.humanToxic || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>어독성</td>
+                                <td>${crop.fishToxic || '-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `).join('');
+            }
+        }
+        
         function displayLocalData(idx) {
             // 로컬 r[12] 데이터 사용 (PSIS 실패 시)
             const pesticide = APP.data.myPesticides[idx];
