@@ -2196,16 +2196,19 @@
             
             for (let fruit of fruitCrops) {
                 if (lowerName === fruit.toLowerCase()) {
+                    console.log(`  ✅ classifyPlant("${cropName}") → fruits`);
                     return 'fruits';
                 }
             }
             
             for (let veg of vegCrops) {
                 if (lowerName === veg.toLowerCase()) {
+                    console.log(`  ✅ classifyPlant("${cropName}") → vegetables`);
                     return 'vegetables';
                 }
             }
             
+            console.log(`  ⚠️ classifyPlant("${cropName}") → vegetables (기본값)`);
             return 'vegetables';
         }
         
@@ -2250,7 +2253,11 @@
         }
 
         function renderPlants() {
+            console.log('🌾 renderPlants 호출됨');
+            console.log('📦 APP.data.growPlants:', APP.data.growPlants?.length || '없음');
+            
             if (!APP.data.growPlants || APP.data.growPlants.length === 0) {
+                console.log('❌ growPlants 없음!');
                 document.getElementById('plants-fruits-table').style.display = 'none';
                 document.getElementById('plants-fruits-empty').style.display = 'block';
                 document.getElementById('plants-vegetables-table').style.display = 'none';
@@ -2263,6 +2270,9 @@
                 const isActive = r[9];
                 return isActive === true || isActive === 'true' || isActive === 1;
             });
+            
+            console.log('🌱 활성 작물:', activePlants.length + '개');
+            activePlants.forEach(r => console.log(`  - ${r[1]} (active: ${r[9]})`));
 
             // 유실수와 채소 분류
             const fruitPlants = [];
@@ -2270,18 +2280,23 @@
             
             activePlants.forEach(r => {
                 const category = classifyPlant(r[1] || '');
+                console.log(`  분류: "${r[1]}" → ${category}`);
                 if (category === 'fruits') {
                     fruitPlants.push(r);
                 } else {
                     vegPlants.push(r);
                 }
             });
+            
+            console.log(`✅ 유실수: ${fruitPlants.length}개, 채소: ${vegPlants.length}개`);
 
             // 유실수 테이블
             if (fruitPlants.length === 0) {
+                console.log('📭 유실수 없음');
                 document.getElementById('plants-fruits-table').style.display = 'none';
                 document.getElementById('plants-fruits-empty').style.display = 'block';
             } else {
+                console.log('📊 유실수 테이블 렌더링');
                 document.getElementById('plants-fruits-table').style.display = 'table';
                 document.getElementById('plants-fruits-empty').style.display = 'none';
                 
@@ -2307,9 +2322,11 @@
 
             // 채소 테이블
             if (vegPlants.length === 0) {
+                console.log('📭 채소 없음');
                 document.getElementById('plants-vegetables-table').style.display = 'none';
                 document.getElementById('plants-vegetables-empty').style.display = 'block';
             } else {
+                console.log('📊 채소 테이블 렌더링');
                 document.getElementById('plants-vegetables-table').style.display = 'table';
                 document.getElementById('plants-vegetables-empty').style.display = 'none';
                 
