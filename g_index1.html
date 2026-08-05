@@ -2266,9 +2266,16 @@
             }
 
             // 활성 작물만 필터링
+            console.log('🔍 첫 3개 작물의 r[9] 값 확인:');
+            for (let i = 0; i < Math.min(3, APP.data.growPlants.length); i++) {
+                const r = APP.data.growPlants[i];
+                console.log(`  [${i}] "${r[1]}" → r[9]=${r[9]} (type: ${typeof r[9]})`);
+            }
+            
             const activePlants = APP.data.growPlants.filter(r => {
                 const isActive = r[9];
-                return isActive === true || isActive === 'true' || isActive === 1;
+                // 'active', true, 'true', 1 모두 포함
+                return isActive === 'active' || isActive === true || isActive === 'true' || isActive === 1;
             });
             
             console.log('🌱 활성 작물:', activePlants.length + '개');
