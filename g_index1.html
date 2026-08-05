@@ -1123,6 +1123,7 @@
                 growRecords: [],
                 workLog: []
             },
+            plantTypeOverrides: {}, // 작물 타입 오버라이드 (예: {'배추': 'vegetables'})
             isLoading: false,
             lastUpdateTime: null,
             menuExpanded: true
@@ -2187,9 +2188,14 @@
             }
         }
 
-        // 작물 분류 - 포함 매칭 방식
+        // 작물 분류 - 포함 매칭 방식 + 오버라이드 확인
         function classifyPlant(cropName) {
-            // 유실수 키워드 (포함 매칭용)
+            // 1️⃣ 오버라이드 확인 (사용자가 변경한 타입)
+            if (APP.plantTypeOverrides[cropName]) {
+                return APP.plantTypeOverrides[cropName];
+            }
+            
+            // 2️⃣ 유실수 키워드 (포함 매칭용)
             const fruitKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래', '감'];
             
             for (let fruit of fruitKeywords) {
@@ -2311,15 +2317,26 @@
         }
         
         function changePlantType(plantId, cropName, newType) {
-            // confusableDictionary에 작물 추가하기
+            // APP.plantTypeOverrides에 저장
+            APP.plantTypeOverrides[cropName] = newType;
+            
             if (newType === 'fruits') {
-                // 채소 → 유실수로 변경
+                console.log(`✅ "${cropName}"을(를) 유실수로 분류했습니다.`);
                 alert(`✅ "${cropName}"이(가) 유실수로 분류되었습니다.`);
             } else {
-                // 유실수 → 채소로 변경
+                console.log(`✅ "${cropName}"을(를) 채소로 분류했습니다.`);
                 alert(`✅ "${cropName}"이(가) 채소로 분류되었습니다.`);
             }
+            
+            // 테이블 재렌더링
             renderPlants();
+            
+            // 해당 탭으로 자동 전환
+            if (newType === 'fruits') {
+                showFruits();
+            } else {
+                showVegetables();
+            }
         }
 
         // ════════════════════════════════════════════════════════════
