@@ -962,7 +962,7 @@
                                     <th>작물명</th>
                                     <th>품종</th>
                                     <th>파종일</th>
-                                    <th>위치</th>
+                                    <th>비고</th>
                                     <th>작업</th>
                                 </tr>
                             </thead>
@@ -984,7 +984,7 @@
                                     <th>작물명</th>
                                     <th>품종</th>
                                     <th>파종일</th>
-                                    <th>위치</th>
+                                    <th>비고</th>
                                     <th>작업</th>
                                 </tr>
                             </thead>
@@ -2187,28 +2187,20 @@
             }
         }
 
-        // 작물 분류 함수
+        // 작물 분류 - 포함 매칭 방식
         function classifyPlant(cropName) {
-            const fruitCrops = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래'];
-            const vegCrops = ['배추', '무', '양파', '마늘', '당근', '오이', '호박', '토마토', '고추', '옥수수', '감자', '고구마', '쪽파', '대파', '생강', '시금치', '상추', '브로콜리'];
+            // 유실수 키워드 (포함 매칭용)
+            const fruitKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래', '감'];
             
-            const lowerName = cropName.toLowerCase();
-            
-            for (let fruit of fruitCrops) {
-                if (lowerName === fruit.toLowerCase()) {
-                    console.log(`  ✅ classifyPlant("${cropName}") → fruits`);
+            for (let fruit of fruitKeywords) {
+                if (cropName.includes(fruit)) {
+                    // 혼동 사전 확인 (배 ≠ 배추 등)
+                    if (confusableDictionary[fruit] && confusableDictionary[fruit].some(c => c === cropName)) {
+                        continue;
+                    }
                     return 'fruits';
                 }
             }
-            
-            for (let veg of vegCrops) {
-                if (lowerName === veg.toLowerCase()) {
-                    console.log(`  ✅ classifyPlant("${cropName}") → vegetables`);
-                    return 'vegetables';
-                }
-            }
-            
-            console.log(`  ⚠️ classifyPlant("${cropName}") → vegetables (기본값)`);
             return 'vegetables';
         }
         
@@ -2244,20 +2236,12 @@
             const plant = APP.data.growPlants.find(p => p[0] === plantId);
             if (plant) {
                 plant[4] = newVariety;
-                alert(`✅ ${cropName} 품종이 "${newVariety}"로 저장되었습니다.`);
-                varietyInput.style.backgroundColor = '#d4edda';
-                setTimeout(() => {
-                    varietyInput.style.backgroundColor = '';
-                }, 1000);
+                alert(`✅ ${cropName}의 품종이 "${newVariety}"로 저장되었습니다.`);
             }
         }
 
         function renderPlants() {
-            console.log('🌾 renderPlants 호출됨');
-            console.log('📦 APP.data.growPlants:', APP.data.growPlants?.length || '없음');
-            
             if (!APP.data.growPlants || APP.data.growPlants.length === 0) {
-                console.log('❌ growPlants 없음!');
                 document.getElementById('plants-fruits-table').style.display = 'none';
                 document.getElementById('plants-fruits-empty').style.display = 'block';
                 document.getElementById('plants-vegetables-table').style.display = 'none';
@@ -2265,63 +2249,37 @@
                 return;
             }
 
-            // 활성 작물만 필터링
-            console.log('🔍 첫 3개 작물의 r[9] 값 확인:');
-            for (let i = 0; i < Math.min(3, APP.data.growPlants.length); i++) {
-                const r = APP.data.growPlants[i];
-                console.log(`  [${i}] "${r[1]}" → r[9]=${r[9]} (type: ${typeof r[9]})`);
-            }
-            
-            const activePlants = APP.data.growPlants.filter(r => {
-                const isActive = r[9];
-                // 'active', true, 'true', 1 모두 포함
-                return isActive === 'active' || isActive === true || isActive === 'true' || isActive === 1;
-            });
-            
-            console.log('🌱 활성 작물:', activePlants.length + '개');
-            activePlants.forEach(r => console.log(`  - ${r[1]} (active: ${r[9]})`));
-
-            // 유실수와 채소 분류
+            // 유실수와 채소로 분류
             const fruitPlants = [];
             const vegPlants = [];
             
-            activePlants.forEach(r => {
-                const category = classifyPlant(r[1] || '');
-                console.log(`  분류: "${r[1]}" → ${category}`);
-                if (category === 'fruits') {
+            APP.data.growPlants.forEach(r => {
+                if (classifyPlant(r[1]) === 'fruits') {
                     fruitPlants.push(r);
                 } else {
                     vegPlants.push(r);
                 }
             });
-            
-            console.log(`✅ 유실수: ${fruitPlants.length}개, 채소: ${vegPlants.length}개`);
 
             // 유실수 테이블
             if (fruitPlants.length === 0) {
-                console.log('📭 유실수 없음');
                 document.getElementById('plants-fruits-table').style.display = 'none';
                 document.getElementById('plants-fruits-empty').style.display = 'block';
             } else {
-                console.log('📊 유실수 테이블 렌더링');
                 document.getElementById('plants-fruits-table').style.display = 'table';
                 document.getElementById('plants-fruits-empty').style.display = 'none';
-                
                 document.getElementById('plants-fruits-tbody').innerHTML = fruitPlants.map(r => {
                     return `<tr>
                         <td>${r[1]||'-'}</td>
-                        <td>
-                            <input type="text" value="${r[4]||''}" id="variety-${r[0]}" 
-                                   style="width: 90%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
-                                   placeholder="품종 입력">
-                        </td>
+                        <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[7]||'-'}</td>
+                        <td>${r[6]||'-'}</td>
                         <td>
-                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" 
-                                    style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600;">
-                                💾
-                            </button>
+                            <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                                <option value="fruits">🍎 유실수</option>
+                                <option value="vegetables">🥬 채소</option>
+                            </select>
+                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2329,33 +2287,39 @@
 
             // 채소 테이블
             if (vegPlants.length === 0) {
-                console.log('📭 채소 없음');
                 document.getElementById('plants-vegetables-table').style.display = 'none';
                 document.getElementById('plants-vegetables-empty').style.display = 'block';
             } else {
-                console.log('📊 채소 테이블 렌더링');
                 document.getElementById('plants-vegetables-table').style.display = 'table';
                 document.getElementById('plants-vegetables-empty').style.display = 'none';
-                
                 document.getElementById('plants-vegetables-tbody').innerHTML = vegPlants.map(r => {
                     return `<tr>
                         <td>${r[1]||'-'}</td>
-                        <td>
-                            <input type="text" value="${r[4]||''}" id="variety-${r[0]}" 
-                                   style="width: 90%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;"
-                                   placeholder="품종 입력">
-                        </td>
+                        <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[7]||'-'}</td>
+                        <td>${r[6]||'-'}</td>
                         <td>
-                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" 
-                                    style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600;">
-                                💾
-                            </button>
+                            <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                                <option value="fruits">🍎 유실수</option>
+                                <option value="vegetables" selected>🥬 채소</option>
+                            </select>
+                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
                         </td>
                     </tr>`;
                 }).join('');
             }
+        }
+        
+        function changePlantType(plantId, cropName, newType) {
+            // confusableDictionary에 작물 추가하기
+            if (newType === 'fruits') {
+                // 채소 → 유실수로 변경
+                alert(`✅ "${cropName}"이(가) 유실수로 분류되었습니다.`);
+            } else {
+                // 유실수 → 채소로 변경
+                alert(`✅ "${cropName}"이(가) 채소로 분류되었습니다.`);
+            }
+            renderPlants();
         }
 
         // ════════════════════════════════════════════════════════════
@@ -2692,9 +2656,6 @@
             '무화과': ['무'],                    // "무화과" ≠ "무"
             '고구마': ['감자'],                  // "고구마" ≠ "감자"
             '감자': ['고구마'],                  // "감자" ≠ "고구마"
-            '망고': ['망고수박', '망고참외'],   // "망고" ≠ "망고수박" (망고는 나오면 안됨)
-            '망고수박': ['망고'],                // "망고수박" ≠ "망고" (수박으로만 매칭)
-            '망고참외': ['망고'],                // "망고참외" ≠ "망고" (참외로만 매칭)
             '레몬': ['꽃양배추', '순무양배추', '다래 레몬프레시'],  // ✅ 레몬은 다래 품종이지 별도 작물 아님
             '꽃양배추': ['양배추'],              // ✅ 꽃양배추는 재배하지 않음, 양배추로 매칭
             '순무양배추': ['양배추']             // ✅ 순무양배추는 재배하지 않음, 양배추로 매칭
