@@ -480,23 +480,32 @@
 
         .modal-content {
             background: white;
-            padding: 24px;
+            padding: 0;
             border-radius: 12px;
             width: 100%;
             max-width: 500px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             max-height: 90vh;
-            overflow-y: auto;
+            overflow: hidden;
             margin-top: 20px;
+            display: flex;
+            flex-direction: column;
         }
 
         .modal-header {
+            padding: 24px 24px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 0;
             padding-bottom: 20px;
             border-bottom: 2px solid var(--border-color);
+        }
+
+        #modal-crops-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 24px 24px;
         }
 
         .modal-title {
@@ -523,6 +532,87 @@
             color: var(--text-dark);
             background: var(--bg-light);
             border-radius: 4px;
+        }
+
+        .modal-scroll-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            padding: 12px;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .scroll-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .scroll-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .scroll-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 수량 조정 버튼 */
+        .qty-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.1);
+        }
+
+        .qty-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 삭제 버튼 */
+        .delete-btn {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #c62828;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+            transform: scale(1.05);
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
         }
 
         .modal-section {
@@ -791,9 +881,9 @@
                             <tr>
                                 <th>농약명</th>
                                 <th>종류</th>
-                                <th>성분</th>
                                 <th>보유량</th>
                                 <th>상태</th>
+                                <th>작업</th>
                             </tr>
                         </thead>
                         <tbody id="pesticides-tbody"></tbody>
@@ -810,6 +900,12 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
+                    <button onclick="fillSuppliesMemo()" style="margin-left: auto; margin-right: 8px; padding: 8px 14px; background: #FF9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        📋 사용방법 채우기
+                    </button>
+                    <button onclick="exportSuppliesExcel()" style="padding: 8px 14px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        📥 엑셀 다운로드
+                    </button>
                 </div>
                 <div class="table-container">
                     <table id="supplies-table">
@@ -819,7 +915,7 @@
                                 <th>종류</th>
                                 <th>성분</th>
                                 <th>보유량</th>
-                                <th>상태</th>
+                                <th>작업</th>
                             </tr>
                         </thead>
                         <tbody id="supplies-tbody"></tbody>
@@ -916,11 +1012,39 @@
     <button class="scroll-to-top" id="scroll-to-top-btn" title="위로 가기">↑</button>
 
     <!-- 🧪 농약 정보 모달 -->
+    <div id="supply-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🌱 <span id="modal-supply-name"></span></div>
+                <button class="modal-close-btn" onclick="closeSupplyModal()">×</button>
+            </div>
+            
+            <!-- 스크롤 버튼 -->
+            <div class="modal-scroll-buttons">
+                <button class="scroll-btn" onclick="scrollSupplyModalToTop()">▲ 맨 위</button>
+                <button class="scroll-btn" onclick="scrollSupplyModalToBottom()">맨 아래 ▼</button>
+            </div>
+            
+            <!-- 비료 정보 -->
+            <div id="modal-supply-content"></div>
+        </div>
+    </div>
+
     <div id="pesticide-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <div class="modal-title">🧪 <span id="modal-pesticide-name"></span></div>
                 <button class="modal-close-btn" onclick="closePesticideModal()">×</button>
+            </div>
+            
+            <!-- 스크롤 버튼 -->
+            <div class="modal-scroll-buttons">
+                <button class="scroll-btn" onclick="scrollPesticideModalToTop()" title="맨 위로">
+                    ▲ 맨 위
+                </button>
+                <button class="scroll-btn" onclick="scrollPesticideModalToBottom()" title="맨 아래로">
+                    맨 아래 ▼
+                </button>
             </div>
             
             <!-- 작물별 정보 -->
@@ -1431,9 +1555,22 @@
                                 const memo = pesticide[12] || '';
                                 
                                 const ownedPlants = getOwnedPlants();
-                                const relevantCrops = memo.split('/').map(e => {
+                                
+                                // memo를 ") /"로 분할해서 완전한 항목 추출
+                                const memoLines = memo.split(/\) \/ /).map((line, idx, arr) => {
+                                    if (idx === arr.length - 1) return line;  // 마지막은 이미 괄호 닫힘
+                                    return line + ')';  // 나머지는 괄호 추가
+                                });
+                                
+                                const relevantCrops = memoLines.map(e => {
                                     const match = e.trim().match(/^([^(]+)\(/);
-                                    return match ? match[1].trim() : '';
+                                    const cropName = match ? match[1].trim() : '';
+                                    
+                                    if (!cropName) return '';
+                                    
+                                    // findCropGroup으로 매칭 (다래 레몬프레시 → 다래)
+                                    const group = findCropGroup(cropName);
+                                    return group;
                                 }).filter(c => c && ownedPlants.some(o => 
                                     o.toLowerCase().includes(c.toLowerCase()) || 
                                     c.toLowerCase().includes(o.toLowerCase())
@@ -1534,19 +1671,79 @@
             empty.style.display = 'none';
 
             tbody.innerHTML = APP.data.myPesticides.map((r, idx) => {
-                const qty = parseFloat(r[3] || 0);
-                let cls = 'available', status = '정상';
-                if (qty === 0) { cls = 'empty'; status = '없음'; }
-                else if (qty < 10) { cls = 'low'; status = '부족'; }
+                const pesticideId = r[0];  // id
+                const name = r[1] || '-';  // 농약명
+                const type = r[2] || '-';  // 종류
+                const quantity = r[16] || 1;  // 보유량 (기본값 1)
+                const pesticideStatus = r[9] || '여유';  // 상태 (여유/구입필요)
+                
+                // 상태 배지 스타일
+                let statusCls = pesticideStatus === '여유' ? 'available' : 'low';
+                let statusDisplay = pesticideStatus === '여유' ? '여유' : '구입필요';
 
                 return `<tr>
-                    <td><span class="pesticide-link" onclick="openPesticideModal(${idx})">${r[1]||'-'}</span></td>
-                    <td>${r[2]||'-'}</td>
-                    <td>${r[5]||'-'}</td>
-                    <td>${qty}</td>
-                    <td><span class="badge ${cls}">${status}</span></td>
+                    <td><span class="pesticide-link" onclick="openPesticideModal(${idx})">${name}</span></td>
+                    <td>${type}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="qty-btn" onclick="decreasePesticideQty(${idx})">−</button>
+                            <span style="min-width: 30px; text-align: center;">${quantity}</span>
+                            <button class="qty-btn" onclick="increasePesticideQty(${idx})">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <select onchange="changePesticideStatus(${idx}, this.value)" style="padding: 4px 8px; border-radius: 4px; border: 1px solid #ddd; font-size: 12px;">
+                            <option value="여유" ${pesticideStatus === '여유' ? 'selected' : ''}>여유</option>
+                            <option value="구입필요" ${pesticideStatus === '구입필요' ? 'selected' : ''}>구입필요</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deletePesticide(${idx}, '${name.replace(/'/g, "\\'")}')">🗑️</button>
+                    </td>
                 </tr>`;
             }).join('');
+        }
+        
+        // 보유농약 quantity 증가
+        function increasePesticideQty(idx) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide && (pesticide[16] || 1) < 3) {
+                pesticide[16] = (pesticide[16] || 1) + 1;
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 quantity 감소
+        function decreasePesticideQty(idx) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide && (pesticide[16] || 1) > 1) {
+                pesticide[16] = (pesticide[16] || 1) - 1;
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 상태 변경
+        function changePesticideStatus(idx, newStatus) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide) {
+                pesticide[9] = newStatus;
+                _gasPost('updatePesticide', {id: pesticide[0], status: newStatus});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 삭제
+        function deletePesticide(idx, pesticideName) {
+            if (confirm(`"${pesticideName}"을 삭제하시겠습니까?`)) {
+                const pesticide = APP.data.myPesticides?.[idx];
+                if (pesticide) {
+                    _gasPost('deletePesticide', {id: pesticide[0]});
+                    APP.data.myPesticides?.splice(idx, 1);
+                    renderPesticides();
+                }
+            }
         }
 
         function renderSupplies() {
@@ -1562,20 +1759,305 @@
             document.getElementById('supplies-table').style.display = 'table';
             empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.supplies.map(r => {
-                const qty = parseFloat(r[6] || 0);
-                let cls = 'available', status = '정상';
-                if (qty === 0) { cls = 'empty'; status = '없음'; }
-                else if (qty < 10) { cls = 'low'; status = '부족'; }
-
+            tbody.innerHTML = APP.data.supplies.map((r, idx) => {
+                const supplyId = r[0];  // id
+                const name = r[7] || '-';  // 비료명 (제조사/브랜드)
+                const type = r[3] || '-';  // 종류
+                const ingredient = r[4] || '-';  // 성분/규격
+                const quantity = r[9] || 1;  // 보유량 (기본값 1)
+                const memo = r[10] || '';  // 사용방법
+                
                 return `<tr>
-                    <td>${r[7]||'-'}</td>
-                    <td>${r[3]||'-'}</td>
-                    <td>${r[4]||'-'}</td>
-                    <td>${qty}</td>
-                    <td><span class="badge ${cls}">${status}</span></td>
+                    <td>
+                        <span class="supply-link" onclick="openSupplyModal('${supplyId}', '${name.replace(/'/g, "\\'")}', '${memo.replace(/'/g, "\\'")}')" style="cursor: pointer; color: var(--primary-color); text-decoration: underline;">
+                            ${name}
+                        </span>
+                    </td>
+                    <td>${type}</td>
+                    <td>${ingredient}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="qty-btn" onclick="decreaseSupplyQty('${supplyId}')">−</button>
+                            <span style="min-width: 30px; text-align: center;">${quantity}</span>
+                            <button class="qty-btn" onclick="increaseSupplyQty('${supplyId}')">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteSupply('${supplyId}', '${name.replace(/'/g, "\\'")}')" title="삭제">🗑️</button>
+                    </td>
                 </tr>`;
             }).join('');
+        }
+        
+        // 보유비료 quantity 증가
+        function increaseSupplyQty(supplyId) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (supply && (supply[9] || 1) < 3) {
+                supply[9] = (supply[9] || 1) + 1;
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 quantity 감소
+        function decreaseSupplyQty(supplyId) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (supply && (supply[9] || 1) > 1) {
+                supply[9] = (supply[9] || 1) - 1;
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 삭제
+        function deleteSupply(supplyId, supplyName) {
+            if (confirm(`"${supplyName}"을 삭제하시겠습니까?`)) {
+                APP.data.supplies = APP.data.supplies?.filter(s => s[0] !== supplyId);
+                _gasPost('deleteSupply', {id: supplyId});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 팝업 열기
+        function openSupplyModal(supplyId, supplyName, memo) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (!supply) return;
+            
+            const crops = (supply[5] || '').split(',').map(c => c.trim()).filter(c => c);
+            const ownedPlants = getOwnedPlants();
+            const relevantCrops = crops.filter(c => 
+                ownedPlants.some(o => o.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(o.toLowerCase()))
+            );
+            
+            document.getElementById('modal-supply-name').textContent = supplyName;
+            document.getElementById('modal-supply-content').innerHTML = `
+                <div class="modal-section">
+                    <div class="modal-label">사용 방법</div>
+                    <textarea id="supply-memo-input" style="width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; font-size: 14px; resize: vertical; min-height: 100px;">${memo || ''}</textarea>
+                    <button onclick="saveSupplyMemo('${supplyId}', '${supplyName.replace(/'/g, "\\'")}')" style="margin-top: 8px; padding: 8px 16px; background: var(--primary-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600;">
+                        💾 저장
+                    </button>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-label">재배 작물</div>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                        ${relevantCrops.length > 0 
+                            ? relevantCrops.map(c => `<span class="badge available">${c}</span>`).join('')
+                            : '<span style="color: #999;">해당 작물 없음</span>'
+                        }
+                    </div>
+                </div>
+                
+                <div class="modal-section">
+                    <div class="modal-label">보유량</div>
+                    <div style="font-size: 18px; font-weight: bold; color: var(--primary-color);">
+                        ${supply[9] || 1}개
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('supply-modal').classList.add('show');
+        }
+        
+        // 비료 memo 저장
+        function saveSupplyMemo(supplyId, supplyName) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (!supply) return;
+            
+            const memoText = document.getElementById('supply-memo-input')?.value || '';
+            supply[10] = memoText;  // supplies[10] = memo
+            
+            _gasPost('updateSupply', {id: supplyId, memo: memoText});
+            alert(`"${supplyName}"의 사용 방법이 저장되었습니다!`);
+            renderSupplies();
+        }
+        
+        // 보유비료 사용방법 자동 채우기
+        function fillSuppliesMemo() {
+            // 각 비료별 사용방법 정보
+            const memoData = {
+                '단한번비료': `[기저비료 사용법]
+1. 정식 2주일 전 밭을 갈아 준비
+2. 밭에 10a당 20kg 고루 뿌리기
+3. 흙과 잘 섞이도록 5~10cm 깊이로 뒤집기
+4. 3~5일 후 정식하기
+
+[상세 정보]
+- 완효성 질소 비료로 천천히 방출
+- 인산(P9) 낮아서 인산질 비료와 함께 사용 권장
+- 생육 초기 영양 공급에 최적
+- 환경 친화적인 완효성 비료`,
+                
+                '엔케이플러스': `[착과 및 열매품질 개선]
+1. 개화 후 15~20일 경 첫 시비
+2. 2주일 간격으로 2~3회 추가 시비
+3. 1회 시비량: 10a당 5~10kg
+4. 물에 충분히 주고 시비하기
+
+[추천 사용 시기]
+- 개화기부터 과실 비대기까지
+- 수확 3주일 전까지 사용 가능
+- 칼리(K17) 높아서 당도 및 색택 향상
+
+[특징]
+- N:K 비율 1:1로 균형 잡힘
+- 인산(P) 낮아서 과실 품질 중심
+- 열매 착과율 증가 및 당도 향상`,
+                
+                '원예맞춤고추비료': `[생육기 및 결실기 관리]
+1. 정식 3주일 후 첫 시비
+2. 이후 2주일 간격으로 3~4회 시비
+3. 1회 시비량: 10a당 8~12kg
+4. 충분한 물 주기
+
+[칼슘·마그네슘 함유의 특징]
+- 고추 등 원예채소 칼슘결핍 방지
+- 배꼽썩음병(끝썩음병) 예방 효과
+- 엽록소 형성으로 광합성 촉진
+
+[추천 작물별 사용]
+- 고추: 개화기부터 수확기까지
+- 수박/참외: 착과 후 비대기
+- 오이: 개화기부터 수확기까지
+- 호박: 개화 후 수확기까지`,
+                
+                '일회만비료': `[추가 시비(웃거름) 사용법]
+1. 생육 중기에 줄을 그어 비료 뿌리기
+2. 1회 시비량: 10a당 15~20kg
+3. 물을 충분히 주기 (관수 후 시비 가능)
+4. 2주일 후 필요시 2차 시비
+
+[사용 시기별 가이드]
+- 춘파작: 4월, 5월 착근 후
+- 추파작: 8월, 9월 정식 후
+- 저장 작물: 수확 1개월 전까지
+
+[특징]
+- N21 높은 질소로 빠른 생육 촉진
+- 완효성 입제로 시간차 방출
+- 가을 작물 수확량 증대에 효과적
+- 저장성 향상 (감자, 무 등)`,
+                
+                '슈퍼복합비료': `[기본 기저비료 사용법]
+1. 정식 2주일 전 밭 준비
+2. 밭에 10a당 25~30kg 고르게 뿌리기
+3. 깊이 10~15cm로 경운하여 섞기
+4. 3~5일 경과 후 정식
+
+[추가 시비(웃거름) 방법]
+1. 생육 중기(정식 3~4주일 후) 첫 시비
+2. 이후 2~3주일 간격으로 2~3회 추가
+3. 1회 추가 시비량: 10a당 10~15kg
+4. 관수 후 시비하기
+
+[특징]
+- N:P:K = 21:17:17 완벽 균형
+- 모든 작물 모든 생육 시기에 사용 가능
+- 인산(P17) 충분해서 뿌리 발달 우수
+- 칼리(K17) 충분해서 병해충 저항성 증가`
+            };
+            
+            let updatedCount = 0;
+            let failedCount = 0;
+            
+            // 각 비료에 memo 할당
+            APP.data.supplies?.forEach((supply, idx) => {
+                const fertilizerName = supply[7];  // [7] = 비료명
+                
+                if (memoData[fertilizerName]) {
+                    // 동일한 비료명 모두에 적용
+                    APP.data.supplies.forEach((s, i) => {
+                        if (s[7] === fertilizerName) {
+                            s[10] = memoData[fertilizerName];  // [10] = memo
+                            updatedCount++;
+                            
+                            // GAS에 업데이트 요청
+                            _gasPost('updateSupply', {
+                                id: s[0],
+                                memo: memoData[fertilizerName]
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // UI 업데이트
+            renderSupplies();
+            
+            // 완료 메시지
+            alert(`✅ 완료!\n채운 비료: ${updatedCount}개\n\n다음 단계:\n1. Google Sheets 준비사항 시트 열기\n2. 주별시비계획 엑셀 데이터 복사\n3. 준비사항 시트에 붙여넣기\n4. HTML 새로고침 (Ctrl+F5)`);
+            
+            console.log(`✅ 비료 사용방법 ${updatedCount}개 채움 완료!`);
+        }
+        
+        // 보유비료 사용방법 엑셀 다운로드
+        function exportSuppliesExcel() {
+            const ownedPlants = getOwnedPlants();
+            
+            // 엑셀 데이터 생성
+            const data = [
+                ['비료명', '성분', '종류', '보유량', '사용방법', '재배작물'],
+                ...APP.data.supplies.map(r => {
+                    const name = r[7] || '-';  // 비료명
+                    const ingredient = r[4] || '-';  // 성분
+                    const type = r[3] || '-';  // 종류
+                    const quantity = r[9] || 1;  // 보유량
+                    const memo = r[10] || '';  // 사용방법
+                    
+                    // 재배 중인 작물만 필터링
+                    const crops = (r[5] || '').split(',').map(c => c.trim()).filter(c => c);
+                    const relevantCrops = crops.filter(c => 
+                        ownedPlants.some(o => o.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(o.toLowerCase()))
+                    ).join(', ') || '-';
+                    
+                    return [name, ingredient, type, quantity, memo, relevantCrops];
+                })
+            ];
+            
+            // CSV로 다운로드 (엑셀도 열 수 있음)
+            const csv = data.map(row => 
+                row.map(cell => {
+                    // 특수문자 처리
+                    const str = String(cell);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`;
+                    }
+                    return str;
+                }).join(',')
+            ).join('\n');
+            
+            // UTF-8 BOM 추가 (엑셀에서 한글 표시 제대로 되도록)
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `보유비료_사용방법_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            alert('보유비료 사용방법이 다운로드되었습니다!\n(엑셀에서도 열 수 있습니다)');
+        }
+        
+        function closeSupplyModal() {
+            document.getElementById('supply-modal').classList.remove('show');
+        }
+
+        // 보유비료 모달 맨 위로
+        function scrollSupplyModalToTop() {
+            const container = document.getElementById('modal-supply-content');
+            if (container) {
+                container.scrollTop = 0;
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // 보유비료 모달 맨 아래로
+        function scrollSupplyModalToBottom() {
+            const container = document.getElementById('modal-supply-content');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+                container.style.scrollBehavior = 'smooth';
+            }
         }
 
         function renderPlants() {
@@ -1894,6 +2376,26 @@
             document.getElementById('pesticide-modal').classList.remove('show');
         }
 
+        // 팝업 내용을 맨 위로 스크롤
+        function scrollPesticideModalToTop() {
+            const container = document.getElementById('modal-crops-container');
+            if (container) {
+                container.scrollTop = 0;
+                // 부드러운 스크롤 (대체 방법)
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // 팝업 내용을 맨 아래로 스크롤
+        function scrollPesticideModalToBottom() {
+            const container = document.getElementById('modal-crops-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+                // 부드러운 스크롤 (대체 방법)
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
         // ════════════════════════════════════════════════════════════
         // 재배 중인 작물 필터링 함수 (학습 기반)
         // ════════════════════════════════════════════════════════════
@@ -1915,7 +2417,10 @@
             '무': ['무화과'],                    // "무" ≠ "무화과"
             '무화과': ['무'],                    // "무화과" ≠ "무"
             '고구마': ['감자'],                  // "고구마" ≠ "감자"
-            '감자': ['고구마']                   // "감자" ≠ "고구마"
+            '감자': ['고구마'],                  // "감자" ≠ "고구마"
+            '레몬': ['꽃양배추', '순무양배추', '다래 레몬프레시'],  // ✅ 레몬은 다래 품종이지 별도 작물 아님
+            '꽃양배추': ['양배추'],              // ✅ 꽃양배추는 재배하지 않음, 양배추로 매칭
+            '순무양배추': ['양배추']             // ✅ 순무양배추는 재배하지 않음, 양배추로 매칭
         };
 
         /**
