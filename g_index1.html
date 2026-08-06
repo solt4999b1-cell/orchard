@@ -1281,22 +1281,32 @@
         async function loadAllData() {
             APP.isLoading = true;
             updateStatus('로딩 중');
-
             try {
                 if (loadData()) {
                     updateStatus('✅ 로드 완료');
                     render();
                     return;
                 }
-
                 const response = await fetchFromGAS('read_all');
                 if (response.success && response.data) {
                     APP.data = convertObjectArrayTo2DArray(response.data);
+                    
+                    // ✅ 각 시트별로 헤더 제외
+                    const sheetsWithHeaders = ['myPesticides', 'growPlants', 'supplies', 'workLogs', 'growRecords'];
+                    for (const sheetName of sheetsWithHeaders) {
+                        if (APP.data[sheetName] && Array.isArray(APP.data[sheetName])) {
+                            const firstRow = APP.data[sheetName][0];
+                            // 첫 행이 헤더인지 확인 (대부분 'id'가 헤더의 첫 칼럼)
+                            if (firstRow && (firstRow[0] === 'id' || firstRow[1] === 'name')) {
+                                APP.data[sheetName] = APP.data[sheetName].slice(1);  // 헤더 제외
+                                console.log(`✅ ${sheetName}: 헤더 제외, ${APP.data[sheetName].length}개 데이터`);
+                            }
+                        }
+                    }
                 } else {
                     console.log('개별 로드 시작...');
                     await loadIndividually();
                 }
-
                 saveData();
                 updateStatus('✅ 로드 완료');
                 render();
@@ -1330,9 +1340,9 @@
                 { action: 'getPreparations', key: '준비사항' },
                 { action: 'getPlants', key: 'growPlants' },
                 { action: 'getMyPesticides', key: 'myPesticides' },
+                { action: 'getSupplies', key: 'supplies' },  // ✅ 이 줄 추가
                 { action: 'getGrowRecords', key: 'growRecords' }
             ];
-
             for (const { action, key } of actions) {
                 try {
                     const resp = await fetchFromGAS(action);
@@ -2426,7 +2436,7 @@
         // ════════════════════════════════════════════════════════════
 
         function openPesticideModal(idx) {
-            const pesticide = APP.data.myPesticides[idx];
+            const pesticide = APP.data.myPesticides[idx + 1];  // idx를 1 증가
             if (!pesticide) return;
 
             const pesticideName = pesticide[1] || '농약';
