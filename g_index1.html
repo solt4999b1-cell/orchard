@@ -998,6 +998,40 @@
                 </div>
             </div>
 
+            <!-- [수정 후 HTML: 기록일지 탭 내부 추가] -->
+            <div class="form-container">
+                <h3 style="font-size: 13px; color: var(--primary-color); margin-bottom: 6px;">✍️ 새 기록 추가</h3>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>작물명</label>
+                        <input type="text" id="new-record-crop" placeholder="예: 사과">
+                    </div>
+                    <div class="form-group">
+                        <label>작업종류</label>
+                        <select id="new-record-type">
+                            <option value="시비">시비</option>
+                            <option value="방제">방제</option>
+                            <option value="전정">전정</option>
+                            <option value="관수">관수</option>
+                            <option value="기타">기타</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>작업일</label>
+                        <input type="date" id="new-record-date">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group" style="flex: 3;">
+                        <label>작업내용</label>
+                        <input type="text" id="new-record-content" placeholder="작업 내용을 입력하세요">
+                    </div>
+                    <div class="form-group" style="flex: 1; display: flex; align-items: flex-end;">
+                        <button type="button" class="btn-submit" onclick="addNewRecord()" style="width: 100%;">추가하기</button>
+                    </div>
+                </div>
+            </div>
+            
             <!-- 📋 기록 일지 -->
             <div id="records" class="tab-content">
                 <div class="section-title">
@@ -1204,7 +1238,28 @@
             const week = Math.ceil(date / 7);
             return { month, week, date, day: getDayName(today) };
         }
+        // iPhone 메모리(localStorage)에 저장 및 불러오기 기능
+        function saveToLocalMemory() {
+            try {
+                localStorage.setItem('orchard_saved_records', JSON.stringify(APP.data.growRecords));
+                alert('✅ iPhone 메모리에 기록일지가 성공적으로 저장되었습니다!');[cite: 1]
+            } catch (e) {
+                alert('저장 중 오류가 발생했습니다: ' + e.message);
+            }
+        }
 
+        function loadFromLocalMemory() {
+            try {
+                const saved = localStorage.getItem('orchard_saved_records');
+                if (saved) {
+                    APP.data.growRecords = JSON.parse(saved);
+                    console.log('✅ iPhone 메모리에서 기록 불러오기 성공');
+                }
+            } catch (e) {
+                console.error('메모리 불러오기 실패:', e);
+            }
+        }
+        
         async function fetchFromGAS(action, params = {}) {
             try {
                 const query = new URLSearchParams({ action, ...params });
@@ -2196,14 +2251,16 @@
             }
             
             // 2️⃣ 유실수 키워드 (포함 매칭용)
-            const fruitKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래', '감'];
+            if (!cropName) return 'vegetables';
+            const fruitsKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '다래', '감', '체리', '자두', '호두', '대추'];
+            const vegExceptions = ['배추', '양배추']; // 혼동 방지 예외 처리
             
-            for (let fruit of fruitKeywords) {
-                if (cropName.includes(fruit)) {
-                    // 혼동 사전 확인 (배 ≠ 배추 등)
-                    if (confusableDictionary[fruit] && confusableDictionary[fruit].some(c => c === cropName)) {
-                        continue;
-                    }
+            if (vegExceptions.some(ex => cropName.includes(ex))) {
+                return 'vegetables';
+            }
+        
+            for (let keyword of fruitsKeywords) {
+                if (cropName.includes(keyword)) {
                     return 'fruits';
                 }
             }
@@ -2314,6 +2371,33 @@
                     </tr>`;
                 }).join('');
             }
+        }
+
+        // [수정 후 JS: 기록 추가 함수]
+        function addNewRecord() {
+            const crop = document.getElementById('new-record-crop').value.trim();
+            const type = document.getElementById('new-record-type').value;
+            const date = document.getElementById('new-record-date').value;
+            const content = document.getElementById('new-record-content').value.trim();
+        
+            if (!crop || !date || !content) {
+                alert('작물명, 작업일, 작업내용을 모두 입력해주세요.');
+                return;
+            }
+        
+            const newEntry = ['rec_' + Date.now(), crop, date, type, content];
+            
+            if (!APP.data.growRecords) APP.data.growRecords = [];
+            APP.data.growRecords.unshift(newEntry); // 최신 기록이 위로 오도록 추가
+        
+            // 메모리 저장 연동
+            saveToLocalMemory();
+        
+            document.getElementById('new-record-crop').value = '';
+            document.getElementById('new-record-content').value = '';
+            
+            renderRecords();
+            alert('새로운 기록일지가 추가되었습니다!');[cite: 1]
         }
         
         function changePlantType(plantId, cropName, newType) {
