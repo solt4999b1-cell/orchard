@@ -3415,13 +3415,13 @@
                         return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
                     })
                     .map(fert => {
-                        const emoji = {
+                        const emoji = ({
                             '단한번비료': '🌾',
                             '엔케이플러스': '🍇',
                             '원예맞춤고추비료': '🫐',
                             '일회만비료': '🌱',
                             '슈퍼복합비료': '🌿'
-                        }[fert.name] || '🌱';
+                        })[fert.name] || '🌱';
                         
                         const cropsHtml = fert.crops.length > 0 
                             ? `<div style="margin-top: 3px; padding: 6px; background: #f9f9f9; border-radius: 4px; border: 1px solid #e0e0e0;">
