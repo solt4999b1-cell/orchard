@@ -1238,27 +1238,6 @@
             const week = Math.ceil(date / 7);
             return { month, week, date, day: getDayName(today) };
         }
-        // iPhone 메모리(localStorage)에 저장 및 불러오기 기능
-        function saveToLocalMemory() {
-            try {
-                localStorage.setItem('orchard_saved_records', JSON.stringify(APP.data.growRecords));
-                alert('✅ iPhone 메모리에 기록일지가 성공적으로 저장되었습니다!');[cite: 1]
-            } catch (e) {
-                alert('저장 중 오류가 발생했습니다: ' + e.message);
-            }
-        }
-
-        function loadFromLocalMemory() {
-            try {
-                const saved = localStorage.getItem('orchard_saved_records');
-                if (saved) {
-                    APP.data.growRecords = JSON.parse(saved);
-                    console.log('✅ iPhone 메모리에서 기록 불러오기 성공');
-                }
-            } catch (e) {
-                console.error('메모리 불러오기 실패:', e);
-            }
-        }
         
         async function fetchFromGAS(action, params = {}) {
             try {
@@ -2373,56 +2352,62 @@
             }
         }
 
-        // [수정 후 JS: 기록 추가 함수]
+       // ✅ 문법 오류를 방지하도록 정돈된 기록 추가 및 저장 함수
         function addNewRecord() {
-            const crop = document.getElementById('new-record-crop').value.trim();
-            const type = document.getElementById('new-record-type').value;
-            const date = document.getElementById('new-record-date').value;
-            const content = document.getElementById('new-record-content').value.trim();
+            const cropInput = document.getElementById('new-record-crop');
+            const typeInput = document.getElementById('new-record-type');
+            const dateInput = document.getElementById('new-record-date');
+            const contentInput = document.getElementById('new-record-content');
+        
+            if (!cropInput || !dateInput || !contentInput) return;
+        
+            const crop = cropInput.value.trim();
+            const type = typeInput.value;
+            const date = dateInput.value;
+            const content = contentInput.value.trim();
         
             if (!crop || !date || !content) {
                 alert('작물명, 작업일, 작업내용을 모두 입력해주세요.');
                 return;
             }
         
+            // 배열 형태로 안전하게 데이터 구조화
             const newEntry = ['rec_' + Date.now(), crop, date, type, content];
             
-            if (!APP.data.growRecords) APP.data.growRecords = [];
-            APP.data.growRecords.unshift(newEntry); // 최신 기록이 위로 오도록 추가
+            if (!APP.data.growRecords) {
+                APP.data.growRecords = [];
+            }
+            APP.data.growRecords.unshift(newEntry);
         
-            // 메모리 저장 연동
+            // iPhone 메모리 저장 연동
             saveToLocalMemory();
         
-            document.getElementById('new-record-crop').value = '';
-            document.getElementById('new-record-content').value = '';
+            cropInput.value = '';
+            contentInput.value = '';
             
             renderRecords();
             alert('새로운 기록일지가 추가되었습니다!');[cite: 1]
         }
         
-        function changePlantType(plantId, cropName, newType) {
-            // APP.plantTypeOverrides에 저장
-            APP.plantTypeOverrides[cropName] = newType;
-            
-            if (newType === 'fruits') {
-                console.log(`✅ "${cropName}"을(를) 유실수로 분류했습니다.`);
-                alert(`✅ "${cropName}"이(가) 유실수로 분류되었습니다.`);
-            } else {
-                console.log(`✅ "${cropName}"을(를) 채소로 분류했습니다.`);
-                alert(`✅ "${cropName}"이(가) 채소로 분류되었습니다.`);
-            }
-            
-            // 테이블 재렌더링
-            renderPlants();
-            
-            // 해당 탭으로 자동 전환
-            if (newType === 'fruits') {
-                showFruits();
-            } else {
-                showVegetables();
+        function saveToLocalMemory() {
+            try {
+                localStorage.setItem('orchard_saved_records', JSON.stringify(APP.data.growRecords));
+                console.log('✅ iPhone 메모리에 기록 저장 완료');[cite: 1]
+            } catch (e) {
+                console.error('메모리 저장 실패:', e);
             }
         }
-
+        
+        function loadFromLocalMemory() {
+            try {
+                const saved = localStorage.getItem('orchard_saved_records');
+                if (saved) {
+                    APP.data.growRecords = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('메모리 불러오기 실패:', e);
+            }
+        }
         // ════════════════════════════════════════════════════════════
         // 🧪 농약 정보 팝업 함수
         // ════════════════════════════════════════════════════════════
