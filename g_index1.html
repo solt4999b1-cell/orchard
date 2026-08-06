@@ -301,6 +301,11 @@
             box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
 
+        .card:active {
+            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.12);
+            transform: translateY(-1px);
+        }
+
         .card-title {
             font-weight: 700;
             color: var(--primary-color);
@@ -369,6 +374,11 @@
             display: flex;
         }
 
+        .scroll-to-top:active {
+            transform: scale(0.92);
+            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.25);
+        }
+
         /* ═══════════════════════════════════════ */
         /* 테이블 */
         /* ═══════════════════════════════════════ */
@@ -400,68 +410,52 @@
             border-bottom: 1px solid var(--border-color);
         }
 
-        /* 폼 입력 스타일 */
-        .form-container {
-            background: #f1f8f1;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            border: 1px solid #c8e6c9;
-        }
-        .form-row {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 8px;
-            flex-wrap: wrap;
-        }
-        .form-group {
-            flex: 1;
-            min-width: 120px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--primary-color);
-            margin-bottom: 2px;
-        }
-        .form-group input, .form-group select {
-            width: 100%;
-            padding: 6px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        .btn-submit {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 12px;
-        }
-        .btn-submit:hover {
-            background: var(--primary-dark);
+        tbody tr:active {
+            background: var(--bg-light);
         }
 
+        /* ═══════════════════════════════════════ */
         /* 배지 */
+        /* ═══════════════════════════════════════ */
         .badge {
             display: inline-block;
             padding: 6px 12px;
             border-radius: 20px;
             font-size: 12px;
             font-weight: 600;
+            user-select: none;
         }
-        .badge.available { background: #e8f5e9; color: #2a5f2a; }
-        .badge.low { background: #fff3e0; color: #e65100; }
 
-        .pesticide-link, .supply-link {
+        .badge.available {
+            background: #e8f5e9;
+            color: #2a5f2a;
+        }
+
+        .badge.low {
+            background: #fff3e0;
+            color: #e65100;
+        }
+
+        .badge.empty {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        /* 농약명 링크 스타일 */
+        .pesticide-link {
             color: var(--primary-color);
             font-weight: 600;
             cursor: pointer;
-            text-decoration: underline;
+            border-bottom: 2px dotted var(--primary-color);
+            transition: all 0.2s;
+        }
+
+        .pesticide-link:hover {
+            background: var(--primary-color);
+            color: white;
+            border-bottom: none;
+            padding: 2px 4px;
+            border-radius: 4px;
         }
 
         /* 모달 스타일 */
@@ -476,62 +470,377 @@
             background: rgba(0, 0, 0, 0.5);
             overflow: auto;
         }
+
         .modal.show {
             display: flex;
             align-items: flex-start;
             justify-content: center;
             padding: 20px;
         }
+
         .modal-content {
             background: white;
+            padding: 0;
             border-radius: 12px;
             width: 100%;
             max-width: 700px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
             max-height: 90vh;
             overflow: hidden;
+            margin-top: 20px;
             display: flex;
             flex-direction: column;
-            margin-top: 20px;
         }
+
         .modal-header {
-            padding: 20px;
+            padding: 28px 32px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 0;
+            padding-bottom: 24px;
             border-bottom: 2px solid var(--border-color);
+            flex: 0 0 auto;
         }
-        .modal-title { font-size: 18px; font-weight: 700; color: var(--primary-color); }
-        .modal-close-btn { background: none; border: none; font-size: 24px; cursor: pointer; color: var(--text-light); }
-        #modal-crops-container, #modal-supply-content { flex: 1; overflow-y: auto; padding: 20px; }
 
-        .qty-btn, .delete-btn {
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
-            background: #fff;
+        #modal-crops-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 32px 28px;
+        }
+
+        #modal-supply-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0 32px 28px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 28px;
             cursor: pointer;
-            font-size: 11px;
+            color: var(--text-light);
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .delete-btn { color: #f44336; border-color: #ffcdd2; background: #ffebee; }
 
+        .modal-close-btn:hover {
+            color: var(--text-dark);
+            background: var(--bg-light);
+            border-radius: 4px;
+        }
+
+        .modal-scroll-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            padding: 12px;
+            background: var(--bg-light);
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            flex: 0 0 auto;
+        }
+
+        .scroll-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .scroll-btn:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+
+        .scroll-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 수량 조정 버튼 */
+        .qty-btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .qty-btn:hover {
+            background: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .qty-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 삭제 버튼 */
+        .delete-btn {
+            background: #ffebee;
+            border: 1px solid #ffcdd2;
+            color: #c62828;
+            padding: 4px 8px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+            transform: scale(1.05);
+        }
+
+        .delete-btn:active {
+            transform: scale(0.95);
+        }
+
+        .modal-section {
+            margin-bottom: 24px;
+        }
+
+        .modal-section-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .crop-item {
+            background: var(--bg-light);
+            padding: 14px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .crop-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .pest-info-table {
+            width: 100%;
+            font-size: 12px;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .pest-info-table tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .pest-info-table tr:last-child {
+            border-bottom: none;
+        }
+
+        .pest-info-table td {
+            padding: 8px;
+        }
+
+        .pest-info-table td:first-child {
+            font-weight: 700;
+            color: var(--text-dark);
+            width: 35%;
+            background: #f9f9f9;
+        }
+
+        .pest-info-table td:last-child {
+            color: var(--text-dark);
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 상태 메시지 */
+        /* ═══════════════════════════════════════ */
         .empty-state {
             text-align: center;
-            padding: 20px;
+            padding: 20px 10px;
             color: var(--text-light);
             font-size: 12px;
         }
-        .empty-state-icon { font-size: 32px; margin-bottom: 8px; display: block; }
-        .spinner {
-            display: inline-block; width: 14px; height: 14px; border: 2px solid var(--primary-color);
-            border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
 
+        .empty-state-icon {
+            font-size: 32px;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 로딩 스피너 */
+        /* ═══════════════════════════════════════ */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--primary-color);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* 푸터 */
+        /* ═══════════════════════════════════════ */
         footer {
             text-align: center;
             color: rgba(255, 255, 255, 0.7);
             padding: 20px;
+            margin-top: 20px;
             font-size: 12px;
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
+        }
+
+        /* ═══════════════════════════════════════ */
+        /* iPhone 12 Pro 최적화 (390px) */
+        /* ═══════════════════════════════════════ */
+        @media (max-width: 480px) {
+            header {
+                padding: 16px;
+            }
+
+            header h1 {
+                font-size: 26px;
+                margin-bottom: 10px;
+            }
+
+            header.collapsed h1 {
+                font-size: 22px;
+            }
+
+            .menu-toggle-btn {
+                width: 44px;
+                height: 44px;
+                font-size: 22px;
+                top: 12px;
+                right: 12px;
+            }
+
+            .date-info {
+                font-size: 12px;
+                gap: 10px;
+            }
+
+            .content {
+                padding: 6px;
+                border-radius: 12px 12px 0 0;
+            }
+
+            .section-title {
+                font-size: 18px;
+                margin-bottom: 8px;
+            }
+
+            .section-title .emoji {
+                font-size: 22px;
+            }
+
+            .category-header {
+                font-size: 16px;
+            }
+
+            .category-header .emoji {
+                font-size: 22px;
+            }
+
+            .card {
+                padding: 14px;
+                margin-bottom: 12px;
+            }
+
+            .card-title {
+                font-size: 16px;
+                margin-bottom: 8px;
+                font-weight: 700;
+            }
+
+            .card-content {
+                font-size: 14px;
+            }
+
+            .card-description {
+                font-size: 13px;
+                padding: 9px 11px;
+            }
+
+            .card-details {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            .tab-btn {
+                min-width: 100px;
+                padding: 11px 12px;
+                font-size: 12px;
+                font-weight: 600;
+                border-radius: 8px;
+            }
+
+            .scroll-to-top {
+                width: 48px;
+                height: 48px;
+                bottom: 25px;
+                right: 16px;
+                font-size: 22px;
+            }
+
+            table {
+                font-size: 11px;
+            }
+
+            th {
+                padding: 4px 6px;
+                font-size: 11px;
+            }
+
+            td {
+                padding: 4px 6px;
+            }
+
+            .tabs {
+                padding: 4px;
+                gap: 3px;
+            }
         }
     </style>
 </head>
@@ -552,18 +861,20 @@
         <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
         <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
         <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
+        <button class="tab-btn" data-tab="fertilizer-info">💊 비료정보</button>
         <button class="tab-btn" data-tab="records">📋 기록 일지</button>
         <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
     </div>
 
     <div class="container">
+        <!-- 콘텐츠 -->
         <div class="content">
             <!-- ✅ 이번 주 할일 탭 -->
             <div id="weekly-tasks" class="tab-content active">
                 <div class="section-title" id="weekly-prep-title">
                     <span class="emoji">✅</span>
                     <span>이번 주 관리</span>
-                    <small>(로딩중...)</small>
+                    <small style="color: #999; font-size: 11px;">(로딩중...)</small>
                 </div>
                 <div id="weekly-prep-list"></div>
             </div>
@@ -599,6 +910,12 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
+                    <button onclick="fillSuppliesMemo()" style="margin-left: auto; margin-right: 8px; padding: 8px 14px; background: #FF9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        📋 사용방법 채우기
+                    </button>
+                    <button onclick="exportSuppliesExcel()" style="padding: 8px 14px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        📥 엑셀 다운로드
+                    </button>
                 </div>
                 <div class="table-container">
                     <table id="supplies-table">
@@ -620,7 +937,28 @@
                 </div>
             </div>
 
-            <!-- 🌾 재배 작물 (첫 번째 요구사항 수정 반영) -->
+            <!-- 🌾 재배 작물 -->
+        <!-- ✅ 비료 정보 탭 -->
+        <div id="fertilizer-info" class="tab-content" style="display: none;">
+            <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <h3 style="margin-bottom: 16px; color: var(--primary-color); font-size: 16px;">💊 비료 정보 조회</h3>
+                
+                <div style="margin-bottom: 16px;">
+                    <label style="font-weight: 600; display: block; margin-bottom: 8px;">비료명 선택:</label>
+                    <select id="fertilizer-select" onchange="displayFertilizerInfo(this.value)" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white;">
+                        <option value="">-- 비료를 선택하세요 --</option>
+                        <option value="슈퍼복합비료">🌾 슈퍼복합비료 (N:P:K = 21:17:17)</option>
+                        <option value="유황">🔬 유황 (천연 살충살균제)</option>
+                        <option value="요소">⚪ 요소 (질소비료 N:46%)</option>
+                    </select>
+                </div>
+                
+                <div id="fertilizer-details" style="background: #f9f9f9; padding: 14px; border-radius: 6px; border-left: 5px solid var(--primary-color); display: none;">
+                    <!-- 동적으로 콘텐츠 삽입됨 -->
+                </div>
+            </div>
+        </div>
+
             <div id="plants" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌾</span>
@@ -647,6 +985,7 @@
                                     <th>품종</th>
                                     <th>파종일</th>
                                     <th>비고</th>
+                                    <th>작업</th>
                                 </tr>
                             </thead>
                             <tbody id="plants-fruits-tbody"></tbody>
@@ -668,6 +1007,7 @@
                                     <th>품종</th>
                                     <th>파종일</th>
                                     <th>비고</th>
+                                    <th>작업</th>
                                 </tr>
                             </thead>
                             <tbody id="plants-vegetables-tbody"></tbody>
@@ -680,48 +1020,12 @@
                 </div>
             </div>
 
-            <!-- 📋 기록 일지 (두 번째, 세 번째 요구사항 반영: 추가 폼 및 iPhone 메모리 저장/불러오기) -->
+            <!-- 📋 기록 일지 -->
             <div id="records" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">📋</span>
                     <span>기록 일지</span>
-                    <button onclick="saveToLocalMemory()" style="margin-left: auto; padding: 4px 8px; background: #2196F3; color: white; border: none; border-radius: 4px; font-size: 11px; cursor: pointer;">💾 iPhone 메모리에 저장</button>
                 </div>
-
-                <!-- 기록 추가 폼 -->
-                <div class="form-container">
-                    <h3 style="font-size: 13px; color: var(--primary-color); margin-bottom: 6px;">✍️ 새 기록 추가</h3>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label>작물명</label>
-                            <input type="text" id="new-record-crop" placeholder="예: 사과">
-                        </div>
-                        <div class="form-group">
-                            <label>작업종류</label>
-                            <select id="new-record-type">
-                                <option value="시비">시비</option>
-                                <option value="방제">방제</option>
-                                <option value="전정">전정</option>
-                                <option value="관수">관수</option>
-                                <option value="기타">기타</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>작업일</label>
-                            <input type="date" id="new-record-date">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group" style="flex: 3;">
-                            <label>작업내용</label>
-                            <input type="text" id="new-record-content" placeholder="작업 내용을 입력하세요">
-                        </div>
-                        <div class="form-group" style="flex: 1; display: flex; align-items: flex-end;">
-                            <button type="button" class="btn-submit" onclick="addNewRecord()" style="width: 100%;">추가하기</button>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="table-container">
                     <table id="records-table">
                         <thead>
@@ -739,6 +1043,19 @@
                     <span class="empty-state-icon">📋</span>
                     <p>작물 기록이 없습니다.</p>
                 </div>
+        <!-- ✅ 로컬 저장소 정보 -->
+        <div id="storage-info-panel" style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: none;">
+            <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px;">💾 로컬 저장소</div>
+            <div style="font-size: 12px; color: #666;">
+                <p>📊 기록: <span id="storage-count">0</span>개</p>
+                <p>💾 용량: <span id="storage-size">0</span> KB</p>
+                <p>⏰ 저장: <span id="storage-date">없음</span></p>
+            </div>
+        </div>
+
+        <!-- ✅ 작물별 기록 -->
+        <div id="records-grouped-container"></div>
+
             </div>
 
             <!-- 📌 할일+자재 -->
@@ -747,22 +1064,90 @@
                     <span class="emoji">📌</span>
                     <span>할일+자재</span>
                 </div>
+
                 <div class="section">
                     <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">📋 할일</h3>
                     <div id="tasks-with-supplies-list"></div>
                 </div>
+
+                <div class="section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">🧪 농약</h3>
+                    <div id="needed-pesticides-list"></div>
+                </div>
+
+                <div class="section">
+                    <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">🌾 시비 관리</h3>
+                    <div id="needed-supplies-list"></div>
+                </div>
             </div>
         </div>
 
+        <!-- 푸터 -->
         <footer>
-            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v3.1</p>
+            <p>🌳 새솔동 과수원 - 과수 관리 시스템 v3.0</p>
         </footer>
     </div>
 
-    <!-- 스크롤 탑 버튼 -->
+    <!-- ✅ 스크롤 탑 버튼 -->
     <button class="scroll-to-top" id="scroll-to-top-btn" title="위로 가기">↑</button>
 
+    <!-- 🧪 농약 정보 모달 -->
+    <div id="supply-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🌱 <span id="modal-supply-name"></span></div>
+                <button class="modal-close-btn" onclick="closeSupplyModal()">×</button>
+            </div>
+            
+            <!-- 스크롤 버튼 -->
+            <div class="modal-scroll-buttons">
+                <button class="scroll-btn" onclick="scrollSupplyModalToTop()">▲ 맨 위</button>
+                <button class="scroll-btn" onclick="scrollSupplyModalToBottom()">맨 아래 ▼</button>
+            </div>
+            
+            <!-- 비료 정보 -->
+            <div id="modal-supply-content"></div>
+        </div>
+    </div>
+
+    <div id="pesticide-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🧪 <span id="modal-pesticide-name"></span></div>
+                <button class="modal-close-btn" onclick="closePesticideModal()">×</button>
+            </div>
+            
+            <!-- 스크롤 버튼 -->
+            <div class="modal-scroll-buttons">
+                <button class="scroll-btn" onclick="scrollPesticideModalToTop()" title="맨 위로">
+                    ▲ 맨 위
+                </button>
+                <button class="scroll-btn" onclick="scrollPesticideModalToBottom()" title="맨 아래로">
+                    맨 아래 ▼
+                </button>
+            </div>
+            
+            <!-- 작물별 정보 -->
+            <div id="modal-crops-container"></div>
+        </div>
+    </div>
+
     <script>
+        // 🔥 캐시 강제 삭제
+        console.log('🧹 localStorage 삭제 중...');
+        try {
+            localStorage.clear();
+            sessionStorage.clear();
+            console.log('✅ 캐시 완전 삭제됨!');
+        } catch(e) {
+            console.error('캐시 삭제 실패:', e);
+        }
+
+        // ✅ 콘솔 경고 억제 (외부 스크립트 주입 방지)
+        if (typeof window.rhwpDev !== 'undefined') {
+            console.log = function() {};
+        }
+
         const APP = {
             gasUrl: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
             data: {
@@ -770,19 +1155,35 @@
                 growPlants: [],
                 myPesticides: [],
                 supplies: [],
-                growRecords: []
-            }
+                growRecords: [],
+                workLog: []
+            },
+            plantTypeOverrides: {}, // 작물 타입 오버라이드 (예: {'배추': 'vegetables'})
+            isLoading: false,
+            lastUpdateTime: null,
+            menuExpanded: true
         };
 
-        // 메뉴 토글 기능
+        const CATEGORY_CONFIG = {
+            '농약': { emoji: '🧪', label: '농약 관리' },
+            '시비': { emoji: '🌱', label: '시비 관리' },
+            '작업관리': { emoji: '🔧', label: '작업 관리' },
+            '미리 준비해야 할 일': { emoji: '⏰', label: '사전 준비' },
+            '이번주 할 일': { emoji: '✅', label: '이번 주 할 일' },
+            '이번달 주의점': { emoji: '⚠️', label: '월간 주의점' }
+        };
+
+        // ════════════════════════════════════════════════════════════
+        // ✅ 메뉴 토글 기능
+        // ════════════════════════════════════════════════════════════
         const menuToggleBtn = document.getElementById('menu-toggle-btn');
         const tabsContainer = document.getElementById('tabs-container');
         const header = document.getElementById('main-header');
-        let menuExpanded = true;
 
         menuToggleBtn.addEventListener('click', () => {
-            menuExpanded = !menuExpanded;
-            if (menuExpanded) {
+            APP.menuExpanded = !APP.menuExpanded;
+            
+            if (APP.menuExpanded) {
                 tabsContainer.classList.remove('hidden');
                 header.classList.remove('collapsed');
                 menuToggleBtn.textContent = '☰';
@@ -793,8 +1194,11 @@
             }
         });
 
-        // 스크롤 탑 버튼
+        // ════════════════════════════════════════════════════════════
+        // ✅ 스크롤 탑 버튼
+        // ════════════════════════════════════════════════════════════
         const scrollToTopBtn = document.getElementById('scroll-to-top-btn');
+
         window.addEventListener('scroll', () => {
             if (window.scrollY > 300) {
                 scrollToTopBtn.classList.add('show');
@@ -802,19 +1206,30 @@
                 scrollToTopBtn.classList.remove('show');
             }
         });
+
         scrollToTopBtn.addEventListener('click', () => {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            window.scrollTo({
+                top: 0,
+                behavior: 'smooth'
+            });
         });
 
+        // ════════════════════════════════════════════════════════════
+        // 기본 유틸 함수들
+        // ════════════════════════════════════════════════════════════
         function formatDate(date) {
             if (!date) return '-';
             try {
                 const d = new Date(date);
-                if (isNaN(d.getTime())) return date;
                 return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
             } catch {
-                return date;
+                return '-';
             }
+        }
+
+        function getDayName(date) {
+            const days = ['일', '월', '화', '수', '목', '금', '토'];
+            return days[new Date(date).getDay()];
         }
 
         function getCurrentWeekInfo() {
@@ -822,50 +1237,1061 @@
             const month = today.getMonth() + 1;
             const date = today.getDate();
             const week = Math.ceil(date / 7);
-            return { month, week, date };
+            return { month, week, date, day: getDayName(today) };
         }
 
-        // iPhone 메모리(localStorage)에 저장 및 불러오기 기능
-        function saveToLocalMemory() {
+        async function fetchFromGAS(action, params = {}) {
             try {
-                localStorage.setItem('orchard_saved_records', JSON.stringify(APP.data.growRecords));
-                alert('✅ iPhone 메모리에 기록일지가 성공적으로 저장되었습니다!');[cite: 1]
-            } catch (e) {
-                alert('저장 중 오류가 발생했습니다: ' + e.message);
+                const query = new URLSearchParams({ action, ...params });
+                const url = `${APP.gasUrl}?${query.toString()}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                const data = await response.json();
+                console.log(`✓ ${action}:`, data);
+                return data;
+            } catch(error) {
+                console.error(`✗ ${action}:`, error);
+                return { success: false, data: [], error: error.message };
             }
         }
 
-        function loadFromLocalMemory() {
+        function saveData() {
             try {
-                const saved = localStorage.getItem('orchard_saved_records');
-                if (saved) {
-                    APP.data.growRecords = JSON.parse(saved);
-                    console.log('✅ iPhone 메모리에서 기록 불러오기 성공');
+                localStorage.setItem('orchard_data', JSON.stringify(APP.data));
+                localStorage.setItem('orchard_time', new Date().toISOString());
+            } catch(e) {
+                console.warn('💾 저장 실패:', e.message);
+            }
+        }
+
+        function loadData() {
+            try {
+                const data = localStorage.getItem('orchard_data');
+                if (data) {
+                    APP.data = JSON.parse(data);
+                    APP.lastUpdateTime = localStorage.getItem('orchard_time');
+                    return true;
                 }
-            } catch (e) {
-                console.error('메모리 불러오기 실패:', e);
+            } catch(e) {
+                console.warn('💾 복원 실패:', e.message);
+            }
+            return false;
+        }
+
+        async function loadAllData() {
+            APP.isLoading = true;
+            updateStatus('로딩 중');
+
+            try {
+                if (loadData()) {
+                    updateStatus('✅ 로드 완료');
+                    render();
+                    return;
+                }
+
+                const response = await fetchFromGAS('read_all');
+                if (response.success && response.data) {
+                    APP.data = convertObjectArrayTo2DArray(response.data);
+                } else {
+                    console.log('개별 로드 시작...');
+                    await loadIndividually();
+                }
+
+                saveData();
+                updateStatus('✅ 로드 완료');
+                render();
+            } catch(error) {
+                console.error('로드 오류:', error);
+                updateStatus('❌ 오류');
+            } finally {
+                APP.isLoading = false;
             }
         }
 
-        // 1️⃣ 첫 번째 요구사항: 엄격한 작물 분류 (유실수와 채소 분리)
-        function classifyPlant(cropName) {
-            if (!cropName) return 'vegetables';
-            const fruitsKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '다래', '감', '체리', '자두', '호두', '대추'];
-            const vegExceptions = ['배추', '양배추', '참외(채소류아님 예외 등)']; // 혼동 방지
+        function convertObjectArrayTo2DArray(objectData) {
+            const result = {};
+            for (const [sheetName, rows] of Object.entries(objectData)) {
+                if (!Array.isArray(rows) || rows.length === 0) {
+                    result[sheetName] = [];
+                    continue;
+                }
+                if (typeof rows[0] === 'object' && !Array.isArray(rows[0])) {
+                    const keys = Object.keys(rows[0]);
+                    result[sheetName] = rows.map(obj => keys.map(key => obj[key]));
+                } else {
+                    result[sheetName] = rows;
+                }
+            }
+            return result;
+        }
+
+        async function loadIndividually() {
+            const actions = [
+                { action: 'getPreparations', key: '준비사항' },
+                { action: 'getPlants', key: 'growPlants' },
+                { action: 'getMyPesticides', key: 'myPesticides' },
+                { action: 'getGrowRecords', key: 'growRecords' }
+            ];
+
+            for (const { action, key } of actions) {
+                try {
+                    const resp = await fetchFromGAS(action);
+                    APP.data[key] = Array.isArray(resp.data) ? resp.data : (Array.isArray(resp) ? resp : []);
+                } catch(e) {
+                    APP.data[key] = [];
+                }
+            }
+        }
+
+        function updateStatus(msg) {
+            const statusEl = document.getElementById('load-status');
+            if (msg.includes('로딩')) {
+                statusEl.innerHTML = msg + '<span class="spinner"></span>';
+            } else {
+                statusEl.textContent = msg;
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 렌더링 함수들
+        // ════════════════════════════════════════════════════════════
+        function renderWeekly() {
+            console.log('🚀 renderWeekly 함수 시작!');
             
-            // 예외 처리 (배추류는 채소)
-            if (vegExceptions.some(ex => cropName.includes(ex))) {
-                return 'vegetables';
+            const { month, week } = getCurrentWeekInfo();
+            const prepList = document.getElementById('weekly-prep-list');
+            const weekTitle = document.getElementById('weekly-prep-title');
+            
+            console.log('✅ prepList 선택:', prepList ? 'OK' : 'NULL');
+            console.log('✅ weekTitle 선택:', weekTitle ? 'OK' : 'NULL');
+            
+            if (!prepList) {
+                console.error('❌ weekly-prep-list 엘리먼트를 찾을 수 없습니다!');
+                return;
+            }
+            
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const weekStartDate = new Date(today);
+            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+            const weekEndDate = new Date(weekStartDate);
+            weekEndDate.setDate(weekStartDate.getDate() + 6);
+            
+            weekStartDate.setHours(0, 0, 0, 0);
+            weekEndDate.setHours(23, 59, 59, 999);
+            
+            const weekRange = `${weekStartDate.getMonth() + 1}월 ${weekStartDate.getDate()}~${weekEndDate.getDate()}일`;
+            
+            if (weekTitle) {
+                weekTitle.innerHTML = `
+                    <span class="emoji">✅</span>
+                    <span>이번 주 관리</span>
+                    <small>(${weekRange})</small>
+                `;
+            }
+            
+            const thisWeekData = (APP.data.준비사항 || []).filter(r => {
+                if (!r[0]) return false;
+                try {
+                    const itemDate = new Date(r[0]);
+                    if (isNaN(itemDate.getTime())) return false;
+                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
+                } catch (e) {
+                    return false;
+                }
+            }) || [];
+
+            const grouped = {};
+            thisWeekData.forEach(r => {
+                const category = r[1] || '기타';
+                if (!grouped[category]) grouped[category] = [];
+                grouped[category].push(r);
+            });
+
+            const categoryOrder = ['작업관리', '미리 준비해야 할 일', '이번주 할 일', '농약', '시비', '이번달 주의점'];
+            const orderedCategories = Object.keys(grouped).sort((a, b) => {
+                const aIdx = categoryOrder.indexOf(a);
+                const bIdx = categoryOrder.indexOf(b);
+                return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+            });
+
+            console.log('📊 grouped 객체:', grouped);
+            console.log('📋 orderedCategories:', orderedCategories);
+            console.log('농약 있는가?:', !!grouped['농약']);
+            console.log('시비 있는가?:', !!grouped['시비']);
+
+            prepList.innerHTML = orderedCategories.length ? orderedCategories.map(category => {
+                const config = CATEGORY_CONFIG[category] || { emoji: '📌', label: category };
+                const items = grouped[category];
+                
+                return `
+                    <div class="category-section">
+                        <div class="category-header">
+                            <span class="emoji">${config.emoji}</span>
+                            <span>${config.label}</span>
+                        </div>
+                        ${items.map(r => {
+                            // 🔧 농약 관리 - r[4]의 농약명들을 파싱해서 강조
+                            if (category === '농약') {
+                                const details = r[4] || '';
+                                
+                                // myPesticides에서 찾은 농약들
+                                const foundPesticides = [];
+                                if (details) {
+                                    const sentenceArray = details.split('.');
+                                    sentenceArray.forEach(sentence => {
+                                        // ·와 또는으로 구분된 농약명들 파싱
+                                        const items = sentence.split(/·|또는|,/).map(s => s.trim()).filter(s => s && s.length > 0);
+                                        items.forEach(item => {
+                                            // 농약명 정제 (예: "리도밀골드 병예방" → "리도밀골드")
+                                            const cleanedItem = item.replace(/\s+(병예방|방제|관리|처리|강화|계속|예방)$/, '').trim();
+                                            
+                                            // myPesticides에서 찾기
+                                            const found = APP.data.myPesticides?.find(p => 
+                                                p[1]?.toLowerCase().includes(cleanedItem.toLowerCase()) ||
+                                                cleanedItem.toLowerCase().includes(p[1]?.toLowerCase())
+                                            );
+                                            if (found) {
+                                                // memo에서 재배작물 관련 정보 추출
+                                                const memo = found[12] || '';
+                                                // `) /` 로 분할해서 불완전한 라인 방지 (6㎏/10a 때문)
+                                                const memoLines = memo.split(/\) \/ /).map((line, idx, arr) => {
+                                                    if (idx === arr.length - 1) return line;  // 마지막은 이미 괄호 닫힘
+                                                    return line + ')';  // 나머지는 괄호 추가
+                                                });
+                                                
+                                                // 현재 재배중인 작물 찾기
+                                                const ownedPlants = getOwnedPlants();
+                                                let dilution = '-';
+                                                let usageCount = '-';
+                                                let foundCrop = false;
+                                                
+                                                memoLines.forEach(line => {
+                                                    const match = line.trim().match(/^([^(]+)\(([^)]+)\)/);
+                                                    if (match) {
+                                                        const cropName = match[1].trim();
+                                                        const details = match[2];
+                                                        
+                                                        // 재배작물인지 확인
+                                                        const isOwnedCrop = ownedPlants.some(o => 
+                                                            cropName.toLowerCase().includes(o.toLowerCase()) ||
+                                                            o.toLowerCase().includes(cropName.toLowerCase())
+                                                        );
+                                                        
+                                                        if (isOwnedCrop) {
+                                                            foundCrop = true;
+                                                            const parts = details.split(',');
+                                                            if (parts.length >= 3) {
+                                                                // parts[2]가 희석배수/용량
+                                                                dilution = parts[2]?.trim() || '-';
+                                                                
+                                                                // 사용횟수를 동적으로 찾기 ("회"를 포함하는 부분)
+                                                                usageCount = '-';
+                                                                for (let i = 0; i < parts.length; i++) {
+                                                                    if (parts[i]?.includes('회')) {
+                                                                        usageCount = parts[i]?.trim();
+                                                                        break;
+                                                                    }
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                });
+                                                
+                                                // 재배 작물이 없으면 첫 번째 항목으로 표시
+                                                if (!foundCrop && memoLines.length > 0) {
+                                                    const line = memoLines[0].trim();
+                                                    const firstParen = line.indexOf('(');
+                                                    const lastParen = line.lastIndexOf(')');
+                                                    
+                                                    if (firstParen !== -1 && lastParen !== -1 && lastParen > firstParen) {
+                                                        const details = line.substring(firstParen + 1, lastParen);
+                                                        const parts = details.split(',');
+                                                        if (parts.length >= 3) {
+                                                            dilution = parts[2]?.trim() || '-';
+                                                            
+                                                            // 사용횟수를 동적으로 찾기
+                                                            usageCount = '-';
+                                                            for (let i = 0; i < parts.length; i++) {
+                                                                if (parts[i]?.includes('회')) {
+                                                                    usageCount = parts[i]?.trim();
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                                
+                                                // 희석배수 변환: 다양한 형식을 20L 기준으로 변환
+                                                let convertedDilution = dilution;
+                                                
+                                                // 1️⃣ ㎏/10a 형식 변환
+                                                if (dilution.includes('㎏') && dilution.includes('10a')) {
+                                                    const match = dilution.match(/(-?\s*)(\d+(?:\.\d+)?)\s*㎏\s*\/\s*10a/);
+                                                    if (match) {
+                                                        const kg = parseFloat(match[2]);
+                                                        // 10a 기준 약 600L 살포 → 20L는 1/30
+                                                        const gramsPer20L = Math.round((kg * 1000) / 30);
+                                                        // 희석배수 계산: 20L(20000g) / 농약량(g)
+                                                        const dilutionRatio = Math.round(20000 / gramsPer20L);
+                                                        convertedDilution = `약 ${dilutionRatio}배(${gramsPer20L}g/20L)`;
+                                                    }
+                                                }
+                                                // 2️⃣ "배" 형식 변환 (예: "2000배" → "2000배(10g/20L)")
+                                                else if (dilution.includes('배')) {
+                                                    const match = dilution.match(/(\d+(?:\.\d+)?)\s*배/);
+                                                    if (match) {
+                                                        const dilutionRatio = parseFloat(match[1]);
+                                                        // 20L(20000g) / 희석배수 = 농약량(g)
+                                                        const gramsPer20L = Math.round(20000 / dilutionRatio);
+                                                        convertedDilution = `${dilution}(${gramsPer20L}g/20L)`;
+                                                    }
+                                                }
+                                                
+                                                foundPesticides.push({
+                                                    name: cleanedItem,
+                                                    dilution: convertedDilution,
+                                                    usageCount: usageCount
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
+                                
+                                return `
+                                    <div class="card">
+                                        <div class="card-title">💊 ${r[2] || ''}</div>
+                                        <div class="card-content">
+                                            ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                            
+                                            ${foundPesticides.length > 0 ? `
+                                                <div style="background: #fff3e0; padding: 12px; border-radius: 6px; border-left: 4px solid #ff9800; margin: 8px 0;">
+                                                    <div style="font-weight: bold; color: #ff9800; margin-bottom: 8px;">🎯 사용 농약</div>
+                                                    ${foundPesticides.map(fp => `
+                                                        <div style="margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid #ffe0b2;">
+                                                            <div style="font-weight: bold; color: #ff6f00; margin-bottom: 4px;">${fp.name}</div>
+                                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px;">
+                                                                <div style="background: white; padding: 6px; border-radius: 4px;">
+                                                                    <div style="color: #666;">희석배수</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.dilution}</div>
+                                                                </div>
+                                                                <div style="background: white; padding: 6px; border-radius: 4px;">
+                                                                    <div style="color: #666;">사용횟수</div>
+                                                                    <div style="font-weight: bold; color: #ff9800;">${fp.usageCount}</div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            ` : ''}
+                                            
+                                            ${r[4] ? `<div class="card-details" style="color: #666; margin-top: 8px;">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            
+                            // 시비 관리
+                            if (category === '시비') {
+                                return `
+                                    <div class="card">
+                                        <div class="card-title">🌾 ${r[2] || ''}</div>
+                                        <div class="card-content">
+                                            ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                            ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                            
+                            // 기본 표시
+                            return `
+                                <div class="card">
+                                    <div class="card-title">${r[2] || ''}</div>
+                                    <div class="card-content">
+                                        ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                        ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            }).join('') : '' ;
+            
+            // 🔧 추가: 준비사항에 농약/시비가 없으면 보유 농약/비료 중 추천 항목 표시
+            if (!grouped['농약'] || grouped['농약'].length === 0) {
+                const recommendedPesticides = (APP.data.myPesticides || []).slice(0, 5);
+                if (recommendedPesticides.length > 0) {
+                    const pesticideSection = `
+                        <div class="category-section">
+                            <div class="category-header">
+                                <span class="emoji">💊</span>
+                                <span>✨ 보유 농약 (추천)</span>
+                            </div>
+                            ${recommendedPesticides.map(pesticide => {
+                                const pesticideName = pesticide[1];
+                                const dilution = pesticide[6] || '-';
+                                const usageTimes = pesticide[4] || '-';
+                                const memo = pesticide[12] || '';
+                                
+                                const ownedPlants = getOwnedPlants();
+                                
+                                // memo를 ") /"로 분할해서 완전한 항목 추출
+                                const memoLines = memo.split(/\) \/ /).map((line, idx, arr) => {
+                                    if (idx === arr.length - 1) return line;  // 마지막은 이미 괄호 닫힘
+                                    return line + ')';  // 나머지는 괄호 추가
+                                });
+                                
+                                const relevantCrops = memoLines.map(e => {
+                                    const match = e.trim().match(/^([^(]+)\(/);
+                                    const cropName = match ? match[1].trim() : '';
+                                    
+                                    if (!cropName) return '';
+                                    
+                                    // findCropGroup으로 매칭 (다래 레몬프레시 → 다래)
+                                    const group = findCropGroup(cropName);
+                                    return group;
+                                }).filter(c => c && ownedPlants.some(o => 
+                                    o.toLowerCase().includes(c.toLowerCase()) || 
+                                    c.toLowerCase().includes(o.toLowerCase())
+                                ));
+                                
+                                return `
+                                    <div class="card">
+                                        <div class="card-title">🌿 ${pesticideName}</div>
+                                        <div class="card-content">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                                <div style="background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                                                    <div style="font-size: 12px; color: #666; margin-bottom: 4px;">희석배수</div>
+                                                    <div style="font-size: 16px; font-weight: bold; color: var(--primary-color);">${dilution}</div>
+                                                </div>
+                                                <div style="background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                                                    <div style="font-size: 12px; color: #666; margin-bottom: 4px;">사용가능횟수</div>
+                                                    <div style="font-size: 16px; font-weight: bold; color: var(--primary-color);">${usageTimes}회</div>
+                                                </div>
+                                            </div>
+                                            ${relevantCrops.length > 0 ? `
+                                                <div style="background: #e8f5e9; padding: 8px; border-radius: 6px; border-left: 4px solid var(--primary-color);">
+                                                    <div style="font-size: 12px; color: #666; margin-bottom: 4px;">재배 작물</div>
+                                                    <div style="font-size: 14px; color: var(--primary-color); font-weight: 500;">
+                                                        ${relevantCrops.join(', ')}
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                    prepList.innerHTML += pesticideSection;
+                }
+            }
+            
+            // 🔧 추가: 준비사항에 시비가 없으면 보유 비료 중 추천 항목 표시
+            if (!grouped['시비'] || grouped['시비'].length === 0) {
+                const recommendedSupplies = (APP.data.supplies || []).slice(0, 5);
+                if (recommendedSupplies.length > 0) {
+                    const supplySection = `
+                        <div class="category-section">
+                            <div class="category-header">
+                                <span class="emoji">🌱</span>
+                                <span>✨ 보유 비료 (추천)</span>
+                            </div>
+                            ${recommendedSupplies.map(supply => {
+                                const suppliesName = supply[1];
+                                const nutrients = supply[2] || '-';
+                                const quantity = supply[3] || '-';
+                                const unit = supply[4] || '-';
+                                
+                                return `
+                                    <div class="card">
+                                        <div class="card-title">🌾 ${suppliesName}</div>
+                                        <div class="card-content">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                                                <div style="background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                                                    <div style="font-size: 12px; color: #666; margin-bottom: 4px;">성분</div>
+                                                    <div style="font-size: 14px; font-weight: bold; color: var(--primary-color);">${nutrients}</div>
+                                                </div>
+                                                <div style="background: #f5f5f5; padding: 8px; border-radius: 6px;">
+                                                    <div style="font-size: 12px; color: #666; margin-bottom: 4px;">보유량</div>
+                                                    <div style="font-size: 14px; font-weight: bold; color: var(--primary-color);">${quantity} ${unit}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                    prepList.innerHTML += supplySection;
+                }
+            }
+            
+            // 준비사항이 전혀 없으면 안내 메시지
+            if (!orderedCategories.length) {
+                prepList.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📭</span><p>이번 주 관리 사항이 없습니다.</p></div>';
+            }
+            
+            console.log('✅ renderWeekly 완료!');
+            console.log('최종 HTML 길이:', prepList.innerHTML.length, '자');
+        }
+
+        function renderPesticides() {
+            const tbody = document.getElementById('pesticides-tbody');
+            const empty = document.getElementById('pesticides-empty');
+            
+            if (!APP.data.myPesticides || APP.data.myPesticides.length === 0) {
+                document.getElementById('pesticides-table').style.display = 'none';
+                empty.style.display = 'block';
+                return;
             }
 
-            for (let keyword of fruitsKeywords) {
-                if (cropName.includes(keyword)) {
+            document.getElementById('pesticides-table').style.display = 'table';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = APP.data.myPesticides.map((r, idx) => {
+                const pesticideId = r[0];  // id
+                const name = r[1] || '-';  // 농약명
+                const type = r[2] || '-';  // 종류
+                const quantity = r[16] || 1;  // 보유량 (기본값 1)
+                const pesticideStatus = r[9] || '여유';  // 상태 (여유/구입필요)
+                
+                // 상태 배지 스타일
+                let statusCls = pesticideStatus === '여유' ? 'available' : 'low';
+                let statusDisplay = pesticideStatus === '여유' ? '여유' : '구입필요';
+
+                return `<tr>
+                    <td><span class="pesticide-link" onclick="openPesticideModal(${idx})">${name}</span></td>
+                    <td>${type}</td>
+                    <td>
+                        <div style="display: flex; gap: 4px; align-items: center; justify-content: center;">
+                            <button class="qty-btn" onclick="decreasePesticideQty(${idx})">−</button>
+                            <span style="min-width: 24px; text-align: center; font-size: 12px;">${quantity}</span>
+                            <button class="qty-btn" onclick="increasePesticideQty(${idx})">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <select onchange="changePesticideStatus(${idx}, this.value)" style="padding: 2px 4px; border-radius: 3px; border: 1px solid #ddd; font-size: 11px;">
+                            <option value="여유" ${pesticideStatus === '여유' ? 'selected' : ''}>여유</option>
+                            <option value="구입필요" ${pesticideStatus === '구입필요' ? 'selected' : ''}>구입필요</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deletePesticide(${idx}, '${name.replace(/'/g, "\\'")}')">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // 보유농약 quantity 증가
+        function increasePesticideQty(idx) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide && (pesticide[16] || 1) < 3) {
+                pesticide[16] = (pesticide[16] || 1) + 1;
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 quantity 감소
+        function decreasePesticideQty(idx) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide && (pesticide[16] || 1) > 1) {
+                pesticide[16] = (pesticide[16] || 1) - 1;
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 상태 변경
+        function changePesticideStatus(idx, newStatus) {
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (pesticide) {
+                pesticide[9] = newStatus;
+                _gasPost('updatePesticide', {id: pesticide[0], status: newStatus});
+                renderPesticides();
+            }
+        }
+        
+        // 보유농약 삭제
+        function deletePesticide(idx, pesticideName) {
+            if (confirm(`"${pesticideName}"을 삭제하시겠습니까?`)) {
+                const pesticide = APP.data.myPesticides?.[idx];
+                if (pesticide) {
+                    _gasPost('deletePesticide', {id: pesticide[0]});
+                    APP.data.myPesticides?.splice(idx, 1);
+                    renderPesticides();
+                }
+            }
+        }
+
+
+        // ✅ 비료 정보 표시 함수
+        function displayFertilizerInfo(fertilizerName) {
+            const details = document.getElementById('fertilizer-details');
+            if (!fertilizerName) {
+                details.style.display = 'none';
+                return;
+            }
+
+            const info = FERTILIZER_INFO[fertilizerName];
+            if (!info) {
+                details.innerHTML = '<p>정보가 없습니다</p>';
+                return;
+            }
+
+            let html = `
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 8px;">${info.name}</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; font-size: 12px;">
+                        <div><span style="font-weight: 600;">분류:</span> ${info.type}</div>
+                        <div><span style="font-weight: 600;">성분:</span> ${info.npk}</div>
+                        <div><span style="font-weight: 600;">단위:</span> ${info.unit}</div>
+                        <div><span style="font-weight: 600;">유효기간:</span> ${info.shelfLife}</div>
+                    </div>
+                    
+                    <p style="font-size: 12px; color: #666; margin-bottom: 8px;">${info.description}</p>
+                    
+                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">🌟 특징:</div>
+                        <ul style="margin: 0; padding-left: 16px; font-size: 11px;">
+                            ${info.features.map(f => '<li>' + f + '</li>').join('')}
+                        </ul>
+                    </div>
+            `;
+
+            if (info.baseFertilizer) {
+                html += `
+                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">💡 기본 기저비료:</div>
+                        <div style="font-size: 11px;">
+                            ⏰ ${info.baseFertilizer.timing}<br>
+                            📊 ${info.baseFertilizer.dosage}<br>
+                            🔨 ${info.baseFertilizer.method}<br>
+                            ⏳ ${info.baseFertilizer.afterDays}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (info.topDressing) {
+                html += `
+                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">🌱 추가 시비:</div>
+                        <div style="font-size: 11px;">
+                            1️⃣ ${info.topDressing.firstTiming}<br>
+                            2️⃣ ${info.topDressing.frequency}<br>
+                            3️⃣ ${info.topDressing.dosage}<br>
+                            4️⃣ ${info.topDressing.afterWatering}
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (info.usage) {
+                html += `
+                    <div style="background: white; padding: 8px; border-radius: 4px; margin-bottom: 8px; font-size: 12px;">
+                        <div style="font-weight: 600; margin-bottom: 4px;">💧 사용 방법:</div>
+                        <div style="font-size: 11px;">
+                            ${info.usage}
+                            ${info.dilution ? '<br>농도: ' + info.dilution : ''}
+                        </div>
+                    </div>
+                `;
+            }
+
+            html += `
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px;">
+                        <div>
+                            <div style="font-weight: 600;">🌾 사용 가능 작물:</div>
+                            <div>${info.crops.slice(0, 5).join(', ')}${info.crops.length > 5 ? '...' : ''}</div>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600;">🌤️ 사용 시기:</div>
+                            <div>${info.seasons.join(', ')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            details.innerHTML = html;
+            details.style.display = 'block';
+        }
+
+                function renderSupplies() {
+            const tbody = document.getElementById('supplies-tbody');
+            const empty = document.getElementById('supplies-empty');
+            
+            if (!APP.data.supplies || APP.data.supplies.length === 0) {
+                document.getElementById('supplies-table').style.display = 'none';
+                empty.style.display = 'block';
+                return;
+            }
+
+            document.getElementById('supplies-table').style.display = 'table';
+            empty.style.display = 'none';
+
+            tbody.innerHTML = APP.data.supplies.map((r, idx) => {
+                const supplyId = r[0];  // id
+                const name = r[7] || '-';  // 비료명 (제조사/브랜드)
+                const type = r[3] || '-';  // 종류
+                const ingredient = r[4] || '-';  // 성분/규격
+                const quantity = r[9] || 1;  // 보유량 (기본값 1)
+                const memo = r[10] || '';  // 사용방법
+                
+                return `<tr>
+                    <td>
+                        <span class="supply-link" onclick="openSupplyModal('${supplyId}', '${name.replace(/'/g, "\\'")}' )" style="cursor: pointer; color: var(--primary-color); text-decoration: underline;">
+                            ${name}
+                        </span>
+                    </td>
+                    <td>${type}</td>
+                    <td>${ingredient}</td>
+                    <td>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <button class="qty-btn" onclick="decreaseSupplyQty('${supplyId}')">−</button>
+                            <span style="min-width: 30px; text-align: center;">${quantity}</span>
+                            <button class="qty-btn" onclick="increaseSupplyQty('${supplyId}')">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteSupply('${supplyId}', '${name.replace(/'/g, "\\'")}')" title="삭제">🗑️</button>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+        
+        // 보유비료 quantity 증가
+        function increaseSupplyQty(supplyId) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (supply && (supply[9] || 1) < 3) {
+                supply[9] = (supply[9] || 1) + 1;
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 quantity 감소
+        function decreaseSupplyQty(supplyId) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (supply && (supply[9] || 1) > 1) {
+                supply[9] = (supply[9] || 1) - 1;
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 삭제
+        function deleteSupply(supplyId, supplyName) {
+            if (confirm(`"${supplyName}"을 삭제하시겠습니까?`)) {
+                APP.data.supplies = APP.data.supplies?.filter(s => s[0] !== supplyId);
+                _gasPost('deleteSupply', {id: supplyId});
+                renderSupplies();
+            }
+        }
+        
+        // 보유비료 팝업 열기
+                function openSupplyModal(supplyId, supplyName) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (!supply) return;
+            
+            const memo = supply[10] || '';  // memo 칼럼의 데이터
+            
+            // memo가 없으면
+            if (!memo || memo.trim() === '') {
+                document.getElementById('modal-supply-name').textContent = supplyName;
+                document.getElementById('modal-supply-content').innerHTML = `
+                    <div style="font-size: 16px; font-weight: 700; color: var(--primary-color); margin-bottom: 16px;">📋 사용 방법</div>
+                    <div style="color: #999; font-size: 14px;">등록된 사용 방법이 없습니다.</div>
+                `;
+                document.getElementById('supply-modal').classList.add('show');
+                return;
+            }
+            
+            // memo 텍스트를 HTML로 변환
+            let htmlContent = memo
+                // 줄바꿈을 <br>로 변환
+                .split('\n')
+                .map(line => {
+                    const trimmed = line.trim();
+                    
+                    // 빈 줄 처리
+                    if (trimmed === '') {
+                        return '<div style="height: 8px;"></div>';
+                    }
+                    
+                    // 📌 제목 처리 (굵은 글씨, 배경색)
+                    if (trimmed.startsWith('📌')) {
+                        return `<div style="background: #fff3cd; padding: 10px; border-left: 4px solid #ff9800; margin: 12px 0 8px 0; font-weight: 600; font-size: 13px; color: #333;">
+                            ${trimmed.replace(/📌\s*/g, '📌 ')}
+                        </div>`;
+                    }
+                    
+                    // ▶ 섹션 제목 (대분류)
+                    if (trimmed.startsWith('▶')) {
+                        return `<div style="background: #e8f5e9; padding: 10px; border-left: 4px solid #4caf50; margin: 12px 0 8px 0; font-weight: 600; font-size: 13px; color: #2e7d32;">
+                            ${trimmed}
+                        </div>`;
+                    }
+                    
+                    // • 또는 - 로 시작하는 항목 (들여쓰기)
+                    if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+                        return `<div style="margin-left: 16px; padding: 6px 0; font-size: 12px; color: #555; line-height: 1.6;">
+                            ${trimmed}
+                        </div>`;
+                    }
+                    
+                    // ⚠️ 경고 문구
+                    if (trimmed.startsWith('⚠️')) {
+                        return `<div style="background: #ffebee; padding: 10px; border-left: 4px solid #f44336; margin: 12px 0 8px 0; font-size: 12px; color: #c62828;">
+                            ${trimmed}
+                        </div>`;
+                    }
+                    
+                    // 일반 텍스트 (들여쓰기 없음, 줄바꿈만)
+                    return `<div style="padding: 4px 0; font-size: 12px; color: #666; line-height: 1.6;">
+                        ${trimmed}
+                    </div>`;
+                })
+                .join('');
+            
+            // 모달 콘텐츠 업데이트
+            document.getElementById('modal-supply-name').textContent = supplyName;
+            document.getElementById('modal-supply-content').innerHTML = `
+                <div style="font-size: 16px; font-weight: 700; color: var(--primary-color); margin-bottom: 16px;">📋 사용 방법</div>
+                <div style="padding: 16px; background: #fafafa; border: 1px solid #e0e0e0; border-radius: 8px;">
+                    ${htmlContent}
+                </div>
+            `;
+            
+            document.getElementById('supply-modal').classList.add('show');
+        }
+        
+        // 비료 memo 저장장
+        function saveSupplyMemo(supplyId, supplyName) {
+            const supply = APP.data.supplies?.find(s => s[0] === supplyId);
+            if (!supply) return;
+            
+            const memoText = document.getElementById('supply-memo-input')?.value || '';
+            supply[10] = memoText;  // supplies[10] = memo
+            
+            _gasPost('updateSupply', {id: supplyId, memo: memoText});
+            alert(`"${supplyName}"의 사용 방법이 저장되었습니다!`);
+            renderSupplies();
+        }
+        
+        // 보유비료 사용방법 자동 채우기
+        function fillSuppliesMemo() {
+            // 각 비료별 사용방법 정보
+            const memoData = {
+                '단한번비료': `[기저비료 사용법]
+1. 정식 2주일 전 밭을 갈아 준비
+2. 밭에 10a당 20kg 고루 뿌리기
+3. 흙과 잘 섞이도록 5~10cm 깊이로 뒤집기
+4. 3~5일 후 정식하기
+
+[상세 정보]
+- 완효성 질소 비료로 천천히 방출
+- 인산(P9) 낮아서 인산질 비료와 함께 사용 권장
+- 생육 초기 영양 공급에 최적
+- 환경 친화적인 완효성 비료`,
+                
+                '엔케이플러스': `[착과 및 열매품질 개선]
+1. 개화 후 15~20일 경 첫 시비
+2. 2주일 간격으로 2~3회 추가 시비
+3. 1회 시비량: 10a당 5~10kg
+4. 물에 충분히 주고 시비하기
+
+[추천 사용 시기]
+- 개화기부터 과실 비대기까지
+- 수확 3주일 전까지 사용 가능
+- 칼리(K17) 높아서 당도 및 색택 향상
+
+[특징]
+- N:K 비율 1:1로 균형 잡힘
+- 인산(P) 낮아서 과실 품질 중심
+- 열매 착과율 증가 및 당도 향상`,
+                
+                '원예맞춤고추비료': `[생육기 및 결실기 관리]
+1. 정식 3주일 후 첫 시비
+2. 이후 2주일 간격으로 3~4회 시비
+3. 1회 시비량: 10a당 8~12kg
+4. 충분한 물 주기
+
+[칼슘·마그네슘 함유의 특징]
+- 고추 등 원예채소 칼슘결핍 방지
+- 배꼽썩음병(끝썩음병) 예방 효과
+- 엽록소 형성으로 광합성 촉진
+
+[추천 작물별 사용]
+- 고추: 개화기부터 수확기까지
+- 수박/참외: 착과 후 비대기
+- 오이: 개화기부터 수확기까지
+- 호박: 개화 후 수확기까지`,
+                
+                '일회만비료': `[추가 시비(웃거름) 사용법]
+1. 생육 중기에 줄을 그어 비료 뿌리기
+2. 1회 시비량: 10a당 15~20kg
+3. 물을 충분히 주기 (관수 후 시비 가능)
+4. 2주일 후 필요시 2차 시비
+
+[사용 시기별 가이드]
+- 춘파작: 4월, 5월 착근 후
+- 추파작: 8월, 9월 정식 후
+- 저장 작물: 수확 1개월 전까지
+
+[특징]
+- N21 높은 질소로 빠른 생육 촉진
+- 완효성 입제로 시간차 방출
+- 가을 작물 수확량 증대에 효과적
+- 저장성 향상 (감자, 무 등)`,
+                
+                '슈퍼복합비료': `[기본 기저비료 사용법]
+1. 정식 2주일 전 밭 준비
+2. 밭에 10a당 25~30kg 고르게 뿌리기
+3. 깊이 10~15cm로 경운하여 섞기
+4. 3~5일 경과 후 정식
+
+[추가 시비(웃거름) 방법]
+1. 생육 중기(정식 3~4주일 후) 첫 시비
+2. 이후 2~3주일 간격으로 2~3회 추가
+3. 1회 추가 시비량: 10a당 10~15kg
+4. 관수 후 시비하기
+
+[특징]
+- N:P:K = 21:17:17 완벽 균형
+- 모든 작물 모든 생육 시기에 사용 가능
+- 인산(P17) 충분해서 뿌리 발달 우수
+- 칼리(K17) 충분해서 병해충 저항성 증가`
+            };
+            
+            let updatedCount = 0;
+            let failedCount = 0;
+            
+            // 각 비료에 memo 할당
+            APP.data.supplies?.forEach((supply, idx) => {
+                const fertilizerName = supply[7];  // [7] = 비료명
+                
+                if (memoData[fertilizerName]) {
+                    // 동일한 비료명 모두에 적용
+                    APP.data.supplies.forEach((s, i) => {
+                        if (s[7] === fertilizerName) {
+                            s[10] = memoData[fertilizerName];  // [10] = memo
+                            updatedCount++;
+                            
+                            // GAS에 업데이트 요청
+                            _gasPost('updateSupply', {
+                                id: s[0],
+                                memo: memoData[fertilizerName]
+                            });
+                        }
+                    });
+                }
+            });
+            
+            // UI 업데이트
+            renderSupplies();
+            
+            // 완료 메시지
+            alert(`✅ 완료!\n채운 비료: ${updatedCount}개\n\n다음 단계:\n1. Google Sheets 준비사항 시트 열기\n2. 주별시비계획 엑셀 데이터 복사\n3. 준비사항 시트에 붙여넣기\n4. HTML 새로고침 (Ctrl+F5)`);
+            
+            console.log(`✅ 비료 사용방법 ${updatedCount}개 채움 완료!`);
+        }
+        
+        // 보유비료 사용방법 엑셀 다운로드
+        function exportSuppliesExcel() {
+            const ownedPlants = getOwnedPlants();
+            
+            // 엑셀 데이터 생성
+            const data = [
+                ['비료명', '성분', '종류', '보유량', '사용방법', '재배작물'],
+                ...APP.data.supplies.map(r => {
+                    const name = r[7] || '-';  // 비료명
+                    const ingredient = r[4] || '-';  // 성분
+                    const type = r[3] || '-';  // 종류
+                    const quantity = r[9] || 1;  // 보유량
+                    const memo = r[10] || '';  // 사용방법
+                    
+                    // 재배 중인 작물만 필터링
+                    const crops = (r[5] || '').split(',').map(c => c.trim()).filter(c => c);
+                    const relevantCrops = crops.filter(c => 
+                        ownedPlants.some(o => o.toLowerCase().includes(c.toLowerCase()) || c.toLowerCase().includes(o.toLowerCase()))
+                    ).join(', ') || '-';
+                    
+                    return [name, ingredient, type, quantity, memo, relevantCrops];
+                })
+            ];
+            
+            // CSV로 다운로드 (엑셀도 열 수 있음)
+            const csv = data.map(row => 
+                row.map(cell => {
+                    // 특수문자 처리
+                    const str = String(cell);
+                    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+                        return `"${str.replace(/"/g, '""')}"`;
+                    }
+                    return str;
+                }).join(',')
+            ).join('\n');
+            
+            // UTF-8 BOM 추가 (엑셀에서 한글 표시 제대로 되도록)
+            const bom = '\uFEFF';
+            const blob = new Blob([bom + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `보유비료_사용방법_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            alert('보유비료 사용방법이 다운로드되었습니다!\n(엑셀에서도 열 수 있습니다)');
+        }
+        
+        function closeSupplyModal() {
+            document.getElementById('supply-modal').classList.remove('show');
+        }
+
+        // 보유비료 모달 맨 위로
+        function scrollSupplyModalToTop() {
+            const container = document.getElementById('modal-supply-content');
+            if (container) {
+                container.scrollTop = 0;
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // 보유비료 모달 맨 아래로
+        function scrollSupplyModalToBottom() {
+            const container = document.getElementById('modal-supply-content');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // 작물 분류 - 포함 매칭 방식 + 오버라이드 확인
+        function classifyPlant(cropName) {
+            // 1️⃣ 오버라이드 확인 (사용자가 변경한 타입)
+            if (APP.plantTypeOverrides[cropName]) {
+                return APP.plantTypeOverrides[cropName];
+            }
+            
+            // 2️⃣ 유실수 키워드 (포함 매칭용)
+            const fruitKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래', '감'];
+            
+            for (let fruit of fruitKeywords) {
+                if (cropName.includes(fruit)) {
+                    // 혼동 사전 확인 (배 ≠ 배추 등)
+                    if (confusableDictionary[fruit] && confusableDictionary[fruit].some(c => c === cropName)) {
+                        continue;
+                    }
                     return 'fruits';
                 }
             }
             return 'vegetables';
         }
-
+        
         function showFruits() {
             document.getElementById('fruits-container').style.display = 'block';
             document.getElementById('vegetables-container').style.display = 'none';
@@ -874,7 +2300,7 @@
             document.getElementById('btn-vegetables').style.background = '#f0f0f0';
             document.getElementById('btn-vegetables').style.color = '#666';
         }
-
+        
         function showVegetables() {
             document.getElementById('fruits-container').style.display = 'none';
             document.getElementById('vegetables-container').style.display = 'block';
@@ -883,192 +2309,1530 @@
             document.getElementById('btn-vegetables').style.background = 'var(--primary-color)';
             document.getElementById('btn-vegetables').style.color = 'white';
         }
+        
+        function saveVariety(plantId, cropName) {
+            const varietyInput = document.getElementById(`variety-${plantId}`);
+            if (!varietyInput) return;
+            
+            const newVariety = varietyInput.value.trim();
+            if (!newVariety) {
+                alert('품종을 입력해주세요.');
+                return;
+            }
+            
+            // 로컬 데이터 업데이트
+            const plant = APP.data.growPlants.find(p => p[0] === plantId);
+            if (plant) {
+                plant[4] = newVariety;
+                alert(`✅ ${cropName}의 품종이 "${newVariety}"로 저장되었습니다.`);
+            }
+        }
 
         function renderPlants() {
+            if (!APP.data.growPlants || APP.data.growPlants.length === 0) {
+                document.getElementById('plants-fruits-table').style.display = 'none';
+                document.getElementById('plants-fruits-empty').style.display = 'block';
+                document.getElementById('plants-vegetables-table').style.display = 'none';
+                document.getElementById('plants-vegetables-empty').style.display = 'block';
+                return;
+            }
+
+            // 유실수와 채소로 분류
             const fruitPlants = [];
             const vegPlants = [];
-
-            (APP.data.growPlants || []).forEach(r => {
-                const cropName = r[1] || '';
-                if (classifyPlant(cropName) === 'fruits') {
+            
+            APP.data.growPlants.forEach(r => {
+                if (classifyPlant(r[1]) === 'fruits') {
                     fruitPlants.push(r);
                 } else {
                     vegPlants.push(r);
                 }
             });
 
-            // 유실수 렌더링
-            const fruitTbody = document.getElementById('plants-fruits-tbody');
-            const fruitEmpty = document.getElementById('plants-fruits-empty');
+            // 유실수 테이블
             if (fruitPlants.length === 0) {
                 document.getElementById('plants-fruits-table').style.display = 'none';
-                fruitEmpty.style.display = 'block';
+                document.getElementById('plants-fruits-empty').style.display = 'block';
             } else {
                 document.getElementById('plants-fruits-table').style.display = 'table';
-                fruitEmpty.style.display = 'none';
-                fruitTbody.innerHTML = fruitPlants.map(r => `
-                    <tr>
-                        <td>${r[1] || '-'}</td>
-                        <td>${r[4] || '-'}</td>
+                document.getElementById('plants-fruits-empty').style.display = 'none';
+                document.getElementById('plants-fruits-tbody').innerHTML = fruitPlants.map(r => {
+                    return `<tr>
+                        <td>${r[1]||'-'}</td>
+                        <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[6] || '-'}</td>
-                    </tr>
-                `).join('');
+                        <td>${r[6]||'-'}</td>
+                        <td>
+                            <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                                <option value="fruits">🍎 유실수</option>
+                                <option value="vegetables">🥬 채소</option>
+                            </select>
+                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
+                        </td>
+                    </tr>`;
+                }).join('');
             }
 
-            // 채소 렌더링
-            const vegTbody = document.getElementById('plants-vegetables-tbody');
-            const vegEmpty = document.getElementById('plants-vegetables-empty');
+            // 채소 테이블
             if (vegPlants.length === 0) {
                 document.getElementById('plants-vegetables-table').style.display = 'none';
-                vegEmpty.style.display = 'block';
+                document.getElementById('plants-vegetables-empty').style.display = 'block';
             } else {
                 document.getElementById('plants-vegetables-table').style.display = 'table';
-                vegEmpty.style.display = 'none';
-                vegTbody.innerHTML = vegPlants.map(r => `
-                    <tr>
-                        <td>${r[1] || '-'}</td>
-                        <td>${r[4] || '-'}</td>
+                document.getElementById('plants-vegetables-empty').style.display = 'none';
+                document.getElementById('plants-vegetables-tbody').innerHTML = vegPlants.map(r => {
+                    return `<tr>
+                        <td>${r[1]||'-'}</td>
+                        <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[6] || '-'}</td>
-                    </tr>
+                        <td>${r[6]||'-'}</td>
+                        <td>
+                            <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
+                                <option value="fruits">🍎 유실수</option>
+                                <option value="vegetables" selected>🥬 채소</option>
+                            </select>
+                            <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+        }
+        
+        function changePlantType(plantId, cropName, newType) {
+            // APP.plantTypeOverrides에 저장
+            APP.plantTypeOverrides[cropName] = newType;
+            
+            if (newType === 'fruits') {
+                console.log(`✅ "${cropName}"을(를) 유실수로 분류했습니다.`);
+                alert(`✅ "${cropName}"이(가) 유실수로 분류되었습니다.`);
+            } else {
+                console.log(`✅ "${cropName}"을(를) 채소로 분류했습니다.`);
+                alert(`✅ "${cropName}"이(가) 채소로 분류되었습니다.`);
+            }
+            
+            // 테이블 재렌더링
+            renderPlants();
+            
+            // 해당 탭으로 자동 전환
+            if (newType === 'fruits') {
+                showFruits();
+            } else {
+                showVegetables();
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 🧪 농약 정보 팝업 함수
+        // ════════════════════════════════════════════════════════════
+
+        function openPesticideModal(idx) {
+            const pesticide = APP.data.myPesticides[idx];
+            if (!pesticide) return;
+
+            const pesticideName = pesticide[1] || '농약';
+            const container = document.getElementById('modal-crops-container');
+
+            // 모달 제목
+            document.getElementById('modal-pesticide-name').textContent = pesticideName;
+
+            // 로딩 표시
+            container.innerHTML = `
+                <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                    <p>🔍 PSIS 데이터를 불러오는 중...</p>
+                </div>
+            `;
+
+            // PSIS API에서 데이터 조회
+            fetchFromGAS('searchPesticide', { keyword: pesticideName }).then(response => {
+                console.log('🔍 농약 정보 조회 응답:', response);
+                
+                if (response.success && response.data) {
+                    // data가 배열이면 첫 번째 요소 가져오기
+                    const dataItem = Array.isArray(response.data) ? response.data[0] : response.data;
+                    
+                    console.log('📦 dataItem:', dataItem);
+                    
+                    // 로컬 데이터 형식 감지 (rawCropsData가 있으면 로컬 데이터)
+                    if (dataItem && dataItem.rawCropsData) {
+                        console.log('📝 로컬 데이터 형식 감지, cropsData:', dataItem.rawCropsData);
+                        displayLocalPesticideData(dataItem.rawCropsData, pesticideName);
+                    } else if (Array.isArray(response.data) && response.data.length > 0) {
+                        // PSIS 데이터 형식
+                        displayPsisData(response.data, pesticideName);
+                    } else {
+                        displayLocalData(idx);
+                    }
+                } else {
+                    displayLocalData(idx);
+                }
+            }).catch(error => {
+                console.error('❌ 조회 오류:', error);
+                displayLocalData(idx);
+            });
+
+            // 모달 표시
+            document.getElementById('pesticide-modal').classList.add('show');
+        }
+
+        function displayPsisData(psisData, pesticideName) {
+            const ownedPlantNames = getOwnedPlants();
+            const container = document.getElementById('modal-crops-container');
+
+            // PSIS 데이터를 작물별로 그룹화
+            const cropGroups = {};
+
+            psisData.forEach(item => {
+                const cropName = item.cropName || item.cropKorName || '';
+                
+                // 재배 중인 작물만 필터링
+                const isOwned = ownedPlantNames.some(owned => 
+                    cropName.toLowerCase().includes(owned.toLowerCase()) ||
+                    owned.toLowerCase().includes(cropName.toLowerCase())
+                );
+
+                if (!isOwned) return;
+
+                if (!cropGroups[cropName]) {
+                    cropGroups[cropName] = [];
+                }
+
+                cropGroups[cropName].push({
+                    pestName: item.diseaseUseKorName || item.diseaseKorName || item.pestName || '-',
+                    timing: item.useTimeArea || item.useTimeStr || '-',
+                    dilution: item.usageStandard || item.dilution || '-',
+                    harvestDays: item.safetyDayNum || item.harvestDays || '-',
+                    times: item.usageCountStd || item.times || '-',
+                    humanToxic: item.toxicName || item.humanToxic || '-',
+                    fishToxic: item.fishToxicName || item.fishToxic || '-'
+                });
+            });
+
+            // 그룹화된 데이터 표시
+            if (Object.keys(cropGroups).length === 0) {
+                // 재배 중인 작물에 정보 없음
+                const allCrops = [...new Set(psisData.map(item => item.cropName || item.cropKorName || ''))];
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 현재 재배 중인 작물에 대한 사용 정보가 없습니다.</p>
+                        <p style="font-size: 12px; margin-top: 15px;">
+                            이 농약은 다음 작물에 사용할 수 있습니다:
+                        </p>
+                        <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${allCrops.map(crop => `
+                                <div style="background: #f0f0f0; padding: 8px; border-radius: 6px; font-size: 12px;">
+                                    ${crop}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // 작물별 테이블 생성
+                container.innerHTML = Object.entries(cropGroups).map(([cropName, pests]) => `
+                    <div class="modal-section">
+                        <div class="crop-name">🌳 ${cropName}</div>
+                        <table class="pest-info-table">
+                            ${pests.map((pest, idx) => `
+                                ${idx === 0 ? '' : '<tr style="height: 8px;"><td colspan="2"></td></tr>'}
+                                <tr>
+                                    <td>병해충명</td>
+                                    <td>${pest.pestName}</td>
+                                </tr>
+                                <tr>
+                                    <td>사용시기</td>
+                                    <td>${pest.timing}</td>
+                                </tr>
+                                <tr>
+                                    <td>희석배수</td>
+                                    <td>${pest.dilution}</td>
+                                </tr>
+                                <tr>
+                                    <td>수확전대기</td>
+                                    <td>${pest.harvestDays}</td>
+                                </tr>
+                                <tr>
+                                    <td>사용가능횟수</td>
+                                    <td>${pest.times}</td>
+                                </tr>
+                                <tr>
+                                    <td>인축독성</td>
+                                    <td>${pest.humanToxic}</td>
+                                </tr>
+                                <tr>
+                                    <td>어독성</td>
+                                    <td>${pest.fishToxic}</td>
+                                </tr>
+                            `).join('')}
+                        </table>
+                    </div>
                 `).join('');
             }
         }
 
-        // 2️⃣ 두 번째 요구사항: 기록 일지 추가 기능 구현
-        function addNewRecord() {
-            const crop = document.getElementById('new-record-crop').value.trim();
-            const type = document.getElementById('new-record-type').value;
-            const date = document.getElementById('new-record-date').value;
-            const content = document.getElementById('new-record-content').value.trim();
+        function displayLocalPesticideData(cropsData, pesticideName) {
+            // 🧠 첫 실행 시 작물명 학습
+            if (!window.learnedCropDictionary) {
+                window.learnedCropDictionary = learnCropDictionary();
+            }
+            
+            const ownedPlantNames = getOwnedPlants();
+            const container = document.getElementById('modal-crops-container');
+        
+            if (!cropsData || cropsData.trim() === '') {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 이 농약의 사용 정보가 없습니다.</p>
+                    </div>
+                `;
+                return;
+            }
+        
+            const allCrops = parsePesticideData(cropsData);
+            const ownedCrops = filterOwnedCrops(allCrops, ownedPlantNames);
+        
+            if (ownedCrops.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 현재 재배 중인 작물에 대한 사용 정보가 없습니다.</p>
+                        <p style="font-size: 12px; margin-top: 15px;">
+                            이 농약은 다음 작물에 사용할 수 있습니다:
+                        </p>
+                        <div style="margin-top: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            ${allCrops.map(crop => `
+                                <div style="background: #f0f0f0; padding: 8px; border-radius: 6px; font-size: 12px;">
+                                    ${crop.cropName}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = ownedCrops.map(crop => `
+                    <div class="modal-section">
+                        <div class="crop-name">🌳 ${crop.cropName}</div>
+                        <table class="pest-info-table">
+                            <tr>
+                                <td>병해충명</td>
+                                <td>${crop.pestName || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용시기</td>
+                                <td>${crop.timing || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>희석배수</td>
+                                <td>${crop.dilution || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>수확전대기</td>
+                                <td>${crop.harvestDays || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용가능횟수</td>
+                                <td>${crop.times || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>인축독성</td>
+                                <td>${crop.humanToxic || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>어독성</td>
+                                <td>${crop.fishToxic || '-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `).join('');
+            }
+        }
+        
+        function displayLocalData(idx) {
+            // 로컬 r[12] 데이터 사용 (PSIS 실패 시)
+            const pesticide = APP.data.myPesticides[idx];
+            const cropsData = pesticide[12] || '';
+            const container = document.getElementById('modal-crops-container');
+            const ownedPlantNames = getOwnedPlants();
 
-            if (!crop || !date || !content) {
-                alert('작물명, 작업일, 작업내용을 모두 입력해주세요.');
+            if (!cropsData || cropsData.trim() === '') {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 이 농약의 사용 정보가 없습니다.</p>
+                    </div>
+                `;
                 return;
             }
 
-            // 배열 구조: [id, 작물명, 작업일, 작업종류, 작업내용]
-            const newEntry = ['rec_' + Date.now(), crop, date, type, content];
-            
-            if (!APP.data.growRecords) APP.data.growRecords = [];
-            APP.data.growRecords.unshift(newEntry); // 최신 기록이 위로 오도록 추가
+            const allCrops = parsePesticideData(cropsData);
+            const ownedCrops = filterOwnedCrops(allCrops, ownedPlantNames);
 
-            // iPhone 메모리에도 자동 반영 저장
-            saveToLocalMemory();
-
-            // 입력 폼 초기화
-            document.getElementById('new-record-crop').value = '';
-            document.getElementById('new-record-content').value = '';
-            
-            renderRecords();
-            alert('새로운 기록일지가 추가되었습니다!');[cite: 1]
+            if (ownedCrops.length === 0) {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                        <p>🌾 현재 재배 중인 작물에 대한 사용 정보가 없습니다.</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = ownedCrops.map(crop => `
+                    <div class="modal-section">
+                        <div class="crop-name">🌳 ${crop.cropName}</div>
+                        <table class="pest-info-table">
+                            <tr>
+                                <td>병해충명</td>
+                                <td>${crop.pestName || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용시기</td>
+                                <td>${crop.timing || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>희석배수</td>
+                                <td>${crop.dilution || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>수확전대기</td>
+                                <td>${crop.harvestDays || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>사용가능횟수</td>
+                                <td>${crop.times || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>인축독성</td>
+                                <td>${crop.humanToxic || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td>어독성</td>
+                                <td>${crop.fishToxic || '-'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                `).join('');
+            }
         }
+
+        function closePesticideModal() {
+            document.getElementById('pesticide-modal').classList.remove('show');
+        }
+
+        // 팝업 내용을 맨 위로 스크롤
+        function scrollPesticideModalToTop() {
+            const container = document.getElementById('modal-crops-container');
+            if (container) {
+                container.scrollTop = 0;
+                // 부드러운 스크롤 (대체 방법)
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // 팝업 내용을 맨 아래로 스크롤
+        function scrollPesticideModalToBottom() {
+            const container = document.getElementById('modal-crops-container');
+            if (container) {
+                container.scrollTop = container.scrollHeight;
+                // 부드러운 스크롤 (대체 방법)
+                container.style.scrollBehavior = 'smooth';
+            }
+        }
+
+        // ════════════════════════════════════════════════════════════
+        // 재배 중인 작물 필터링 함수 (학습 기반)
+        // ════════════════════════════════════════════════════════════
+
+        /**
+         * ❌ 혼동하기 쉬운 단어들 (제외 리스트)
+         * 예: "감" ≠ "감자", "배" ≠ "배추"
+         */
+        let confusableDictionary = {
+            '감': ['감자', '감귤'],              // "감" ≠ "감자"
+            '감자': ['감'],                      // "감자" ≠ "감"
+            '배': ['배추', '양배추'],            // "배" ≠ "배추"
+            '배추': ['양배추', '배'],            // "배추" ≠ "양배추", "배"
+            '양배추': ['배추', '배'],            // "양배추" ≠ "배추", "배"
+            '파': ['양파', '쪽파', '대파'],     // "파" ≠ "양파"
+            '양파': ['파'],                      // "양파" ≠ "파"
+            '아주까리': ['아주까리콩'],          // ⚠️ "아주까리" ≠ "아주까리콩"
+            '아주까리콩': ['아주까리'],          // ⚠️ "아주까리콩" ≠ "아주까리"
+            '무': ['무화과'],                    // "무" ≠ "무화과"
+            '무화과': ['무'],                    // "무화과" ≠ "무"
+            '고구마': ['감자'],                  // "고구마" ≠ "감자"
+            '감자': ['고구마'],                  // "감자" ≠ "고구마"
+            '레몬': ['꽃양배추', '순무양배추', '다래 레몬프레시'],  // ✅ 레몬은 다래 품종이지 별도 작물 아님
+            '꽃양배추': ['양배추'],              // ✅ 꽃양배추는 재배하지 않음, 양배추로 매칭
+            '순무양배추': ['양배추']             // ✅ 순무양배추는 재배하지 않음, 양배추로 매칭
+        };
+
+        /**
+         * 🧠 myPesticides의 memo에서 작물명을 학습해서
+         * 혼동 사전을 자동 생성합니다.
+         * 예: "감"과 "감자"는 다른 종류
+         */
+        function learnCropDictionary() {
+            console.log('📚 작물명 학습 시작...');
+            
+            // Step 1: 모든 memo에서 작물명 추출
+            const cropSet = new Set();
+            
+            if (APP.data.myPesticides) {
+                APP.data.myPesticides.forEach(row => {
+                    const memo = row[12] || ''; // memo 열
+                    if (!memo) return;
+                    
+                    // "작물명(품종)(데이터)" 형식에서 작물명 추출
+                    const entries = memo.split('/');
+                    entries.forEach(entry => {
+                        const match = entry.trim().match(/^([^(]+)\(/);
+                        if (match) {
+                            const cropName = match[1].trim();
+                            cropSet.add(cropName);
+                        }
+                    });
+                });
+            }
+            
+            const crops = Array.from(cropSet).sort();
+            console.log('📝 추출된 작물(' + crops.length + '개):', crops);
+            
+            // Step 2: 혼동 사전 자동 생성
+            const confusable = {};
+            
+            crops.forEach(crop1 => {
+                const conflicts = [];
+                
+                crops.forEach(crop2 => {
+                    if (crop1 === crop2) return;
+                    
+                    // 🔧 포함 관계 확인
+                    // "감"과 "감자"는 다른 단어, "배추"와 "양배추"도 다름
+                    if (crop2.includes(crop1) && crop2.length > crop1.length + 1) {
+                        conflicts.push(crop2);
+                        console.log('  ❌', crop1, '≠', crop2, '(포함 관계)');
+                    }
+                });
+                
+                if (conflicts.length > 0) {
+                    confusable[crop1] = conflicts;
+                }
+            });
+            
+            console.log('📚 자동 생성된 혼동 사전:', confusable);
+            return confusable;
+        }
+
+        /**
+         * 🌾 같은 종류로 인식할 작물 그룹핑 (현재 재배 작물 기반)
+         * 예: "감"과 "단감", "토마토"와 "방울토마토"
+         * 
+         * 주의: "감" ≠ "감자", "배" ≠ "배추", "아주까리" ≠ "아주까리콩"
+         */
+        const cropGroups = {
+            // 과수류
+            '감': [],  // 단일 작물
+            '배': [],  // 단일 작물
+            
+            '다래': [
+                '다래 일세',
+                '다래 레몬프레시',
+                '다래 참다래(키위)',
+                '다래 용성2호'
+            ],
+            
+            '으름': [
+                '으름 토종',
+                '으름 슈퍼대실',
+                '으름 백화대실',
+                '으름 홍화대실'
+            ],
+            
+            '사과': [
+                '나가노신구 사과',
+                '돌고 사과',
+                '아리수 사과'
+            ],
+            
+            '살구': [
+                '백살구',
+                'B360살구',
+                '대천황살구(킹코트)',
+                '킹코트살구(하코트)',
+                '하코드살구'
+            ],
+            
+            '복분자': [
+                '블랙베리(슈퍼복분자)'
+            ],
+            
+            '무화과': [
+                '무화과 시카고하디',
+                '무화과 롱다우트',
+                '무화과 바나네',
+                '무화과 피코튬'
+            ],
+            
+            '매실': [
+                '남고 매실',
+                '노천 매실'
+            ],
+            
+            '포도': [
+                '머루포도(MBA)'
+            ],
+            
+            // 수박류 (가장 많은 품종)
+            '수박': [
+                '블랙망고수박',
+                '애플수박',
+                '자몽애플수박',
+                '흑피애플미니꼬꼬마수박①',
+                '흑피애플미니꼬꼬마수박②',
+                '애플미니꼬꼬마수박①',
+                '애플미니꼬꼬마수박②',
+                '접목수박',
+                '망고수박①',
+                '망고수박②',
+                '망고수박③',
+                '접목애플수박①',
+                '접목애플수박②',
+                '복수박①',
+                '복수박②'
+            ],
+            
+            // 호박류 (단호박, 애호박 모두 호박)
+            '호박': [
+                '보우짱 단호박①',
+                '보우짱 단호박②',
+                '애호박①',
+                '맷돌호박①',
+                '맷돌호박②',
+                '애호박②',
+                '미니단호박보우짱①'
+            ],
+            
+            // 참외
+            '참외': [
+                '망고참외',
+                '꿀참외',
+                '개구리참외',
+                '베타카로틴참외',
+                '사과참외'
+            ],
+            
+            // 오이
+            '오이': [
+                '백다다기오이'
+            ],
+            
+            '쿠카멜론': [
+                '쿠카멜론①',
+                '쿠카멜론②'
+            ],
+            
+            // 근채류
+            '마늘': [
+                '마늘(3이랑)',
+                '마늘(2이랑 후작)'
+            ],
+            
+            '양파': [
+                '양파',
+                '양파(6이랑)'
+            ],
+            
+            '생강': [
+                '토종생강',
+                '개량생강'
+            ],
+            
+            '무': [
+                '김장무'
+            ],
+            
+            // 특용작물
+            '어수리': [
+                '어수리(5이랑)',
+                '어수리(7이랑)',
+                '어수리(8이랑)',
+                '어수리(9이랑)',
+                '어수리(10이랑)'
+            ],
+            
+            '곤드레': [
+                '곤드레(7이랑)',
+                '곤드레(8이랑)',
+                '곤드레(9이랑)'
+            ],
+            
+            '근대': [
+                '황근대',
+                '황근대(7이랑)',
+                '청근대',
+                '청근대(7이랑)'
+            ],
+            
+            // 두류
+            '동부': [
+                '동부(마늘 후작)',
+                '동부콩'
+            ],
+            
+            '콩': [
+                '선비잡이콩',
+                '작두콩'
+            ],
+            
+            // 기타 작물
+            '고구마': [
+                '고구마',
+                '고구마(2차)'
+            ],
+            
+            '감자': [
+                '감자(봄재배)'
+            ],
+            
+            '배추': [
+                '배추(가을)'
+            ],
+            
+            '토마토': [],
+            '열무': [],
+            '시금치': [],
+            '옥수수': [],
+            '바질': [],
+            '바이오체리': [],
+            '블루베리': ['블루베리 패트리오트'],
+            '헤이즐넛': [
+                '헤이즐넛 바르셀로나',
+                '헤이즐넛 초거대향'
+            ],
+            '앵두': ['앵두(대홍앵)'],
+            '모과': [
+                '마르멜로(서양모과)',
+                '모과(대실모과)'
+            ],
+            '땅콩': [],
+            '머루콩': [],
+            
+            // ⚠️ 중요: 이 둘은 다른 작물!
+            '아주까리': [],        // 피마자유 추출용
+            '아주까리콩': []       // 콩 종류
+        };
+
+        /**
+         * 작물을 그룹으로 매핑 (개선된 버전)
+         * "방울토마토" → "토마토"
+         * "머루포도(MBA)" → "포도"
+         * 포함 관계 매칭도 지원 (괄호/숫자 무시)
+         */
+        function findCropGroup(cropName) {
+            const cropLower = cropName.toLowerCase();
+            
+            // 1️⃣ 그룹에서 정확한 매칭
+            for (const [main, variants] of Object.entries(cropGroups)) {
+                if (cropLower === main.toLowerCase()) {
+                    return main;
+                }
+            }
+            
+            // 2️⃣ 변형 매칭 (정확 → 포함)
+            for (const [main, variants] of Object.entries(cropGroups)) {
+                if (variants.length === 0) continue;
+                
+                // 2-1️⃣ 정확한 매칭
+                if (variants.some(v => cropLower === v.toLowerCase())) {
+                    console.log('✅ 정확 변형:', cropName, '→', main);
+                    return main;
+                }
+                
+                // 2-2️⃣ 괄호/숫자 무시한 포함 매칭
+                const cropClean = cropLower.replace(/[()①②③④⑤\d\s]/g, '');
+                
+                if (variants.some(v => {
+                    const vClean = v.toLowerCase().replace(/[()①②③④⑤\d\s]/g, '');
+                    
+                    if (cropClean.length >= 2 && vClean.length >= 2) {
+                        const match = cropClean === vClean || 
+                                     cropClean.includes(vClean) ||
+                                     vClean.includes(cropClean);
+                        
+                        if (match) {
+                            console.log('✅ 포함 매칭:', cropName, '→', main, 
+                                       '(정제: ' + cropClean + ' vs ' + vClean + ')');
+                        }
+                        return match;
+                    }
+                    return false;
+                })) {
+                    return main;
+                }
+            }
+            
+            // 3️⃣ 그룹에 없으면 자신
+            console.log('❓ 그룹 미등록:', cropName);
+            return cropName;
+        }
+
+        function getOwnedPlants() {
+            // 재배 작물 시트(growPlants)에서 작물명 추출
+            if (!APP.data.growPlants || APP.data.growPlants.length === 0) {
+                return [];
+            }
+            
+            return APP.data.growPlants.map(r => r[1] || '').filter(name => name.trim());
+        }
+
+        function filterOwnedCrops(allCrops, ownedPlantNames) {
+            console.log('═══════════════════════════════════════════════════');
+            console.log('🔍 filterOwnedCrops 시작');
+            console.log('📊 allCrops:', allCrops.map(c => c.cropName).join(', '));
+            console.log('🌳 ownedPlantNames:', ownedPlantNames.join(', '));
+            
+            if (!ownedPlantNames || ownedPlantNames.length === 0) {
+                console.error('⚠️ 재배 작물 없음!');
+                return [];
+            }
+            
+            // 재배 중인 작물을 정규화 (그룹화)
+            const ownedGroups = new Set();
+            const ownedGroupMap = {}; // 디버깅용
+            
+            ownedPlantNames.forEach(name => {
+                // 1️⃣ 정확 이름 추가
+                ownedGroups.add(name.toLowerCase());
+                
+                // 2️⃣ 그룹으로도 추가
+                const group = findCropGroup(name);
+                ownedGroups.add(group.toLowerCase());
+                
+                // 3️⃣ 괄호 제거한 버전도 추가
+                const nameClean = name.toLowerCase()
+                    .replace(/[()①②③④⑤\d\s]/g, '');
+                if (nameClean) {
+                    ownedGroups.add(nameClean);
+                }
+                
+                console.log(`  🌾 ${name} → 그룹: ${group}, 정제: ${nameClean}`);
+                ownedGroupMap[name] = { group, nameClean };
+            });
+            
+            console.log('📋 재배 그룹 목록:', Array.from(ownedGroups));
+            
+            // 농약 작물들 필터링
+            const result = allCrops.filter(crop => {
+                const cropName = crop.cropName;
+                const cropNameLower = cropName.toLowerCase();
+                
+                // 1️⃣ 혼동 사전 확인: 제외할 작물
+                const isConfusable = Object.entries(confusableDictionary).some(
+                    ([excluded, conflictList]) => {
+                        if (cropNameLower === excluded.toLowerCase()) {
+                            const hasConflict = conflictList.some(c => 
+                                ownedGroups.has(c.toLowerCase())
+                            );
+                            if (hasConflict) {
+                                console.log(`  ❌ 혼동 제외: ${cropName}`);
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                );
+                
+                if (isConfusable) return false;
+                
+                // 2️⃣ 정확 이름 매칭
+                if (ownedGroups.has(cropNameLower)) {
+                    console.log(`  ✅ 정확: ${cropName}`);
+                    return true;
+                }
+                
+                // 3️⃣ 그룹 매칭
+                const cropGroup = findCropGroup(cropName);
+                if (ownedGroups.has(cropGroup.toLowerCase())) {
+                    console.log(`  ✅ 그룹: ${cropName} (그룹: ${cropGroup})`);
+                    return true;
+                }
+                
+                // 4️⃣ 괄호 제거한 매칭
+                const cropClean = cropNameLower.replace(/[()①②③④⑤\d\s]/g, '');
+                if (cropClean && ownedGroups.has(cropClean)) {
+                    console.log(`  ✅ 정제: ${cropName} (정제: ${cropClean})`);
+                    return true;
+                }
+                
+                // 5️⃣ 포함 관계 매칭 (느슨한 매칭)
+                for (const ownedGroup of ownedGroups) {
+                    if (ownedGroup.length >= 2 && cropClean.length >= 2) {
+                        if (cropClean.includes(ownedGroup) || 
+                            ownedGroup.includes(cropClean)) {
+                            console.log(`  ✅ 포함: ${cropName} (매칭: ${ownedGroup})`);
+                            return true;
+                        }
+                    }
+                }
+                
+                console.log(`  ❌ 미매칭: ${cropName}`);
+                return false;
+            });
+            
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log(`🎯 필터링 결과: ${result.length}개`);
+            result.forEach(r => console.log(`  ✓ ${r.cropName}`));
+            console.log('═══════════════════════════════════════════════════');
+            
+            return result;
+        }
+
+        function parsePesticideData(cropsData) {
+            const crops = [];
+            
+            try {
+                // "/" 기준으로 작물 분리
+                const cropEntries = cropsData.split('/').map(e => e.trim()).filter(e => e);
+                
+                cropEntries.forEach(entry => {
+                    try {
+                        console.log('🔍 파싱:', entry);
+                        
+                        // 첫 번째 ( 찾기: 작물명 끝
+                        const firstParen = entry.indexOf('(');
+                        if (firstParen === -1) return;
+                        
+                        // 마지막 ) 찾기: 데이터 끝
+                        const lastParen = entry.lastIndexOf(')');
+                        if (lastParen === -1) return;
+                        
+                        // 작물명 추출
+                        const cropNameClean = entry.substring(0, firstParen).trim();
+                        
+                        // 전체 괄호 내용
+                        const totalContent = entry.substring(firstParen + 1, lastParen);
+                        console.log('📝 전체 내용:', totalContent);
+                        
+                        // 🔑 핵심: ")(" 패턴 찾기
+                        // 품종이 있으면: 수박(복수박 포함)(덩굴마름병,...)
+                        // 품종이 없으면: 마늘(잎마름병,...)
+                        const hasVariety = totalContent.includes(')(');
+                        
+                        let dataPart = '';
+                        
+                        if (hasVariety) {
+                            // 형식 1️⃣: 작물명(품종)(데이터)
+                            const splitIdx = totalContent.indexOf(')(');
+                            dataPart = totalContent.substring(splitIdx + 2);
+                            console.log('✅ 형식 1 (품종 있음):', 'dataPart =', dataPart);
+                        } else {
+                            // 형식 2️⃣: 작물명(데이터)
+                            dataPart = totalContent;
+                            console.log('✅ 형식 2 (품종 없음):', 'dataPart =', dataPart);
+                        }
+                        
+                        // 쉼표로 분리
+                        const details = dataPart.split(',').map(d => d.trim());
+                        
+                        console.log('✅ cropName:', cropNameClean);
+                        console.log('✅ details 개수:', details.length);
+                        console.log('✅ details:', details);
+                        
+                        if (details.length < 7) {
+                            console.warn('⚠️ 데이터 부족 (' + details.length + '개)');
+                            return;
+                        }
+                        
+                        crops.push({
+                            cropName: cropNameClean,
+                            pestName: details[0],
+                            timing: details[1],
+                            dilution: details[2],
+                            harvestDays: details[3],
+                            times: details[4],
+                            humanToxic: details[5],
+                            fishToxic: details[6]
+                        });
+                        
+                        console.log('✅ 추가됨:', cropNameClean);
+                        
+                    } catch (e) {
+                        console.error('❌ 파싱 오류:', e.message);
+                    }
+                });
+                
+                console.log('✅ 최종 crops:', crops.length + '개');
+            } catch (e) {
+                console.error('❌ parsePesticideData 오류:', e.message);
+            }
+            
+            return crops;
+        }
+
+        // 모달 외부 클릭시 닫기
+        document.addEventListener('click', function(event) {
+            const modal = document.getElementById('pesticide-modal');
+            if (event.target === modal) {
+                closePesticideModal();
+            }
+        });
 
         function renderRecords() {
             const tbody = document.getElementById('records-tbody');
             const empty = document.getElementById('records-empty');
+            const container = document.getElementById('records-grouped-container');
             
             if (!APP.data.growRecords || APP.data.growRecords.length === 0) {
                 document.getElementById('records-table').style.display = 'none';
-                empty.style.display = 'block';
+                if (empty) empty.style.display = 'block';
+                if (container) container.innerHTML = '';
                 return;
             }
 
+            if (empty) empty.style.display = 'none';
             document.getElementById('records-table').style.display = 'table';
-            empty.style.display = 'none';
 
-            tbody.innerHTML = APP.data.growRecords.map(r => {
+            // 🔄 날짜순으로 정렬 (최근이 먼저)
+            const sortedRecords = [...APP.data.growRecords].sort((a, b) => {
+                const dateA = new Date(a[2]);
+                const dateB = new Date(b[2]);
+                
+                if (isNaN(dateA.getTime()) || isNaN(dateB.getTime())) {
+                    return 0;
+                }
+                
+                return dateB.getTime() - dateA.getTime();
+            });
+            
+            console.log('📅 기록일지:', sortedRecords.length + '개');
+
+            // 테이블 렌더링 (기존 호환성)
+            tbody.innerHTML = sortedRecords.map(r => {
                 return `<tr>
-                    <td><strong>${r[1] || '-'}</strong></td>
-                    <td><span style="background:#e8f5e9; color:#2a5f2a; padding:2px 6px; border-radius:4px; font-size:11px;">${r[3] || '-'}</span></td>
+                    <td>${r[1]||'-'}</td>
+                    <td>${r[3]||'-'}</td>
                     <td>${formatDate(r[2])}</td>
-                    <td>${r[4] || '-'}</td>
+                    <td>${r[4]||'-'}</td>
                 </tr>`;
             }).join('');
+
+            // 🆕 작물별 그룹화
+            if (container) {
+                const groupedRecords = {};
+                sortedRecords.forEach(record => {
+                    const cropName = record[1] || '미분류';
+                    if (!groupedRecords[cropName]) {
+                        groupedRecords[cropName] = [];
+                    }
+                    groupedRecords[cropName].push(record);
+                });
+
+                const html = Object.entries(groupedRecords)
+                    .sort((a, b) => a[0].localeCompare(b[0]))
+                    .map(([crop, records]) => {
+                        const cropType = classifyPlant(crop);
+                        const emoji = cropType === 'fruits' ? '🍎' : '🥬';
+                        
+                        return `
+                            <div style="background: white; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+                                <div onclick="toggleCropGroup(this)" style="background: var(--primary-color); color: white; padding: 12px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+                                    <span>${emoji} <strong>${crop}</strong> (${records.length}건)</span>
+                                    <span>▼</span>
+                                </div>
+                                <div style="display: block; max-height: 600px; overflow-y: auto;">
+                                    ${records.map((record) => `
+                                        <div style="padding: 10px 12px; border-bottom: 1px solid #eee;">
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                                                <div>
+                                                    <div style="font-size: 11px; color: #999; font-weight: 600;">🔧 작업종류</div>
+                                                    <div style="font-size: 12px; color: #333;">${record[3]||'-'}</div>
+                                                </div>
+                                                <div>
+                                                    <div style="font-size: 11px; color: #999; font-weight: 600;">📅 작업일</div>
+                                                    <div style="font-size: 12px; color: #333;">${formatDate(record[2])}</div>
+                                                </div>
+                                            </div>
+                                            <div style="margin-bottom: 8px;">
+                                                <div style="font-size: 11px; color: #999; font-weight: 600;">📝 작업내용</div>
+                                                <div style="font-size: 12px; color: #333;">${record[4]||'-'}</div>
+                                            </div>
+                                            <div style="text-align: right; padding-top: 8px; border-top: 1px solid #f0f0f0;">
+                                                <button onclick="editCropRecord(this, ${JSON.stringify(record)})" style="background: #2196F3; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px;">✏️ 수정</button>
+                                                <button onclick="deleteCropRecord(this)" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">🗑️ 삭제</button>
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                container.innerHTML = html;
+            }
+
+            updateStorageInfo();
         }
 
-        function renderWeekly() {
-            const prepList = document.getElementById('weekly-prep-list');
-            const data = APP.data.준비사항 || [];
-            if (data.length === 0) {
-                prepList.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📭</span><p>이번 주 관리 사항이 없습니다.</p></div>';
-                return;
-            }
-            prepList.innerHTML = data.map(r => `
-                <div class="card">
-                    <div class="card-title">${r[2] || ''}</div>
-                    <div class="card-content">
-                        ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+
+        function renderWeeklyWithSupplies() {
+            const today = new Date();
+            const dayOfWeek = today.getDay();
+            const weekStartDate = new Date(today);
+            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+            const weekEndDate = new Date(weekStartDate);
+            weekEndDate.setDate(weekStartDate.getDate() + 6);
+            weekStartDate.setHours(0, 0, 0, 0);
+            weekEndDate.setHours(23, 59, 59, 999);
+            
+            const tasks = (APP.data.준비사항 || []).filter(r => {
+                if (!r[0]) return false;
+                try {
+                    const itemDate = new Date(r[0]);
+                    if (isNaN(itemDate.getTime())) return false;
+                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
+                } catch (e) {
+                    return false;
+                }
+            }) || [];
+            
+            document.getElementById('tasks-with-supplies-list').innerHTML = tasks.length ? tasks.map(r => `
+                <div class="card" style="margin-bottom: 4px; padding: 8px;">
+                    <div class="card-title" style="font-size: 12px; margin-bottom: 2px;">✅ ${r[2] || ''}</div>
+                    <div class="card-content" style="font-size: 11px;">
+                        ${r[3] ? `<p style="margin: 0;">${r[3]}</p>` : ''}
                     </div>
                 </div>
-            `).join('');
+            `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
+
+            document.getElementById('needed-pesticides-list').innerHTML = APP.data.myPesticides && APP.data.myPesticides.length ? APP.data.myPesticides.map(r => {
+                const qty = parseFloat(r[3] || 0);
+                return `<div class="card" style="margin-bottom: 4px; padding: 8px;">
+                    <div class="card-title" style="font-size: 12px; margin-bottom: 2px;">🧪 ${r[1]}</div>
+                    <div class="card-content" style="font-size: 11px;">보유: <strong>${qty} ${r[4]||'-'}</strong></div>
+                </div>`;
+            }).join('') : '<div class="empty-state"><p>농약이 없습니다.</p></div>';
+
+            document.getElementById('needed-supplies-list').innerHTML = (() => {
+                const today = new Date();
+                const dayOfWeek = today.getDay();
+                const weekStartDate = new Date(today);
+                weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
+                const weekEndDate = new Date(weekStartDate);
+                weekEndDate.setDate(weekStartDate.getDate() + 6);
+                weekStartDate.setHours(0, 0, 0, 0);
+                weekEndDate.setHours(23, 59, 59, 999);
+                
+                // 이번 주 시비 항목 찾기
+                const weeklyTasks = (APP.data.준비사항 || []).filter(r => {
+                    if (!r[0] || r[1] !== '시비') return false;
+                    try {
+                        const itemDate = new Date(r[0]);
+                        if (isNaN(itemDate.getTime())) return false;
+                        return itemDate >= weekStartDate && itemDate <= weekEndDate;
+                    } catch (e) {
+                        return false;
+                    }
+                });
+                
+                if (!APP.data.supplies || APP.data.supplies.length === 0) {
+                    return '<div class="empty-state"><p>비료가 없습니다.</p></div>';
+                }
+                
+                // 비료별로 그룹화
+                const fertilizersMap = {};
+                const fertilizerOrder = ['단한번비료', '엔케이플러스', '원예맞춤고추비료', '일회만비료', '슈퍼복합비료'];
+                
+                APP.data.supplies.forEach(supply => {
+                    const fertName = supply[7]; // 비료명
+                    const qty = parseFloat(supply[9] || 0);
+                    const memo = supply[10] || '';
+                    const ingredient = supply[4] || '';
+                    
+                    if (!fertilizersMap[fertName]) {
+                        fertilizersMap[fertName] = {
+                            name: fertName,
+                            ingredient: ingredient,
+                            qty: qty,
+                            memo: memo,
+                            crops: []
+                        };
+                    }
+                });
+                
+                // 이번 주 필요한 작물 추가
+                const currentMonth = new Date().getMonth() + 1; // 1-12
+                weeklyTasks.forEach(task => {
+                    const title = task[2] || '';
+                    const taskDate = task[0] ? new Date(task[0]) : null;
+                    const taskMonth = taskDate ? taskDate.getMonth() + 1 : currentMonth;
+                    
+                    // 제목에서 비료명 추출 (예: "🍇 수박 착과 후 웃거름 (엔케이플러스)")
+                    const fertMatch = title.match(/\((.*?)\)$/);
+                    if (fertMatch) {
+                        const fertName = fertMatch[1].trim();
+                        if (fertilizersMap[fertName]) {
+                            // 제목에서 작물명 추출 (이모지 제거)
+                            const cropTitle = title.replace(/\([^)]*\)$/, '').replace(/^[^\s]+\s/, '').trim();
+                            fertilizersMap[fertName].crops.push({
+                                name: cropTitle,
+                                fullTitle: title,  // 전체 제목 저장
+                                month: taskMonth,
+                                isCurrentMonth: taskMonth === currentMonth
+                            });
+                        }
+                    }
+                });
+                
+                // 비료별로 HTML 생성
+                const result = Object.values(fertilizersMap)
+                    .sort((a, b) => {
+                        const aIdx = fertilizerOrder.indexOf(a.name);
+                        const bIdx = fertilizerOrder.indexOf(b.name);
+                        return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
+                    })
+                    .map(fert => {
+                        const emoji = {
+                            '단한번비료': '🌾',
+                            '엔케이플러스': '🍇',
+                            '원예맞춤고추비료': '🫐',
+                            '일회만비료': '🌱',
+                            '슈퍼복합비료': '🌿'
+                        }[fert.name] || '🌱';
+                        
+                        const cropsHtml = fert.crops.length > 0 
+                            ? `<div style="margin-top: 3px; padding: 6px; background: #f9f9f9; border-radius: 4px; border: 1px solid #e0e0e0;">
+                                <strong style="font-size: 10px;">📅 이번 주:</strong>
+                                <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
+                                    ${fert.crops.map(crop => {
+                                        const isCurrentMonth = crop.isCurrentMonth;
+                                        const bgColor = isCurrentMonth ? '#fff8f0' : '#f5faf8';
+                                        const borderColor = isCurrentMonth ? '#FF9800' : '#81C784';
+                                        const textColor = isCurrentMonth ? '#E65100' : '#2E7D32';
+                                        return `<div style="
+                                            padding: 6px 8px;
+                                            background: ${bgColor};
+                                            border-left: 2px solid ${borderColor};
+                                            border-radius: 2px;
+                                            font-size: 11px;
+                                            color: ${textColor};
+                                            line-height: 1.2;
+                                        ">
+                                            <div style="font-weight: 600; display: flex; align-items: center; gap: 3px;">
+                                                ${crop.fullTitle}
+                                                ${isCurrentMonth ? '<span style="color: #FF9800;">⭐</span>' : ''}
+                                            </div>
+                                        </div>`;
+                                    }).join('')}
+                                </div>
+                            </div>`
+                            : '';
+                        
+                        const memoPreview = fert.memo ? fert.memo.substring(0, 100).replace(/\n/g, ' ') + (fert.memo.length > 100 ? '...' : '') : '정보 없음';
+                        
+                        return `<div class="card" style="border-left: 4px solid var(--primary-color); margin-bottom: 4px; padding: 8px;">
+                            <div class="card-title" style="font-size: 13px; font-weight: 600; margin-bottom: 3px;">
+                                ${emoji} ${fert.name}
+                                <span style="font-size: 10px; color: #666; margin-left: 4px;">${fert.ingredient}</span>
+                            </div>
+                            <div class="card-content">
+                                ${cropsHtml}
+                                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #eee;">
+                                    <div style="font-size: 10px; color: #666; margin-bottom: 3px;">
+                                        📋 ${memoPreview}
+                                    </div>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
+                                        <span style="font-size: 11px;">
+                                            📦 ${fert.qty}개
+                                        </span>
+                                        <button onclick="alert('비료명: ${fert.name}\\n보유량: ${fert.qty}\\n\\n상세 정보는 보유 비료 탭에서 확인하세요.')" 
+                                                style="padding: 3px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600;">
+                                            ✏️
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+                    })
+                    .join('');
+                
+                return result || '<div class="empty-state"><p>비료가 없습니다.</p></div>';
+            })()
         }
 
-        function renderPesticides() {
-            const tbody = document.getElementById('pesticides-tbody');
-            const empty = document.getElementById('pesticides-empty');
-            const data = APP.data.myPesticides || [];
-            if (data.length === 0) {
-                document.getElementById('pesticides-table').style.display = 'none';
-                empty.style.display = 'block';
+
+        // ✅ 그룹 토글
+        function toggleCropGroup(headerEl) {
+            const itemsEl = headerEl.nextElementSibling;
+            const isHidden = itemsEl.style.display === 'none';
+            itemsEl.style.display = isHidden ? 'block' : 'none';
+            headerEl.style.background = isHidden ? 'var(--primary-color)' : 'var(--primary-dark)';
+        }
+
+        // ✅ 기록 수정
+        function editCropRecord(btn, record) {
+            const newType = prompt('작업종류를 수정하세요:', record[3] || '');
+            if (newType === null) return;
+
+            const newContent = prompt('작업내용을 수정하세요:', record[4] || '');
+            if (newContent === null) return;
+
+            // 실제 데이터 업데이트
+            const idx = APP.data.growRecords.findIndex(r => 
+                r[1] === record[1] && r[2] === record[2] && r[3] === record[3]
+            );
+            if (idx >= 0) {
+                APP.data.growRecords[idx][3] = newType;
+                APP.data.growRecords[idx][4] = newContent;
+                saveRecordsToStorage();
+                renderRecords();
+            }
+        }
+
+        // ✅ 기록 삭제
+        function deleteCropRecord(btn) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            
+            const recordDiv = btn.closest('[style*="border-bottom: 1px solid #eee"]');
+            const contentText = recordDiv.textContent;
+            
+            APP.data.growRecords = APP.data.growRecords.filter(r => {
+                return !(r[4] && r[4].includes(contentText.split('📝')[1]?.split('수정')[0]?.trim()));
+            });
+            
+            saveRecordsToStorage();
+            renderRecords();
+            alert('✅ 삭제되었습니다');
+        }
+
+        // ✅ 로컬 스토리지
+        const STORAGE_KEY = 'saesoldong_records_v2';
+
+        function saveRecordsToStorage() {
+            try {
+                const data = {
+                    records: APP.data.growRecords || [],
+                    lastSaved: new Date().toISOString()
+                };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+                console.log('✅ 저장:', APP.data.growRecords.length + '개');
+            } catch (error) {
+                console.error('❌ 저장 오류:', error);
+            }
+        }
+
+        function loadRecordsFromStorage() {
+            try {
+                const stored = localStorage.getItem(STORAGE_KEY);
+                if (!stored) return;
+                const data = JSON.parse(stored);
+                APP.data.growRecords = data.records || [];
+                console.log('📥 복구:', APP.data.growRecords.length + '개');
+            } catch (error) {
+                console.error('❌ 복구 오류:', error);
+            }
+        }
+
+        // ✅ 저장소 정보
+        function updateStorageInfo() {
+            const stored = localStorage.getItem(STORAGE_KEY);
+            const count = (APP.data.growRecords || []).length;
+            const sizeKB = (stored || '').length / 1024;
+            
+            const countEl = document.getElementById('storage-count');
+            const sizeEl = document.getElementById('storage-size');
+            const dateEl = document.getElementById('storage-date');
+            const panel = document.getElementById('storage-info-panel');
+            
+            if (countEl) countEl.textContent = count;
+            if (sizeEl) sizeEl.textContent = sizeKB.toFixed(2);
+            if (panel) panel.style.display = count > 0 ? 'block' : 'none';
+            
+            if (stored && dateEl) {
+                try {
+                    const data = JSON.parse(stored);
+                    const date = new Date(data.lastSaved);
+                    dateEl.textContent = date.toLocaleDateString('ko-KR') + ' ' + date.toLocaleTimeString('ko-KR');
+                } catch(e) {}
+            }
+        }
+
+
+        // ✅ 비료 정보 데이터베이스 (신규 추가)
+        const FERTILIZER_INFO = {
+            '슈퍼복합비료': {
+                name: '슈퍼복합비료',
+                type: '복합비료',
+                nratio: '21',
+                pratio: '17',
+                kratio: '17',
+                npk: 'N:P:K = 21:17:17',
+                unit: 'kg',
+                description: '모든 작물에 사용 가능한 완벽한 복합비료',
+                features: [
+                    '✅ N:P:K = 21:17:17 완벽 균형',
+                    '✅ 모든 작물 모든 생육 시기에 사용 가능',
+                    '✅ 인산(P17) 충분해서 뿌리 발달 우수',
+                    '✅ 칼리(K17) 충분해서 병해충 저항성 증가',
+                    '✅ 빠른 효과 + 지속성 우수'
+                ],
+                baseFertilizer: {
+                    timing: '정식 2주일 전',
+                    dosage: '10a당 25~30kg',
+                    method: '밭에 고르게 뿌리고 10~15cm 깊이로 경운하여 섞기',
+                    afterDays: '3~5일 경과 후 정식'
+                },
+                topDressing: {
+                    firstTiming: '정식 3~4주일 후',
+                    frequency: '2~3주일 간격으로 2~3회 추가',
+                    dosage: '1회 10a당 10~15kg',
+                    afterWatering: '관수 후 시비하기'
+                },
+                crops: ['감자', '배추', '무', '당근', '양파', '마늘', '고구마', '옥수수', '콩', '오이', '호박', '가지', '토마토', '고추'],
+                seasons: ['봄', '여름', '가을'],
+                storageMethod: '서늘하고 건조한 곳에 보관',
+                shelfLife: '2년'
+            },
+            
+            '유황': {
+                name: '유황(황)',
+                type: '살충/살균제',
+                nratio: '0',
+                pratio: '0',
+                kratio: '0',
+                npk: '순수 유황 (S)',
+                unit: 'g 또는 kg',
+                description: '천연 살충살균제, 모든 작물에 안전',
+                features: [
+                    '✅ 천연 성분으로 안전',
+                    '✅ 진딧물, 응애, 병해에 효과',
+                    '✅ 친환경 재배에 추천',
+                    '✅ 잔류 문제 없음'
+                ],
+                usage: '물에 섞어 살포 (농도: 0.3~0.5%)',
+                crops: ['모든 작물'],
+                seasons: ['봄', '여름', '가을'],
+                storageMethod: '습하지 않은 곳에 보관',
+                shelfLife: '3년 이상'
+            },
+            
+            '요소': {
+                name: '요소 (질소 비료)',
+                type: '질소 비료',
+                nratio: '46',
+                pratio: '0',
+                kratio: '0',
+                npk: '순수 질소 (N 46%)',
+                unit: 'g 또는 kg',
+                description: '빠른 질소 공급, 생육 촉진',
+                features: [
+                    '✅ N 46% 고농축',
+                    '✅ 빠른 효과 (3~7일)',
+                    '✅ 엽면시비 가능',
+                    '✅ 가성비 우수'
+                ],
+                usage: '물에 녹여 잎이나 뿌리에 살포',
+                dilution: '500배 액 (500ml당 요소 1g)',
+                crops: ['모든 작물'],
+                seasons: ['생육 중기'],
+                storageMethod: '서늘한 곳, 습기 차단',
+                shelfLife: '무한'
+            }
+        };
+
+        // ✅ 비료 정보 조회 함수
+        function showFertilizerInfo(fertilizerName) {
+            const info = FERTILIZER_INFO[fertilizerName];
+            
+            if (!info) {
+                alert('❌ ' + fertilizerName + '에 대한 정보가 없습니다.\n\n등록된 비료:\n- 슈퍼복합비료\n- 유황\n- 요소');
                 return;
             }
-            document.getElementById('pesticides-table').style.display = 'table';
-            empty.style.display = 'none';
-            tbody.innerHTML = data.map(r => `
-                <tr>
-                    <td>${r[1] || '-'}</td>
-                    <td>${r[2] || '-'}</td>
-                    <td>1</td>
-                    <td><span class="badge available">여유</span></td>
-                    <td>-</td>
-                </tr>
-            `).join('');
-        }
 
-        function renderSupplies() {
-            const tbody = document.getElementById('supplies-tbody');
-            const empty = document.getElementById('supplies-empty');
-            const data = APP.data.supplies || [];
-            if (data.length === 0) {
-                document.getElementById('supplies-table').style.display = 'none';
-                empty.style.display = 'block';
-                return;
+            let content = `
+📋 ${info.name} 상세 정보
+
+━━━━━━━━━━━━━━━━━━━━━━━━━
+🏷️ 분류: ${info.type}
+성분: ${info.npk}
+단위: ${info.unit}
+━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 설명:
+${info.description}
+
+🌟 특징:
+${info.features.map(f => f).join('\n')}
+
+`;
+
+            if (info.baseFertilizer) {
+                content += `
+💡 기본 기저비료 사용법:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+⏰ 시기: ${info.baseFertilizer.timing}
+📊 용량: ${info.baseFertilizer.dosage}
+🔨 방법: ${info.baseFertilizer.method}
+⏳ 이후: ${info.baseFertilizer.afterDays}
+`;
             }
-            document.getElementById('supplies-table').style.display = 'table';
-            empty.style.display = 'none';
-            tbody.innerHTML = data.map(r => `
-                <tr>
-                    <td>${r[7] || '-'}</td>
-                    <td>${r[3] || '-'}</td>
-                    <td>${r[4] || '-'}</td>
-                    <td>1</td>
-                    <td>-</td>
-                </tr>
-            `).join('');
+
+            if (info.topDressing) {
+                content += `
+🌱 추가 시비(웃거름) 방법:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+1️⃣ 첫 시비: ${info.topDressing.firstTiming}
+2️⃣ 반복: ${info.topDressing.frequency}
+3️⃣ 용량: ${info.topDressing.dosage}
+4️⃣ 주의: ${info.topDressing.afterWatering}
+`;
+            }
+
+            if (info.usage) {
+                content += `
+💧 사용 방법:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+${info.usage}
+${info.dilution ? '농도: ' + info.dilution : ''}
+`;
+            }
+
+            content += `
+🌾 사용 가능 작물:
+━━━━━━━━━━━━━━━━━━━━━━━━━
+${info.crops.join(', ')}
+
+🌤️ 사용 시기:
+${info.seasons.join(', ')}
+
+💾 보관 방법:
+${info.storageMethod}
+
+📅 유효기간:
+${info.shelfLife}
+`;
+
+            // 모달 또는 alert로 표시
+            alert(content);
         }
 
-        function render() {
+                function render() {
             renderWeekly();
             renderPesticides();
             renderSupplies();
             renderPlants();
             renderRecords();
+            renderWeeklyWithSupplies();
         }
 
         function switchTab(name) {
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            
             document.querySelector(`[data-tab="${name}"]`).classList.add('active');
             document.getElementById(name).classList.add('active');
         }
 
-        // 초기 데이터 로드 및 iPhone 메모리 불러오기 연동
+        // ════════════════════════════════════════════════════════════
+        // 초기화
+        // ════════════════════════════════════════════════════════════
         document.addEventListener('DOMContentLoaded', async () => {
             const today = new Date();
-            document.getElementById('today-date').textContent = `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
-            document.getElementById('new-record-date').valueAsDate = today;
+            document.getElementById('today-date').textContent = 
+                `${today.getFullYear()}년 ${today.getMonth() + 1}월 ${today.getDate()}일`;
 
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.addEventListener('click', e => {
@@ -1077,27 +3841,7 @@
                 });
             });
 
-            // 3️⃣ 세 번째 요구사항: iPhone 메모리에서 데이터 불러오기 시도
-            loadFromLocalMemory();
-
-            try {
-                const response = await fetch(`${APP.gasUrl}?action=read_all`);
-                const result = await response.json();
-                if (result.success && result.data) {
-                    if (result.data.growPlants) APP.data.growPlants = result.data.growPlants;
-                    if (result.data.myPesticides) APP.data.myPesticides = result.data.myPesticides;
-                    if (result.data.supplies) APP.data.supplies = result.data.supplies;
-                    if (result.data.준비사항) APP.data.준비사항 = result.data.준비사항;
-                    if (!APP.data.growRecords || APP.data.growRecords.length === 0) {
-                        if (result.data.growRecords) APP.data.growRecords = result.data.growRecords;
-                    }
-                }
-            } catch (e) {
-                console.warn('서버 통신 실패, 로컬 데이터 사용:', e);
-            }
-
-            document.getElementById('load-status').textContent = '✅ 로드 완료';
-            render();
+            await loadAllData();
         });
     </script>
 </body>
