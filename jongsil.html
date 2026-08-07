@@ -3,22 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>유기농업기능사 실기 200문제 (완벽 복원 및 음성 패치 버전)</title>
+<title>종자기능사 실기(필답형) 200문제 · 최신 출제경향판</title>
 <style>
   :root {
-    --green: #2D6A4F;
-    --green-light: #52B788;
-    --green-pale: #D8F3DC;
+    --green: #1F6F5C;
+    --green-light: #4EA88B;
+    --green-pale: #D9F0E7;
     --brown: #6B4226;
     --soil: #8B5E3C;
-    --yellow: #F9C74F;
+    --yellow: #F4B740;
     --red: #E63946;
-    --bg: #F8FAF5;
+    --blue: #2F5D9E;
+    --bg: #F7FAF8;
     --card: #FFFFFF;
-    --text: #1A1A2E;
+    --text: #17202A;
     --gray: #6B7280;
     --border: #E5E7EB;
-    --shadow: 0 2px 12px rgba(45,106,79,0.10);
+    --shadow: 0 2px 12px rgba(31,111,92,0.10);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -31,32 +32,32 @@
 
   /* 헤더 */
   .header {
-    background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 60%, #52B788 100%);
-    padding: 20px 16px 15px;
+    background: linear-gradient(135deg, #123B33 0%, #1F6F5C 60%, #4EA88B 100%);
+    padding: 16px 16px 12px;
     text-align: center;
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 3px 16px rgba(0,0,0,0.18);
   }
-  .header h1 { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px; }
-  .header p  { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 4px; }
-  
+  .header h1 { font-size: 17px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .header p  { font-size: 11.5px; color: rgba(255,255,255,0.85); margin-top: 3px; }
+
   /* TTS 제어 패널 */
   .tts-panel {
     background: rgba(255, 255, 255, 0.15);
     border-radius: 8px;
-    margin-top: 10px;
-    padding: 8px 12px;
+    margin-top: 9px;
+    padding: 7px 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     color: white;
     font-size: 12px;
   }
-  .tts-row { display: flex; justify-content: center; align-items: center; gap: 15px; }
+  .tts-row { display: flex; justify-content: center; align-items: center; gap: 14px; flex-wrap: wrap; }
   .tts-ctrl-group { display: flex; align-items: center; gap: 6px; }
-  .tts-panel input[type="range"] { width: 70px; accent-color: var(--yellow); }
-  .tts-panel select { 
-    background: white; border: none; border-radius: 4px; 
+  .tts-panel input[type="range"] { width: 66px; accent-color: var(--yellow); }
+  .tts-panel select {
+    background: white; border: none; border-radius: 4px;
     padding: 2px 6px; font-size: 12px; font-weight: bold; color: var(--green);
   }
   .audio-status {
@@ -78,11 +79,11 @@
     display: flex; overflow-x: auto; gap: 0;
     background: white; border-bottom: 2px solid var(--green-pale);
     padding: 0 8px; scrollbar-width: none;
-    position: sticky; top: 162px; z-index: 99;
+    position: sticky; top: 156px; z-index: 99;
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab-btn {
-    flex-shrink: 0; padding: 10px 14px;
+    flex-shrink: 0; padding: 10px 12px;
     font-size: 12px; font-weight: 700; color: var(--gray);
     background: none; border: none; cursor: pointer;
     border-bottom: 3px solid transparent; margin-bottom: -2px;
@@ -91,7 +92,7 @@
   .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
 
   /* 섹션 */
-  .section { display: none; padding: 12px 12px 120px; }
+  .section { display: none; padding: 12px 12px 130px; }
   .section.active { display: block; }
   .section-title {
     font-size: 14px; font-weight: 800; color: var(--green);
@@ -105,6 +106,7 @@
     overflow: hidden; border: 1px solid var(--border);
   }
   .q-card.playing-now { border: 2.5px solid var(--yellow); background: #FFFDF0; }
+  .q-card.wrong-card { border-left: 5px solid var(--red); }
   .q-head {
     display: flex; align-items: flex-start; gap: 10px;
     padding: 12px 14px; cursor: pointer;
@@ -124,9 +126,9 @@
   .q-card.open .q-arrow { transform: rotate(180deg); }
   .q-answer {
     display: none; padding: 0 14px 14px 52px;
-    font-size: 13px; color: #1A3C34;
+    font-size: 13px; color: #14332C;
     border-top: 1px solid var(--green-pale);
-    background: #F0FAF4;
+    background: #F1FAF6;
   }
   .q-card.open .q-answer { display: block; padding-top: 10px; }
   .q-answer strong { color: var(--green); }
@@ -142,12 +144,25 @@
     padding: 6px 10px; border-radius: 0 8px 8px 0;
     font-size: 12px; margin-top: 6px; color: #7B4F00;
   }
+  .q-answer .calc {
+    background: #EDF3FF; border-left: 3px solid var(--blue);
+    padding: 6px 10px; border-radius: 0 8px 8px 0;
+    font-size: 12.5px; margin-top: 6px; color: #14315E; font-weight: 600;
+  }
+  .badge-hot {
+    display:inline-block; background:var(--red); color:#fff; font-size:9.5px; font-weight:800;
+    padding:1px 5px; border-radius:4px; margin-right:5px; vertical-align:2px;
+  }
+  .badge-calc {
+    display:inline-block; background:var(--blue); color:#fff; font-size:9.5px; font-weight:800;
+    padding:1px 5px; border-radius:4px; margin-right:5px; vertical-align:2px;
+  }
 
   /* 우측 제어 버튼 */
   .btn-group {
     display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0;
   }
-  .check-btn, .speaker-btn {
+  .check-btn, .speaker-btn, .bm-btn {
     background: none; border: 1.5px solid var(--border);
     border-radius: 20px; padding: 2px 10px; font-size: 11px;
     color: var(--gray); cursor: pointer; font-family: inherit;
@@ -155,6 +170,7 @@
   .check-btn.checked { background: var(--green); color: white; border-color: var(--green); }
   .speaker-btn { background: #FFF; border-color: var(--green-light); color: var(--green); font-weight: bold; }
   .speaker-btn:active { background: var(--green-pale); }
+  .bm-btn.marked { background: var(--yellow); color: #4A3B00; border-color: var(--yellow); font-weight: 800; }
 
   /* 통계 바 */
   .stat-bar {
@@ -166,6 +182,15 @@
   .stat-num { font-size: 22px; font-weight: 800; color: var(--green); }
   .stat-label { font-size: 10px; color: var(--gray); }
   .stat-div { width: 1px; background: var(--border); height: 36px; }
+
+  /* 검색 */
+  .search-box {
+    width: 100%; padding: 12px 14px; border: 2px solid var(--green-pale);
+    border-radius: 12px; font-size: 14px; font-family: inherit; margin-bottom: 12px;
+    background: white;
+  }
+  .search-box:focus { border-color: var(--green); outline: none; }
+  .hint { font-size: 12px; color: var(--gray); text-align: center; padding: 20px 10px; line-height: 1.9; }
 
   /* 하단 그리드 액션 바 */
   .action-bar {
@@ -191,23 +216,26 @@
   }
   .quiz-modal.open { display: flex; }
   .quiz-box {
-    background: white; border-radius: 16px; padding: 24px;
-    width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+    background: white; border-radius: 16px; padding: 22px;
+    width: 100%; max-width: 480px; max-height: 82vh; overflow-y: auto;
   }
-  .quiz-q { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .quiz-q { font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text); }
   .quiz-input {
     width: 100%; padding: 12px; border: 2px solid var(--border);
     border-radius: 10px; font-size: 14px; font-family: inherit;
-    margin-bottom: 12px;
+    margin-bottom: 12px; min-height: 78px; resize: vertical;
   }
   .quiz-input:focus { border-color: var(--green); outline: none; }
   .quiz-result {
     padding: 12px; border-radius: 10px; font-size: 13px;
-    margin-bottom: 12px; display: none;
+    margin-bottom: 12px; display: none; background:#F1FAF6; color:#14332C;
   }
-  .quiz-result.correct { background: #D8F3DC; color: #1B4332; }
-  .quiz-result.wrong   { background: #FFEBEE; color: #B71C1C; }
   .quiz-btns { display: flex; gap: 8px; }
+  .quiz-btns button { flex:1; padding:11px 4px; border:none; border-radius:10px; font-size:13px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .self-grade { display:none; gap:8px; margin-bottom:10px; }
+  .self-grade.on { display:flex; }
+  .btn-ox-o { flex:1; background:#D9F0E7; color:#14332C; border:none; border-radius:10px; padding:11px 4px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
+  .btn-ox-x { flex:1; background:#FFE3E3; color:#8B1A1A; border:none; border-radius:10px; padding:11px 4px; font-weight:800; font-size:13px; cursor:pointer; font-family:inherit; }
 
   /* 요약 노트 스타일 */
   .note-box { border-radius:12px; padding:14px; margin-bottom:12px; }
@@ -216,22 +244,28 @@
   .note-box.blue   { background:#EEF4FF; border:1.5px solid #90CAF9; }
   .note-box.purple { background:#F5F0FF; border:1.5px solid #CE93D8; }
   .note-box.red    { background:#FFF3E0; border:1.5px solid #FFCC02; }
-  .note-title { font-size:14px; font-weight:800; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid rgba(0,0,0,0.08); color:#1A1A2E; }
+  .note-title { font-size:14px; font-weight:800; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid rgba(0,0,0,0.08); color:#17202A; }
   .note-table { width:100%; border-collapse:collapse; margin-bottom:10px; font-size:13px; }
   .note-table tr { border-bottom:1px solid rgba(0,0,0,0.07); }
   .note-table td { padding:6px 4px; }
-  .note-table td:first-child { color:#546E7A; width:50%; font-weight:600; }
-  .note-table td:last-child  { font-weight:700; color:#1A3C34; }
-  .note-key { background:rgba(255,255,255,0.6); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.9; color:#2D2D2D; }
-  .tag { display:inline-block; background:#1B5E20; color:white; padding:0 6px; border-radius:5px; font-size:11px; font-weight:700; }
+  .note-table td:first-child { color:#546E7A; width:48%; font-weight:600; }
+  .note-table td:last-child  { font-weight:700; color:#14332C; }
+  .note-key { background:rgba(255,255,255,0.6); border-radius:8px; padding:10px 12px; font-size:12.5px; line-height:1.9; color:#2D2D2D; }
+  .tag { display:inline-block; background:#14532D; color:white; padding:0 6px; border-radius:5px; font-size:11px; font-weight:700; }
+  .fig-opt {
+    padding:11px 4px; border:2px solid var(--border); background:#fff; border-radius:10px;
+    font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; color:var(--text);
+  }
+  .fig-opt:disabled { cursor:default; }
+  .formula { background:#fff; border:1px dashed #90CAF9; border-radius:8px; padding:8px 10px; margin:6px 0; font-size:12.5px; color:#14315E; font-weight:700; }
 </style>
 </head>
 <body>
 
 <div class="header">
-  <h1>🌱 유기농업기능사 실기 200문제</h1>
-  <p>5월 31일 시험 대비 · 탭하면 정답 확인</p>
-  
+  <h1>🌾 종자기능사 실기(필답형) 200문제</h1>
+  <p>2026년 3회 실기(8.29~9.16) 대비 · 필답형 2시간 · 60점 이상 합격</p>
+
   <div class="tts-panel">
     <div class="tts-row">
       <div class="tts-ctrl-group">
@@ -249,18 +283,21 @@
     </div>
     <div class="audio-status" id="audioStatus"></div>
   </div>
-  
+
   <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
 </div>
 
 <div class="tabs" id="tabBar">
-  <button class="tab-btn active" onclick="showTab(0)">Ⅰ 토양</button>
-  <button class="tab-btn" onclick="showTab(1)">Ⅱ 퇴비</button>
-  <button class="tab-btn" onclick="showTab(2)">Ⅲ 재배관리</button>
-  <button class="tab-btn" onclick="showTab(3)">Ⅳ 작물재배</button>
-  <button class="tab-btn" onclick="showTab(4)">Ⅴ 유기생산</button>
+  <button class="tab-btn active" onclick="showTab(0)">Ⅰ 종자생리</button>
+  <button class="tab-btn" onclick="showTab(1)">Ⅱ 종자검사</button>
+  <button class="tab-btn" onclick="showTab(2)">Ⅲ 육묘·파종</button>
+  <button class="tab-btn" onclick="showTab(3)">Ⅳ 번식·접목</button>
+  <button class="tab-btn" onclick="showTab(4)">Ⅴ 육종·법규</button>
   <button class="tab-btn" onclick="showTab(5)">★ 암기카드</button>
   <button class="tab-btn" onclick="showTab(6)">📓 핵심요약</button>
+  <button class="tab-btn" onclick="showTab(7)">⭐ 오답·즐겨찾기</button>
+  <button class="tab-btn" onclick="showTab(8)">🔍 검색</button>
+  <button class="tab-btn" onclick="showTab(9)">🖼 그림자료</button>
 </div>
 
 <div id="statBar" style="padding:10px 12px 0">
@@ -269,154 +306,174 @@
     <div class="stat-div"></div>
     <div class="stat-item"><div class="stat-num" id="checkedStat">0</div><div class="stat-label">학습완료</div></div>
     <div class="stat-div"></div>
+    <div class="stat-item"><div class="stat-num" id="wrongStat">0</div><div class="stat-label">오답</div></div>
+    <div class="stat-div"></div>
     <div class="stat-item"><div class="stat-num" id="rateStat">0%</div><div class="stat-label">진도율</div></div>
   </div>
 </div>
 
-<div class="section active" id="sec0"><div class="section-title">🌍 Ⅰ. 토양 (1~40번)</div></div>
-<div class="section" id="sec1"><div class="section-title">🍂 Ⅱ. 퇴비 (41~80번)</div></div>
-<div class="section" id="sec2"><div class="section-title">🌿 Ⅲ. 유기적 재배관리 (81~120번)</div></div>
-<div class="section" id="sec3"><div class="section-title">🌾 Ⅳ. 유기작물 재배 (121~160번)</div></div>
-<div class="section" id="sec4"><div class="section-title">📋 Ⅴ. 유기농업 생산·인증 (161~200번)</div></div>
+<div class="section active" id="sec0"><div class="section-title">🌱 Ⅰ. 종자의 구조·발아·휴면·저장 (1~40번)</div></div>
+<div class="section" id="sec1"><div class="section-title">🔬 Ⅱ. 종자검사·품질관리·계산 (41~80번)</div></div>
+<div class="section" id="sec2"><div class="section-title">🪴 Ⅲ. 육묘·상토·파종 (81~120번)</div></div>
+<div class="section" id="sec3"><div class="section-title">✂️ Ⅳ. 영양번식·접목·조직배양 (121~160번)</div></div>
+<div class="section" id="sec4"><div class="section-title">🧬 Ⅴ. 육종·채종·종자법규 (161~200번)</div></div>
 <div class="section" id="sec5"><div class="section-title">★ 핵심 암기카드</div></div>
 
 <div class="section" id="sec6">
   <div class="section-title">📓 핵심 요약 노트</div>
 
+  <div class="note-box blue">
+    <div class="note-title">🧮 필답형 계산공식 총정리 (매회 출제)</div>
+    <div class="formula">발아율(%) = (발아립수 ÷ 공시립수) × 100</div>
+    <div class="formula">발아세(%) = (조사기간 내 발아립수 ÷ 공시립수) × 100</div>
+    <div class="formula">순도(정립률, %) = 정립중량 ÷ (정립+이종종자+이물)중량 × 100</div>
+    <div class="formula">수분함량(%) = (건조 전 무게 − 건조 후 무게) ÷ 건조 전 무게 × 100</div>
+    <div class="formula">평균발아일수 = Σ(발아일수 × 그날 발아립수) ÷ 총 발아립수</div>
+    <div class="formula">천립중(g) = 1,000립의 무게 = (100립 무게 × 10)</div>
+    <div class="formula">종자 이용률(%) = 순도(%) × 발아율(%) ÷ 100</div>
+    <div class="formula">소요종자량(g) = 재식주수 × 주당 파종립수 × 천립중 ÷ 1,000 ÷ (순도×발아율)</div>
+    <div class="formula">재식주수 = 재배면적(㎡) ÷ (이랑폭 × 주간거리)(㎡)</div>
+    <div class="note-key">
+      ✔ <b>10a = 1,000㎡ = 1,000평이 아님(약 302평)</b> — 단위 환산 실수 주의<br>
+      ✔ 발아율·순도는 <b>소수 첫째자리까지</b>, 요구하는 자리수 꼭 확인<br>
+      ✔ 계산문제는 <b>공식 → 대입 → 답(단위)</b> 3단으로 써야 부분점수를 받음
+    </div>
+  </div>
+
   <div class="note-box green">
-    <div class="note-title">🌍 토양 핵심 공식·수치</div>
+    <div class="note-title">🌱 종자 생리 핵심 수치</div>
     <table class="note-table">
-      <tr><td>토양 3상 비율</td><td>고상 50% / 액상 25% / 기상 25%</td></tr>
-      <tr><td>점토 입경</td><td>&lt; 0.002 mm</td></tr>
-      <tr><td>미사 입경</td><td>0.002 ~ 0.05 mm</td></tr>
-      <tr><td>모래 입경</td><td>0.05 ~ 2.0 mm</td></tr>
-      <tr><td>논 적정 pH</td><td>5.5 ~ 6.5</td></tr>
-      <tr><td>밭 적정 pH</td><td>6.0 ~ 7.0</td></tr>
-      <tr><td>부식 C/N율</td><td>10 ~ 12</td></tr>
-      <tr><td>CEC 단위</td><td>cmol⁺/kg (= meq/100g)</td></tr>
-      <tr><td>Ca:Mg:K 적정 비율</td><td>65~75% : 10~15% : 2~5%</td></tr>
-      <tr><td>이상 토양 공극률</td><td>약 50%</td></tr>
-      <tr><td>토양 용적밀도</td><td>1.0 ~ 1.3 g/cm³</td></tr>
+      <tr><td>발아 3요소</td><td>수분 · 온도 · 산소</td></tr>
+      <tr><td>배유 염색체 수</td><td>3n (극핵 2 + 정핵 1)</td></tr>
+      <tr><td>배(胚) 염색체 수</td><td>2n</td></tr>
+      <tr><td>발아검사 공시립수</td><td>400립 (100립 × 4반복)</td></tr>
+      <tr><td>순도검사 최소 시료</td><td>2,500립 이상</td></tr>
+      <tr><td>테트라졸륨 용액</td><td>0.1~1.0%, 30~40℃ 암소</td></tr>
+      <tr><td>곡류 안전저장 수분</td><td>13% 이하</td></tr>
+      <tr><td>유료종자 안전저장 수분</td><td>7~9%</td></tr>
+      <tr><td>종자 건조 온도 상한</td><td>40~45℃ 이하</td></tr>
+      <tr><td>벼 온탕침법(키다리병)</td><td>60℃ 10분</td></tr>
+      <tr><td>건열소독(바이러스)</td><td>70℃ 7일</td></tr>
+      <tr><td>염수선 비중(메벼)</td><td>1.13 (찰벼·밭벼 1.08)</td></tr>
+      <tr><td>저온습윤층적</td><td>0~5℃ 습한 모래, 1~3개월</td></tr>
     </table>
     <div class="note-key">
-      <b>결핍 증상 암기법</b><br>
-      🟡 <b>칼륨(K)</b> → <span class="tag">노엽</span> 가장자리 갈변 (이동성↑)<br>
-      🟡 <b>마그네슘(Mg)</b> → <span class="tag">엽맥간</span> 황화, 노엽 먼저<br>
-      🔴 <b>칼슘(Ca)</b> → <span class="tag">신엽·과실</span> (이동성↓) → 토마토 배꼽썩음병<br>
-      🔵 <b>붕소(B)</b> → <span class="tag">생장점·과실</span> → 사과 코르크화<br>
-      🟠 <b>질소(N)</b> → 전체 황화, 노엽 먼저
+      <b>종자 수명 3분류</b><br>
+      🔴 <span class="tag">단명(1~2년)</span> 콩·양파·파·고추·상추·메밀·땅콩<br>
+      🟡 <span class="tag">상명(3~5년)</span> 벼·밀·보리·완두·무·순무<br>
+      🟢 <span class="tag">장명(5년↑)</span> 토마토·가지·수박·오이·배추·비트·클로버<br><br>
+      <b>Harrington 저장 법칙</b><br>
+      ① 저장온도 5℃ ↓ → 수명 2배 ② 종자수분 1% ↓ → 수명 2배<br>
+      ③ (온도℃ + 상대습도%) &lt; 100 이면 안전<br><br>
+      <b>광 조건</b> ☀ 광발아: 상추·담배·우엉·celery / 🌑 암발아: 호박·토마토·가지·파·오이
     </div>
   </div>
 
   <div class="note-box brown">
-    <div class="note-title">🍂 퇴비 핵심 수치</div>
+    <div class="note-title">🔬 종자검사 절차·용어</div>
     <table class="note-table">
-      <tr><td>최적 C/N율</td><td><b>25 ~ 35</b></td></tr>
-      <tr><td>최적 수분</td><td><b>50 ~ 60%</b></td></tr>
-      <tr><td>살균 온도</td><td><b>55℃ 이상 3일</b></td></tr>
-      <tr><td>발아시험 합격</td><td>대조구 대비 <b>80% 이상</b></td></tr>
-      <tr><td>계분 C/N율</td><td>5 ~ 7 (낮음 → 빠른 분해)</td></tr>
-      <tr><td>볏짚 C/N율</td><td>80 (높음 → 느린 분해)</td></tr>
-      <tr><td>헤어리베치 N고정</td><td>150 ~ 200 kg N/ha</td></tr>
+      <tr><td>시료 채취 순서</td><td>1차시료 → 합성시료 → 제출시료 → 검사시료</td></tr>
+      <tr><td>축분(감량) 방법</td><td>기계분할·원추4분법·스푼법·손분할법</td></tr>
+      <tr><td>순도 구성 3요소</td><td>정립 · 이종종자 · 이물</td></tr>
+      <tr><td>수분측정(저온항온)</td><td>103±2℃, 17±1시간</td></tr>
+      <tr><td>수분측정(고온항온)</td><td>130~133℃, 1~4시간</td></tr>
+      <tr><td>발아판정 구분</td><td>정상묘·비정상묘·경실·신선종자·부패립</td></tr>
+      <tr><td>벼 보급종 검사기준(예)</td><td>정립 98%↑ / 발아 85%↑ / 수분 14%↓</td></tr>
+      <tr><td>종자 증식체계</td><td>기본식물 → 원원종 → 원종 → 보급종</td></tr>
     </table>
     <div class="note-key">
-      <b>C/N율 높으면</b> → 부동화(질소 고정, 작물 결핍)<br>
-      <b>C/N율 낮으면</b> → 무기화(암모니아 발생, 악취)<br>
-      <b>C/N율 기준</b>: &gt;30 부동화 / &lt;20 무기화<br><br>
-      <b>유기 질소원</b>: 어분(N 7~8%) / 대두박(N 7%) / 혈분(N 12~14%)<br>
-      <b>유기 인산원</b>: 골분 / 인광석 / 어박<br>
-      <b>유기 칼륨원</b>: 초목회(재) / 황산칼륨(광물)
-    </div>
-  </div>
-
-  <div class="note-box blue">
-    <div class="note-title">🌿 병해충·방제 핵심 암기</div>
-    <div class="note-key">
-      <b>병해 발생 조건</b><br>
-      🍄 <span class="tag">역병·노균병</span>: 고온다습(25~30℃) + 과습<br>
-      🍄 <span class="tag">잿빛곰팡이</span>: 저온다습(20℃ 이하) + 습도 85%↑<br>
-      🍄 <span class="tag">흰가루병</span>: 건조+주야 온도차 큼<br>
-      🌾 <span class="tag">도열병</span>: 냉해+과질소+과습<br><br>
-      <b>유기 허용 살균제</b><br>
-      ✅ 석회보르도액(황산구리4+생석회4+물100L)<br>
-      ✅ 수산화구리(동수화제)<br>
-      ✅ 유황 수화제<br>
-      ✅ 중탄산나트륨(0.5% 용액)<br>
-      ✅ 석회유황합제(발아 전)<br><br>
-      <b>유기 허용 살충제</b><br>
-      ✅ 제충국(피레트린) / 님(neem) / 데리스<br>
-      ✅ BT제 (나비목 유충 대상)<br>
-      ✅ 페로몬 트랩 / 황색 끈끈이<br><br>
-      <b>천적 암기</b><br>
-      🕷 점박이응애 → <b>칠레이리응애</b><br>
-      🐜 진딧물 → <b>무당벌레·풀잠자리</b>
+      <b>활력(생사) 간이검정</b><br>
+      ✅ 테트라졸륨(TTC) → 탈수소효소 반응, 배가 <b>붉게</b> 염색되면 활력 有<br>
+      ✅ 전기전도도 검사 → 침출액 EC 값이 <b>높을수록 활력 낮음</b><br>
+      ✅ X선 검사 → 충실도·내부 공동·해충 피해 확인 (비파괴)<br>
+      ✅ 배 절단법, 인디고카민법, 구아이아콜법<br><br>
+      <b>품종 진위(순도) 검정</b><br>
+      종자·유묘 형태 검사 → 페놀검사(벼·귀리) → 전기영동(단백질) → <b>DNA 분자표지(SSR)</b> → 포장 재배시험
     </div>
   </div>
 
   <div class="note-box purple">
-    <div class="note-title">📋 인증·법률 핵심 수치</div>
-    <table class="note-table">
-      <tr><td>유기 전환기간(일년생)</td><td>파종·이식 전 <b>2년</b></td></tr>
-      <tr><td>유기 전환기간(다년생)</td><td>최초 수확 전 <b>3년</b></td></tr>
-      <tr><td>인증 유효기간</td><td><b>1년</b> (매년 갱신)</td></tr>
-      <tr><td>유기가공식품 기준</td><td>유기원료 <b>95%</b> 이상</td></tr>
-      <tr><td>잔류농약 허용치</td><td>허용기준의 <b>1/20</b> 이하</td></tr>
-      <tr><td>IFOAM 4대 원칙</td><td>건강·생태·공정·배려</td></tr>
-    </table>
+    <div class="note-title">✂️ 육묘·번식 핵심 암기</div>
     <div class="note-key">
-      <b>유기농산물 vs 무농약농산물</b><br>
-      유기: 농약 ❌ + 화학비료 ❌<br>
-      무농약: 농약 ❌ + 화학비료 1/3 이하 ✅<br><br>
-      <b>인증 취소 사유</b><br>
-      ① 금지 농약·비료 사용 ② 허위 서류 ③ 기준 미준수<br>
-      → 취소 후 <b>3년간</b> 재신청 불가
+      <b>상토 소독</b> 증기 60~80℃ 30분 / 태양열 / 약제(다조멧)<br>
+      <b>상토 기준</b> pH 5.5~6.5, EC 1.0dS/m 이하<br>
+      <b>복토 두께</b> 종자 지름의 <b>2~3배</b> (미세종자는 복토 생략·아주 얇게)<br>
+      <b>볍씨 침종</b> 수온 15℃ 5~7일(<b>적산온도 100℃</b>) → 최아 30~32℃, 싹 1~2mm<br>
+      <b>못자리 육묘일수</b> 어린모 8~10일 / 치묘 20일 / 중묘 30~35일<br>
+      <b>신문지 피복 이유</b> 수분 증발 억제·표면 건조 방지·지온 유지<br>
+      <b>저면관수 이유</b> 미세종자·상토 유실 방지, 표면 물리적 충격 방지<br><br>
+      <b>접목 5대 목적</b> ① 토양병해(덩굴쪼김병) 저항성 ② 저온·고온 신장성 ③ 흡비력 증대 ④ 조기결실·왜화 ⑤ 품종 특성 유지<br>
+      <b>접목 활착조건</b> <span class="tag">형성층 밀착</span> + 친화성 + 25℃ 내외 + 습도 90~95% + 2~3일 차광<br>
+      <b>대목</b> 수박·오이 → 박·신토좌호박 / 가지 → 토루바무 / 토마토 → 대목용 토마토<br>
+      <b>접목 시기</b> 절접(깎기접) 3~4월 / 눈접(T자형) 8~9월 / 녹지접 6~7월<br><br>
+      <b>구근 5종</b> 인경(마늘·백합·튤립) · 구경(글라디올러스·토란) · 괴경(감자) · 괴근(고구마·다알리아) · 근경(생강·칸나)<br>
+      <b>씨감자 절단</b> 30~50g, 눈 2개 이상 → 큐어링 15~20℃·습도 85~90%·3~5일
     </div>
   </div>
 
   <div class="note-box green">
-    <div class="note-title">🌾 작물 재배 핵심 암기</div>
+    <div class="note-title">🧬 육종·채종·법규 핵심</div>
+    <table class="note-table">
+      <tr><td>품종보호 요건 5</td><td>신규성·구별성·균일성·안정성·품종명칭</td></tr>
+      <tr><td>품종보호권 존속기간</td><td>20년 (과수·임목 25년)</td></tr>
+      <tr><td>보증 유효기간(채소)</td><td>2년</td></tr>
+      <tr><td>보증 유효기간(감자·고구마)</td><td>2개월</td></tr>
+      <tr><td>보증 유효기간(버섯)</td><td>1개월</td></tr>
+      <tr><td>보증 유효기간(맥류·콩)</td><td>6개월</td></tr>
+      <tr><td>종자관리사 자격</td><td>기능사 + 실무경력 3년</td></tr>
+      <tr><td>채종 적기(벼)</td><td>황숙기</td></tr>
+      <tr><td>채종 적기(십자화과)</td><td>갈숙기</td></tr>
+      <tr><td>벼 인공교배 제웅</td><td>온탕 43℃ 5분 / 개영법</td></tr>
+    </table>
     <div class="note-key">
-      <b>논 잡초 방제 3대 방법</b><br>
-      🦆 오리 농법 (이앙 1주일 후, 15일령 이상)<br>
-      🐌 우렁이 농법 (이앙 후 10~15일 방류)<br>
-      💧 심수관개 (수심 7~10cm 유지)<br><br>
-      <b>연작 회피 기간</b><br>
-      수박: 5~7년 / 토마토·가지: 3년 / 고추: 3~4년<br><br>
-      <b>접목 재배 이유</b>: 시들음병(Fusarium) 저항성<br>
-      수박 대목: <b>박(호박)</b><br><br>
-      <b>태양열 소독</b>: 투명비닐+여름(7~8월)+4~6주<br>
-      지온 50~60℃ → 병원균·선충·잡초종자 사멸<br><br>
-      <b>종자 소독(유기농 허용)</b><br>
-      ① 온탕 소독(50~55℃, 30분)<br>
-      ② 목초액 희석액 침지
+      <b>인공교배 순서</b> 개화 전 제웅 → 봉지 씌우기 → 개화기 화분 채취 → 수분 → 표찰 부착 → 격리·관리<br><br>
+      <b>자가불화합성 타파</b> 뇌수분(개화 2~3일 전) · 노화수분 · CO₂ 3~5% 처리 · 고온처리 · 전기자극<br>
+      <b>웅성불임 이용작물</b> 고추 · 양파 · 당근 · 벼 · 옥수수<br><br>
+      <b>화서 암기</b> 총상(무·배추) / 원추(벼) / 수상(보리·밀) / 산방(사과) / 복산형(당근) / 두상(국화·해바라기) / 육수(옥수수 암이삭) / 유이(밤·버드나무 수꽃)<br><br>
+      <b>육종 순서</b> 목표설정 → 변이작성 → 선발 → 고정 → 생산력검정 → 지역적응시험 → 품종등록 → 종자증식·보급
     </div>
   </div>
 
   <div class="note-box red">
     <div class="note-title">⚡ 시험 직전 5분 체크리스트</div>
     <div class="note-key" style="font-size:13px;line-height:2">
-      □ 퇴비 최적 조건: C/N율 25~35 / 수분 50~60% / 온도 55℃↑<br>
-      □ 토양 3상: 고상50·액상25·기상25<br>
-      □ 논pH 5.5~6.5 / 밭pH 6.0~7.0<br>
-      □ 유기 전환: 일년생 2년 / 다년생 3년<br>
-      □ 유기가공 95% 이상 / 무농약=화학비료 1/3이하<br>
-      □ 석회보르도액 = 황산구리4+생석회4+물100L<br>
-      □ BT제 = 나비목 유충(배추벌레)<br>
-      □ 점박이응애 천적 = 칠레이리응애<br>
-      □ 칼슘결핍 토마토 = 배꼽썩음병<br>
-      □ Mg결핍 = 엽맥간 황화(노엽)<br>
-      □ K결핍 = 노엽 가장자리 갈변<br>
-      □ 우렁이 방류 = 이앙 10~15일 후<br>
-      □ IFOAM 4대원칙 = 건강·생태·공정·배려
+      □ 발아검사 = 400립(100×4반복) / 순도검사 = 2,500립 이상<br>
+      □ 배 2n · 배유 3n (중복수정)<br>
+      □ 발아 3요소 = 수분·온도·산소<br>
+      □ 수분함량 = (전−후)/전 ×100 ← <b>분모는 건조 전</b><br>
+      □ 순도 = 정립/(정립+이종종자+이물) ×100<br>
+      □ TTC = 붉게 염색 → 활력 있음<br>
+      □ 벼 온탕침법 60℃ 10분(키다리병)<br>
+      □ 복토 = 종자 지름의 2~3배<br>
+      □ 침종 적산온도 100℃ / 최아 30~32℃<br>
+      □ 접목 활착 = 형성층 밀착 + 25℃ + 습도 90~95%<br>
+      □ 눈접 8~9월 / 깎기접 3~4월<br>
+      □ 품종보호 5요건 = 신·구·균·안·명<br>
+      □ 품종보호권 20년(과수·임목 25년)<br>
+      □ 증식체계 = 기본 → 원원종 → 원종 → 보급종<br>
+      □ 채종적기 = 벼 황숙기 / 십자화과 갈숙기
     </div>
   </div>
 </div>
+
+<div class="section" id="sec7">
+  <div class="section-title">⭐ 오답노트 · 즐겨찾기</div>
+  <div id="reviewWrap"></div>
+</div>
+
+<div class="section" id="sec8">
+  <div class="section-title">🔍 문제 검색</div>
+  <input class="search-box" id="searchInput" placeholder="예: 발아율, 접목, 휴면, 웅성불임…" oninput="runSearch()">
+  <div id="searchWrap"><div class="hint">키워드를 입력하면 문제와 정답 내용을 모두 검색합니다.<br>예) <b>계산</b> 을 입력하면 계산문제만 모아볼 수 있어요.</div></div>
+</div>
+
+<div class="section" id="sec9"><div class="section-title">🖼 그림자료 · 도해</div></div>
 
 <div class="action-bar">
   <button class="btn-secondary" onclick="openQuiz()">🎲 랜덤 퀴즈</button>
   <button class="btn-secondary" onclick="toggleAll()">📖 전체펼치기</button>
   <button class="btn-danger" onclick="stopSpeaking()">🛑 음성 정지</button>
-  
+
   <button class="btn-yellow" onclick="playSectionAudio()">▶️ 메뉴별 다듣기</button>
   <button class="btn-primary" onclick="playAllAudio()">📢 전체 다듣기</button>
   <button class="btn-secondary" style="background:#E5E7EB; color:#374151;" onclick="window.scrollTo(0,0)">⬆️ 맨 위로</button>
@@ -426,565 +483,1220 @@
   <div class="quiz-box">
     <div style="font-size:12px;color:#9E9E9E;margin-bottom:8px" id="quizNum">문제 1/10</div>
     <div class="quiz-q" id="quizQ"></div>
-    <input class="quiz-input" id="quizInput" placeholder="정답을 입력하세요" onkeypress="if(event.key==='Enter')checkQuiz()">
+    <textarea class="quiz-input" id="quizInput" placeholder="답안을 직접 써 보세요 (필답형은 손으로 쓰는 연습이 중요합니다)"></textarea>
     <div class="quiz-result" id="quizResult"></div>
+    <div class="self-grade" id="selfGrade">
+      <button class="btn-ox-o" onclick="gradeQuiz(true)">⭕ 맞음</button>
+      <button class="btn-ox-x" onclick="gradeQuiz(false)">❌ 틀림(오답노트)</button>
+    </div>
     <div class="quiz-btns">
       <button class="btn-secondary" onclick="closeQuiz()">닫기</button>
-      <button class="btn-primary" id="quizBtn" onclick="checkQuiz()">확인</button>
+      <button class="btn-primary" id="quizBtn" onclick="checkQuiz()">정답 보기</button>
+    </div>
+  </div>
+</div>
+
+<div class="quiz-modal" id="figModal">
+  <div class="quiz-box" style="max-width:420px">
+    <div style="font-size:12px;color:#9E9E9E;margin-bottom:6px" id="figNum"></div>
+    <div id="figImg" style="max-width:190px;margin:0 auto 10px"></div>
+    <div id="figOpts" style="display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-bottom:10px"></div>
+    <div id="figFb" style="display:none;background:#F1FAF6;border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.8;margin-bottom:10px"></div>
+    <div class="quiz-btns">
+      <button class="btn-secondary" onclick="closeFigQuiz()">닫기</button>
+      <button class="btn-primary" onclick="nextFig()">다음 그림 →</button>
     </div>
   </div>
 </div>
 
 <script>
-// 1번부터 200번까지 데이터 구조 매핑
+// ══════════════════════════════════════════════════════════
+// 종자기능사 실기(필답형) 대비 200문제 — 최신 출제경향 반영
+// cat 0:종자생리 1:종자검사 2:육묘파종 3:영양번식 4:육종·법규
+// tag 'hot':빈출  'calc':계산문제
+// ══════════════════════════════════════════════════════════
 const QUESTIONS = [
-  // Ⅰ. 토양 (1 ~ 40)
-  {n:1, q:"토양의 3상(三相)을 쓰시오.", a:"<strong>고상(固相)</strong> : 광물질+유기물 / <strong>액상(液相)</strong> : 토양수분 / <strong>기상(氣相)</strong> : 토양공기<div class='point'>💡 비율: 고상 50%, 액상 25%, 기상 25%가 이상적</div>", cat:0},
-  {n:2, q:"토양의 입단(단립) 구조 형성에 유리한 유기물의 역할 2가지를 쓰시오.", a:"① 토양 입자를 결합시켜 입단 형성 촉진<br>② 토양 통기성·보수성·투수성 개선<div class='point'>💡 부식(humus)이 입단 형성의 핵심 물질</div>", cat:0},
-  {n:3, q:"토양 pH 6.5를 약산성·중성·알칼리성 중 어느 것으로 분류하는가?", a:"<span class='keyword'>약산성</span> (pH 6.0~6.5 범위)", cat:0},
-  {n:4, q:"석회를 시용하는 주요 목적 2가지를 쓰시오.", a:"① 산성 토양의 pH 교정(중화)<br>② 칼슘(Ca) 공급 및 토양 구조 개선", cat:0},
-  {n:5, q:"토양의 양이온 치환용량(CEC)의 단위와 의미를 설명하시오.", a:"단위: <strong>cmol⁺/kg</strong><br>의미: 토양이 양이온을 흡착·보유할 수 있는 능력", cat:0},
-  {n:6, q:"토양 유기물 함량 증가 시 나타나는 효과 3가지를 쓰시오.", a:"① 보수력·보비력 증가 ② 토양 입단 형성 촉진 ③ 미생물 활성 증가", cat:0},
-  {n:7, q:"토양의 완충능(buffer capacity)이란 무엇인가?", a:"외부에서 산·알칼리가 가해져도 토양 pH가 급격히 변하지 않고 유지하려는 성질", cat:0},
-  {n:8, q:"토양 용적밀도(가비중)의 정의를 쓰고, 경운이 용적밀도에 미치는 영향을 설명하시오.", a:"정의: 건조 토양의 단위 부피당 질량<br>경운 영향: 경운 후 공극 증가 → <strong>용적밀도 감소</strong>", cat:0},
-  {n:9, q:"점토(clay)와 모래(sand)의 입경 기준을 쓰시오.", a:"<strong>점토</strong>: 0.002mm 미만<br><strong>모래</strong>: 0.05~2.0mm", cat:0},
-  {n:10, q:"질소의 토양 내 순환 과정을 아래 순서로 완성하시오: 유기태질소 → ( ) → ( ) → 식물흡수", a:"유기태질소 → <strong>암모늄태 질소(NH₄⁺)</strong> → <strong>질산태 질소(NO₃⁻)</strong> → 식물흡수", cat:0},
-  {n:11, q:"인산(P)이 산성 토양에서 불용화되는 이유를 쓰시오.", a:"산성 조건에서 철, 알루미늄 이온과 결합하여 불용성 화합물을 형성하기 때문", cat:0},
-  {n:12, q:"토양 미생물 중 질소고정에 관여하는 대표 미생물 2종을 쓰시오.", a:"① <strong>리조비움(Rhizobium)</strong> ② <strong>아조토박터(Azotobacter)</strong>", cat:0},
-  {n:13, q:"토양 산성화의 주요 원인 3가지를 쓰시오.", a:"① 빗물에 의한 염기 용탈 ② 질소비료 과다 시용 ③ 작물 재배에 의한 염기 흡수", cat:0},
-  {n:14, q:"토양 중 칼슘(Ca), 마그네슘(Mg), 칼륨(K)의 적정 치환 비율을 쓰시오.", a:"Ca : Mg : K = <strong>65~75% : 10~15% : 2~5%</strong>", cat:0},
-  {n:15, q:"녹비작물의 정의와 토양에 미치는 효과 2가지를 쓰시오.", a:"정의: 유기물 공급을 위해 토양에 직접 갈아엎는 작물<br>효과: ① 토양 유기물·질소 공급 ② 토양 구조 개선", cat:0},
-  {n:16, q:"토양의 구조 중 팬(pan)층이 형성될 때 작물 생육에 미치는 영향을 쓰시오.", a:"① 뿌리 신장 방해 ② 배수 불량 및 과습 발생 ③ 양분·수분 흡수 저해", cat:0},
-  {n:17, q:"토양 중 부식(humus)의 C/N율은 얼마인가?", a:"<strong>10~12</strong>", cat:0},
-  {n:18, q:"토양의 공극률(porosity)을 구하는 공식을 쓰시오.", a:"<strong>공극률(%) = (1 - 용적밀도/진밀도) × 100</strong>", cat:0},
-  {n:19, q:"킬레이트(chelate) 화합물이 토양에서 미량원소 흡수에 미치는 영향을 설명하시오.", a:"미량원소와 킬레이트를 형성하여 불용화를 방지하고 식물이 흡수 가능한 형태로 유지시켜줌", cat:0},
-  {n:20, q:"토양 오염의 지표로 사용되는 중금속 4가지를 쓰시오.", a:"<strong>카드뮴(Cd), 납(Pb), 비소(As), 수은(Hg)</strong>", cat:0},
-  {n:21, q:"염류집적 토양의 개량 방법 3가지를 쓰시오.", a:"① 담수 제염 ② 깊이 갈기 및 심토 혼합 ③ 흡비작물 재배 후 제거", cat:0},
-  {n:22, q:"토양 입자의 크기 순서를 작은 것부터 나열하시오.", a:"<strong>점토 < 미사 < 세사 < 조사 < 자갈</strong>", cat:0},
-  {n:23, q:"토양 중 황(S)의 식물 이용 가능 형태와 결핍 증상을 쓰시오.", a:"이용 형태: <strong>황산이온(SO₄²⁻)</strong><br>결핍 증상: 어린잎부터 황색으로 변함", cat:0},
-  {n:24, q:"밭토양과 논토양의 산화환원 조건 차이를 쓰시오.", a:"밭토양: <strong>산화 조건</strong><br>논토양: <strong>환원 조건</strong>", cat:0},
-  {n:25, q:"토양 미생물의 분류를 크기·분류군별로 3가지 쓰시오.", a:"① <strong>세균</strong> ② <strong>방선균</strong> ③ <strong>곰팡이</strong>", cat:0},
-  {n:26, q:"토양의 유기물 분해 속도에 영향을 미치는 환경 요인 3가지를 쓰시오.", a:"① 온도 ② 수분 ③ pH", cat:0},
-  {n:27, q:"규산(SiO₂) 시용이 벼 재배에 미치는 효과 3가지를 쓰시오.", a:"① 잎 조직 강화로 도복 방지 ② 병해충 저항성 증가 ③ 수광 자세 개선", cat:0},
-  {n:28, q:"토양 부식산과 풀빅산의 차이를 설명하시오.", a:"<strong>부식산</strong>: 알칼리에 용해<br><strong>풀빅산</strong>: 산·알칼리 모두 용해, 식물 흡수 용이", cat:0},
-  {n:29, q:"VA균근이 작물 생육에 미치는 이점 2가지를 쓰시오.", a:"① 인산 흡수 효율 향상 ② 건조 및 병해 저항성 증가", cat:0},
-  {n:30, q:"토양 경운의 목적 3가지를 쓰시오.", a:"① 통기성·투수성 개선 ② 잡초 방제 및 잔재 혼화 ③ 파종에 적합한 상토 조성", cat:0},
-  {n:31, q:"토양 중 칼륨(K)의 결핍 증상을 쓰시오.", a:"오래된 잎의 가장자리부터 갈변·괴사하는 증상", cat:0},
-  {n:32, q:"토양 중 붕소(B) 결핍 시 나타나는 대표적인 작물별 증상을 2가지 쓰시오.", a:"① 사과·배: 코르크화 ② 순무·배추: 속이 빈 심부병", cat:0},
-  {n:33, q:"유기물의 무기화와 부동화를 설명하시오.", a:"<strong>무기화</strong>: 유기태 양분에서 무기태로 변환<br><strong>부동화</strong>: 무기태 양분을 미생물이 유기태로 전환", cat:0},
-  {n:34, q:"논토양의 환원 조건에서 발생하는 유해 물질 2가지를 쓰시오.", a:"① <strong>황화수소(H₂S)</strong> ② <strong>유기산</strong>", cat:0},
-  {n:35, q:"토양의 완충 작용에 관여하는 물질 2가지를 쓰시오.", a:"① 점토광물 ② 부식", cat:0},
-  {n:36, q:"토양 중 유효 인산 함량 분석법으로 가장 일반적으로 사용되는 방법을 쓰시오.", a:"<strong>Lancaster법</strong>", cat:0},
-  {n:37, q:"토양 색이 농업적으로 가지는 의미를 설명하시오.", a:"<strong>흑색</strong>: 유기물 많음 / <strong>적색</strong>: 철산화물 많음 / <strong>청회색</strong>: 환원 조건(과습)", cat:0},
-  {n:38, q:"토양 온도가 작물 생육에 미치는 영향 2가지를 쓰시오.", a:"① 뿌리 생장 및 양분 흡수 속도 ② 미생물 활성 및 유기물 분해 속도", cat:0},
-  {n:39, q:"논토양의 적정 pH 범위를 쓰고, 적정 범위가 밭토양보다 넓은 이유를 쓰시오.", a:"적정 pH: <strong>5.5~6.5</strong><br>이유: 담수 조건에서 pH 변동이 완화되어 양분 유효도가 유지됨", cat:0},
-  {n:40, q:"토양 검정의 목적과 주요 분석 항목 3가지를 쓰시오.", a:"목적: 토양 비옥도 파악 및 시비 처방 기준 제시<br>분석 항목: ① pH ② 유기물 함량 ③ 유효 인산", cat:0},
+  // ───────── Ⅰ. 종자의 구조·발아·휴면·저장 (1~40) ─────────
+  {n:1, cat:0, tag:'hot', q:"종자의 기본 구조를 3가지로 구분하여 쓰시오.", a:"① <strong>종피(種皮)</strong> : 종자를 보호하는 껍질<br>② <strong>배(胚)</strong> : 새로운 개체가 될 어린 식물체<br>③ <strong>배유(胚乳)·자엽</strong> : 발아에 쓰이는 저장양분<div class='point'>💡 '보호–생명–양분' 3요소로 외우면 빠짐없이 씁니다.</div>"},
+  {n:2, cat:0, q:"배(胚)를 구성하는 4가지 기관을 쓰시오.", a:"① 유아(幼芽, 어린싹) ② 배축(胚軸) ③ 유근(幼根, 어린뿌리) ④ 자엽(子葉, 떡잎)"},
+  {n:3, cat:0, tag:'hot', q:"배유종자와 무배유종자의 차이를 설명하고 각각의 작물 예를 2가지씩 쓰시오.", a:"<strong>배유종자</strong> : 양분을 배유에 저장 → 벼, 보리, 옥수수, 감, 피마자<br><strong>무배유종자</strong> : 배유가 퇴화하고 <strong>자엽</strong>에 양분 저장 → 콩, 팥, 완두, 땅콩<div class='point'>💡 화본과=배유종자 / 두과=무배유종자로 크게 갈라서 암기</div>"},
+  {n:4, cat:0, tag:'hot', q:"속씨식물의 중복수정 과정을 배와 배유로 나누어 설명하시오.", a:"① 정핵(n) + 난세포(n) → <strong>배(2n)</strong><br>② 정핵(n) + 극핵 2개(2n) → <strong>배유(3n)</strong><div class='point'>💡 배 2n · 배유 3n 은 매년 나오는 단골 숫자입니다.</div>"},
+  {n:5, cat:0, q:"현미(벼 종자)의 단면 구조를 바깥쪽부터 순서대로 쓰시오.", a:"과피 → 종피 → 호분층 → 배유 → 배<div class='point'>💡 왕겨(내영·외영)를 벗긴 것이 현미, 호분층까지 깎으면 백미</div>"},
+  {n:6, cat:0, q:"종피의 주요 기능 3가지를 쓰시오.", a:"① 배와 저장양분의 기계적 보호<br>② 수분·가스 출입 조절(건조·과습 방지)<br>③ 병해충 침입 차단 및 휴면 유지"},
+  {n:7, cat:0, tag:'hot', q:"종자 발아에 필요한 3대 환경요인을 쓰시오.", a:"<span class='keyword'>수분</span> <span class='keyword'>온도</span> <span class='keyword'>산소</span><div class='point'>💡 광(光)은 작물에 따라 필요/불필요가 달라 3요소에 넣지 않습니다.</div>"},
+  {n:8, cat:0, tag:'hot', q:"광발아종자와 암발아종자의 뜻을 쓰고 각각 작물 예를 3가지씩 쓰시오.", a:"<strong>광발아종자</strong> : 빛이 있어야 발아 촉진 → 상추, 담배, 우엉, 셀러리, 뽕나무<br><strong>암발아종자</strong> : 빛이 없어야 발아 촉진 → 호박, 토마토, 가지, 파, 오이<div class='point'>💡 광발아종자는 복토를 얕게, 암발아종자는 충분히 덮습니다.</div>"},
+  {n:9, cat:0, q:"종자 발아의 진행 과정을 순서대로 쓰시오.", a:"수분 흡수 → 저장양분 분해(효소 활성화) → 배의 호흡·생장 개시 → 유근·유아 출현(종피 파열) → 유묘 형성"},
+  {n:10, cat:0, q:"발아 시 지베렐린(GA)이 하는 역할을 설명하시오.", a:"배에서 생성된 지베렐린이 <strong>호분층</strong>에 작용하여 <strong>α-아밀라아제</strong> 등 가수분해효소의 합성을 유도하고, 배유의 전분을 당으로 분해해 배에 공급함"},
+  {n:11, cat:0, q:"종자의 수분흡수 3단계를 쓰시오.", a:"① 제1기 : 급수기(물리적 흡수, imbibition)<br>② 제2기 : 정체기(효소 활성·대사 준비)<br>③ 제3기 : 생장기(유근 출현, 수분 재흡수 증가)"},
+  {n:12, cat:0, tag:'hot', q:"발아율과 발아세의 차이를 설명하시오.", a:"<strong>발아율</strong> : 전체 조사기간 동안 발아한 종자의 비율 → 종자의 <strong>발아 능력</strong><br><strong>발아세</strong> : 치상 후 <strong>일정 기간(초기)</strong>에 발아한 비율 → 발아의 <strong>빠르기·균일도(세력)</strong><div class='point'>💡 발아세가 높으면 초기 생육이 고르고 묘의 소질이 좋습니다.</div>"},
+  {n:13, cat:0, q:"발아기·발아전(發芽揃)의 뜻을 각각 쓰시오.", a:"<strong>발아기</strong> : 전체 종자의 약 40~50%가 발아한 날<br><strong>발아전</strong> : 전체 종자의 약 80% 이상이 발아한 날<div class='point'>💡 발아시(최초 1립 발아) → 발아기(40~50%) → 발아전(80%) 순서</div>"},
+  {n:14, cat:0, tag:'hot', q:"종자 휴면의 정의를 쓰고, 휴면이 작물에 주는 이점 2가지를 쓰시오.", a:"<strong>정의</strong> : 발아에 적합한 환경을 주어도 종자가 발아하지 않는 상태<br><strong>이점</strong> ① 불량 환경(겨울·건조)을 피해 종족 보존<br>② 수확 전 <strong>수발아(穗發芽)</strong> 방지 및 장기 저장 가능"},
+  {n:15, cat:0, tag:'hot', q:"종자 휴면의 원인을 5가지 쓰시오.", a:"① 종피의 <strong>불투수성</strong>(경실)<br>② 종피의 <strong>산소 불투과성</strong><br>③ 종피의 기계적 저항<br>④ <strong>배의 미숙</strong>(후숙 필요)<br>⑤ <strong>발아억제물질</strong> 존재(ABA 등)"},
+  {n:16, cat:0, q:"경실종자(硬實種子)의 뜻과 대표 작물 3가지를 쓰시오.", a:"<strong>뜻</strong> : 종피가 단단하고 물이 스며들지 않아 발아하지 못하는 종자<br><strong>작물</strong> : 자운영, 알팔파, 클로버, 아까시나무 등 <strong>콩과</strong> 작물"},
+  {n:17, cat:0, tag:'hot', q:"경실종자의 휴면타파 방법을 5가지 쓰시오.", a:"① 종피파상법(사포·칼로 상처)<br>② 농황산 처리 후 수세<br>③ 저온·고온 처리(온도 교차)<br>④ 진탕처리(흔들어 마찰)<br>⑤ 알코올·질산 처리"},
+  {n:18, cat:0, q:"저온습윤층적처리(stratification)의 방법과 목적을 쓰시오.", a:"<strong>방법</strong> : 습한 모래·톱밥과 종자를 켜켜이 쌓아 <strong>0~5℃</strong>에서 1~3개월 저장<br><strong>목적</strong> : 배의 후숙 촉진 및 발아억제물질 분해 → 휴면타파"},
+  {n:19, cat:0, q:"휴면타파에 이용되는 생장조절물질 2가지와 그 효과를 쓰시오.", a:"① <strong>지베렐린(GA)</strong> : 발아억제물질(ABA)에 길항하여 발아 촉진<br>② <strong>시토키닌</strong> : 광발아종자의 암조건 발아 유도<br>※ 질산칼륨(KNO₃) 용액 침지도 발아 촉진에 널리 이용됨"},
+  {n:20, cat:0, q:"종자에 들어 있는 발아억제물질을 3가지 쓰시오.", a:"① 아브시스산(ABA) ② 쿠마린 ③ 페놀화합물(탄닌) ※ 시안화수소, 유기산도 해당"},
+  {n:21, cat:0, q:"벼 종자의 휴면타파 방법을 쓰시오.", a:"<strong>건열처리</strong> : 40℃에서 4~5주 또는 50℃에서 4~5일 처리<br>※ 질산칼륨·과산화수소 용액 침지도 이용"},
+  {n:22, cat:0, q:"감자의 휴면타파 방법 2가지를 쓰시오.", a:"① <strong>지베렐린 2ppm</strong> 용액에 30~60분 침지<br>② 에틸렌클로로히드린(리쿠아드) 처리, 박피·절단 후 최아"},
+  {n:23, cat:0, q:"2차 휴면(경화휴면)이 무엇인지 설명하시오.", a:"휴면이 끝난 종자가 <strong>고온·저산소·과습 등 불량 환경</strong>에 놓였을 때 다시 휴면 상태로 되돌아가는 현상"},
+  {n:24, cat:0, tag:'hot', q:"종자를 수명에 따라 3가지로 분류하고 각각 작물 예를 2가지씩 쓰시오.", a:"① <strong>단명종자(1~2년)</strong> : 콩, 양파, 파, 고추, 상추, 메밀, 땅콩<br>② <strong>상명종자(3~5년)</strong> : 벼, 보리, 밀, 완두, 무<br>③ <strong>장명종자(5년 이상)</strong> : 토마토, 가지, 수박, 오이, 배추, 클로버"},
+  {n:25, cat:0, tag:'hot', q:"해링턴(Harrington)의 종자저장 법칙 2가지를 쓰시오.", a:"① 저장온도를 <strong>5℃ 낮출 때마다</strong> 종자 수명은 약 2배 길어진다<br>② 종자 수분함량을 <strong>1% 낮출 때마다</strong> 수명은 약 2배 길어진다<div class='point'>💡 실무 지표 : (저장온도℃ + 상대습도%) &lt; 100 이면 안전</div>"},
+  {n:26, cat:0, q:"종자 장기저장의 기본 조건 3가지를 쓰시오.", a:"① <strong>저온</strong>(4℃ 이하, 장기보존은 −18℃)<br>② <strong>저습</strong>(상대습도 30~40%, 종자수분 5~8%)<br>③ <strong>저산소·밀폐</strong>(진공포장·불활성기체 충전)"},
+  {n:27, cat:0, q:"종자 퇴화(degeneration)의 원인을 3가지로 분류하여 쓰시오.", a:"① <strong>유전적 퇴화</strong> : 자연교잡·이형종자 혼입·돌연변이<br>② <strong>생리적 퇴화</strong> : 부적당한 재배·저장환경으로 활력 저하<br>③ <strong>병리적 퇴화</strong> : 종자전염병·바이러스 감염"},
+  {n:28, cat:0, q:"종자 활력 저하 시 나타나는 현상 3가지를 쓰시오.", a:"① 발아율·발아세 저하 ② 비정상묘 증가·초기 생육 불량 ③ 저장양분 소모와 저항성 저하로 입모율 감소"},
+  {n:29, cat:0, tag:'hot', q:"곡류 종자와 유료종자의 안전저장 수분함량을 각각 쓰시오.", a:"곡류(벼·맥류·옥수수) : <strong>13% 이하</strong><br>유료종자(유채·참깨·땅콩) : <strong>7~9%</strong><div class='point'>💡 지방 함량이 높을수록 더 낮은 수분에서 저장해야 산패를 막습니다.</div>"},
+  {n:30, cat:0, tag:'hot', q:"종자 프라이밍(priming)의 뜻과 효과 2가지를 쓰시오.", a:"<strong>뜻</strong> : 발아 직전 단계까지 수분을 조절해 흡수시킨 뒤 다시 건조시켜 두는 처리<br><strong>효과</strong> ① 발아 속도가 빨라지고 발아가 <strong>균일</strong>해짐<br>② 저온·염류 등 불량환경에서도 <strong>입모율</strong>이 높아짐"},
+  {n:31, cat:0, q:"펠릿종자(pellet seed)를 사용하는 목적 3가지를 쓰시오.", a:"① 미세종자를 크게 만들어 <strong>기계파종</strong> 가능<br>② 파종량 절감 및 솎음노력 절감<br>③ 살균제·비료 등을 함께 코팅해 초기 생육 보호<div class='point'>💡 상추·양파·당근 등 소립종자에 주로 이용</div>"},
+  {n:32, cat:0, q:"필름코팅 종자와 종자 착색(색소처리)의 목적을 쓰시오.", a:"<strong>필름코팅</strong> : 약제 분말의 비산 방지, 종자 취급성·유동성 향상<br><strong>착색</strong> : 소독 처리 여부 식별 및 <strong>식용과 구별</strong>하여 오용 방지"},
+  {n:33, cat:0, tag:'hot', q:"벼 종자의 온탕침법(온탕소독) 조건과 방제 대상 병을 쓰시오.", a:"<strong>조건</strong> : <strong>60℃ 온탕에 10분</strong> 침지 후 즉시 냉수에 냉각<br><strong>대상</strong> : <strong>키다리병</strong>, 이삭누룩병, 깨씨무늬병 등 종자전염병<div class='point'>💡 온도·시간이 넘으면 발아율이 떨어지므로 정확히 지켜야 합니다.</div>"},
+  {n:34, cat:0, q:"종자 건열소독의 방법과 주 대상을 쓰시오.", a:"<strong>방법</strong> : 70℃ 건열에서 7일간(예비건열 후 본처리) 처리<br><strong>대상</strong> : 박과·가지과 종자의 <strong>바이러스·세균병</strong>(TMV, 궤양병 등)"},
+  {n:35, cat:0, q:"종자전염병의 예를 작물별로 3가지 쓰시오.", a:"① 벼 <strong>키다리병</strong>·도열병·깨씨무늬병<br>② 콩 자반병(자주무늬병)<br>③ 토마토 궤양병·TMV, 고추 탄저병"},
+  {n:36, cat:0, tag:'hot', q:"종자의 성숙 단계를 순서대로 쓰고, 벼의 채종 적기를 쓰시오.", a:"유숙기 → 호숙기 → <strong>황숙기</strong> → 완숙기 → 고숙기<br><strong>벼 채종 적기 : 황숙기</strong><div class='point'>💡 십자화과(무·배추)는 <b>갈숙기</b>가 채종 적기입니다.</div>"},
+  {n:37, cat:0, q:"생리적 성숙(physiological maturity)의 뜻을 쓰시오.", a:"모식물로부터 종자로의 <strong>양분 이동이 끝나 건물중이 최대</strong>가 되는 시기로, 이때 종자의 발아력과 활력이 가장 높음"},
+  {n:38, cat:0, q:"종자 건조 시 온도 상한과 그 이유를 쓰시오.", a:"<strong>40~45℃ 이하</strong>로 건조해야 함<br><strong>이유</strong> : 고온에서는 배와 효소 단백질이 변성되어 <strong>발아율이 크게 떨어짐</strong>"},
+  {n:39, cat:0, q:"수확 후 종자 정선(조제) 방법을 4가지 쓰시오.", a:"① 풍선(바람 이용) ② 체 선별(크기·두께) ③ 비중선(무게·염수선) ④ 색채선별기·자기선별기"},
+  {n:40, cat:0, tag:'hot', q:"염수선의 목적과 메벼·찰벼의 적정 비중을 쓰시오.", a:"<strong>목적</strong> : 쭉정이·미숙립을 제거하고 충실한 종자만 골라 <strong>발아·입모를 균일</strong>하게 함<br><strong>비중</strong> : 메벼 <strong>1.13</strong> / 찰벼·밭벼 <strong>1.08</strong><div class='point'>💡 선별 후 반드시 맑은 물에 씻어 염분을 제거해야 발아장해가 없습니다.</div>"},
 
-  // Ⅱ. 퇴비 (41 ~ 80)
-  {n:41, q:"퇴비화의 정의를 쓰시오.", a:"유기물을 미생물에 의해 부숙·안정화시켜 비료를 만드는 과정", cat:1},
-  {n:42, q:"퇴비 발효의 최적 조건 4가지를 쓰시오.", a:"① C/N율: 25~35 ② 수분: 50~60% ③ 온도: 55~65℃ ④ 통기", cat:1},
-  {n:43, q:"퇴비의 부숙도를 판단하는 방법 3가지를 쓰시오.", a:"① 온도 안정 ② 색깔(흑갈색) 및 악취 소멸 ③ 씨앗 발아 시험(80% 이상)", cat:1},
-  {n:44, q:"퇴비 재료의 C/N율이 높을 때와 낮을 때의 문제점을 각각 쓰시오.", a:"<strong>C/N율 높을 때</strong>: 분해 느림, 질소 고정 발생<br><strong>C/N율 낮을 때</strong>: 암모니아 가스 및 악취 심함", cat:1},
-  {n:45, q:"가축분 퇴비 제조 시 볏짚을 혼합하는 이유 2가지를 쓰시오.", a:"① C/N율 조정 ② 수분 조절 및 통기성 확보", cat:1},
-  {n:46, q:"유기농업에서 사용 가능한 퇴비 재료 4가지를 쓰시오.", a:"① 가축분 퇴비 ② 볏짚·왕겨 ③ 녹비작물 ④ 부산물 퇴비", cat:1},
-  {n:47, q:"퇴비화 과정의 3단계를 순서대로 쓰시오.", a:"① 초기 가온기 → ② 고온기(살균) → ③ 숙성기", cat:1},
-  {n:48, q:"지렁이 분변토의 특징과 장점 2가지를 쓰시오.", a:"장점: ① 유익 미생물 풍부 ② 양분 유효도가 높음", cat:1},
-  {n:49, q:"완숙 퇴비와 미숙 퇴비를 토양에 시용할 때 나타나는 차이점을 쓰시오.", a:"완숙은 피해가 없으나, 미숙 퇴비는 발효열, 가스, 유기산 발생으로 뿌리 손상 및 발아 장해 유발", cat:1},
-  {n:50, q:"액비의 장점 3가지를 쓰시오.", a:"① 속효성 ② 엽면 살포 기능 ③ 토양 균일 분포", cat:1},
-  {n:51, q:"퇴비의 적정 시용량 계산 시 고려해야 할 사항 3가지를 쓰시오.", a:"① 토양 검정 결과 ② 작물의 양분 요구량 ③ 퇴비의 양분 함량", cat:1},
-  {n:52, q:"고온 호기성 퇴비화 과정에서 55℃ 이상으로 유지해야 하는 이유를 쓰시오.", a:"병원성 미생물 및 잡초 종자를 완전히 사멸시키기 위함", cat:1},
-  {n:53, q:"퇴비 부숙도 판정에 사용하는 '씨앗 발아 시험'의 방법을 설명하시오.", a:"퇴비 추출 희석액에서 무·시금치 씨앗 발아율이 대조구 대비 <strong>80% 이상</strong>이면 완숙으로 판정", cat:1},
-  {n:54, q:"볏짚(C/N율=80)과 계분(C/N율=7)을 혼합하여 C/N율 25를 만들기 위한 혼합 비율을 구하시오.", a:"계분 약 75%, 볏짚 약 25% 혼합", cat:1},
-  {n:55, q:"미생물 자재를 퇴비화에 사용하는 목적을 쓰시오.", a:"① 발효 촉진 및 기간 단축 ② 악취 감소 ③ 병원균 억제", cat:1},
-  {n:56, q:"혐기성 발효 퇴비화의 특징과 단점을 쓰시오.", a:"단점: ① 발효 기간이 매우 김 ② 심한 악취 발생 ③ 살균 효과 미흡", cat:1},
-  {n:57, q:"유기농업에서 사용 가능한 비료 자재 5가지를 쓰시오.", a:"① 완숙 퇴비 ② 녹비작물 ③ 어분 ④ 목초액 ⑤ 패화석", cat:1},
-  {n:58, q:"부엽토의 정의와 농업적 이용 방법을 쓰시오.", a:"정의: 낙엽이 자연 분해된 유기물이 풍부한 흙<br>이용: 파종상 혼합, 멀칭 재료", cat:1},
-  {n:59, q:"퇴비의 전질소(T-N) 함량이 중요한 이유와 분석 방법을 쓰시오.", a:"이유: 시용량 산정 기준 / 분석법: <strong>킬달법</strong>", cat:1},
-  {n:60, q:"산야초 발효액 제조 시 사용하는 재료와 발효 방법을 간단히 설명하시오.", a:"산야초와 흑설탕을 1:1 중량비로 혼합 후 밀봉하여 3~6개월 발효", cat:1},
-  {n:61, q:"목초액의 제조 과정과 농업적 효과를 쓰시오.", a:"제조: 숯 제조 시 발생하는 연기를 냉각 응축<br>효과: ① 토양 미생물 활성화 ② 병해충 예방 억제", cat:1},
-  {n:62, q:"가축분 퇴비 사용 시 중금속 오염에 주의해야 하는 이유를 쓰시오.", a:"사료 내 첨가된 구리, 아연 등이 분변에 축적되어 토양에 집적될 수 있기 때문", cat:1},
-  {n:63, q:"퇴비화 과정에서 암모니아 휘산을 줄이는 방법 2가지를 쓰시오.", a:"① 퇴비 더미 피복 ② 제올라이트 등 가스 흡착제 첨가", cat:1},
-  {n:64, q:"유기농에서 허용되는 미생물 자재 종류 3가지를 쓰시오.", a:"① 바실러스균 ② 트리코더마균 ③ EM 제제", cat:1},
-  {n:65, q:"쌀겨를 이용한 유기질 비료 제조 방법과 효과를 쓰시오.", a:"방법: 쌀겨에 물과 미생물을 혼합하여 발효<br>효과: 미생물 활성화 및 인산 가용화", cat:1},
-  {n:66, q:"퇴비 더미의 적정 크기를 쓰고 그 이유를 설명하시오.", a:"크기: 폭 1.5~2m, 높이 1~1.5m<br>이유: 발효열 온도를 유지하고 산소를 원활히 공급하기 위함", cat:1},
-  {n:67, q:"계분 퇴비와 돈분 퇴비의 질소·인산·칼륨 함량을 상대적으로 비교하시오.", a:"<strong>계분</strong>은 질소와 인산 함량이 높으며, <strong>돈분</strong>은 칼륨 함량이 높고 수분이 많음", cat:1},
-  {n:68, q:"퇴비화 과정에서 뒤집기가 필요한 이유 2가지를 쓰시오.", a:"① 호기성 발효를 위한 산소 공급 ② 수분·온도 균일화", cat:1},
-  {n:69, q:"유기농업에서 화학합성비료 대신 사용할 수 있는 질소 공급원 4가지를 쓰시오.", a:"① 두과 녹비작물 ② 어분 ③ 대두박 ④ 가축분 완숙 퇴비", cat:1},
-  {n:70, q:"인산 공급을 위해 유기농에서 사용 가능한 자재 3가지를 쓰시오.", a:"① 골분 ② 천연 인광석 분말 ③ 어박", cat:1},
-  {n:71, q:"칼륨 공급을 위해 유기농에서 사용 가능한 자재 3가지를 쓰시오.", a:"① 초목회 ② 천연 황산칼륨 광물 ③ 칼리나이트", cat:1},
-  {n:72, q:"규회석을 토양에 시용하는 목적과 효과를 쓰시오.", a:"목적: 규산과 칼슘 공급<br>효과: 세포 조직 강화로 도복 및 병해 저항성 향상", cat:1},
-  {n:73, q:"어분의 주요 양분 함량과 토양 적용 시 특징을 쓰시오.", a:"양분: 질소 7~8%, 인산 6~7% 내외<br>특징: 분해가 비교적 빠른 속효성 유기질 자재", cat:1},
-  {n:74, q:"유박의 종류 4가지와 일반적인 질소 함량을 쓰시오.", a:"종류: 대두박, 면실박, 유채박, 참깨박<br>질소 함량: 보통 5 ~ 7% 범위 내외", cat:1},
-  {n:75, q:"해조류를 비료로 사용할 때의 장점 2가지를 쓰시오.", a:"① 알긴산 작용으로 토양 입단 형성 촉진 ② 미량원소 공급", cat:1},
-  {n:76, q:"퇴비 보관 시 주의사항 3가지를 쓰시오.", a:"① 비와 이슬 차단 ② 적절한 통기 유지 ③ 직사광선 차단", cat:1},
-  {n:77, q:"혈분의 농업적 특성을 쓰시오.", a:"질소 함량이 12~14%로 대단히 높으며 분해가 매우 빠른 속효성 자재임", cat:1},
-  {n:78, q:"부산물 비료와 퇴비의 법적 차이점을 설명하시오.", a:"부산물 비료는 유기성 부산물을 총칭하며, 퇴비는 미생물 부숙 과정을 반드시 거친 비료로 정의됨", cat:1},
-  {n:79, q:"토양 개량제로 제올라이트를 사용하는 목적을 쓰시오.", a:"양이온 교환용량(CEC)을 향상시켜 보비력을 높이고 양분 용탈을 방지함", cat:1},
-  {n:80, q:"유기농업에서 허용되지 않는 비료 자재 3가지를 쓰시오.", a:"① 화학합성 질소비료 ② 화학처리 인산비료 ③ 하수슬러지 퇴비", cat:1},
+  // ───────── Ⅱ. 종자검사·품질관리·계산 (41~80) ─────────
+  {n:41, cat:1, tag:'hot', q:"종자검사의 주요 항목을 5가지 쓰시오.", a:"① 순도검사(정립률) ② 발아검사 ③ 수분검사 ④ 이종종자·이물 검사 ⑤ 천립중(무게) 검사<div class='point'>💡 여기에 병해검사(종자전염병)와 품종 진위검정이 더해집니다.</div>"},
+  {n:42, cat:1, tag:'hot', q:"종자검사에서 시료의 종류를 채취 순서대로 4가지 쓰시오.", a:"① <strong>1차시료</strong>(소집단 여러 지점에서 채취)<br>② <strong>합성시료</strong>(1차시료를 모두 합침)<br>③ <strong>제출시료</strong>(검사기관에 보내는 시료)<br>④ <strong>검사시료(분할시료)</strong>(실제 검사에 쓰는 양)"},
+  {n:43, cat:1, q:"제출시료를 검사시료로 줄이는 축분(감량) 방법을 3가지 쓰시오.", a:"① 기계분할법(종자분할기, riffle divider)<br>② <strong>원추4분법</strong>(원뿔로 쌓아 4등분 후 대각선 취함)<br>③ 스푼법·손분할법"},
+  {n:44, cat:1, tag:'hot', q:"순도검사에서 시료를 나누는 3가지 구성요소를 쓰시오.", a:"① <strong>정립(순수종자)</strong> ② <strong>이종종자</strong> ③ <strong>이물</strong><div class='point'>💡 세 구성요소의 백분율 합은 반드시 100.0%가 되어야 합니다.</div>"},
+  {n:45, cat:1, q:"순도검사에서 '정립'으로 인정되는 것을 3가지 쓰시오.", a:"① 해당 품종의 완전한 성숙 종자<br>② 원래 크기의 <strong>1/2 이상</strong>인 미숙립·발아립·병해립<br>③ 종피가 벗겨졌어도 배가 온전한 종자"},
+  {n:46, cat:1, q:"순도검사에서 '이물'에 해당하는 것을 4가지 쓰시오.", a:"① 흙·모래·돌 ② 줄기·잎·꽃·껍질 등 식물 잔재<br>③ 원형의 <strong>1/2 미만</strong>으로 부서진 종자 ④ 배가 없는 쭉정이·균핵·충영"},
+  {n:47, cat:1, tag:'calc', q:"[계산] 순도검사 결과 정립 96.5g, 이종종자 1.2g, 이물 2.3g이었다. 순도(정립률)를 소수 첫째자리까지 구하시오.", a:"<div class='calc'>순도(%) = 정립중량 ÷ 전체중량 × 100<br>= 96.5 ÷ (96.5+1.2+2.3=100.0) × 100<br>= <strong>96.5%</strong></div>이종종자 1.2%, 이물 2.3% (합계 100.0%)"},
+  {n:48, cat:1, tag:'hot', q:"발아검사의 공시립수와 반복 수를 쓰시오.", a:"<strong>400립</strong>을 <strong>100립씩 4반복</strong>으로 치상하여 검사<div class='point'>💡 반복 간 차이가 허용범위를 넘으면 재검사합니다.</div>"},
+  {n:49, cat:1, q:"발아검사에 사용하는 배지(발아상)의 종류를 3가지 쓰시오.", a:"① 종이배지 — 페이퍼 위(TP), 페이퍼 사이(BP), 주름종이(PP)<br>② 모래배지(S) ③ 토양배지(TS)"},
+  {n:50, cat:1, tag:'calc', q:"[계산] 400립을 치상하여 정상묘 356립, 비정상묘 20립, 미발아 24립을 얻었다. 발아율을 구하시오.", a:"<div class='calc'>발아율(%) = 정상묘 수 ÷ 공시립수 × 100<br>= 356 ÷ 400 × 100 = <strong>89.0%</strong></div>비정상묘는 발아립에 포함하지 않는 것이 원칙"},
+  {n:51, cat:1, tag:'calc', q:"[계산] 벼 종자 200립을 치상하여 5일째까지 152립, 14일째까지 총 178립이 발아하였다. 발아세와 발아율을 구하시오.", a:"<div class='calc'>발아세 = 152 ÷ 200 × 100 = <strong>76.0%</strong><br>발아율 = 178 ÷ 200 × 100 = <strong>89.0%</strong></div>발아세는 초기(벼 5일) 기준, 발아율은 최종 조사일 기준"},
+  {n:52, cat:1, tag:'calc', q:"[계산] 3일 20립, 4일 40립, 5일 30립, 6일 10립이 발아하였다. 평균발아일수를 소수 둘째자리까지 구하시오.", a:"<div class='calc'>평균발아일수 = Σ(발아일수 × 발아립수) ÷ 총 발아립수<br>= (3×20 + 4×40 + 5×30 + 6×10) ÷ 100<br>= (60+160+150+60) ÷ 100 = 430 ÷ 100<br>= <strong>4.30일</strong></div>값이 작을수록 발아가 빠르고 균일함"},
+  {n:53, cat:1, tag:'hot', q:"발아검사의 판정 구분 5가지를 쓰시오.", a:"① 정상묘 ② 비정상묘 ③ 경실종자 ④ 신선종자(미발아이나 건전) ⑤ 부패립(사종자)"},
+  {n:54, cat:1, q:"비정상묘로 판정하는 경우를 3가지 쓰시오.", a:"① 유근 또는 유아가 결여·기형인 것<br>② 자엽이 절반 이상 손상되거나 부패한 것<br>③ 병해·약해로 정상 생육이 불가능한 유묘"},
+  {n:55, cat:1, tag:'hot', q:"테트라졸륨(TTC) 검사의 원리·처리조건·판정 방법을 쓰시오.", a:"<strong>원리</strong> : 살아있는 조직의 <strong>탈수소효소</strong>가 TTC를 환원시켜 붉은색 포르마잔을 생성<br><strong>조건</strong> : 0.1~1.0% 용액, <strong>30~40℃ 암소</strong>에서 2~24시간<br><strong>판정</strong> : 배·유근이 <strong>선명한 적색</strong>으로 염색 → 활력 있음 / 무착색·부분착색 → 활력 없음<div class='point'>💡 발아검사보다 훨씬 빨라 '생사(활력) 급속검정'에 이용</div>"},
+  {n:56, cat:1, q:"종자를 미리 물에 담근 뒤 테트라졸륨 처리를 하는 이유를 쓰시오.", a:"종자를 예비흡수시켜 <strong>조직을 부드럽게 하고 효소를 활성화</strong>시켜야 용액이 배까지 고르게 침투하여 정확한 염색 판정이 가능하기 때문"},
+  {n:57, cat:1, q:"전기전도도(EC) 검사의 원리와 판정 기준을 쓰시오.", a:"<strong>원리</strong> : 활력이 낮은 종자는 세포막이 손상되어 침출되는 전해질이 많아짐<br><strong>판정</strong> : 침지액의 <strong>EC 값이 높을수록 활력이 낮음</strong>"},
+  {n:58, cat:1, q:"X선 검사법으로 알 수 있는 내용을 3가지 쓰시오.", a:"① 종자 내부의 <strong>충실도(배·배유 형성 여부)</strong><br>② 내부 공동·기계적 손상 여부<br>③ 해충의 식해(食害) 흔적<div class='point'>💡 종자를 파괴하지 않는 <b>비파괴 검사</b>라는 점이 핵심</div>"},
+  {n:59, cat:1, q:"품종의 진위를 가리는 검정 방법을 4가지 쓰시오.", a:"① 종자·유묘의 형태 검사<br>② <strong>페놀검사</strong>(벼·귀리의 영 착색 반응)<br>③ 단백질 전기영동<br>④ <strong>DNA 분자표지(SSR 등)</strong> ⑤ 포장 재배시험(최종 확인)"},
+  {n:60, cat:1, q:"종자 수분검사 시 저온항온건조법과 고온항온건조법의 조건을 각각 쓰시오.", a:"<strong>저온항온법</strong> : 103±2℃에서 17±1시간(유료종자 등)<br><strong>고온항온법</strong> : 130~133℃에서 1~4시간(화곡류 등)"},
+  {n:61, cat:1, tag:'calc', q:"[계산] 종자 시료 10.00g을 건조한 후 무게가 8.75g이 되었다. 수분함량(습량기준)을 구하시오.", a:"<div class='calc'>수분함량(%) = (건조 전 − 건조 후) ÷ <strong>건조 전</strong> × 100<br>= (10.00 − 8.75) ÷ 10.00 × 100<br>= <strong>12.5%</strong></div>💡 분모를 건조 후 무게로 쓰면 건량기준이 되어 오답 처리됩니다."},
+  {n:62, cat:1, tag:'hot', q:"천립중과 실중의 뜻을 각각 쓰시오.", a:"<strong>천립중</strong> : 종자 1,000립의 무게(g) → 종자의 <strong>충실도·크기</strong> 지표<br><strong>실중</strong> : 종자 1L(리터)의 무게(g) → 종자의 <strong>충실도·용적 밀도</strong> 지표"},
+  {n:63, cat:1, tag:'calc', q:"[계산] 종자 100립의 무게가 2.85g이었다. 천립중을 구하시오.", a:"<div class='calc'>천립중 = 100립 무게 × 10 = 2.85 × 10 = <strong>28.5g</strong></div>보통 100립씩 8반복 측정 후 평균값을 사용"},
+  {n:64, cat:1, tag:'calc', q:"[계산] 순도 98%, 발아율 90%인 종자의 종자이용률(유효종자율)을 구하시오.", a:"<div class='calc'>종자이용률(%) = 순도(%) × 발아율(%) ÷ 100<br>= 98 × 90 ÷ 100 = <strong>88.2%</strong></div>실제 포장에서 기대되는 입모 능력을 나타냄"},
+  {n:65, cat:1, tag:'calc', q:"[계산] 10a에 이랑폭 60cm, 주간거리 40cm로 재배할 때 재식주수를 구하시오.", a:"<div class='calc'>10a = 1,000㎡<br>재식주수 = 1,000 ÷ (0.6 × 0.4) = 1,000 ÷ 0.24<br>= <strong>약 4,167주</strong></div>💡 cm를 m로 반드시 환산할 것"},
+  {n:66, cat:1, tag:'calc', q:"[계산] 위 조건(재식주수 4,167주)에서 1주당 3립을 파종하고 천립중 3g, 순도 98%, 발아율 90%일 때 소요 종자량(g)을 구하시오.", a:"<div class='calc'>① 필요 파종립수 = 4,167 × 3 = 12,501립<br>② 종자이용률 = 0.98 × 0.90 = 0.882<br>③ 실제 준비량 = 12,501 ÷ 0.882 ≒ 14,173립<br>④ 무게 = 14,173 × 3g ÷ 1,000 = <strong>약 42.5g</strong></div>공식 : 소요량 = (주수×주당립수×천립중) ÷ 1,000 ÷ (순도×발아율)"},
+  {n:67, cat:1, q:"포장검사(圃場檢査)의 목적과 주요 검사 항목을 쓰시오.", a:"<strong>목적</strong> : 재배 중인 채종포에서 품종의 순도와 종자의 건전성을 확인<br><strong>항목</strong> : 품종 순도(이형주 혼입률), 이품종·잡초 혼입, 병해충 발생 정도, 격리거리 준수 여부"},
+  {n:68, cat:1, tag:'hot', q:"이형주(異型株)의 뜻과 제거 시기·이유를 쓰시오.", a:"<strong>뜻</strong> : 해당 품종의 고유 특성과 다른 개체(이품종·자연교잡·돌연변이 개체)<br><strong>시기</strong> : <strong>개화 전</strong>(출수·개화 직전)에 반드시 제거<br><strong>이유</strong> : 개화 후에는 화분이 날려 <strong>유전적 퇴화</strong>가 일어나기 때문"},
+  {n:69, cat:1, q:"채종포에서 격리(隔離)가 필요한 이유와 격리 방법 3가지를 쓰시오.", a:"<strong>이유</strong> : 다른 품종의 화분이 날아와 <strong>자연교잡</strong>이 일어나면 품종 순도가 떨어짐<br><strong>방법</strong> ① 거리격리 ② 시간격리(개화기 조절) ③ 차단격리(망실·봉지·차단수벽)"},
+  {n:70, cat:1, q:"자가수분 작물과 타가수분 작물의 채종 격리거리를 비교하여 쓰시오.", a:"<strong>자가수분 작물(벼·콩)</strong> : 짧아도 됨(수 m 정도)<br><strong>타가수분 작물(배추·무·옥수수)</strong> : 수백~1,000m 이상 필요<div class='point'>💡 배추·무 원종 채종은 1,000m, 옥수수는 300m 내외가 기준으로 제시됩니다.</div>"},
+  {n:71, cat:1, tag:'hot', q:"우리나라 종자 증식체계를 순서대로 쓰시오.", a:"<strong>기본식물 → 원원종 → 원종 → 보급종</strong><div class='point'>💡 기본식물(육성기관) → 원원종(도 농업기술원) → 원종(도 원종장) → 보급종(국립종자원)</div>"},
+  {n:72, cat:1, q:"종자보증의 종류 2가지와 그 뜻을 쓰시오.", a:"① <strong>국가보증</strong> : 국가나 지자체가 시행하는 보증(수출입 종자, 정부 보급종)<br>② <strong>자체보증</strong> : 종자업자가 종자관리사를 통해 스스로 시행하는 보증"},
+  {n:73, cat:1, tag:'hot', q:"보증종자 포장에 반드시 표시해야 할 사항을 5가지 쓰시오.", a:"① 품종명·작물명 ② 발아율 ③ 순도(정립률) ④ 생산연월(생산지) ⑤ 보증의 유효기간 ⑥ 종자업 등록번호·수량"},
+  {n:74, cat:1, tag:'hot', q:"작물별 보증표시의 유효기간을 쓰시오.", a:"채소 <strong>2년</strong> / 버섯 <strong>1개월</strong> / 감자·고구마 <strong>2개월</strong> / 맥류·콩 <strong>6개월</strong> / 그 밖의 작물 <strong>1년</strong><div class='point'>💡 유효기간 기산일은 <b>발아율 검사일</b>입니다.</div>"},
+  {n:75, cat:1, q:"우리나라에서 종자검사와 보급종 생산·보급을 담당하는 기관을 쓰시오.", a:"<strong>국립종자원</strong>(농림축산식품부 소속)<div class='point'>💡 국제적으로는 ISTA(국제종자검정협회) 규정을 따릅니다.</div>"},
+  {n:76, cat:1, q:"종자 병리검사(종자전염병 검정) 방법을 3가지 쓰시오.", a:"① <strong>습지법(blotter method)</strong> : 습한 여과지에 치상 후 병징 관찰<br>② 한천배지법(선택배지 배양)<br>③ 종자 세척액 검경법·혈청학적 검정(ELISA)·PCR 검정"},
+  {n:77, cat:1, q:"수입 종자에 대해 실시하는 수입적응성시험의 목적을 쓰시오.", a:"국내 기후·토양 조건에서 재배 가능 여부와 <strong>품질·병해충 저항성</strong>을 확인하여 부적합 종자의 유통을 막기 위함"},
+  {n:78, cat:1, q:"종자 검사 결과 불합격된 종자에 대한 조치를 쓰시오.", a:"보증표시를 할 수 없으며 보증종자로 유통 불가 → 재조제(정선)·재검사를 하거나 <strong>사료·식용 등으로 용도 전환 또는 폐기</strong>"},
+  {n:79, cat:1, q:"종자 시료를 채취할 때 지켜야 할 원칙 3가지를 쓰시오.", a:"① 소집단 전체를 <strong>대표</strong>할 수 있도록 여러 지점에서 고르게 채취<br>② 정해진 최소 채취 지점 수와 시료량을 확보<br>③ 채취 즉시 밀봉·표시하여 <strong>수분 변화와 혼입을 방지</strong>"},
+  {n:80, cat:1, q:"좋은 종자(우량종자)가 갖추어야 할 조건을 5가지 쓰시오.", a:"① 품종의 <strong>유전적 순도</strong>가 높을 것<br>② 발아율·발아세가 높고 활력이 클 것<br>③ 이종종자·이물이 섞이지 않을 것<br>④ 병해충에 감염되지 않았을 것<br>⑤ 수분함량이 적정하고 충실할 것(천립중이 클 것)"},
 
-  // Ⅲ. 유기적 재배관리 (81 ~ 120)
-  {n:81, q:"유기농업에서 사용 가능한 병해 방제 방법 4가지를 쓰시오.", a:"① 저항성 품종 ② 윤작 및 혼작 ③ 허용 미생물 농약 ④ 재배 환경 개선", cat:2},
-  {n:82, q:"유기농에서 허용되는 식물성 천연 살충제 3가지를 쓰시오.", a:"① <strong>제충국</strong> ② <strong>님 추출물</strong> ③ <strong>데리스</strong>", cat:2},
-  {n:83, q:"생물적 방제의 정의와 사용 예를 2가지 쓰시오.", a:"정의: 해충의 천적이나 병원 미생물을 활용한 방제법<br>예: ① 칠레이리응애 ② 무당벌레", cat:2},
-  {n:84, q:"유기농업에서 잡초 방제 방법 5가지를 쓰시오.", a:"① 멀칭 ② 기계 제초 ③ 화염 제초 ④ 밀식 재배 ⑤ 피복작물 재배", cat:2},
-  {n:85, q:"동반 식물 재배의 원리와 예를 쓰시오.", a:"원리: 함께 심었을 때 해충 기피 등 상호 이익을 주는 관계 이용<br>예: 토마토 + 바질", cat:2},
-  {n:86, q:"페로몬 트랩의 원리와 농업적 이용을 설명하시오.", a:"원리: 성페로몬으로 특정 해충의 수컷 유인 포획<br>이용: 해충 발생 시기 예찰 및 대량 포획 밀도 감소", cat:2},
-  {n:87, q:"석회보르도액의 제조 방법과 주요 방제 대상을 쓰시오.", a:"제조: 황산구리 수용액과 생석회 석회유를 혼합<br>방제 대상: 역병, 탄저병, 노균병 등 곰팡이성 병해", cat:2},
-  {n:88, q:"유기농업에서 병해충 종합 관리(IPM)의 기본 원칙을 쓰시오.", a:"예방 조치를 최우선으로 하며 정밀 예찰 후 생물적·물리적 방제를 종합 연계함", cat:2},
-  {n:89, q:"멀칭의 효과 4가지를 쓰시오.", a:"① 잡초 억제 ② 수분 보존 ③ 토양 온도 조절 ④ 토양 침식 방지", cat:2},
-  {n:90, q:"황색 끈끈이 트랩의 원리와 대상 해충을 쓰시오.", a:"원리: 해충이 노란색 색상에 유인되는 습성 이용<br>대상: 진딧물, 총채벌레, 온실가루이, 잎굴파리", cat:2},
-  {n:91, q:"토양훈증을 유기농에서 사용할 수 없는 이유와 대체 방법을 쓰시오.", a:"이유: 화학합성 훈증제 전면 금지 / 대체법: <strong>태양열 토양 소독법</strong>", cat:2},
-  {n:92, q:"유기농업에서 혼작의 이점 3가지를 쓰시오.", a:"① 특정 병해충 확산 저지 ② 공간 이용 효율 극대화 ③ 생물다양성 증진", cat:2},
-  {n:93, q:"BT제의 살충 원리를 설명하시오.", a:"BT균이 생성한 독소 단백질을 해충이 섭식하면 소화관 세포가 파괴되어 사멸함", cat:2},
-  {n:94, q:"배수 불량 토양에서 습해를 받은 작물의 증상을 쓰시오.", a:"뿌리가 부패하고, 흡수 기능 상실로 아래 잎이 황화되거나 포기가 시듦", cat:2},
-  {n:95, q:"윤작이 병해충 방제에 효과적인 이유를 쓰시오.", a:"동일 기주 작물의 연속 재배를 차단하여 토양 내 특정 병원균 및 해충의 밀도 순환을 끊기 때문", cat:2},
-  {n:96, q:"유기농업에서 허용되는 구리 계열 살균제를 2가지 쓰시오.", a:"① 석회보르도액 ② 수산화구리", cat:2},
-  {n:97, q:"유기농업에서 황 제제의 사용 목적과 방제 대상을 쓰시오.", a:"목적: 살균 및 살충, 살비 작용 / 방제 대상: 흰가루병, 응애류", cat:2},
-  {n:98, q:"작물 재배 시 과잉 시비로 발생하는 문제점 3가지를 쓰시오.", a:"① 토양 염류 집적 ② 지하수 오염 ③ 조직 연약화로 병해충 저항성 급감", cat:2},
-  {n:99, q:"식물 바이러스병의 전파 경로 3가지를 쓰시오.", a:"① 즙액 접촉 ② 매개충(진딧물 등) ③ 종자 전염", cat:2},
-  {n:100, q:"칼슘 결핍 시 나타나는 대표적인 작물별 증상을 2가지 쓰시오.", a:"① 토마토·고추: **배꼽썩음병** ② 배추·상추: **팁번** 증상", cat:2},
-  {n:101, q:"마그네슘 결핍 증상의 특징을 쓰시오.", a:"하위엽(노엽)에서 먼저 발생하며, 잎맥은 녹색을 유지하나 **엽맥 사이가 황화**됨", cat:2},
-  {n:102, q:"생육 단계별 수분 관리에서 가장 중요한 시기(수분 임계기)를 작물별로 2가지 쓰시오.", a:"① 벼: 출수 개화기 전후 ② 옥수수: 수염 출현기 전후", cat:2},
-  {n:103, q:"유기농업에서 시설 재배의 병해 예방을 위한 환경 관리 방법 3가지를 쓰시오.", a:"① 환기로 실내 습도 저하 ② 적정 재식거리 유지 ③ 멀칭으로 토양 수분 증발 차단", cat:2},
-  {n:104, q:"토양 전염성 병원균을 방제하기 위한 비화학적 방법 3가지를 쓰시오.", a:"① 태양열 토양 소독 ② 길항 미생물 시용 ③ 접목 재배", cat:2},
-  {n:105, q:"엽면 시비의 장점과 주의사항을 쓰시오.", a:"장점: 뿌리 기능 약화 시 양분의 신속한 결핍 회복<br>주의사항: 적정 희석 농도를 준수하고 아침·오후에 살포", cat:2},
-  {n:106, q:"근류균을 콩과 작물 종자에 접종하는 이유와 방법을 쓰시오.", a:"이유: 뿌리혹 형성을 촉진하여 공중질소 고정 능력을 극대화<br>방법: 파종 직전 종자 표면에 근류균 균주를 묻혀 파종", cat:2},
-  {n:107, q:"유기농업에서 해충 방제를 위한 물리적 방법 4가지를 쓰시오.", a:"① 방충망 설치 ② 끈끈이 트랩 ③ 포충기 가동 ④ 인력 포살", cat:2},
-  {n:108, q:"관개 방법 중 점적 관개의 장점 3가지를 쓰시오.", a:"① 물 절약 효과 ② 잡초 발생 억제 ③ 지상부 병해 감소", cat:2},
-  {n:109, q:"이어짓기 장해의 원인 3가지를 쓰시오.", a:"① 특정 병원균 및 선충 급증 ② 특정 양분 편재 소모 ③ 자가독소 축적", cat:2},
-  {n:110, q:"잿빛곰팡이병의 발생 조건과 유기적 방제법을 쓰시오.", a:"조건: 저온 환경과 과습한 상태<br>방제법: 환기 철저, 병든 부위 제거, 중탄산나트륨 살포", cat:2},
-  {n:111, q:"벼 도열병의 발생 조건과 예방법을 쓰시오.", a:"조건: 저온 냉해, 질소비료 과다 시용<br>예방법: 밀식을 피하고 통풍 확보, 규산질 비료 보충 시용", cat:2},
-  {n:112, q:"역병의 특징과 유기적 방제 방법을 쓰시오.", a:"특징: 물을 통해 전염되며 고온다습 조건에서 폭발적 확산<br>방제법: 배수로 정비, 태양열 소독, 석회보르도액 살포", cat:2},
-  {n:113, q:"진딧물 방제를 위한 유기농 방법 3가지를 쓰시오.", a:"① 천적 방사 ② 님 추출 오일 살포 ③ 반사 멀칭 필름 시용", cat:2},
-  {n:114, q:"파밤나방 방제를 위해 유기농에서 사용 가능한 방법을 쓰시오.", a:"① 성페로몬 트랩 이용 ② 유충 발생 초기 BT제 살포", cat:2},
-  {n:115, q:"점박이응애 방제를 위한 천적을 쓰고 방사 방법을 설명하시오.", a:"천적: **칠레이리응애**<br>방사 방법: 해충 발생 초기 잎 표면에 골고루 분산 방사", cat:2},
-  {n:116, q:"유기농업에서 토마토 흰가루병 방제에 허용되는 자재 2가지를 쓰시오.", a:"① 유황 수화제 ② 중탄산나트륨 희석액", cat:2},
-  {n:117, q:"태양열 토양 소독의 방법과 효과를 쓰시오.", a:"방법: 한여름에 수분 공급 후 투명비닐로 밀폐하여 4~6주간 방치<br>효과: 지온 상승으로 병원균, 선충, 잡초 종자가 고온 사멸", cat:2},
-  {n:118, q:"식물추출물 중 마늘 추출액의 농업적 효과를 쓰시오.", a:"알리신 성분의 강력한 향과 항균력으로 해충 기피 및 병해 예방 효과를 가짐", cat:2},
-  {n:119, q:"비닐 멀칭 색깔별 효과를 구분하시오.", a:"**흑색**: 잡초 억제 / **투명**: 지온 상승 / **은색**: 해충 기피 효과", cat:2},
-  {n:120, q:"유기농업에서 비료와 농약의 사용이 제한되는 법적 근거를 쓰시오.", a:"**친환경농어업 육성 및 유기식품 등의 관리·지원에 관한 법률**", cat:2},
+  // ───────── Ⅲ. 육묘·상토·파종 (81~120) ─────────
+  {n:81, cat:2, tag:'hot', q:"육묘(育苗)를 하는 이유(이점)를 5가지 쓰시오.", a:"① 조기 수확 및 <strong>수확기간 연장</strong><br>② 종자 절약(파종량 감소)<br>③ 본밭 이용도 증대(앞그루와 겹치기)<br>④ 유묘기 집중관리로 <strong>재해·병해충 회피</strong><br>⑤ 결주 방지와 생육 균일화로 수량·품질 향상"},
+  {n:82, cat:2, q:"육묘 방식을 3가지로 구분하여 쓰시오.", a:"① 노지육묘(못자리·묘상) ② 보온육묘(온상·터널) ③ <strong>공정육묘(플러그육묘)</strong>"},
+  {n:83, cat:2, tag:'hot', q:"공정육묘(플러그육묘)의 장점을 4가지 쓰시오.", a:"① 파종·관수의 <strong>자동화·대량생산</strong> 가능<br>② 좁은 면적에서 균일한 묘 생산<br>③ 뿌리가 상토와 함께 뽑혀 <strong>정식 후 활착이 빠름</strong><br>④ 운반·취급이 쉽고 육묘기간 단축"},
+  {n:84, cat:2, q:"플러그 트레이의 규격(공수)에 따른 용도 차이를 설명하시오.", a:"공수가 <strong>적을수록(50·72공)</strong> 셀이 커서 대묘·장기육묘용(과채류)<br>공수가 <strong>많을수록(128·200·288공)</strong> 셀이 작아 단기육묘·엽채류용<div class='point'>💡 셀이 작으면 건조·양분 결핍이 빨리 와 관리가 까다롭습니다.</div>"},
+  {n:85, cat:2, tag:'hot', q:"육묘용 상토가 갖추어야 할 조건을 5가지 쓰시오.", a:"① 보수력과 <strong>배수·통기성</strong>이 동시에 좋을 것<br>② 병원균·해충·잡초종자가 없을 것(소독)<br>③ 적정 pH(5.5~6.5)와 낮은 EC<br>④ 양분 보유력(CEC)이 클 것<br>⑤ 가볍고 균질하며 구입이 쉬울 것"},
+  {n:86, cat:2, q:"상토의 재료로 쓰이는 자재를 4가지 쓰고 각각의 특성을 간단히 쓰시오.", a:"① <strong>피트모스</strong> : 보수력·CEC 큼, 산성<br>② <strong>버미큘라이트</strong> : 보수·보비력 우수<br>③ <strong>펄라이트</strong> : 통기·배수성 개선<br>④ <strong>코코피트</strong> : 보수성 좋고 친환경 대체재"},
+  {n:87, cat:2, tag:'hot', q:"상토(모판흙) 소독 방법을 3가지 쓰고 조건을 쓰시오.", a:"① <strong>증기소독</strong> : 60~80℃에서 30분 내외<br>② <strong>태양열소독</strong> : 한여름 관수 후 투명비닐 밀폐 3~4주<br>③ <strong>약제소독</strong> : 다조멧·메탐소듐 등 훈증제 처리 후 가스 빼기<div class='point'>💡 100℃ 이상 과열소독은 유용미생물까지 죽고 암모니아 장해가 생깁니다.</div>"},
+  {n:88, cat:2, q:"육묘용 상토의 적정 pH와 EC 기준을 쓰시오.", a:"pH <strong>5.5~6.5</strong>, EC <strong>1.0 dS/m 이하</strong>(작물에 따라 0.5~1.5)<div class='point'>💡 EC가 높으면 발아 불량·뿌리 장해(염류장해)가 발생합니다.</div>"},
+  {n:89, cat:2, tag:'hot', q:"파종 방법 4가지를 쓰고 각각 알맞은 작물을 쓰시오.", a:"① <strong>점파(点播)</strong> : 콩·옥수수 등 대립종자<br>② <strong>조파(條播)</strong> : 맥류·당근 등 줄뿌림<br>③ <strong>산파(散播)</strong> : 잔디·목초 등 흩어뿌림<br>④ <strong>적파(摘播)</strong> : 몇 립씩 모아뿌림(파·부추)"},
+  {n:90, cat:2, tag:'hot', q:"복토(覆土)의 기본 원칙과 복토가 너무 깊을 때의 문제점을 쓰시오.", a:"<strong>원칙</strong> : 복토 두께는 <strong>종자 지름의 2~3배</strong>, 미세종자는 복토를 하지 않거나 아주 얇게<br><strong>문제점</strong> : 산소 부족과 출아 에너지 소모로 <strong>발아 지연·출아율 저하</strong>, 유묘 도장"},
+  {n:91, cat:2, q:"미세종자(상추·페튜니아 등) 파종 요령을 3가지 쓰시오.", a:"① 모래·버미큘라이트와 섞어 고르게 흩어뿌림<br>② 복토는 생략하거나 종자가 겨우 가려질 정도로 얇게<br>③ <strong>저면관수</strong>로 관수하고 신문지·부직포로 덮어 건조 방지"},
+  {n:92, cat:2, tag:'hot', q:"파종 후 상면에 신문지를 덮는 이유를 3가지 쓰시오.", a:"① 수분 증발을 막아 <strong>상토 표면의 건조 방지</strong><br>② 관수 시 종자가 씻겨 나가거나 몰리는 것을 방지<br>③ 지온을 유지하고 급격한 온도 변화를 완화<div class='point'>💡 발아가 시작되면 <b>즉시 걷어내야</b> 도장하지 않습니다.</div>"},
+  {n:93, cat:2, tag:'hot', q:"저면관수(底面灌水)의 뜻과 이용하는 이유를 쓰시오.", a:"<strong>뜻</strong> : 트레이 아래쪽에 물을 대어 <strong>모세관 현상</strong>으로 상토가 물을 빨아올리게 하는 관수 방법<br><strong>이유</strong> ① 미세종자·복토를 하지 않은 종자가 씻겨 나가지 않음<br>② 잎과 표면이 젖지 않아 <strong>병 발생(모잘록병)이 줄어듦</strong>"},
+  {n:94, cat:2, tag:'hot', q:"볍씨 침종(浸種)의 목적과 조건을 쓰시오.", a:"<strong>목적</strong> : 종자가 발아에 필요한 수분을 충분히 흡수하게 하여 발아를 <strong>균일</strong>하게 함<br><strong>조건</strong> : 수온 <strong>15℃에서 5~7일</strong>(적산온도 약 <strong>100℃</strong>), 물은 2~3일마다 갈아줌"},
+  {n:95, cat:2, tag:'hot', q:"볍씨 최아(催芽)의 조건과 적정 싹 길이를 쓰시오.", a:"<strong>조건</strong> : <strong>30~32℃</strong>에서 1~2일간 보온<br><strong>싹 길이</strong> : <strong>1~2mm</strong>(종자의 1/3 이하)<div class='point'>💡 싹이 길면 파종기에서 부러져 결주가 생깁니다.</div>"},
+  {n:96, cat:2, q:"벼 육묘 시 상자당 볍씨 파종량을 육묘 방식별로 쓰시오.", a:"어린모 : 상자당 <strong>200~220g</strong>(밀파)<br>치묘 : 130~150g<br>중묘 : <strong>100~130g</strong>(소식)"},
+  {n:97, cat:2, tag:'hot', q:"벼 육묘 방식별 육묘일수와 잎 수를 쓰시오.", a:"① <strong>어린모</strong> : 8~10일, 2~2.5엽<br>② <strong>치묘</strong> : 약 20일, 3엽<br>③ <strong>중묘</strong> : 30~35일, 4~5엽"},
+  {n:98, cat:2, q:"못자리의 종류를 3가지 쓰시오.", a:"① 물못자리 ② 밭못자리(건답못자리) ③ 보온절충못자리 ④ 상자육묘(기계이앙용)"},
+  {n:99, cat:2, tag:'hot', q:"모의 경화(硬化, 순화)의 목적과 방법을 쓰시오.", a:"<strong>목적</strong> : 정식 후 노지 환경에 잘 견디도록 <strong>내한성·내건성</strong>을 길러 활착률을 높임<br><strong>방법</strong> : 정식 7~10일 전부터 <strong>관수량을 줄이고</strong> 야간온도를 낮추며 환기·직사광 노출을 점차 늘림"},
+  {n:100, cat:2, tag:'hot', q:"좋은 모(苗)의 조건(묘의 소질)을 4가지 쓰시오.", a:"① 마디사이가 짧고 <strong>줄기가 굵으며</strong> 도장하지 않은 것<br>② 잎이 두껍고 짙은 녹색인 것<br>③ 뿌리가 희고 잔뿌리가 많아 <strong>근군이 충실</strong>한 것<br>④ 병해충 피해가 없고 생육이 균일한 것"},
+  {n:101, cat:2, tag:'hot', q:"묘가 웃자라는(도장) 원인 4가지와 대책을 쓰시오.", a:"<strong>원인</strong> ① 고온(특히 야간 고온) ② 광 부족·밀식 ③ 과습·과다관수 ④ 질소 과다<br><strong>대책</strong> : 환기로 야간온도를 낮추고 충분한 광 확보, 솎음·간격 확보, 관수와 질소 절감"},
+  {n:102, cat:2, tag:'hot', q:"모잘록병(입고병)의 발생 조건과 방제법을 쓰시오.", a:"<strong>발생조건</strong> : 저온·다습, 밀파, 과습한 상토, 배수 불량<br><strong>방제</strong> ① 상토 소독과 무병 상토 사용 ② 저면관수로 표면 과습 방지 ③ 환기·솎음으로 통풍 확보 ④ 적용 약제 관주<div class='point'>💡 병원균 : Pythium, Rhizoctonia, Fusarium</div>"},
+  {n:103, cat:2, q:"육묘 시 웃거름(액비) 관리 요령을 쓰시오.", a:"본엽 2~3매 전개 후부터 묽은 액비를 관수와 함께 시용하고, <strong>EC를 측정하며 농도장해가 없도록</strong> 소량씩 자주 준다"},
+  {n:104, cat:2, q:"육묘 시 주간·야간 온도 관리의 기본 원칙을 쓰시오.", a:"주간에는 광합성이 잘 되도록 다소 높게(25℃ 내외), <strong>야간에는 낮추어(15℃ 내외) 호흡 소모를 줄임</strong> → 주야 온도차(DIF)를 이용해 도장 억제"},
+  {n:105, cat:2, q:"육묘용 터널(소형 비닐터널) 설치 목적과 준비 자재를 쓰시오.", a:"<strong>목적</strong> : 보온으로 조기 파종·발아 촉진, 서리·바람·강우 피해 방지<br><strong>자재</strong> : 지주(활죽·파이프), 피복비닐, 고정핀·끈, 부직포·차광망"},
+  {n:106, cat:2, q:"터널·하우스 피복자재를 3가지 쓰고 특징을 쓰시오.", a:"① <strong>PE(폴리에틸렌)</strong> : 값싸고 가벼우나 보온성 낮음<br>② <strong>EVA</strong> : 물방울 맺힘이 적고 보온성 우수<br>③ <strong>PO필름</strong> : 투광률·내구성 우수 ④ 부직포 : 보온·차광용 이중피복"},
+  {n:107, cat:2, q:"육묘상 환기의 목적을 3가지 쓰시오.", a:"① 고온장해와 도장 방지 ② 과습 억제로 병 발생 감소 ③ CO₂ 공급과 유해가스(암모니아 등) 배출"},
+  {n:108, cat:2, q:"육묘 시 관수의 기본 요령을 3가지 쓰시오.", a:"① 오전 중에 관수하여 <strong>야간에 잎이 젖지 않도록</strong> 함<br>② 한 번에 충분히, 다음 관수까지 약간 마르게(과습 방지)<br>③ 수온은 상토 온도와 비슷하게(저온수 급수 금지)"},
+  {n:109, cat:2, q:"이식(옮겨심기)의 이점을 3가지 쓰시오.", a:"① 단근 효과로 <strong>잔뿌리 발생 촉진</strong> → 활착·흡수력 증대<br>② 생육 억제로 도장 방지·묘의 충실화<br>③ 본밭 이용도 증대 및 불량묘 도태"},
+  {n:110, cat:2, q:"공정육묘에서 단근(뿌리끊기)·접촉자극(브러싱)을 하는 이유를 쓰시오.", a:"물리적 자극으로 <strong>줄기 신장을 억제</strong>하고 세포벽을 두껍게 하여 <strong>도장하지 않은 튼튼한 묘</strong>를 만들기 위함(약제 무사용 왜화법)"},
+  {n:111, cat:2, q:"정식(아주심기) 적기의 판단 기준을 쓰시오.", a:"과채류는 본엽 <strong>4~6매</strong>(고추·토마토는 첫 꽃봉오리가 보일 때), 뿌리가 상토를 감아 <strong>포트에서 흙이 부서지지 않고 뽑힐 때</strong>"},
+  {n:112, cat:2, q:"정식 후 활착을 돕는 방법을 3가지 쓰시오.", a:"① 흐린 날·오후에 정식하고 정식 후 충분히 관수(활착수)<br>② 며칠간 차광·방풍으로 증산 억제<br>③ 정식 깊이를 알맞게(자엽 아래) 하고 뿌리분을 깨지 않게 심음"},
+  {n:113, cat:2, q:"발아율이 낮게 나타나는 원인을 4가지 쓰시오.", a:"① 종자 자체의 활력 저하·휴면 미타파<br>② 복토 과다·과습으로 인한 산소 부족<br>③ 부적당한 온도(저온·고온)<br>④ 상토의 EC 과다(염류장해)·병해 감염"},
+  {n:114, cat:2, q:"육묘 중 발생하기 쉬운 해충 3가지와 방제법을 쓰시오.", a:"① 진딧물 — 황색 점착트랩, 방충망 ② 총채벌레 — 청색 트랩, 미세방충망 ③ 온실가루이 — 황색 트랩·천적(온실가루이좀벌)<div class='point'>💡 육묘장은 0.4mm 이하 방충망 설치가 기본 예방책</div>"},
+  {n:115, cat:2, q:"육묘상의 광 관리 요령을 쓰시오.", a:"발아 직후부터 충분한 광을 확보(피복물 즉시 제거), 여름에는 <strong>차광망으로 30~50% 차광</strong>하여 고온·강광 장해를 막고 겨울에는 보광 검토"},
+  {n:116, cat:2, q:"묘의 노화(늙은 모)가 일어나는 원인과 문제점을 쓰시오.", a:"<strong>원인</strong> : 육묘기간 과다, 셀 크기 과소, 양·수분 부족<br><strong>문제점</strong> : 정식 후 활착 지연, 초기 생육 정체, 조기 화아분화로 수량 저하"},
+  {n:117, cat:2, q:"채소 접목묘를 구입·사용하는 이유를 3가지 쓰시오.", a:"① 토양전염병(덩굴쪼김병·풋마름병) 회피 ② 저온·고온 신장성 향상 ③ 흡비력 증대로 수량·품질 향상"},
+  {n:118, cat:2, q:"육묘 작업에 필요한 도구·자재를 5가지 쓰시오.", a:"파종용 트레이·포트, 상토, 파종판(파종기), 물뿌리개·관수호스, 이식용 핀셋·모종삽, 온·습도계, 라벨(품종 표시)"},
+  {n:119, cat:2, q:"육묘 시 품종 라벨(표찰)에 기재해야 할 내용을 쓰시오.", a:"작물명·품종명, 파종일, 종자 로트번호(생산연도), 파종량·수량, 담당자명<div class='point'>💡 표찰 누락은 실기에서 감점 요인입니다. 반드시 파종 직후 부착!</div>"},
+  {n:120, cat:2, q:"묘 생산 이력관리(생산기록)에 포함되어야 할 항목을 4가지 쓰시오.", a:"① 종자 구입처·품종·로트번호 ② 파종일·파종량·상토 종류<br>③ 관수·시비·약제 처리 내역 ④ 출하일·출하처 및 묘의 규격"},
 
-  // Ⅳ. 유기작물 재배 (121 ~ 160)
-  {n:121, q:"유기농업에서 종자 선택 시 고려해야 할 조건 3가지를 쓰시오.", a:"① 유기 채종 종자 또는 미처리 종자 ② 지역 적응성 및 저항성이 높은 품종", cat:3},
-  {n:122, q:"작부체계에서 윤작의 중요성과 적절한 윤작 기간을 설명하시오.", a:"중요성: 지력 유지 및 토양 병해충 밀도 차단 / 기간: 통상 2~5년 주기 구성", cat:3},
-  {n:123, q:"유기 수도작에서 제초 방법 3가지를 쓰시오.", a:"① 우렁이 농법 ② 기계적 제초기 가동 ③ 심수관개 조치", cat:3},
-  {n:124, q:"우렁이 농법에서 우렁이를 방류하는 적정 시기와 주의사항을 쓰시오.", a:"시기: 이앙 후 10 ~ 15일 사이 / 주의사항: 평탄 작업 및 탈출 방지망 설치 필수", cat:3},
-  {n:125, q:"오리 농법의 원리와 장점 2가지를 쓰시오.", a:"원리: 오리가 잡초와 유충을 포식함<br>장점: ① 제초 및 해충 방제 ② 배설물 배출로 천적 공급 및 시비 환원", cat:3},
-  {n:126, q:"유기농 배추 재배 시 배추좀나방 방제 방법 3가지를 쓰시오.", a:"① 성페로몬 트랩 설치 ② 한랭사 피복 재배 ③ BT제 주기적 살포", cat:3},
-  {n:127, q:"토마토 유기 재배 시 발생하기 쉬운 생리 장해 2가지와 원인을 쓰시오.", a:"① 배꼽썩음병(칼슘 결핍) ② 공동과(야간 저온·일조 부족)", cat:3},
-  {n:128, q:"유기농 딸기 재배에서 탄저병 예방 관리 방법을 쓰시오.", a:"무병묘를 사용하고 시설 환기를 가동하며 발병 즉시 포기를 제거하고 동 제제를 살포", cat:3},
-  {n:129, q:"콩 유기 재배에서 질소 시비를 최소화하는 방법을 쓰시오.", a:"우량 근류균을 접종하여 공중질소 고정량을 최대화하고 질소 투입을 생략", cat:3},
-  {n:130, q:"마늘 유기 재배 시 파종 전 토양 준비 방법을 설명하시오.", a:"완숙 퇴비를 충분히 시용하고 깊이갈이를 수행하며 배수성 확보를 위해 두둑을 높임", cat:3},
-  {n:131, q:"유기농 감자 재배 시 역병 예방 방법을 쓰시오.", a:"인증된 무병 씨감자를 확보해 심고, 두둑을 높여 물 고임을 방지하며 동수화제 살포", cat:3},
-  {n:132, q:"유기농 고추 재배 시 탄저병 방제 방법 3가지를 쓰시오.", a:"① 비가림 시설 재배 ② 이랑 멀칭 시용 ③ 석회보르도액 예방 살포", cat:3},
-  {n:133, q:"녹비작물로 헤어리베치를 선택하는 이유와 토양 처리 방법을 쓰시오.", a:"이유: 질소 고정량이 우수함 / 처리: 주작물 파종 2~3주 전 꽃이 필 무렵 로터리 매립", cat:3},
-  {n:134, q:"유기농 사과 재배에서 화상병 예방을 위한 관리 방법을 쓰시오.", a:"전정 도구를 수시로 소독하고 개화 전 동제 살포 지침 준수 및 의심 포기 매몰", cat:3},
-  {n:135, q:"유기농에서 비닐 멀칭 대신 사용 가능한 친환경 멀칭 자재 3가지를 쓰시오.", a:"① 볏짚 멀칭 ② 피복녹비 재배 멀칭 ③ 생분해성 멀칭 종이·필름", cat:3},
-  {n:136, q:"유기농업에서 접목 재배를 하는 목적 2가지를 쓰시오.", a:"① 토양 전염성 시들음병 저항성 확보 ② 저온 신장성 및 양분 흡수력 강화", cat:3},
-  {n:137, q:"유기농 벼 재배에서 참게 농법의 원리와 효과를 설명하시오.", a:"참게를 논에 방사하여 잡초 유묘를 차단하고 해충을 포식하며 흙탕물을 유도해 제초함", cat:3},
-  {n:138, q:"시설원예 유기 재배에서 탄산가스 공급의 효과와 허용 여부를 쓰시오.", a:"효과: CO₂ 농도를 높여 광합성 촉진 / 허용 여부: 순수 가스 주입은 허용됨", cat:3},
-  {n:139, q:"유기 수도작에서 물 관리가 잡초 방제에 미치는 영향을 설명하시오.", a:"이앙 후 7~10cm 두께로 깊게 물을 대는 심수관개를 유지하면 잡초 발아가 억제됨", cat:3},
-  {n:140, q:"유기농업에서 토종 종자를 보존·이용하는 의의 2가지를 쓰시오.", a:"① 유전자원 다양성 확보 ② 농약·비료 없이도 생존력이 우수", cat:3},
-  {n:141, q:"수박의 유기 재배 시 접목 대목으로 사용하는 작물과 그 이유를 쓰시오.", a:"대목:박 또는 호박 / 이유: 만할병 저항성 보유 및 흡비력이 왕성함", cat:3},
-  {n:142, q:"유기농 밭작물 재배 시 심토파쇄의 효과를 쓰시오.", a:"단단한 경반층을 깨뜨려 수직 배수성을 높이고 작물 뿌리가 깊게 신장되도록 도움", cat:3},
-  {n:143, q:"유기 재배 배추의 무름병 예방 방법을 쓰시오.", a:"배수로를 정비하여 침수를 막고 해충을 차단하며 과도한 질소 시비를 억제", cat:3},
-  {n:144, q:"유기농업에서 종자 소독에 사용할 수 있는 방법 2가지를 쓰시오.", a:"① 온탕 소독법 ② 목초액 희석액 침지 소독", cat:3},
-  {n:145, q:"이모작 체계의 예를 들고, 유기농에서의 이점을 설명하시오.", a:"사례: 호밀 재배 후 여름 콩 재배 / 이점: 잔사 유기물이 지력을 증진하고 잡초 발생 억제", cat:3},
-  {n:146, q:"무의 유기 재배 시 기형근 발생 원인과 예방법을 쓰시오.", a:"원인: 미숙 퇴비 접촉, 장애물, 선충 뿌리 상처 / 예방법: 정밀 세토 조성 및 완숙 퇴비 시용", cat:3},
-  {n:147, q:"유기농 파 재배에서 녹병 방제 방법을 쓰시오.", a:"질소 과잉을 피하고 식재 간격을 넓혀 통풍을 확보하며 발병 초기 유황 제제 살포", cat:3},
-  {n:148, q:"유기농업에서 작물 간 혼작 시 주요 효과를 쓰고, 사례를 1가지 드시오.", a:"효과: 공간 효율 증대 및 병해충 이동 차단 / 사례: 옥수수 대 사이에 콩 혼작 재배", cat:3},
-  {n:149, q:"배 과수 유기 재배에서 검은별무늬병 방제 방법을 쓰시오.", a:"바닥의 이병 낙엽을 모아 소각·매몰하고 이른 봄 눈이 트기 전 석회유황합제 살포", cat:3},
-  {n:150, q:"유기농업에서 작물 피복의 역할 3가지를 쓰시오.", a:"① 표토 유실 방지 ② 잡초 발생 억제 ③ 매립 시 천연 유기물 양분 공급", cat:3},
-  {n:151, q:"딸기 유기 재배에서 런너를 이용한 육묘 방법을 설명하시오.", a:"모주에서 유인된 무병 런너 중 세력이 균일한 2번, 3번 자묘를 포트에 받아 육묘함", cat:3},
-  {n:152, q:"유기 과채류 재배에서 적과의 목적과 방법을 쓰시오.", a:"목적: 불량 과실을 제거하여 품질 향상 및 해걸이 방지 / 방법: 인력으로 손 수작업 선별 솎아냄", cat:3},
-  {n:153, q:"감귤 유기 재배에서 궤양병 방제 방법을 쓰시오.", a:"밭 주변 방풍수를 조성해 상처 전염을 막고 이병 가지 제거 및 구리 동제 살포", cat:3},
-  {n:154, q:"유기농 포도 재배에서 탄저병 예방 관리 방법을 쓰시오.", a:"어린 송이 단계에서 포도 송이 종이 봉지 씌우기 작업을 완료하고 비가림 시설 가동", cat:3},
-  {n:155, q:"배추의 석회 결핍을 예방하기 위한 방법을 쓰시오.", a:"토양 건조를 방지하고 석회 자재를 적량 시용하며 비상시 염화칼슘 액을 엽면 시비", cat:3},
-  {n:156, q:"유기 재배 참외에서 발생하는 노균병 예방 방법을 쓰시오.", a:"야간 보온 관리를 철저히 하여 잎 표면에 이슬 맺힘을 방지하고 환기 가동", cat:3},
-  {n:157, q:"유기농 상추 재배에서 석회질 비료를 사용하는 주요 목적을 쓰시오.", a:"토양 산성화를 교정하여 pH를 조절하고 잎 조직을 단단히 하여 팁번 증상을 예방", cat:3},
-  {n:158, q:"오이 유기 재배에서 노균병 발생 시 대처 방법을 쓰시오.", a:"하위엽의 이병 잎을 즉시 따내어 폐기하고 시설 습도를 낮추며 동수화제 살포", cat:3},
-  {n:159, q:"유기농업에서 GMO 종자 사용이 금지된 이유를 쓰시오.", a:"자연 순환 보존 가치 원칙에 위배되며 유전자 오염에 따른 생태계 교란 위험성 때문", cat:3},
-  {n:160, q:"유기 재배에서 수확 후 잔재물 처리 방법과 그 이점을 쓰시오.", a:"방법: 깨끗한 잔재물은 가축분과 함께 퇴비화하여 환원 / 이점: 농장 내 천연 양분 순환 달성", cat:3},
+  // ───────── Ⅳ. 영양번식·접목·조직배양 (121~160) ─────────
+  {n:121, cat:3, tag:'hot', q:"영양번식의 뜻과 장점 3가지를 쓰시오.", a:"<strong>뜻</strong> : 잎·줄기·뿌리 등 영양기관을 이용해 새 개체를 만드는 번식법<br><strong>장점</strong> ① 모주의 <strong>유전적 특성이 그대로 유지</strong><br>② 종자번식이 어렵거나 불임인 작물도 번식 가능<br>③ 개화·결실이 빨라 조기 수확 가능(유년성 단축)"},
+  {n:122, cat:3, q:"영양번식의 단점을 3가지 쓰시오.", a:"① 바이러스 등 <strong>병이 그대로 전염·축적</strong>됨<br>② 번식률이 낮고 대량 증식에 비용·노력이 많이 듦<br>③ 저장·운반이 어렵고 유전적 다양성이 없음"},
+  {n:123, cat:3, tag:'hot', q:"영양번식의 방법을 5가지 쓰시오.", a:"① 분주(포기나누기) ② <strong>삽목(꺾꽂이)</strong> ③ <strong>접목(접붙이기)</strong> ④ <strong>취목(휘묻이)</strong> ⑤ 구근 분구 ⑥ 조직배양"},
+  {n:124, cat:3, tag:'hot', q:"접목(접붙이기)의 목적을 5가지 쓰시오.", a:"① <strong>토양전염병 저항성</strong> 부여(덩굴쪼김병·풋마름병)<br>② 저온·고온 신장성 등 <strong>환경적응성</strong> 향상<br>③ 흡비력 증대로 수량·품질 향상<br>④ 수세 조절(왜화)과 <strong>조기 결실</strong><br>⑤ 우량 품종의 특성 유지·대량 증식"},
+  {n:125, cat:3, tag:'hot', q:"접목에서 대목과 접수의 뜻을 쓰시오.", a:"<strong>대목(臺木)</strong> : 뿌리 쪽이 되는 바탕나무(밑나무)<br><strong>접수(接穗)</strong> : 위에 붙이는 눈이나 가지(품종이 되는 부분)"},
+  {n:126, cat:3, tag:'hot', q:"접목의 활착에 필요한 조건을 4가지 쓰시오.", a:"① 대목과 접수의 <strong>형성층이 밀착</strong>될 것 (가장 중요)<br>② 접목 <strong>친화성</strong>이 있을 것<br>③ 온도 <strong>25℃ 내외</strong>, 습도 <strong>90~95%</strong> 유지<br>④ 접목 후 2~3일간 <strong>차광</strong>하여 증산 억제"},
+  {n:127, cat:3, q:"접목 친화성과 불친화성을 설명하시오.", a:"<strong>친화성</strong> : 대목과 접수가 잘 유합하여 오래 정상 생육하는 성질(같은 종·속일수록 큼)<br><strong>불친화성</strong> : 유합 불량, 접합부 비대·부러짐, 생육 정체·고사 등이 나타나는 성질"},
+  {n:128, cat:3, tag:'hot', q:"접목 방법을 5가지 이상 쓰시오.", a:"① 깎기접(절접) ② 짜개접(할접) ③ <strong>눈접(아접)</strong> ④ <strong>맞접(호접)</strong> ⑤ 합접 ⑥ 혀접(설접) ⑦ <strong>안장접</strong> ⑧ 녹지접 ⑨ 삽접(꽂이접)·핀접"},
+  {n:129, cat:3, tag:'hot', q:"깎기접(절접)의 시기와 방법을 순서대로 쓰시오.", a:"<strong>시기</strong> : 3~4월(수액 이동이 시작될 무렵, 접수는 눈이 트기 전 채취·저장)<br><strong>방법</strong> ① 대목을 지면 5~10cm에서 자름 → ② 대목 한쪽을 2~3cm 깎아내림 → ③ 접수를 눈 1~2개 붙여 반대면을 길게·짧게 깎음 → ④ <strong>형성층을 맞추어</strong> 끼움 → ⑤ 접목테이프로 감고 건조 방지"},
+  {n:130, cat:3, tag:'hot', q:"눈접(T자형 아접)의 적기와 방법을 쓰시오.", a:"<strong>적기</strong> : <strong>8~9월</strong>(수피가 잘 벗겨지고 눈이 충실할 때)<br><strong>방법</strong> : 대목 수피를 <strong>T자로 절개</strong> → 접수에서 눈을 방패형(순형)으로 떼어냄 → 절개부에 밀어 넣고 눈만 남기고 테이프로 감음<div class='point'>💡 장미·복숭아·사과 묘목 생산의 기본 방법입니다.</div>"},
+  {n:131, cat:3, tag:'hot', q:"오이 맞접(호접)의 방법과 대목·접수 파종 시기 조절 요령을 쓰시오.", a:"<strong>대목</strong> : 흑종호박(신토좌) 등 / <strong>접수</strong> : 오이<br><strong>방법</strong> : 대목의 생장점을 제거하고 하배축을 위에서 아래로, 접수는 아래에서 위로 비스듬히 잘라 <strong>서로 끼워 맞춘 뒤 클립으로 고정</strong>, 활착 후 접수 뿌리를 자름<br><strong>파종</strong> : 하배축 굵기가 비슷해지도록 <strong>접수(오이)를 먼저, 대목(호박)을 3~5일 뒤에</strong> 파종<div class='point'>💡 맞접은 양쪽 뿌리가 살아 있어 활착률이 높은 것이 장점입니다.</div>"},
+  {n:132, cat:3, q:"박과 채소의 삽접(꽂이접)·핀접의 특징을 쓰시오.", a:"대목의 생장점을 제거하고 <strong>송곳(대나무침)으로 구멍</strong>을 낸 뒤 쐐기 모양으로 깎은 접수를 꽂는 방법(핀접은 세라믹핀으로 고정)<br>→ 작업이 빠르고 대량 생산에 유리하나 <strong>활착 관리(습도)</strong>가 까다로움"},
+  {n:133, cat:3, q:"선인장 안장접의 방법을 쓰시오.", a:"대목(삼각주 등)의 윗부분을 수평으로 자르고 모서리를 비스듬히 깎아 <strong>안장 모양</strong>으로 만든 뒤, 접수(비모란 등)의 밑면을 맞춰 올려놓고 실·고무줄로 가볍게 눌러 고정<div class='point'>💡 유관속(관다발)의 위치가 서로 맞닿도록 중심을 맞추는 것이 핵심</div>"},
+  {n:134, cat:3, q:"접목 후 활착까지의 관리 방법을 3가지 쓰시오.", a:"① 접목상 온도 25℃ 내외, 습도 <strong>90~95%</strong> 유지(밀폐상)<br>② 2~3일간 <strong>차광</strong> 후 서서히 광 노출·환기(순화)<br>③ 활착 후 대목에서 나오는 <strong>곁눈(대목순)을 제거</strong>, 접목테이프는 제때 풀어줌"},
+  {n:135, cat:3, tag:'hot', q:"수박·오이·가지·토마토의 대표적인 대목을 각각 쓰시오.", a:"수박 → <strong>박(참박)·신토좌 호박</strong><br>오이 → 흑종호박(신토좌)<br>가지 → <strong>토루바무</strong>(야생가지)<br>토마토 → 대목전용 토마토(B-blocking 등)<div class='point'>💡 수박은 <b>덩굴쪼김병(Fusarium)</b> 회피가 접목의 가장 큰 목적입니다.</div>"},
+  {n:136, cat:3, tag:'hot', q:"삽목(꺾꽂이)의 뜻과 종류를 3가지 쓰시오.", a:"<strong>뜻</strong> : 잎·줄기·뿌리를 잘라 발근시켜 새 개체를 얻는 번식법<br><strong>종류</strong> ① 녹지삽(당년 자란 푸른 가지) ② 숙지삽(휴면기 굳은 가지) ③ 엽삽(잎꽂이) ④ 근삽(뿌리꽂이)"},
+  {n:137, cat:3, tag:'hot', q:"삽수(揷穗) 조제 요령을 3가지 쓰시오.", a:"① 길이 <strong>10~15cm</strong>, 눈(마디) 2~3개가 붙도록 자름<br>② 아래쪽은 <strong>비스듬히</strong> 잘라 흡수면적을 넓히고, 잎은 2~3장만 남기고 <strong>절반 정도 잘라</strong> 증산 억제<br>③ 자른 즉시 물에 담가 <strong>건조와 기포 침입 방지</strong>"},
+  {n:138, cat:3, q:"발근촉진제(생장조절제)의 종류와 사용 목적을 쓰시오.", a:"<strong>종류</strong> : IBA, NAA, 루톤(분제) 등 <strong>옥신계</strong><br><strong>목적</strong> : 삽수 기부의 세포분열을 촉진해 <strong>발근율을 높이고 발근을 균일·촉진</strong>"},
+  {n:139, cat:3, q:"삽목상 용토의 조건과 재료를 쓰시오.", a:"<strong>조건</strong> : 배수·통기가 좋고 보수력이 있으며 <strong>병원균이 없고 양분이 적을 것</strong><br><strong>재료</strong> : 깨끗한 모래, 펄라이트, 버미큘라이트, 피트모스 혼합용토"},
+  {n:140, cat:3, q:"삽목 후 미스트(안개분무) 관수를 하는 이유를 쓰시오.", a:"잎 표면의 <strong>증산을 억제</strong>하고 상대습도를 높게 유지하여 발근 전 삽수의 시들음을 막고 <strong>엽온을 낮추기</strong> 위함"},
+  {n:141, cat:3, q:"엽삽(잎꽂이)이 가능한 작물을 3가지 쓰시오.", a:"베고니아, 산세베리아, 아프리칸바이올렛, 페페로미아, 글록시니아"},
+  {n:142, cat:3, q:"근삽(뿌리꽂이)으로 번식하는 작물을 3가지 쓰시오.", a:"고구마, 나무딸기(라즈베리), 오동나무, 자두, 무궁화"},
+  {n:143, cat:3, tag:'hot', q:"취목(휘묻이)의 종류를 3가지 쓰고 방법을 간단히 쓰시오.", a:"① <strong>성토법(묻어떼기)</strong> : 밑동을 잘라 새 가지가 나오면 흙을 북돋아 발근 — 사과 대목<br>② <strong>고취법(높이떼기)</strong> : 가지에 환상박피 후 물이끼로 감싸 발근 — 고무나무·관엽<br>③ 압조법(휘묻이) : 가지를 땅에 묻어 발근 — 포도·개나리"},
+  {n:144, cat:3, q:"고취법에서 환상박피(環狀剝皮)를 하는 이유를 쓰시오.", a:"체관(사부)을 끊어 위에서 내려오는 <strong>동화양분과 옥신이 그 지점에 축적</strong>되도록 하여 발근을 촉진하기 위함"},
+  {n:145, cat:3, q:"분주(포기나누기)의 뜻과 적기, 대표 작물을 쓰시오.", a:"<strong>뜻</strong> : 뿌리가 달린 포기를 나누어 심는 번식법<br><strong>적기</strong> : 휴면기(이른 봄 또는 가을)<br><strong>작물</strong> : 부추·아스파라거스·작약·대나무·관엽식물"},
+  {n:146, cat:3, tag:'hot', q:"구근(球根)의 종류 5가지를 쓰고 각각 작물 예를 쓰시오.", a:"① <strong>인경(비늘줄기)</strong> : 마늘·양파·백합·튤립<br>② <strong>구경(알줄기)</strong> : 글라디올러스·토란·프리지어<br>③ <strong>괴경(덩이줄기)</strong> : 감자·아네모네<br>④ <strong>괴근(덩이뿌리)</strong> : 고구마·다알리아<br>⑤ <strong>근경(뿌리줄기)</strong> : 생강·칸나·연"},
+  {n:147, cat:3, q:"백합의 인편번식(비늘조각 번식) 방법을 쓰시오.", a:"충실한 인경에서 <strong>인편을 기부가 붙은 채로 떼어내어</strong> 소독 후 버미큘라이트에 묻고 20~25℃에서 관리 → 기부에 <strong>자구(小球)</strong>가 형성되면 육성"},
+  {n:148, cat:3, tag:'hot', q:"씨감자 절단 요령과 절단 후 처리 방법을 쓰시오.", a:"<strong>절단</strong> : 1조각 <strong>30~50g</strong>, <strong>눈(맹아)이 2개 이상</strong> 붙도록 세로로 자름<br><strong>처리</strong> : 절단칼을 <strong>수시로 소독</strong>(70% 알코올·차아염소산)하고, 절단면은 <strong>큐어링(15~20℃, 습도 85~90%, 3~5일)</strong>으로 코르크층을 형성시켜 부패 방지"},
+  {n:149, cat:3, q:"씨감자를 무병주로 생산·관리해야 하는 이유를 쓰시오.", a:"감자는 영양번식 작물이라 <strong>바이러스가 대를 거듭할수록 축적</strong>되어 수량이 급격히 떨어지므로(퇴화), 조직배양 무병주에서 시작한 <strong>씨감자 갱신</strong>이 필요함"},
+  {n:150, cat:3, q:"고구마 육묘(순 기르기) 방법을 쓰시오.", a:"묘상에 씨고구마를 눕혀 묻고 30~33℃로 보온 → 싹이 25~30cm 자라면 <strong>지제부에서 잘라 순(묘)을 채취</strong> → 채취 후 웃거름을 주면 여러 차례 수확 가능"},
+  {n:151, cat:3, q:"딸기의 러너(포복지) 번식 방법과 주의점을 쓰시오.", a:"모주에서 뻗은 <strong>러너의 자묘를 포트에 받아 발근</strong>시킨 뒤 러너를 잘라 묘로 이용<br><strong>주의</strong> : 모주는 <strong>바이러스 무병주</strong>를 사용하고, 탄저병 예방을 위해 <strong>두상관수를 피함</strong>"},
+  {n:152, cat:3, tag:'hot', q:"조직배양의 뜻과 이용 목적을 3가지 쓰시오.", a:"<strong>뜻</strong> : 식물의 세포·조직·기관을 무균 배지에서 배양해 개체를 얻는 기술<br><strong>목적</strong> ① <strong>무병주(바이러스 프리) 생산</strong> ② 단기간 <strong>대량 증식</strong> ③ 육종 소재 확보(반수체·잡종배 구제)·유전자원 보존"},
+  {n:153, cat:3, q:"조직배양 배지(MS배지)의 주요 구성 성분을 4가지 쓰시오.", a:"① 무기염류(다량·미량원소) ② 탄소원(<strong>설탕</strong>) ③ 비타민·아미노산 ④ <strong>생장조절제(옥신·시토키닌)</strong> ⑤ 응고제(한천)"},
+  {n:154, cat:3, tag:'hot', q:"조직배양에서 옥신과 시토키닌의 비율에 따른 분화 방향을 쓰시오.", a:"<strong>옥신 &gt; 시토키닌</strong> → <strong>뿌리(발근)</strong> 분화<br><strong>시토키닌 &gt; 옥신</strong> → <strong>신초(줄기·눈)</strong> 분화<br>두 호르몬이 비슷 → <strong>캘러스</strong> 형성"},
+  {n:155, cat:3, tag:'hot', q:"생장점 배양으로 무병주를 얻을 수 있는 원리를 설명하시오.", a:"바이러스는 관다발을 통해 이동하는데 <strong>생장점(0.2~0.5mm)에는 관다발이 아직 분화되지 않아</strong> 바이러스 밀도가 매우 낮음 → 이 부분만 떼어 배양하면 무병주 획득 가능<div class='point'>💡 열처리(37℃)를 병행하면 무병주 획득률이 더 높아집니다.</div>"},
+  {n:156, cat:3, q:"기내배양묘의 순화(馴化, acclimatization)가 필요한 이유와 방법을 쓰시오.", a:"<strong>이유</strong> : 기내묘는 <strong>큐티클층과 기공 조절기능이 미약</strong>하여 그대로 노지에 두면 급격히 시듦<br><strong>방법</strong> : 배지 세척 후 무균 상토에 이식 → <strong>높은 습도에서 차광</strong> 관리하며 서서히 습도를 낮추고 광을 늘림"},
+  {n:157, cat:3, q:"약배양(葯培養)의 뜻과 육종에서의 이용 가치를 쓰시오.", a:"<strong>뜻</strong> : 꽃밥(약)을 배양하여 <strong>반수체(n)</strong> 식물을 얻는 기술<br><strong>가치</strong> : 콜히친으로 배가하면 <strong>완전 동형접합체(순계)</strong>가 되어 <strong>육종연한을 크게 단축</strong>"},
+  {n:158, cat:3, q:"배배양(胚培養)과 배주배양의 이용 목적을 쓰시오.", a:"원연종 간 교배에서 배가 도중에 <strong>퇴화·불임</strong>이 되는 경우, 어린 배(또는 배주)를 떼어 인공배지에서 키워 <strong>잡종 식물체를 구제</strong>하기 위함"},
+  {n:159, cat:3, q:"무병주(바이러스 프리) 여부를 검정하는 방법을 3가지 쓰시오.", a:"① 지표식물(검정식물) 접종 검정<br>② <strong>혈청학적 검정(ELISA)</strong><br>③ <strong>RT-PCR 등 분자생물학적 검정</strong> ④ 전자현미경 관찰"},
+  {n:160, cat:3, tag:'hot', q:"접목·삽목·절단 작업 시 도구 소독이 필요한 이유와 소독제를 쓰시오.", a:"<strong>이유</strong> : 칼·가위를 통해 <strong>바이러스와 세균이 개체 간에 전염</strong>되므로<br><strong>소독제</strong> : 70% 에탄올, 차아염소산나트륨(락스) 희석액, 제3인산나트륨<div class='point'>💡 실기에서 작업 전·개체 교체 시 소독 여부도 평가 대상이 됩니다.</div>"},
 
-  // Ⅴ. 유기농업 생산·인증 (161 ~ 200)
-  {n:161, q:"유기농산물의 법적 정의를 쓰시오.", a:"유기합성농약과 화학비료를 일체 사용하지 아니하고 엄격한 전환기간 이상을 거쳐 생산된 농산물", cat:4},
-  {n:162, q:"유기농산물 인증을 위한 전환기간을 작물 종류별로 쓰시오.", a:"**일년생 작물**: 파종 전 2년 / **다년생 작물**: 최초 수확 전 3년의 기간 적용", cat:4},
-  {n:163, q:"유기농산물 인증 기관의 역할과 인증 유효 기간을 쓰시오.", a:"역할: 농장 심사 및 인증 부여 / 유효 기간: 발급일로부터 1년", cat:4},
-  {n:164, q:"친환경농산물 표시 인증의 종류를 쓰시오.", a:"현재 **유기농산물**과 **무농약농산물** 2종류 체계로 구성됨", cat:4},
-  {n:165, q:"유기농업에서 금지하는 투입재를 4가지 쓰시오.", a:"① 유기합성 농약 ② 화학합성 비료 ③ 합성 생장조절제 ④ GMO 기원 종자 및 자재", cat:4},
-  {n:166, q:"유기가공식품의 정의와 유기 원재료 함유 기준을 쓰시오.", a:"정의: 유기 인증 농산물을 가공 원료로 제조한 식품 / 함유 기준: 유기 원료 비율 95% 이상", cat:4},
-  {n:167, q:"유기축산에서 가축의 사육 밀도 기준을 엄격히 정하는 이유를 쓰시오.", a:"밀집 사육에 따른 스트레스와 질병을 예방하고 항생제 투입 요인을 제거하기 위함", cat:4},
-  {n:168, q:"유기농업과 자연농업의 차이점을 설명하시오.", a:"유기농업은 허용 자재 목록 내에서 관리해 인증을 받으며, 자연농업은 비인증 비투입 경향임", cat:4},
-  {n:169, q:"유기농업의 생산성이 관행농업보다 낮을 수 있는 이유 3가지를 쓰시오.", a:"① 화학비료 미사용으로 양분 공급 제한 ② 제초 및 방제 어려움 ③ 전환 초기 비옥도 미흡", cat:4},
-  {n:170, q:"국내 유기농산물 인증 절차를 순서대로 쓰시오.", a:"인증 신청 서류 제출 → 지정 인증기관의 현장 실사 → 분석 결과 검토 → 인증 결정 및 교부", cat:4},
-  {n:171, q:"유기축산에서 항생제 사용이 금지된 이유를 쓰시오.", a:"축산물 내 성분 잔류 위험을 예방하고 축산 생태계 내 항생제 내성균 출현을 막기 위함", cat:4},
-  {n:172, q:"유기농업의 4대 원칙을 쓰시오.", a:"① **건강의 원칙** ② **생태의 원칙** ③ **공정의 원칙** ④ **배려의 원칙**", cat:4},
-  {n:173, q:"Codex Alimentarius 유기식품 가이드라인의 주요 내용을 설명하시오.", a:"국제식품규격위원회에서 제정한 유기식품 생산 유통 전 과정에 대한 공인 국제 가이드라인 표준임", cat:4},
-  {n:174, q:"유기농산물 인증 후 인증이 취소될 수 있는 사유 3가지를 쓰시오.", a:"① 고의적인 금지 자재 무단 사용 ② 허위 장부 서류 제출 ③ 사후 관리 검사 위반", cat:4},
-  {n:175, q:"무농약 농산물과 유기농산물의 차이점을 설명하시오.", a:"유기농산물은 둘 다 불사용이 기준이며, 무농약농산물은 농약은 안 쓰되 화학비료는 1/3 이하 허용", cat:4},
-  {n:176, q:"유기농업이 환경에 미치는 긍정적 효과 3가지를 쓰시오.", a:"① 토양 유기물 함량 증진으로 탄소 격리 ② 수질 오염 예방 ③ 토양 미생물다양성 보존", cat:4},
-  {n:177, q:"유기농산물의 유통 및 보관 시 관행 농산물과 혼합을 방지하는 방법을 쓰시오.", a:"전용 포장재 상자를 구분해 사용하고 보관 창고 내 독립된 전용 격리 저장 구역을 설정 관리함", cat:4},
-  {n:178, q:"유기농업 전환 시 토양 관리 계획에 포함되어야 할 내용 3가지를 쓰시오.", a:"① 필지별 토양 검정 실시 ② 연차별 녹비작물 윤작 계획 ③ 완숙 퇴비 투입 시기 안배", cat:4},
-  {n:179, q:"로컬 푸드 운동과 유기농업의 연관성을 설명하시오.", a:"수송 에너지를 최소화하는 로컬 푸드와 제조 화학 에너지를 안 쓰는 유기농업은 환경 보전에서 일치함", cat:4},
-  {n:180, q:"유기농업에서 완충 지역이 필요한 이유와 기준을 쓰시오.", a:"이유: 인접 농지로부터 농약 비산 유입이나 비료 성분의 침투 차단 / 기준: 이격 거리 설정 또는 생울타리 조성", cat:4},
-  {n:181, q:"유기가공식품 제조 시 사용할 수 없는 식품첨가물 3가지를 쓰시오.", a:"① 화학합성 보존료 ② 합성 인공 타르계 착색료 ③ 인공 합성 착향료", cat:4},
-  {n:182, q:"Brix 측정이 유기농 작물 품질 관리에 어떻게 활용되는지 설명하시오.", a:"수확물의 당도 고형물 밀도를 정밀 측정하여 유기 재배 결과물의 충실도와 고유 영양 가치를 객관적 검증", cat:4},
-  {n:183, q:"유기축산물(계란)의 인증 기준 중 사육 면적 기준을 쓰시오.", a:"계사 내 제곱미터당 산란계 9마리 이하 및 마리당 야외 전용 방목장 공간(4제곱미터)을 상시 개방 구비", cat:4},
-  {n:184, q:"유기농산물 잔류 농약 검사 기준과 허용 기준치를 설명하시오.", a:"성분이 일체 검출되지 않는 불검출이 원칙이며 비산 오염 등 인정 시에도 일반 기준치의 1/20 이하", cat:4},
-  {n:185, q:"유기농업의 경제적 어려움 3가지와 해결 방안을 쓰시오.", a:"어려움: 초기 생산량 감소, 인력 제초비 상승, 판로 결여 / 해결책: 직불 보조금 수령, 소비자 직거래 계약", cat:4},
-  {n:186, q:"GAP와 유기농업 인증의 차이점을 쓰시오.", a:"GAP는 유해 요소를 위생 관리하며 한도 내 농약 사용을 인정하나, 유기농업은 농약 비료 사용을 원천 불허함", cat:4},
-  {n:187, q:"유기농업에서 '예방의 원칙'의 의미를 설명하시오.", a:"유해성이 명확히 입증되지 않았더라도 위험 징후가 있다면 선제적으로 자재 투입을 금지 유보한다는 이념", cat:4},
-  {n:188, q:"유기농업 실천 농가 기록 장부에 반드시 포함되어야 할 내용 4가지를 쓰시오.", a:"① 자재 구매 투입 일지 ② 인증 필지별 재배 기록 ③ 수확 농산물 출하 판매처 기록 ④ 토양 검정 성적서", cat:4},
-  {n:189, q:"우리나라 유기농업 발전을 위해 정부가 시행 중인 지원 제도 3가지를 쓰시오.", a:"① 친환경농업 직불 보조금 지급 ② 유기농업 자재 구입비 보조 ③ 친환경 인증 수수료 비용 지원", cat:4},
-  {n:190, q:"유기농산물 수출 시 수입국의 동등성 인정 협정의 의미를 설명하시오.", a:"양국 간 인증 규정이 대등함을 상호 협정 확인하여 상대국 마크를 별도 심사 없이 자국 내 유통하는 제도", cat:4},
-  {n:191, q:"유기 작부체계에서 두과 작물을 반드시 포함하는 이유를 쓰시오.", a:"뿌리혹 근류균 활동으로 대기 질소를 변환 고정하여 화학 비료를 대체하고 양질의 지력을 공급하기 위함", cat:4},
-  {n:192, q:"유기농업이 온실가스 감축에 기여하는 이유 2가지를 쓰시오.", a:"① 완숙 퇴비 환원을 통해 탄소 토양 격리 수행 ② 막대한 에너지가 드는 질소 비료 화학 합성 공정 생략 직접 감축", cat:4},
-  {n:193, q:"유기농업 실천 농가가 병해충 발생 시 기록해야 할 내용을 쓰시오.", a:"병해충 발병 일자 및 필지 위치 명칭, 해충 발생 수준 및 실제 처리에 도입한 천적이나 자재 살포 투입량", cat:4},
-  {n:194, q:"유기식품 표시제에서 '유기' 명칭 표시를 할 수 있는 원재료 함량 기준을 쓰시오.", a:"물과 소금을 제외한 가공 원료 전체 중 공인 유기 원재료 함량이 최종 95% 이상이어야 공식 로고 사용 가능", cat:4},
-  {n:195, q:"내생 균근과 외생 균근의 차이를 쓰시오.", a:"내생 균근은 균사가 뿌리 세포벽 내부까지 침투 공생해 인산 흡수를 돕고, 외생 균근은 표면에만 시트를 형성 공생", cat:4},
-  {n:196, q:"유기농업에서 생물다양성 증진을 위한 방법 3가지를 쓰시오.", a:"① 소면적 윤작 간작 복합 재배 ② 밭 둑 경계면에 밀원식물대 조성 ③ 미생물제 투입을 통한 토양 균형 보존", cat:4},
-  {n:197, q:"유기농산물 생산자가 인증 심사 시 제출해야 하는 주요 서류를 쓰시오.", a:"유기농업 생산 계획서, 영농 작업 및 출하 기록 장부 일체, 분석 필지별 토양 검정 성적표", cat:4},
-  {n:198, q:"국제 유기농업 인증 기관 가입의 의의를 설명하시오.", a:"국제 규격 표준 연맹 가이드라인 가치를 공유하여 자국 민간 인증의 대외 신뢰도를 증진하고 장벽 해소", cat:4},
-  {n:199, q:"유기농업 농가의 완충 지대 관리 방법을 설명하시오.", a:"완충 구역 내에서 자라난 수확물은 농약 비산 흡착 우려가 있으므로 일반 비인증용으로 분리 처분해야 함", cat:4},
-  {n:200, q:"유기농업의 미래 발전 방향을 '기후 변화 대응' 측면에서 서술하시오.", a:"기후에 견디는 떼알구조 토양 비옥도를 구축하고, 유기물 시용 탄소 격리를 통해 감축 목표 달성에 기여함", cat:4}
+  // ───────── Ⅴ. 육종·채종·종자법규 (161~200) ─────────
+  {n:161, cat:4, tag:'hot', q:"자식성 작물과 타식성 작물의 뜻을 쓰고 각각 작물 예를 3가지씩 쓰시오.", a:"<strong>자식성</strong> : 자가수분으로 종자를 맺는 작물 → 벼, 보리, 밀, 콩, 완두, 토마토, 가지<br><strong>타식성</strong> : 타가수분 비율이 높은 작물 → 옥수수, 호밀, 배추, 무, 양파, 시금치"},
+  {n:162, cat:4, q:"타가수정을 촉진하는 식물의 기작(장치)을 4가지 쓰시오.", a:"① <strong>자웅이주</strong>(시금치·아스파라거스) ② <strong>자웅이숙</strong>(웅예선숙·자예선숙)<br>③ <strong>자가불화합성</strong>(배추과·백합과) ④ <strong>웅성불임</strong> ⑤ 이형예현상"},
+  {n:163, cat:4, tag:'hot', q:"자가불화합성의 뜻과 타파(극복) 방법을 4가지 쓰시오.", a:"<strong>뜻</strong> : 정상적인 화분과 암술이면서도 <strong>자기 화분으로는 수정되지 않는</strong> 성질<br><strong>타파</strong> ① <strong>뇌수분</strong>(개화 2~3일 전 꽃봉오리 수분) ② 노화수분(개화 후기 수분)<br>③ <strong>3~5% CO₂ 처리</strong> ④ 고온처리·전기자극·염수 처리<div class='point'>💡 배추·무 F1 채종의 핵심 기술이 바로 <b>뇌수분</b>입니다.</div>"},
+  {n:164, cat:4, tag:'hot', q:"웅성불임성의 뜻과 종류 3가지를 쓰시오.", a:"<strong>뜻</strong> : 화분(수술)이 형성되지 않거나 기능을 못해 <strong>자가수정이 불가능한</strong> 성질<br><strong>종류</strong> ① 유전자적 웅성불임(GMS) ② <strong>세포질적 웅성불임(CMS)</strong> ③ 세포질–유전자적 웅성불임(CGMS)"},
+  {n:165, cat:4, tag:'hot', q:"F1 채종에 웅성불임과 자가불화합성을 이용하는 이유를 쓰시오.", a:"인공제웅 없이도 <strong>모계가 자가수정하지 못하게</strong> 하여 타가수정만 일어나게 함 → <strong>제웅 노력을 없애고 F1 종자의 순도를 높임</strong><div class='point'>💡 웅성불임 이용 : 고추·양파·당근·벼·옥수수 / 자가불화합성 이용 : 배추·무·양배추</div>"},
+  {n:166, cat:4, q:"잡종강세(heterosis)의 뜻과 F1 종자의 장점 3가지를 쓰시오.", a:"<strong>뜻</strong> : 유전적으로 다른 두 계통을 교배했을 때 F1이 양친보다 <strong>생육·수량이 우수</strong>해지는 현상<br><strong>장점</strong> ① 수량·품질 향상 ② 균일도(균일성) 우수 ③ 내병성·환경적응성 향상"},
+  {n:167, cat:4, q:"F1 종자를 매년 새로 구입해야 하는 이유를 쓰시오.", a:"F1을 자가채종하여 심으면 F2에서 <strong>형질이 분리</strong>되어 균일성이 깨지고 잡종강세가 사라져 수량·품질이 크게 떨어지기 때문"},
+  {n:168, cat:4, tag:'hot', q:"인공교배의 작업 순서를 쓰시오.", a:"① 모본·부본 선정 → ② <strong>개화 전 제웅(除雄)</strong> → ③ 봉지(격리봉투) 씌우기 → ④ 부본에서 화분 채취 → ⑤ 암술머리에 <strong>수분(受粉)</strong> → ⑥ 다시 봉지 씌우고 <strong>표찰(교배일·조합) 부착</strong> → ⑦ 결실 후 채종<div class='point'>💡 '제웅 → 봉지 → 수분 → 표찰' 4단계를 빠뜨리면 감점됩니다.</div>"},
+  {n:169, cat:4, tag:'hot', q:"제웅(除雄)의 뜻과 방법을 4가지 쓰시오.", a:"<strong>뜻</strong> : 자가수정을 막기 위해 개화 전 <strong>수술(꽃밥)을 제거</strong>하는 작업<br><strong>방법</strong> ① <strong>개영법</strong>(가위로 영을 자르고 핀셋으로 꽃밥 제거) ② <strong>온탕제웅법</strong> ③ 절영법 ④ 흡인제웅법 ⑤ 화판인발법(콩)"},
+  {n:170, cat:4, tag:'hot', q:"벼의 인공교배 시 온탕제웅 조건과 개화(수분) 적기를 쓰시오.", a:"<strong>온탕제웅</strong> : <strong>43℃ 온탕에 약 5분</strong> 담가 화분을 죽임(암술은 생존)<br><strong>개화 적기</strong> : 맑은 날 <strong>오전 9~11시</strong>(개영 시각)에 수분"},
+  {n:171, cat:4, q:"옥수수 인공교배(F1 채종)에서 제웅 방법을 쓰시오.", a:"모본의 <strong>웅수(수이삭)를 화분이 나오기 전에 뽑아 제거</strong>(除雄, detasseling)<br>→ 옥수수는 <strong>자웅동주이화</strong>라 수이삭만 제거하면 제웅이 완료됨"},
+  {n:172, cat:4, tag:'hot', q:"화서(꽃차례)의 종류를 5가지 쓰고 해당 작물을 쓰시오.", a:"① <strong>총상화서</strong> — 무·배추 ② <strong>원추화서</strong> — 벼<br>③ <strong>수상화서</strong> — 보리·밀 ④ <strong>산방화서</strong> — 사과<br>⑤ <strong>복산형화서</strong> — 당근·미나리 ⑥ <strong>두상화서</strong> — 국화·해바라기<br>⑦ <strong>육수화서</strong> — 옥수수 암이삭 ⑧ <strong>유이화서</strong> — 밤나무·버드나무 수꽃"},
+  {n:173, cat:4, tag:'hot', q:"완전화(양성화)의 구조를 바깥쪽부터 순서대로 쓰시오.", a:"<strong>꽃받침 → 꽃잎(화관) → 수술 → 암술</strong><br>수술 = 꽃밥(약) + 수술대 / 암술 = 암술머리 + 암술대 + 씨방(배주)"},
+  {n:174, cat:4, q:"자웅동주이화와 자웅이주의 뜻과 작물 예를 쓰시오.", a:"<strong>자웅동주이화</strong> : 한 그루에 암꽃·수꽃이 따로 핌 → 오이, 호박, 옥수수, 수박<br><strong>자웅이주</strong> : 암그루·수그루가 따로 있음 → 시금치, 아스파라거스, 은행나무"},
+  {n:175, cat:4, q:"순계분리법(순계선발)의 뜻과 적용 작물을 쓰시오.", a:"<strong>뜻</strong> : 재래종 집단 안에서 우수한 개체를 골라 자식시켜 <strong>순계로 고정</strong>한 뒤 품종화하는 방법<br><strong>적용</strong> : 벼·콩 등 <strong>자식성 작물</strong>"},
+  {n:176, cat:4, tag:'hot', q:"계통육종법과 집단육종법의 차이를 설명하시오.", a:"<strong>계통육종법</strong> : F2부터 개체선발 → 계통재배·선발 반복. 형질 확인이 빠르나 <strong>노력·비용이 많이 듦</strong>(질적형질에 유리)<br><strong>집단육종법</strong> : F5~F6까지 <strong>집단으로 재배(자연도태)</strong> 후 개체선발. 노력이 적고 유용유전자 소실이 적음(양적형질에 유리)"},
+  {n:177, cat:4, tag:'hot', q:"여교잡육종에서 1회친과 반복친의 뜻을 쓰고, 이용 목적을 쓰시오.", a:"<strong>1회친(공여친)</strong> : 도입하려는 목표형질(내병성 등)을 가진 친 — 처음 한 번만 교배<br><strong>반복친</strong> : 우수한 기존 품종 — 계속 반복해서 교배<br><strong>목적</strong> : 우량 품종의 특성은 유지하면서 <strong>한 가지 결점만 개량</strong>(내병성 도입)"},
+  {n:178, cat:4, tag:'hot', q:"배수성육종에 쓰이는 약제와 처리 부위, 대표 사례를 쓰시오.", a:"<strong>약제</strong> : <strong>콜히친(colchicine)</strong> — 방추사 형성을 억제해 염색체 배가<br><strong>처리 부위</strong> : 생장점(발아 종자·유묘의 정단부)<br><strong>사례</strong> : 씨없는 수박(2n×4n → <strong>3배체</strong>), 무추(무×배추), 4배체 포도"},
+  {n:179, cat:4, q:"돌연변이육종에 이용되는 처리 방법을 물리적·화학적으로 나누어 쓰시오.", a:"<strong>물리적</strong> : 감마선(γ), X선, 중성자, 자외선<br><strong>화학적</strong> : EMS, NMU, 콜히친, 아지드화나트륨<div class='point'>💡 장점 : 한 가지 형질만 개량 가능 / 단점 : 유용 변이 출현율이 매우 낮음</div>"},
+  {n:180, cat:4, q:"분자표지(DNA marker)를 이용한 선발(MAS)의 장점을 쓰시오.", a:"형질이 겉으로 나타나기 전 <strong>유묘 단계에서 유전자 보유 여부를 확인</strong>할 수 있어 선발이 정확하고 <strong>육종연한을 크게 단축</strong>함(환경 영향을 받지 않음)"},
+  {n:181, cat:4, tag:'hot', q:"신품종 육성 과정을 순서대로 쓰시오.", a:"① 육종목표 설정 → ② 육종재료(변이) 확보 → ③ 교배 등 <strong>변이 작성</strong> → ④ 선발 → ⑤ 고정(계통 육성) → ⑥ <strong>생산력검정시험</strong> → ⑦ <strong>지역적응성시험</strong> → ⑧ 품종 등록·명명 → ⑨ 종자 증식·보급"},
+  {n:182, cat:4, q:"생산력검정시험과 지역적응성시험의 차이를 쓰시오.", a:"<strong>생산력검정</strong> : 육성기관 내에서 수량성·품질 등 <strong>기본 성능</strong>을 검정<br><strong>지역적응성시험</strong> : 여러 지역·연차에 걸쳐 <strong>재배 안정성과 적응지역</strong>을 확인"},
+  {n:183, cat:4, tag:'hot', q:"채종포(採種圃)의 선정 조건을 4가지 쓰시오.", a:"① 다른 품종과 <strong>격리거리가 확보</strong>되는 곳<br>② 기상조건이 좋고 <strong>개화·결실기에 강우가 적은</strong> 곳<br>③ 병해충 발생이 적고 <strong>연작 피해가 없는</strong> 포장<br>④ 배수가 양호하고 관리·수확 작업이 편리한 곳"},
+  {n:184, cat:4, tag:'hot', q:"채종재배에서 일반 재배와 다르게 관리해야 할 점을 4가지 쓰시오.", a:"① 격리 유지 및 <strong>개화 전 이형주 제거</strong><br>② 질소 과용을 피하고 <strong>인·칼리를 충분히</strong>(도복·결실 불량 방지)<br>③ 병해충(특히 종자전염병) 철저 방제<br>④ <strong>적기 수확·건조</strong>와 로트별 분리 관리·표찰"},
+  {n:185, cat:4, q:"채종 적기를 벼와 십자화과 채소로 나누어 쓰고 그 이유를 쓰시오.", a:"벼 : <strong>황숙기</strong> / 십자화과(무·배추) : <strong>갈숙기</strong><br><strong>이유</strong> : 이 시기에 종자의 <strong>발아력과 활력이 최대</strong>이며, 더 늦으면 탈립·수발아·품질 저하가 발생"},
+  {n:186, cat:4, q:"채종량을 높이기 위한 관리 방법을 3가지 쓰시오.", a:"① 개화기에 <strong>수분매개곤충(꿀벌) 방사</strong> 또는 인공수분<br>② 적심·적화로 <strong>결실 균일화</strong> 및 등숙 촉진<br>③ 개화·결실기 적정 수분 관리와 도복 방지(지주·차광 회피)"},
+  {n:187, cat:4, q:"수확한 종자의 건조·조제·저장 순서를 쓰시오.", a:"수확 → 탈곡(탈립) → <strong>건조(40~45℃ 이하)</strong> → 정선(풍선·체선별·비중선) → 종자검사 → 소독·코팅 → 포장·표시 → <strong>저온저장</strong>"},
+  {n:188, cat:4, q:"종자산업법의 목적을 쓰시오.", a:"종자와 묘의 생산·보증 및 유통 등에 관한 사항을 정하여 <strong>종자산업의 발전을 도모</strong>하고 <strong>농업·임업 생산의 안정</strong>에 이바지하는 것"},
+  {n:189, cat:4, q:"종자관리사의 자격 요건과 주요 업무를 쓰시오.", a:"<strong>자격</strong> : 종자기능사 취득 후 <strong>실무경력 3년</strong> 등 법정 요건을 갖추어 등록<br><strong>업무</strong> : 자체보증을 위한 <strong>포장검사·종자검사</strong>와 보증표시 발급, 종자 품질관리"},
+  {n:190, cat:4, tag:'hot', q:"품종보호 요건 5가지를 쓰시오.", a:"① <strong>신규성</strong> ② <strong>구별성</strong> ③ <strong>균일성</strong> ④ <strong>안정성</strong> ⑤ <strong>1개의 고유한 품종명칭</strong><div class='point'>💡 '신·구·균·안·명' 다섯 글자로 외우세요.</div>"},
+  {n:191, cat:4, tag:'hot', q:"품종보호권의 존속기간을 쓰시오.", a:"설정등록일부터 <strong>20년</strong>, 다만 <strong>과수·임목은 25년</strong>"},
+  {n:192, cat:4, q:"품종명칭으로 등록될 수 없는 경우를 3가지 쓰시오.", a:"① 숫자만으로 되었거나 기호만으로 표시된 명칭<br>② 해당 품종의 <strong>특성·품질을 오인·혼동</strong>하게 할 우려가 있는 명칭<br>③ 이미 등록된 품종명칭과 같거나 유사한 명칭, 공서양속에 반하는 명칭"},
+  {n:193, cat:4, q:"국가품종목록 등재의 뜻과 대상 작물을 쓰시오.", a:"<strong>뜻</strong> : 품질관리가 필요한 주요 작물의 품종을 국가가 목록에 올려 <strong>보증종자로만 유통</strong>되게 하는 제도<br><strong>대상</strong> : 벼, 보리, 콩, 옥수수, 감자 등 <strong>식량작물</strong>(사료용은 제외)"},
+  {n:194, cat:4, q:"종자업 등록과 종자 유통관리의 필요성을 쓰시오.", a:"품질이 검증되지 않은 종자의 유통을 막아 <strong>농가의 재배 실패와 피해를 예방</strong>하고, 문제 발생 시 <strong>이력추적과 책임 소재</strong>를 명확히 하기 위함"},
+  {n:195, cat:4, q:"농가 자가채종의 문제점을 3가지 쓰시오.", a:"① 자연교잡·이형주 혼입으로 <strong>유전적 순도 저하</strong><br>② 종자전염병·바이러스 축적(병리적 퇴화)<br>③ F1 품종은 형질 분리로 균일성·수량 급감, 품종보호권 침해 소지"},
+  {n:196, cat:4, q:"유전자변형종자(LMO)의 관리에서 지켜야 할 사항을 쓰시오.", a:"수입·생산·유통 시 <strong>LMO 표시</strong>와 승인 절차를 지키고, 시험재배 시 <strong>격리포장·완충지대</strong>를 확보하며 잔재물은 폐기 처리하여 환경 방출을 막아야 함"},
+  {n:197, cat:4, q:"UPOV의 뜻과 우리 종자산업에 준 영향을 쓰시오.", a:"<strong>UPOV</strong> : 국제식물신품종보호연맹 — 신품종 육성자의 권리를 국제적으로 보호하는 협약<br><strong>영향</strong> : 외국 품종에 <strong>로열티 부담</strong>이 발생 → 국산 품종 육성과 <strong>종자 자급률 향상</strong>이 국가 과제가 됨"},
+  {n:198, cat:4, q:"유전자원(종자은행)의 보존 방법과 조건을 쓰시오.", a:"<strong>중기보존</strong> : 0~4℃, 종자수분 5~8%<br><strong>장기보존</strong> : <strong>−18℃ 이하</strong> 밀봉 저장(수분 5% 내외), 초저온은 액체질소(−196℃)<div class='point'>💡 영양번식 작물은 조직배양·기내보존으로 유전자원을 유지합니다.</div>"},
+  {n:199, cat:4, q:"종자산업에서 최근 중요해지고 있는 기술 분야를 3가지 쓰시오.", a:"① <strong>분자표지·유전체 기반 디지털 육종</strong>(MAS, 유전체 선발)<br>② <strong>유전자 교정(gene editing)</strong> 기술의 육종 적용<br>③ 종자 프라이밍·코팅 등 <strong>종자처리 정밀화</strong>와 스마트 육묘·종자 수출"},
+  {n:200, cat:4, tag:'hot', q:"종자기능사로서 우량 종자를 생산·공급하기 위해 지켜야 할 핵심 사항을 종합하여 쓰시오.", a:"① 채종포 <strong>격리와 개화 전 이형주 제거</strong>로 유전적 순도 확보<br>② 적기(황숙기·갈숙기) 수확과 <strong>45℃ 이하 건조</strong>로 활력 보존<br>③ 정선·소독 후 <strong>순도·발아율·수분 검사</strong>를 거쳐 보증<br>④ 저온·저습 저장과 로트별 <strong>표시·이력관리</strong> 철저"}
 ];
 
-// 플래시 암기카드 데이터 30개 (완벽 복원)
+// ══════════════════════════════════════════════════════════
+// ★ 핵심 암기카드 (숫자·용어 즉답 훈련)
+// ══════════════════════════════════════════════════════════
 const FLASHCARDS = [
-  {front:"퇴비 최적 C/N율", back:"25~35"},
-  {front:"퇴비 최적 수분", back:"50~60%"},
-  {front:"퇴비 살균 온도", back:"55℃ 이상 3일"},
-  {front:"점토 입경", back:"0.002mm 미만"},
-  {front:"유기농 전환기간(일년생)", back:"파종·이식 전 2년"},
-  {front:"유기농 전환기간(다년생)", back:"최초 수확 전 3년"},
-  {front:"유기가공식품 유기원료 기준", back:"95% 이상"},
-  {front:"잔류농약 허용기준", back:"허용기준의 1/20 이하"},
-  {front:"토양 이상 CEC 단위", back:"cmol⁺/kg"},
-  {front:"Ca:Mg:K 치환 비율", back:"65~75% : 10~15% : 2~5%"},
-  {front:"무농약 vs 유기농 차이", back:"무농약=농약X·화학비료1/3이하 / 유기=둘다X"},
-  {front:"IFOAM 4대원칙", back:"건강·생태·공정·배려"},
-  {front:"석회보르도액 4-4식", back:"황산구리4kg+생석회4kg+물100L"},
-  {front:"BT제 대상 해충", back:"나비목 유충(배추벌레 등)"},
-  {front:"화상병 병원균 종류", back:"세균성"},
-  {front:"칼슘결핍 토마토 병해 명칭", back:"배꼽썩음병"},
-  {front:"마그네슘 결핍 증상", back:"엽맥간 황화(노엽 먼저)"},
-  {front:"칼륨 결핍 증상", back:"노엽 가장자리 갈변·괴사"},
-  {front:"붕소 결핍 사과 과실", back:"코르크화(내부 갈변)"},
-  {front:"질소 고정 콩과 공생균", back:"리조비움(Rhizobium)"},
-  {front:"우렁이 논 방류 시기", back:"이앙 후 10~15일 사이"},
-  {front:"태양열 소독 조건", back:"투명비닐+여름(7~8월)+4~6주"},
-  {front:"벼 도열병 발생 환경", back:"냉해·과질소·과습"},
-  {front:"역병 최적 온도 기후", back:"25~30℃, 고온다습 기후"},
-  {front:"유기농 인증 유효기간", back:"1년 (매년 갱신)"},
-  {front:"헤어리베치 질소고정량", back:"150~200 kg N/ha"},
-  {front:"VA균근 주요 농업적 효과", back:"불용성 인산흡수 향상, 건조저항성"},
-  {front:"C/N율 >30 초과 결과", back:"질소 부동화 현상 (작물 이용 불가)"},
-  {front:"C/N율 <20 미만 결과", back:"질소 무기화 현상 (작물 이용 가능)"},
-  {front:"토양 용적밀도 단위", back:"g/cm³"},
-  {front:"이상적 토양 구조 공극률", back:"약 50% 수준"}
+  {front:"발아검사 공시립수와 반복", back:"400립 (100립 × 4반복)"},
+  {front:"순도검사 최소 시료 립수", back:"2,500립 이상"},
+  {front:"배와 배유의 염색체 수", back:"배 2n, 배유 3n"},
+  {front:"발아 3요소", back:"수분 · 온도 · 산소"},
+  {front:"순도(정립률) 공식", back:"정립중량 ÷ (정립+이종종자+이물) × 100"},
+  {front:"수분함량 공식", back:"(건조 전 − 건조 후) ÷ 건조 전 × 100"},
+  {front:"발아율 공식", back:"발아립수 ÷ 공시립수 × 100"},
+  {front:"천립중의 뜻", back:"종자 1,000립의 무게(g)"},
+  {front:"실중의 뜻", back:"종자 1L의 무게(g)"},
+  {front:"테트라졸륨 검사 조건", back:"0.1~1.0% 용액, 30~40℃ 암소 / 배가 붉게 염색되면 활력 有"},
+  {front:"전기전도도 검사 판정", back:"EC 값이 높을수록 활력 낮음"},
+  {front:"수분측정 저온항온법", back:"103±2℃, 17±1시간"},
+  {front:"수분측정 고온항온법", back:"130~133℃, 1~4시간"},
+  {front:"단명종자 작물", back:"콩·양파·파·고추·상추·메밀·땅콩 (1~2년)"},
+  {front:"장명종자 작물", back:"토마토·가지·수박·오이·배추·클로버 (5년 이상)"},
+  {front:"해링턴 법칙", back:"온도 5℃↓ 또는 수분 1%↓ → 수명 2배 / 온도+습도 < 100"},
+  {front:"곡류 안전저장 수분", back:"13% 이하 (유료종자 7~9%)"},
+  {front:"벼 온탕침법 조건과 대상", back:"60℃ 10분, 키다리병 등 종자전염병"},
+  {front:"건열소독 조건", back:"70℃에서 7일 (바이러스·세균)"},
+  {front:"염수선 비중", back:"메벼 1.13 / 찰벼·밭벼 1.08"},
+  {front:"저온습윤층적 조건", back:"0~5℃ 습한 모래, 1~3개월"},
+  {front:"경실 휴면타파 방법", back:"종피파상·농황산·저온고온·진탕·알코올 처리"},
+  {front:"광발아종자", back:"상추·담배·우엉·셀러리"},
+  {front:"암발아종자", back:"호박·토마토·가지·파·오이"},
+  {front:"복토 두께 원칙", back:"종자 지름의 2~3배 (미세종자는 생략)"},
+  {front:"볍씨 침종 조건", back:"수온 15℃ 5~7일 (적산온도 100℃)"},
+  {front:"볍씨 최아 조건", back:"30~32℃, 싹 길이 1~2mm"},
+  {front:"벼 육묘일수(어린모/치묘/중묘)", back:"8~10일 / 20일 / 30~35일"},
+  {front:"상토 소독(증기) 조건", back:"60~80℃에서 30분"},
+  {front:"상토 적정 pH·EC", back:"pH 5.5~6.5 / EC 1.0dS/m 이하"},
+  {front:"접목 활착 조건", back:"형성층 밀착 + 25℃ + 습도 90~95% + 2~3일 차광"},
+  {front:"깎기접·눈접 적기", back:"깎기접 3~4월 / 눈접(T자형) 8~9월"},
+  {front:"수박·오이 대목", back:"박(참박) · 신토좌 호박 → 덩굴쪼김병 회피"},
+  {front:"씨감자 절단 기준", back:"30~50g, 눈 2개 이상 + 큐어링 15~20℃·습도 85~90%"},
+  {front:"구근 5종류", back:"인경·구경·괴경·괴근·근경"},
+  {front:"옥신 > 시토키닌 이면", back:"뿌리(발근) 분화 / 반대면 신초 분화"},
+  {front:"생장점 배양 원리", back:"생장점에는 관다발 미분화 → 바이러스 밀도 낮음"},
+  {front:"자가불화합성 타파법", back:"뇌수분 · 노화수분 · CO₂ 3~5% · 고온처리"},
+  {front:"웅성불임 이용 작물", back:"고추·양파·당근·벼·옥수수"},
+  {front:"벼 온탕제웅 조건", back:"43℃ 온탕 5분 / 개화는 오전 9~11시"},
+  {front:"인공교배 순서", back:"제웅 → 봉지 씌우기 → 수분 → 표찰 → 격리관리"},
+  {front:"배수성육종 약제", back:"콜히친 (씨없는 수박 = 3배체)"},
+  {front:"여교잡 1회친·반복친", back:"1회친=목표형질 공여친 / 반복친=개량할 우량품종"},
+  {front:"화서 - 벼·보리·무", back:"벼 원추화서 / 보리 수상화서 / 무 총상화서"},
+  {front:"채종 적기", back:"벼 황숙기 / 십자화과 갈숙기"},
+  {front:"종자 증식체계", back:"기본식물 → 원원종 → 원종 → 보급종"},
+  {front:"품종보호 요건 5가지", back:"신규성·구별성·균일성·안정성·품종명칭"},
+  {front:"품종보호권 존속기간", back:"20년 (과수·임목 25년)"},
+  {front:"보증 유효기간(채소/감자·고구마/버섯)", back:"채소 2년 / 감자·고구마 2개월 / 버섯 1개월"},
+  {front:"종자관리사 자격", back:"종자기능사 + 실무경력 3년"},
+  {front:"화본과 자엽의 이름과 역할", back:"배반(scutellum) — 저장이 아니라 배유 양분을 흡수해 배에 공급"},
+  {front:"자엽 2매인데 배유종자인 작물", back:"피마자·감·커피 (자엽은 얇은 막, 양분은 배유에)"},
+  {front:"콩 종자에서 유근의 위치", back:"제(배꼽) 바로 옆 — 발아 시 가장 먼저 나옴"},
+  {front:"양파 자엽의 형태", back:"1매, 가늘고 길게 구부러진 원통형(배유 속)"},
+  {front:"지상자엽형 작물", back:"콩·오이·목화·소나무 (자엽이 땅 위로 올라옴)"},
+  {front:"지하자엽형 작물", back:"완두·팥·잠두·벼·옥수수 (자엽이 땅속에 남음)"},
+  {front:"옥수수 배유의 두 종류", back:"각질배유(바깥·단단) / 분질배유(배 주변·무름)"}
 ];
 
-const checked = JSON.parse(localStorage.getItem('organic_checked') || '{}');
-let currentTabIdx = 0;
+// ══════════════════════════════════════════════════════════
+// 상태 저장 (localStorage)
+// ══════════════════════════════════════════════════════════
+const LS = { checked:'seed_checked_v1', bm:'seed_bookmark_v1', wrong:'seed_wrong_v1' };
+const checked   = JSON.parse(localStorage.getItem(LS.checked) || '{}');
+const bookmarks = JSON.parse(localStorage.getItem(LS.bm)      || '{}');
+const wrongs    = JSON.parse(localStorage.getItem(LS.wrong)   || '{}');
+const TOTAL = QUESTIONS.length;
 
+let currentTabIdx = 0;
 let audioQueue = [];
 let queueIndex = 0;
 let isContinuousPlaying = false;
+let allOpen = false;
+
+// ══════════════════════════════════════════════════════════
+// 카드 생성
+// ══════════════════════════════════════════════════════════
+function badgeOf(q) {
+  if (q.tag === 'calc') return '<span class="badge-calc">계산</span>';
+  if (q.tag === 'hot')  return '<span class="badge-hot">빈출</span>';
+  return '';
+}
+
+function cardHTML(q, idPrefix) {
+  const isW = !!wrongs[q.n];
+  return `
+    <div class="q-card${isW ? ' wrong-card' : ''}" id="${idPrefix}card${q.n}" data-n="${q.n}">
+      <div class="q-head" onclick="toggleCard(this)">
+        <div class="q-num">${q.n}</div>
+        <div class="q-text">${badgeOf(q)}${q.q}</div>
+        <div class="btn-group">
+          <button class="speaker-btn" onclick="event.stopPropagation();speakSingleQuestion(${q.n})">🔊 읽기</button>
+          <button class="bm-btn ${bookmarks[q.n] ? 'marked' : ''}" data-bm="${q.n}"
+            onclick="event.stopPropagation();toggleBookmark(${q.n})">${bookmarks[q.n] ? '★ 저장됨' : '☆ 저장'}</button>
+          <button class="check-btn ${checked[q.n] ? 'checked' : ''}" data-ck="${q.n}"
+            onclick="event.stopPropagation();toggleCheck(${q.n})">${checked[q.n] ? '✓ 완료' : '학습완료'}</button>
+        </div>
+        <div class="q-arrow">▾</div>
+      </div>
+      <div class="q-answer">${q.a}</div>
+    </div>`;
+}
 
 function buildCards() {
-  const secs = [0,1,2,3,4];
-  secs.forEach(cat => {
-    const sec = document.getElementById('sec'+cat);
-    if(!sec) return;
-    QUESTIONS.filter(q=>q.cat===cat).forEach(q=>{
-      const card = document.createElement('div');
-      card.className = 'q-card' + (checked[q.n] ? ' checked-card' : '');
-      card.id = 'card'+q.n;
-      card.innerHTML = `
-        <div class="q-head" onclick="toggleCard(${q.n})">
-          <div class="q-num">${q.n}</div>
-          <div class="q-text">${q.q}</div>
-          <div class="btn-group">
-            <button class="speaker-btn" onclick="event.stopPropagation();speakSingleQuestion(${q.n})">🔊 읽기</button>
-            <button class="check-btn ${checked[q.n]?'checked':''}" onclick="event.stopPropagation();toggleCheck(${q.n})">
-              ${checked[q.n]?'✓ 완료':'학습완료'}
-            </button>
-          </div>
-          <div class="q-arrow">▾</div>
-        </div>
-        <div class="q-answer">${q.a}</div>`;
-      sec.appendChild(card);
-    });
+  [0,1,2,3,4].forEach(cat => {
+    const sec = document.getElementById('sec' + cat);
+    if (!sec) return;
+    const html = QUESTIONS.filter(q => q.cat === cat).map(q => cardHTML(q, '')).join('');
+    sec.insertAdjacentHTML('beforeend', html);
   });
+  document.getElementById('totalStat').textContent = TOTAL;
   updateStats();
 }
 
 function buildFlashCards() {
   const sec = document.getElementById('sec5');
-  FLASHCARDS.forEach((fc, i) => {
+  FLASHCARDS.forEach(fc => {
     const d = document.createElement('div');
-    d.style.cssText = 'background:white;border-radius:12px;box-shadow:0 2px 8px rgba(45,106,79,0.1);margin-bottom:8px;overflow:hidden';
-    d.innerHTML = `
-      <div style="background:linear-gradient(135deg,#1B4332,#2D6A4F);padding:12px 16px;cursor:pointer; display:flex; justify-content:space-between; align-items:center;"
-        onclick="this.nextSibling.style.display=this.nextSibling.style.display==='block'?'none':'block'">
-        <span style="font-size:13px;font-weight:700;color:white">Q. ${fc.front}</span>
-        <button class="speaker-btn" style="padding:1px 8px; font-size:10px;" onclick="event.stopPropagation();speakText('${fc.front}. 정답은 ${fc.back}입니다.')">🔊</button>
-      </div>
-      <div style="display:none;padding:12px 16px;font-size:14px;font-weight:700;color:#1B4332;text-align:center">
-        ✅ ${fc.back}
-      </div>`;
+    d.style.cssText = 'background:white;border-radius:12px;box-shadow:0 2px 8px rgba(31,111,92,0.1);margin-bottom:8px;overflow:hidden';
+
+    const head = document.createElement('div');
+    head.style.cssText = 'background:linear-gradient(135deg,#123B33,#1F6F5C);padding:12px 16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:8px';
+
+    const label = document.createElement('span');
+    label.style.cssText = 'font-size:13px;font-weight:700;color:white';
+    label.textContent = 'Q. ' + fc.front;
+
+    const spk = document.createElement('button');
+    spk.className = 'speaker-btn';
+    spk.style.cssText = 'padding:1px 8px;font-size:10px;flex-shrink:0';
+    spk.textContent = '🔊';
+
+    const back = document.createElement('div');
+    back.style.cssText = 'display:none;padding:12px 16px;font-size:14px;font-weight:700;color:#123B33;text-align:center';
+    back.textContent = '✅ ' + fc.back;
+
+    head.addEventListener('click', () => {
+      back.style.display = (back.style.display === 'block') ? 'none' : 'block';
+    });
+    spk.addEventListener('click', e => {
+      e.stopPropagation();
+      speakText(fc.front + '. 정답은 ' + fc.back + '입니다.');
+    });
+
+    head.appendChild(label);
+    head.appendChild(spk);
+    d.appendChild(head);
+    d.appendChild(back);
     sec.appendChild(d);
   });
 }
 
 // ══════════════════════════════════════════════════════════
-// 🔊 핵심 기능: 연속 재생 및 큐 제어 TTS 엔진 (발음 & 괄호 생략 지원)
+// 🔊 TTS 엔진 (연속 재생 큐)
 // ══════════════════════════════════════════════════════════
 function stopSpeaking() {
   isContinuousPlaying = false;
   audioQueue = [];
   queueIndex = 0;
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-  }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
   document.querySelectorAll('.q-card').forEach(c => c.classList.remove('playing-now'));
-  const statusDiv = document.getElementById('audioStatus');
-  statusDiv.style.display = 'none';
-  statusDiv.innerText = '';
+  const s = document.getElementById('audioStatus');
+  s.style.display = 'none';
+  s.innerText = '';
 }
 
 function numberToKorean(num) {
   const units = ['', '십', '백'];
   const nums = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
   let result = '';
-  let str = num.toString();
+  const str = num.toString();
   for (let i = 0; i < str.length; i++) {
-    let n = parseInt(str[str.length - 1 - i]);
-    if (n !== 0) {
-      result = (n === 1 && i > 0 ? '' : nums[n]) + units[i] + result;
-    }
+    const n = parseInt(str[str.length - 1 - i]);
+    if (n !== 0) result = (n === 1 && i > 0 ? '' : nums[n]) + units[i] + result;
   }
   return result || '영';
 }
 
 function speakText(text, onEndCallback = null) {
   if (!('speechSynthesis' in window)) {
-    alert('TTS 오디오 음성을 지원하지 않는 브라우저입니다.');
+    alert('음성(TTS)을 지원하지 않는 브라우저입니다.');
     return;
   }
   window.speechSynthesis.cancel();
-
   const rate = parseFloat(document.getElementById('ttsRate').value) || 1.0;
-  
-  // 1단계: HTML 태그 정제
-  let cleanText = text.replace(/<[^>]*>/g, ' ').replace(/💡|✅|⚙️|🌱|🌍|🍂/g, '');
-  
-  // 2단계: 본문 전체에서 모든 유형의 괄호()와 그 안의 한자/영어 내용 지우기
-  cleanText = cleanText.replace(/\([^)]*\)/g, ' ');
 
-  // 3단계: 단위 명사 발음 패치 ("2가지" -> "두가지")
-  cleanText = cleanText.replace(/(\d+)\s*가지/g, function(match, p1) {
-    const numMap = { '1': '한', '2': '두', '3': '세', '4': '네', '5': '다섯', '6': '여섯', '7': '일곱', '8': '여덟', '9': '아홉', '10': '열' };
-    return (numMap[p1] || p1) + '가지';
+  // 1) HTML 태그·이모지 제거
+  let clean = text.replace(/<[^>]*>/g, ' ').replace(/[💡✅⚙️🌱🌾🔬🪴✂️🧬⭐🔍★☆]/g, '');
+  // 2) 괄호 안 한자·영문 생략
+  clean = clean.replace(/\([^)]*\)/g, ' ');
+  // 3) 단위 명사 발음 보정
+  clean = clean.replace(/(\d+)\s*가지/g, (m, p1) => {
+    const map = {'1':'한','2':'두','3':'세','4':'네','5':'다섯','6':'여섯','7':'일곱','8':'여덟','9':'아홉','10':'열'};
+    return (map[p1] || p1) + '가지';
   });
+  // 4) 문제 번호 정규화
+  clean = clean.replace(/문제\s*(\d+)번?/g, (m, p1) => '문제 ' + numberToKorean(p1) + '번');
+  // 5) 기호 읽기 보정
+  clean = clean.replace(/±/g, ' 플러스마이너스 ').replace(/~/g, ' 에서 ').replace(/℃/g, '도').replace(/÷/g, ' 나누기 ').replace(/×/g, ' 곱하기 ');
 
-  // 4단계: 문제 번호 중복 발음 차단 정규화 (사십삼삼 방지)
-  cleanText = cleanText.replace(/문제\s*(\d+)번?/g, function(match, p1) {
-    return '문제 ' + numberToKorean(p1) + '번';
-  });
+  const u = new SpeechSynthesisUtterance(clean);
+  u.lang = 'ko-KR';
+  u.rate = rate;
+  u.onend = () => { if (onEndCallback) onEndCallback(); };
+  u.onerror = () => { if (onEndCallback) onEndCallback(); };
+  window.speechSynthesis.speak(u);
+}
 
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.lang = 'ko-KR';
-  utterance.rate = rate;
-
-  utterance.onend = function() {
-    if (onEndCallback) onEndCallback();
-  };
-  utterance.onerror = function() {
-    if (onEndCallback) onEndCallback();
-  };
-
-  window.speechSynthesis.speak(utterance);
+function plainAnswer(html) {
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  return doc.body.textContent || '';
 }
 
 function speakSingleQuestion(num) {
   stopSpeaking();
   const item = QUESTIONS.find(q => q.n === num);
   if (!item) return;
-
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(item.a, 'text/html');
-  const cleanAnswer = doc.body.textContent || doc.body.innerText;
-  
-  const numText = numberToKorean(item.n);
-  const script = `문제 ${numText}번. ${item.q} 정답 설명입니다. ${cleanAnswer}`;
-  
+  const script = `문제 ${numberToKorean(item.n)}번. ${item.q} 정답 설명입니다. ${plainAnswer(item.a)}`;
   const loops = parseInt(document.getElementById('ttsLoop').value) || 1;
-  let currentLoop = 0;
-  
-  function runLoop() {
-    speakText(script, () => {
-      currentLoop++;
-      if (currentLoop < loops) {
-        setTimeout(runLoop, 400);
-      }
-    });
-  }
-  runLoop();
+  let cur = 0;
+  (function run() {
+    speakText(script, () => { cur++; if (cur < loops) setTimeout(run, 400); });
+  })();
 }
 
 function startQueuePlayback() {
+  const s = document.getElementById('audioStatus');
   if (queueIndex >= audioQueue.length) {
-    const statusDiv = document.getElementById('audioStatus');
-    statusDiv.innerText = '🎉 모든 대기열 안내 재생이 완료되었습니다.';
-    setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    s.innerText = '🎉 대기열 재생이 모두 완료되었습니다.';
+    setTimeout(() => { s.style.display = 'none'; }, 3000);
     stopSpeaking();
     return;
   }
-
   isContinuousPlaying = true;
-  const currentItem = audioQueue[queueIndex];
-  
+  const cur = audioQueue[queueIndex];
+
   document.querySelectorAll('.q-card').forEach(c => c.classList.remove('playing-now'));
-  const targetCard = document.getElementById('card' + currentItem.n);
-  if (targetCard) {
-    targetCard.classList.add('playing-now');
-    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  const target = document.getElementById('card' + cur.n);
+  if (target) {
+    target.classList.add('playing-now');
+    target.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
-  const statusDiv = document.getElementById('audioStatus');
-  statusDiv.style.display = 'block';
-  statusDiv.innerText = `🎧 연속 재생 중: [${queueIndex + 1} / ${audioQueue.length}] 문항 청취 중`;
+  s.style.display = 'block';
+  s.innerText = `🎧 연속 재생 중 : [${queueIndex + 1} / ${audioQueue.length}] 문항`;
 
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(currentItem.a, 'text/html');
-  const cleanAnswer = doc.body.textContent || doc.body.innerText;
-  
-  const numText = numberToKorean(currentItem.n);
-  const script = `문제 ${numText}번. ${currentItem.q} 정답은 ${cleanAnswer}입니다.`;
-
+  const script = `문제 ${numberToKorean(cur.n)}번. ${cur.q} 정답은 ${plainAnswer(cur.a)} 입니다.`;
   speakText(script, () => {
-    if (isContinuousPlaying) {
-      queueIndex++;
-      setTimeout(startQueuePlayback, 600);
-    }
+    if (isContinuousPlaying) { queueIndex++; setTimeout(startQueuePlayback, 600); }
   });
 }
 
 function playSectionAudio() {
   stopSpeaking();
-  if (currentTabIdx > 4) {
-    alert('Ⅰ파트부터 Ⅴ파트까지의 문제 메뉴를 선택하신 후 실행해 주세요.');
+  if (currentTabIdx <= 4) {
+    audioQueue = QUESTIONS.filter(q => q.cat === currentTabIdx);
+  } else if (currentTabIdx === 7) {
+    audioQueue = reviewList();
+  } else {
+    alert('Ⅰ~Ⅴ 문제 메뉴 또는 오답·즐겨찾기 메뉴에서 실행해 주세요.');
     return;
   }
-  audioQueue = QUESTIONS.filter(q => q.cat === currentTabIdx);
   queueIndex = 0;
-  if(audioQueue.length === 0) {
-    alert('해당 메뉴에 로드된 문제가 없습니다.');
-    return;
-  }
+  if (!audioQueue.length) { alert('해당 메뉴에 재생할 문제가 없습니다.'); return; }
   startQueuePlayback();
 }
 
 function playAllAudio() {
   stopSpeaking();
   allOpen = true;
-  document.querySelectorAll('.q-card').forEach(c=>c.classList.add('open'));
-  
+  document.querySelectorAll('.q-card').forEach(c => c.classList.add('open'));
   audioQueue = [...QUESTIONS];
   queueIndex = 0;
   startQueuePlayback();
 }
 
-function toggleCard(n) {
-  document.getElementById('card'+n).classList.toggle('open');
+// ══════════════════════════════════════════════════════════
+// 카드 상호작용
+// ══════════════════════════════════════════════════════════
+function toggleCard(headEl) {
+  headEl.closest('.q-card').classList.toggle('open');
 }
 
 function toggleCheck(n) {
   checked[n] = !checked[n];
-  localStorage.setItem('organic_checked', JSON.stringify(checked));
-  const btn = document.querySelector('#card'+n+' .check-btn');
-  if (btn) { btn.textContent = checked[n]?'✓ 완료':'학습완료'; btn.className='check-btn'+(checked[n]?' checked':''); }
+  localStorage.setItem(LS.checked, JSON.stringify(checked));
+  document.querySelectorAll(`[data-ck="${n}"]`).forEach(btn => {
+    btn.textContent = checked[n] ? '✓ 완료' : '학습완료';
+    btn.className = 'check-btn' + (checked[n] ? ' checked' : '');
+  });
+  updateStats();
+}
+
+function toggleBookmark(n) {
+  bookmarks[n] = !bookmarks[n];
+  localStorage.setItem(LS.bm, JSON.stringify(bookmarks));
+  document.querySelectorAll(`[data-bm="${n}"]`).forEach(btn => {
+    btn.textContent = bookmarks[n] ? '★ 저장됨' : '☆ 저장';
+    btn.className = 'bm-btn' + (bookmarks[n] ? ' marked' : '');
+  });
+  if (currentTabIdx === 7) buildReview();
+}
+
+function markWrong(n, isWrong) {
+  if (isWrong) wrongs[n] = true; else delete wrongs[n];
+  localStorage.setItem(LS.wrong, JSON.stringify(wrongs));
   updateStats();
 }
 
 function updateStats() {
   const cnt = Object.values(checked).filter(Boolean).length;
+  const wcnt = Object.keys(wrongs).length;
   document.getElementById('checkedStat').textContent = cnt;
-  document.getElementById('rateStat').textContent = Math.round(cnt/200*100)+'%';
-  document.getElementById('progressFill').style.width = (cnt/200*100)+'%';
+  document.getElementById('wrongStat').textContent = wcnt;
+  document.getElementById('rateStat').textContent = Math.round(cnt / TOTAL * 100) + '%';
+  document.getElementById('progressFill').style.width = (cnt / TOTAL * 100) + '%';
+}
+
+function toggleAll() {
+  allOpen = !allOpen;
+  document.querySelectorAll('.q-card').forEach(c => c.classList.toggle('open', allOpen));
+  document.querySelector('.action-bar button:nth-child(2)').textContent = allOpen ? '📖 전체접기' : '📖 전체펼치기';
 }
 
 function showTab(i) {
   currentTabIdx = i;
-  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
-  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
-  window.scrollTo(0,0);
+  document.querySelectorAll('.section').forEach((s, j) => s.classList.toggle('active', j === i));
+  document.querySelectorAll('.tab-btn').forEach((b, j) => b.classList.toggle('active', j === i));
+  if (i === 7) buildReview();
+  if (i === 8) setTimeout(() => document.getElementById('searchInput').focus(), 100);
+  window.scrollTo(0, 0);
 }
 
-let allOpen = false;
-function toggleAll() {
-  allOpen = !allOpen;
-  document.querySelectorAll('.q-card').forEach(c=>c.classList.toggle('open',allOpen));
-  document.querySelector('.action-bar button:nth-child(2)').textContent = allOpen ? '📖 전체접기' : '📖 전체펼치기';
+// ══════════════════════════════════════════════════════════
+// ⭐ 오답노트 · 즐겨찾기
+// ══════════════════════════════════════════════════════════
+function reviewList() {
+  return QUESTIONS.filter(q => wrongs[q.n] || bookmarks[q.n]);
 }
 
-// 랜덤 퀴즈 셋
-let quizList = [], quizIdx = 0, quizAnswered = false;
+function buildReview() {
+  const wrap = document.getElementById('reviewWrap');
+  const list = reviewList();
+  if (!list.length) {
+    wrap.innerHTML = `<div class="hint">아직 저장된 문제가 없습니다.<br>문제 카드의 <b>☆ 저장</b> 버튼을 누르거나,<br>랜덤 퀴즈에서 <b>❌ 틀림</b>을 선택하면 여기에 모입니다.</div>`;
+    return;
+  }
+  const w = list.filter(q => wrongs[q.n]).length;
+  wrap.innerHTML =
+    `<div style="font-size:12.5px;color:#6B7280;margin-bottom:10px;text-align:center">
+       오답 <b style="color:#E63946">${w}</b>문항 · 즐겨찾기 포함 총 <b>${list.length}</b>문항
+       <button class="btn-secondary" style="border:none;border-radius:8px;padding:5px 10px;margin-left:8px;font-size:11.5px;font-weight:700;cursor:pointer;font-family:inherit" onclick="clearWrong()">오답 비우기</button>
+     </div>` + list.map(q => cardHTML(q, 'r-')).join('');
+}
+
+function clearWrong() {
+  if (!confirm('오답 표시를 모두 지울까요? (즐겨찾기는 유지됩니다)')) return;
+  Object.keys(wrongs).forEach(k => delete wrongs[k]);
+  localStorage.setItem(LS.wrong, JSON.stringify(wrongs));
+  updateStats();
+  buildReview();
+  showToast('오답노트를 비웠습니다');
+}
+
+// ══════════════════════════════════════════════════════════
+// 🔍 검색
+// ══════════════════════════════════════════════════════════
+function runSearch() {
+  const kw = document.getElementById('searchInput').value.trim();
+  const wrap = document.getElementById('searchWrap');
+  if (kw.length < 1) {
+    wrap.innerHTML = `<div class="hint">키워드를 입력하면 문제와 정답 내용을 모두 검색합니다.<br>예) <b>계산</b> 을 입력하면 계산문제만 모아볼 수 있어요.</div>`;
+    return;
+  }
+  const low = kw.toLowerCase();
+  const hits = QUESTIONS.filter(q => {
+    if (low === '계산') return q.tag === 'calc';
+    if (low === '빈출') return q.tag === 'hot';
+    return (q.q + ' ' + plainAnswer(q.a)).toLowerCase().includes(low);
+  });
+  if (!hits.length) {
+    wrap.innerHTML = `<div class="hint">'${kw}' 검색 결과가 없습니다.<br>다른 키워드로 다시 찾아보세요.</div>`;
+    return;
+  }
+  wrap.innerHTML = `<div style="font-size:12.5px;color:#6B7280;margin-bottom:10px;text-align:center">🔎 <b>${hits.length}</b>개 문항을 찾았습니다</div>`
+    + hits.map(q => cardHTML(q, 's-')).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// 🎲 랜덤 퀴즈 (자가채점 → 오답노트 연동)
+// ══════════════════════════════════════════════════════════
+let quizList = [], quizIdx = 0, quizShown = false;
+
 function openQuiz() {
   stopSpeaking();
-  quizList = [...QUESTIONS].sort(()=>Math.random()-0.5).slice(0,10);
-  quizIdx = 0; quizAnswered = false;
+  const pool = (currentTabIdx <= 4) ? QUESTIONS.filter(q => q.cat === currentTabIdx) : QUESTIONS;
+  const src = (currentTabIdx === 7 && reviewList().length) ? reviewList() : pool;
+  quizList = [...src].sort(() => Math.random() - 0.5).slice(0, 10);
+  quizIdx = 0;
   document.getElementById('quizModal').classList.add('open');
   showQuiz();
 }
-function closeQuiz() { stopSpeaking(); document.getElementById('quizModal').classList.remove('open'); }
+
+function closeQuiz() {
+  stopSpeaking();
+  document.getElementById('quizModal').classList.remove('open');
+}
+
 function showQuiz() {
   const q = quizList[quizIdx];
-  document.getElementById('quizNum').textContent = `문제 ${quizIdx+1}/10`;
+  quizShown = false;
+  document.getElementById('quizNum').textContent = `문제 ${quizIdx + 1} / ${quizList.length}`;
   document.getElementById('quizQ').textContent = q.q;
   document.getElementById('quizInput').value = '';
   const res = document.getElementById('quizResult');
-  res.style.display = 'none'; res.className = 'quiz-result';
-  document.getElementById('quizBtn').textContent = '확인';
-  quizAnswered = false;
-  
-  const numText = numberToKorean(q.n);
-  speakText(`문제 ${numText}번. ${q.q}`);
-  document.getElementById('quizInput').focus();
-}
-function checkQuiz() {
-  if (quizAnswered) {
-    quizIdx++;
-    if (quizIdx >= quizList.length) { closeQuiz(); showToast('🎉 퀴즈 완료!'); return; }
-    showQuiz(); return;
-  }
-  const ans = document.getElementById('quizInput').value.trim();
-  if (!ans) return;
-  const res = document.getElementById('quizResult');
-  res.style.display = 'block';
-  const q = quizList[quizIdx];
-  res.className = 'quiz-result correct';
-  res.innerHTML = '✅ 정답 확인:<br>' + q.a;
-  document.getElementById('quizBtn').textContent = quizIdx<9 ? '다음 문제 →' : '완료';
-  quizAnswered = true;
-  
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(q.a, 'text/html');
-  speakText(`정답 설명입니다. ${doc.body.textContent}`);
-  toggleCheck(q.n);
-}
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#1B4332;color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:300;font-weight:700';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  setTimeout(()=>t.remove(),2000);
+  res.style.display = 'none';
+  document.getElementById('selfGrade').classList.remove('on');
+  const btn = document.getElementById('quizBtn');
+  btn.textContent = '정답 보기';
+  btn.style.display = '';
+  speakText(`문제 ${numberToKorean(q.n)}번. ${q.q}`);
 }
 
-// 렌더링 가동
+function checkQuiz() {
+  if (quizShown) { nextQuiz(); return; }
+  const q = quizList[quizIdx];
+  const res = document.getElementById('quizResult');
+  res.style.display = 'block';
+  res.innerHTML = '<b style="color:#1F6F5C">✅ 모범답안</b><br>' + q.a;
+  document.getElementById('selfGrade').classList.add('on');
+  document.getElementById('quizBtn').style.display = 'none';
+  quizShown = true;
+  speakText('정답 설명입니다. ' + plainAnswer(q.a));
+}
+
+function gradeQuiz(correct) {
+  const q = quizList[quizIdx];
+  markWrong(q.n, !correct);
+  if (correct) toggleCheckIfNeeded(q.n);
+  showToast(correct ? '⭕ 맞았습니다!' : '❌ 오답노트에 저장했습니다');
+  nextQuiz();
+}
+
+function toggleCheckIfNeeded(n) {
+  if (!checked[n]) toggleCheck(n);
+}
+
+function nextQuiz() {
+  quizIdx++;
+  document.getElementById('selfGrade').classList.remove('on');
+  if (quizIdx >= quizList.length) {
+    closeQuiz();
+    const w = Object.keys(wrongs).length;
+    showToast(`🎉 퀴즈 완료! 현재 오답 ${w}문항`);
+    if (currentTabIdx === 7) buildReview();
+    return;
+  }
+  showQuiz();
+}
+
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:74px;left:50%;transform:translateX(-50%);background:#123B33;color:white;padding:9px 18px;border-radius:20px;font-size:13px;z-index:300;font-weight:700;max-width:88%;text-align:center';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 2200);
+}
+
+
+// ══════════════════════════════════════════════════════════
+// 🖼 그림자료 — 직접 작도한 SVG 도해 (화서 / 접목 / 구조)
+// ══════════════════════════════════════════════════════════
+const SVG_OPEN = '<svg viewBox="0 0 100 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:118px">';
+const AX = 'stroke="#4E7C4A" stroke-width="2.6" fill="none" stroke-linecap="round"';
+const BR = 'stroke="#4E7C4A" stroke-width="1.8" fill="none" stroke-linecap="round"';
+const FL = 'fill="#E8A33D" stroke="#B97A1E" stroke-width="1"';
+const FL2 = 'fill="#F0C06A" stroke="#B97A1E" stroke-width="0.9"';
+
+function flower(x, y, r) { return `<circle cx="${x}" cy="${y}" r="${r || 5}" ${FL}/>`; }
+
+const INFLOR = [
+  { name:'총상화서', crop:'무 · 배추 · 냉이 · 아까시나무',
+    tip:'꽃자루 길이가 <b>거의 같고</b> 축을 따라 아래에서 위로 핌',
+    svg: SVG_OPEN + `<path d="M50 118 V14" ${AX}/>` +
+      [102,88,74,60,46].map((y,i)=>{const x=i%2?76:24;return `<path d="M50 ${y} L${x} ${y-6}" ${BR}/>`+flower(x,y-6);}).join('') +
+      flower(50,20,5) + '</svg>' },
+
+  { name:'원추화서', crop:'벼 · 수수 · 남천',
+    tip:'총상화서의 <b>가지가 다시 갈라져</b> 원뿔 모양을 이룸',
+    svg: SVG_OPEN + `<path d="M50 118 V16" ${AX}/>` +
+      [[100,34],[84,27],[68,20],[52,14]].map(([y,len],i)=>
+        [-1,1].map(s=>{const ex=50+s*len, ey=y-12;
+          return `<path d="M50 ${y} L${ex} ${ey}" ${BR}/>`+
+                 `<path d="M${ex} ${ey} L${ex-s*6} ${ey-8}" ${BR}/><path d="M${ex} ${ey} L${ex+s*5} ${ey-7}" ${BR}/>`+
+                 flower(ex-s*6,ey-8,3.6)+flower(ex+s*5,ey-7,3.6);}).join('')).join('') +
+      flower(50,18,4) + '</svg>' },
+
+  { name:'수상화서', crop:'보리 · 밀 · 질경이',
+    tip:'꽃자루가 <b>거의 없이</b> 축에 직접 붙어 핌',
+    svg: SVG_OPEN + `<path d="M50 118 V16" ${AX}/>` +
+      [104,92,80,68,56,44,32].map(y=>`<ellipse cx="41" cy="${y}" rx="8" ry="5" ${FL}/><ellipse cx="59" cy="${y-6}" rx="8" ry="5" ${FL2}/>`).join('') +
+      '</svg>' },
+
+  { name:'유이화서', crop:'밤나무 · 버드나무 · 호두나무 수꽃',
+    tip:'수상화서가 <b>아래로 늘어진</b> 형태(꼬리 모양)',
+    svg: SVG_OPEN + `<path d="M50 12 C50 12 44 34 52 56 C60 78 42 96 46 116" ${AX}/>` +
+      [[50,24],[47,38],[52,52],[56,66],[50,80],[45,94],[46,108]].map(([x,y])=>
+        `<ellipse cx="${x-8}" cy="${y}" rx="7" ry="4.5" ${FL}/><ellipse cx="${x+8}" cy="${y+5}" rx="7" ry="4.5" ${FL2}/>`).join('') +
+      '</svg>' },
+
+  { name:'육수화서', crop:'옥수수 암이삭 · 토란 · 안스리움',
+    tip:'축이 <b>굵고 육질</b>이며, 흔히 큰 <b>포(苞)</b>가 감쌈',
+    svg: SVG_OPEN + `<path d="M22 116 C4 78 16 26 44 14" stroke="#7FB069" stroke-width="3" fill="#E3F0DC"/>` +
+      `<rect x="44" y="20" width="16" height="94" rx="8" fill="#C8E0BE" stroke="#4E7C4A" stroke-width="2.2"/>` +
+      [30,42,54,66,78,90,102].map(y=>`<circle cx="48" cy="${y}" r="3.2" ${FL}/><circle cx="57" cy="${y+5}" r="3.2" ${FL2}/>`).join('') +
+      '</svg>' },
+
+  { name:'산방화서', crop:'사과 · 배 · 벚나무 · 유채',
+    tip:'꽃자루 길이가 달라 <b>꽃이 거의 같은 높이</b>에 모임(평평한 윗면)',
+    svg: SVG_OPEN + `<path d="M50 120 V32" ${AX}/>` +
+      `<path d="M50 112 L14 34" ${BR}/><path d="M50 112 L86 34" ${BR}/>` +
+      `<path d="M50 86 L30 34" ${BR}/><path d="M50 86 L70 34" ${BR}/>` +
+      [112,86].map(y=>`<circle cx="50" cy="${y}" r="2.6" fill="#4E7C4A"/>`).join('') +
+      [14,30,50,70,86].map(x=>flower(x,32,5.5)).join('') +
+      `<path d="M6 22 H94" stroke="#C24C4C" stroke-width="1" stroke-dasharray="4 3"/>` +
+      `<text x="50" y="17" font-size="8" text-anchor="middle" fill="#C24C4C" font-weight="700">같은 높이</text>` + '</svg>' },
+
+  { name:'단순산형화서', crop:'미나리아재비 · 부추 · 앵초',
+    tip:'꽃자루가 <b>한 점에서</b> 우산살처럼 방사상으로 나옴',
+    svg: SVG_OPEN + `<path d="M50 118 V84" ${AX}/>` +
+      [[14,44],[28,30],[50,24],[72,30],[86,44]].map(([x,y])=>`<path d="M50 84 L${x} ${y}" ${BR}/>`+flower(x,y,5.5)).join('') +
+      '</svg>' },
+
+  { name:'복산형화서', crop:'당근 · 미나리 · 회향 · 파슬리',
+    tip:'산형화서의 <b>각 꽃자루 끝에 다시 작은 산형</b>이 달림',
+    svg: SVG_OPEN + `<path d="M50 118 V88" ${AX}/>` +
+      [[16,58],[50,48],[84,58]].map(([x,y])=>
+        `<path d="M50 88 L${x} ${y}" ${BR}/>` +
+        [[-12,-14],[0,-20],[12,-14]].map(([dx,dy])=>`<path d="M${x} ${y} L${x+dx} ${y+dy}" ${BR}/>`+flower(x+dx,y+dy,4)).join('')
+      ).join('') + '</svg>' },
+
+  { name:'두상화서', crop:'국화 · 해바라기 · 민들레 · 상추',
+    tip:'꽃자루 없는 작은 꽃들이 <b>넓은 화탁 위에 빽빽이</b> 모여 한 송이처럼 보임',
+    svg: SVG_OPEN + `<path d="M50 118 V62" ${AX}/>` +
+      `<path d="M20 60 Q50 44 80 60 Q50 72 20 60 Z" fill="#C8E0BE" stroke="#4E7C4A" stroke-width="2"/>` +
+      [[28,54],[38,49],[50,46],[62,49],[72,54],[33,58],[45,55],[57,55],[68,58]].map(([x,y])=>flower(x,y,3.4)).join('') +
+      [[14,62],[86,62],[22,72],[78,72]].map(([x,y])=>`<ellipse cx="${x}" cy="${y}" rx="8" ry="3.4" ${FL2}/>`).join('') +
+      '</svg>' },
+
+  { name:'단정화서', crop:'튤립 · 목련 · 양귀비',
+    tip:'줄기 <b>끝에 꽃이 한 송이만</b> 달림',
+    svg: SVG_OPEN + `<path d="M50 118 V44" ${AX}/>` +
+      `<path d="M50 100 L26 82" ${BR}/><path d="M50 84 L74 68" ${BR}/>` +
+      [[50,26,13],[50,26,0]].slice(0,1).map(()=>'').join('') +
+      `<circle cx="50" cy="30" r="13" ${FL}/><circle cx="50" cy="30" r="5" fill="#B97A1E"/>` +
+      '</svg>' },
+
+  { name:'단집산화서', crop:'수국 · 미나리아재비류',
+    tip:'<b>가운데(끝) 꽃이 먼저 피고</b> 아래 좌우 가지에서 꽃이 나중에 핌',
+    svg: SVG_OPEN + `<path d="M50 118 V34" ${AX}/>` +
+      `<path d="M50 64 L18 44" ${BR}/><path d="M50 64 L82 44" ${BR}/>` +
+      flower(50,28,7) + flower(18,42,5.5) + flower(82,42,5.5) +
+      `<text x="50" y="16" font-size="9" text-anchor="middle" fill="#B97A1E" font-weight="700">1</text>` +
+      `<text x="14" y="32" font-size="9" text-anchor="middle" fill="#B97A1E" font-weight="700">2</text>` +
+      `<text x="86" y="32" font-size="9" text-anchor="middle" fill="#B97A1E" font-weight="700">2</text>` +
+      '</svg>' },
+
+  { name:'복집산화서', crop:'딱총나무 · 백당나무 · 개회나무',
+    tip:'단집산화서가 <b>여러 번 되풀이</b>되어 갈라짐',
+    svg: SVG_OPEN + `<path d="M50 118 V40" ${AX}/>` +
+      `<path d="M50 70 L18 52" ${BR}/><path d="M50 70 L82 52" ${BR}/>` +
+      `<path d="M18 52 L6 34" ${BR}/><path d="M18 52 L30 32" ${BR}/>` +
+      `<path d="M82 52 L70 32" ${BR}/><path d="M82 52 L94 34" ${BR}/>` +
+      flower(50,34,6) + [[6,32],[30,30],[70,30],[94,32]].map(([x,y])=>flower(x,y,4.5)).join('') +
+      '</svg>' },
+
+  { name:'전갈고리형화서', crop:'꽃마리 · 컴프리 · 지치',
+    tip:'꽃차례 축이 <b>전갈 꼬리처럼 말려</b> 한쪽으로만 꽃이 달림(권산화서)',
+    svg: SVG_OPEN + `<path d="M46 118 C46 92 44 70 54 56 C64 42 82 42 84 56 C86 68 74 74 68 66" ${AX}/>` +
+      [[36,104],[34,86],[40,68],[54,50],[70,42],[82,50]].map(([x,y],i)=>flower(x,y,6-i*0.5)).join('') +
+      '</svg>' },
+
+  { name:'집단화서', crop:'뽕나무 · 무화과 · 비름',
+    tip:'꽃자루가 거의 없는 꽃이 <b>한 곳에 뭉쳐</b> 덩어리를 이룸',
+    svg: SVG_OPEN + `<path d="M50 118 V22" ${AX}/>` +
+      [[36,34],[64,34],[30,52],[70,52],[34,74],[66,74]].map(([x,y])=>
+        `<path d="M50 ${y+4} L${x} ${y+2}" ${BR}/>` +
+        [[0,0],[-7,5],[7,5],[0,9]].map(([dx,dy])=>flower(x+dx,y+dy,3.4)).join('')).join('') +
+      '</svg>' }
+];
+
+const GRAFT = [
+  { name:'깎기접(절접)', tip:'봄 3~4월 · 대목을 자르고 한쪽을 2~3cm 깎아 접수를 끼움 — <b>형성층 밀착</b>이 핵심',
+    svg:`<svg viewBox="0 0 120 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:125px">
+      <rect x="48" y="46" width="28" height="70" rx="3" fill="#C9A96B" stroke="#8B6B3A" stroke-width="2"/>
+      <path d="M48 46 L48 92 L60 92 L60 46 Z" fill="#EFE0C2" stroke="#8B6B3A" stroke-width="1.4"/>
+      <path d="M42 8 L42 90 L56 78 L56 8 Z" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="2"/>
+      <circle cx="39" cy="24" r="3.6" fill="#4E7C4A"/><circle cx="39" cy="40" r="3.6" fill="#4E7C4A"/>
+      <path d="M34 92 H86" stroke="#E63946" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <path d="M56 8 L56 78" stroke="#4E7C4A" stroke-width="1"/>
+      <text x="84" y="24" font-size="10" fill="#4E7C4A" font-weight="700">접수</text>
+      <text x="84" y="112" font-size="10" fill="#8B6B3A" font-weight="700">대목</text>
+      <text x="88" y="90" font-size="9" fill="#E63946" font-weight="700">형성층</text></svg>` },
+
+  { name:'짜개접(할접)', tip:'대목을 <b>세로로 쪼개</b> 쐐기 모양 접수를 끼움 — 대목이 굵을 때 유리',
+    svg:`<svg viewBox="0 0 120 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:125px">
+      <rect x="44" y="54" width="32" height="60" rx="3" fill="#C9A96B" stroke="#8B6B3A" stroke-width="2"/>
+      <path d="M60 54 V92" stroke="#8B6B3A" stroke-width="2"/>
+      <path d="M52 12 L52 50 L60 62 L68 50 L68 12 Z" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="2"/>
+      <circle cx="49" cy="26" r="3.4" fill="#4E7C4A"/><circle cx="71" cy="36" r="3.4" fill="#4E7C4A"/>
+      <text x="82" y="24" font-size="10" fill="#4E7C4A" font-weight="700">접수</text>
+      <text x="82" y="100" font-size="10" fill="#8B6B3A" font-weight="700">대목</text></svg>` },
+
+  { name:'눈접(T자형 아접)', tip:'<b>8~9월</b> 수피가 잘 벗겨질 때 · 대목에 T자로 칼집을 내고 방패형 눈을 끼움',
+    svg:`<svg viewBox="0 0 120 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:125px">
+      <rect x="34" y="8" width="26" height="108" rx="6" fill="#C9A96B" stroke="#8B6B3A" stroke-width="2"/>
+      <path d="M36 44 H58 M47 44 V86" stroke="#6B4E22" stroke-width="2.4"/>
+      <path d="M40 46 Q40 40 47 40 Q54 40 54 46 L54 74 L47 82 L40 74 Z" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="1.8"/>
+      <circle cx="47" cy="56" r="4.2" fill="#4E7C4A"/>
+      <path d="M74 52 H90 M74 66 H90 M74 80 H90" stroke="#8AA6C8" stroke-width="3" stroke-linecap="round"/>
+      <text x="66" y="24" font-size="10" fill="#8B6B3A" font-weight="700">대목</text>
+      <text x="62" y="104" font-size="9.5" fill="#4E7C4A" font-weight="700">눈+테이프</text></svg>` },
+
+  { name:'맞접(호접) — 오이', tip:'대목·접수 <b>양쪽 뿌리를 살린 채</b> 서로 깎아 맞물려 클립 고정 → 활착 후 접수 뿌리 절단',
+    svg:`<svg viewBox="0 0 120 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:125px">
+      <path d="M40 116 V44" stroke="#4E7C4A" stroke-width="7" stroke-linecap="round"/>
+      <path d="M80 116 V44" stroke="#C9A96B" stroke-width="7" stroke-linecap="round"/>
+      <path d="M40 44 Q60 40 80 44" stroke="#4E7C4A" stroke-width="3" fill="none"/>
+      <path d="M28 34 Q40 22 44 38" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="1.6"/>
+      <path d="M92 34 Q80 22 76 38" fill="#D8E8CE" stroke="#8B6B3A" stroke-width="1.6"/>
+      <rect x="50" y="60" width="20" height="14" rx="4" fill="#F2C14E" stroke="#B97A1E" stroke-width="1.6"/>
+      <path d="M44 67 H50 M70 67 H76" stroke="#B97A1E" stroke-width="2"/>
+      <path d="M34 118 q6 6 12 0 M74 118 q6 6 12 0" stroke="#8B6B3A" stroke-width="2" fill="none"/>
+      <text x="14" y="104" font-size="9.5" fill="#4E7C4A" font-weight="700">오이</text>
+      <text x="88" y="104" font-size="9.5" fill="#8B6B3A" font-weight="700">호박</text>
+      <text x="46" y="88" font-size="9" fill="#B97A1E" font-weight="700">클립</text></svg>` },
+
+  { name:'안장접 — 선인장', tip:'대목 윗부분을 <b>안장 모양</b>으로 깎고 접수를 올려 고정 · <b>유관속 위치</b>를 맞추는 것이 핵심',
+    svg:`<svg viewBox="0 0 120 125" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:125px">
+      <path d="M36 116 V64 L60 44 L84 64 V116 Z" fill="#8FBF7F" stroke="#4E7C4A" stroke-width="2"/>
+      <path d="M44 116 V60 M60 116 V48 M76 116 V60" stroke="#4E7C4A" stroke-width="1" stroke-dasharray="3 3"/>
+      <path d="M42 40 Q60 56 78 40 Q78 18 60 18 Q42 18 42 40 Z" fill="#E0605A" stroke="#A8322D" stroke-width="2"/>
+      <path d="M50 26 Q60 21 70 26" stroke="#A8322D" stroke-width="1.2" fill="none"/>
+      <circle cx="60" cy="46" r="3.4" fill="#F2C14E" stroke="#B97A1E" stroke-width="1.2"/>
+      <text x="86" y="34" font-size="9.5" fill="#A8322D" font-weight="700">접수</text>
+      <text x="86" y="96" font-size="9.5" fill="#4E7C4A" font-weight="700">대목</text>
+      <text x="4" y="52" font-size="8.5" fill="#B97A1E" font-weight="700">유관속</text></svg>` }
+];
+
+const STRUCT = [
+  { name:'벼 종자(현미)의 종단면',
+    svg:`<svg viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:130px">
+      <ellipse cx="105" cy="60" rx="86" ry="40" fill="#F2E3BE" stroke="#8B6B3A" stroke-width="2.4"/>
+      <ellipse cx="105" cy="60" rx="78" ry="33" fill="#FBF4E2" stroke="#C9A96B" stroke-width="1.6"/>
+      <ellipse cx="105" cy="60" rx="72" ry="28" fill="#FFFDF5" stroke="#E0CFA0" stroke-width="1.2"/>
+      <path d="M44 74 q10 16 26 14 q14 -2 12 -18 q-2 -14 -18 -12 q-16 2 -20 16 Z" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="2"/>
+      <path d="M56 78 l10 6 M62 70 l10 4" stroke="#4E7C4A" stroke-width="1.4"/>
+      <text x="8" y="18" font-size="11" font-weight="700" fill="#8B6B3A">① 과피</text>
+      <text x="82" y="18" font-size="11" font-weight="700" fill="#C9A96B">② 종피</text>
+      <text x="150" y="18" font-size="11" font-weight="700" fill="#B08D3A">③ 호분층</text>
+      <text x="140" y="112" font-size="11" font-weight="700" fill="#8B6B3A">④ 배유</text>
+      <text x="26" y="112" font-size="11" font-weight="700" fill="#4E7C4A">⑤ 배</text>
+      <path d="M34 22 L52 40 M104 22 L104 32 M172 22 L150 38 M150 104 L128 74 M44 104 L58 88" stroke="#9AA0A6" stroke-width="1"/></svg>`,
+    legend:'① <b>과피</b> 씨방벽 유래 · ② <b>종피</b> 주피 유래 · ③ <b>호분층</b> 단백질·지방 풍부, 발아 시 α-아밀라아제 분비 · ④ <b>배유(3n)</b> 전분 저장 · ⑤ <b>배(2n)</b> 유아·배축·유근·자엽(밴반)' },
+
+  { name:'콩 종자(무배유종자)의 구조',
+    svg:`<svg viewBox="0 0 220 120" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:130px">
+      <path d="M28 60 q0 -40 62 -42 q66 -2 96 22 q24 22 0 42 q-30 24 -96 22 q-62 -2 -62 -44 Z" fill="#EFE0BE" stroke="#8B6B3A" stroke-width="2.4"/>
+      <path d="M42 60 q0 -32 52 -34 q56 -2 82 18 q18 16 0 32 q-26 20 -82 18 q-52 -2 -52 -34 Z" fill="#F7EED6" stroke="#C9A96B" stroke-width="1.6"/>
+      <path d="M42 60 H176" stroke="#C9A96B" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <path d="M52 60 q4 -16 20 -16 q10 0 12 10 l-4 12 q-2 10 -14 10 q-14 0 -14 -16 Z" fill="#A8CE9A" stroke="#4E7C4A" stroke-width="1.8"/>
+      <path d="M56 66 l-14 12" stroke="#4E7C4A" stroke-width="3" stroke-linecap="round"/>
+      <path d="M74 50 l-6 -14" stroke="#4E7C4A" stroke-width="2.6" stroke-linecap="round"/>
+      <text x="146" y="16" font-size="11" font-weight="700" fill="#8B6B3A">① 종피</text>
+      <text x="146" y="110" font-size="11" font-weight="700" fill="#C9A96B">② 자엽</text>
+      <text x="70" y="18" font-size="11" font-weight="700" fill="#4E7C4A">③ 유아</text>
+      <text x="6" y="104" font-size="11" font-weight="700" fill="#4E7C4A">④ 유근</text>
+      <path d="M150 20 L120 34 M150 104 L120 84 M78 24 L70 38 M32 96 L44 78" stroke="#9AA0A6" stroke-width="1"/></svg>`,
+    legend:'배유가 퇴화하고 <b>자엽(떡잎)에 양분을 저장</b>하는 무배유종자. 배 = 유아 + 배축 + 유근 + 자엽. 콩·팥·완두·땅콩이 해당' },
+
+  { name:'완전화(양성화)의 화기 구조',
+    svg:`<svg viewBox="0 0 220 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:140px">
+      <path d="M110 128 V96" stroke="#4E7C4A" stroke-width="3.4"/>
+      <path d="M84 96 q26 14 52 0 q-6 -12 -26 -12 q-20 0 -26 12 Z" fill="#9DC48C" stroke="#4E7C4A" stroke-width="2"/>
+      <path d="M84 92 q-16 -8 -22 -22 M136 92 q16 -8 22 -22" stroke="#4E7C4A" stroke-width="2.6" fill="none"/>
+      <path d="M86 88 Q40 74 26 40 Q64 52 88 82 Z" fill="#F3B8CE" stroke="#C4728F" stroke-width="1.8"/>
+      <path d="M134 88 Q180 74 194 40 Q156 52 132 82 Z" fill="#F3B8CE" stroke="#C4728F" stroke-width="1.8"/>
+      <path d="M92 84 Q76 52 66 32" stroke="#B08D3A" stroke-width="2.2" fill="none"/>
+      <ellipse cx="64" cy="27" rx="8" ry="5.5" fill="#F2C14E" stroke="#B97A1E" stroke-width="1.6"/>
+      <path d="M128 84 Q144 52 154 32" stroke="#B08D3A" stroke-width="2.2" fill="none"/>
+      <ellipse cx="156" cy="27" rx="8" ry="5.5" fill="#F2C14E" stroke="#B97A1E" stroke-width="1.6"/>
+      <path d="M110 84 V38" stroke="#6FA35C" stroke-width="3"/>
+      <ellipse cx="110" cy="32" rx="11" ry="7" fill="#C9E6B8" stroke="#4E7C4A" stroke-width="1.8"/>
+      <ellipse cx="110" cy="92" rx="17" ry="11" fill="#DDF0D2" stroke="#4E7C4A" stroke-width="1.8"/>
+      <circle cx="104" cy="92" r="3.2" fill="#E8A33D"/><circle cx="116" cy="93" r="3.2" fill="#E8A33D"/>
+      <text x="6" y="16" font-size="10.5" font-weight="700" fill="#B97A1E">① 꽃밥</text>
+      <text x="6" y="46" font-size="10.5" font-weight="700" fill="#B08D3A">② 수술대</text>
+      <text x="168" y="16" font-size="10.5" font-weight="700" fill="#4E7C4A">③ 암술머리</text>
+      <text x="176" y="60" font-size="10.5" font-weight="700" fill="#6FA35C">④ 암술대</text>
+      <text x="164" y="106" font-size="10.5" font-weight="700" fill="#4E7C4A">⑤ 씨방·배주</text>
+      <text x="6" y="82" font-size="10.5" font-weight="700" fill="#C4728F">⑥ 꽃잎</text>
+      <text x="6" y="122" font-size="10.5" font-weight="700" fill="#4E7C4A">⑦ 꽃받침</text>
+      <path d="M34 20 L54 26 M40 42 L74 50 M196 20 L124 30 M196 58 L118 62 M192 102 L130 94 M32 78 L60 72 M36 118 L84 100" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    legend:'수술 = <b>꽃밥(약) + 수술대</b> / 암술 = <b>암술머리 + 암술대 + 씨방</b>. 4가지(꽃받침·꽃잎·수술·암술)를 모두 갖추면 완전화, 하나라도 없으면 불완전화' }
+];
+
+
+// ── 종자 유형별 배유·자엽·유근 위치 비교 ────────────────────
+const SEEDTYPE = [
+  { name:'벼 (화본과 · 배유종자 · 자엽 1매)',
+    kind:'배유종자',
+    svg:`<svg viewBox="0 0 230 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:132px">
+      <ellipse cx="118" cy="64" rx="92" ry="40" fill="#FBF4E2" stroke="#8B6B3A" stroke-width="2.4"/>
+      <ellipse cx="118" cy="64" rx="84" ry="33" fill="#FFFDF5" stroke="#E0CFA0" stroke-width="1.2"/>
+      <path d="M74 34 Q60 64 74 94 L44 94 Q32 64 44 34 Z" fill="#DFF0D4" stroke="#4E7C4A" stroke-width="2"/>
+      <path d="M74 34 Q60 64 74 94" fill="none" stroke="#2F6B3E" stroke-width="3"/>
+      <path d="M58 58 L46 44 L54 42 L60 52 Z" fill="#8FBF7F" stroke="#2F6B3E" stroke-width="1.4"/>
+      <path d="M58 72 L46 88 L54 90 L61 78 Z" fill="#C6A46B" stroke="#7A5A22" stroke-width="1.4"/>
+      <path d="M60 58 V72" stroke="#2F6B3E" stroke-width="2.4"/>
+      <text x="6" y="16" font-size="10" font-weight="700" fill="#2F6B3E">① 배반(자엽)</text>
+      <text x="6" y="34" font-size="10" font-weight="700" fill="#4E7C4A">② 유아·초엽</text>
+      <text x="6" y="118" font-size="10" font-weight="700" fill="#7A5A22">③ 유근</text>
+      <text x="150" y="118" font-size="10" font-weight="700" fill="#8B6B3A">④ 배유(대부분)</text>
+      <path d="M58 20 L70 40 M56 38 L52 44 M40 112 L48 94 M186 110 L150 84" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    key:'배유가 종자 부피의 <b>대부분</b>을 차지하고, <b>배는 종자 기부(아래쪽 한쪽)에 치우쳐</b> 붙어 있습니다. 자엽은 1매이며 <b>배반(scutellum)</b>이라 부르고, 양분을 저장하지 않고 <b>배유의 양분을 흡수해 배로 넘겨주는 기관</b>입니다. 유아는 <b>초엽(자엽초)</b>에, 유근은 <b>근초</b>에 싸여 있습니다.' },
+
+  { name:'옥수수 (화본과 · 배유종자 · 자엽 1매)',
+    kind:'배유종자',
+    svg:`<svg viewBox="0 0 230 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:132px">
+      <path d="M116 10 Q182 12 184 60 Q186 104 150 116 L84 116 Q48 104 50 60 Q52 12 116 10 Z" fill="#F6D66B" stroke="#B9862A" stroke-width="2.4"/>
+      <path d="M116 20 Q172 22 174 60 Q176 98 146 108 L88 108 Q58 98 60 60 Q62 22 116 20 Z" fill="#FBEDB4" stroke="#E0BC6A" stroke-width="1.4"/>
+      <path d="M117 40 Q140 46 140 76 Q140 102 117 108 Q94 102 94 76 Q94 46 117 40 Z" fill="#DFF0D4" stroke="#4E7C4A" stroke-width="2"/>
+      <path d="M117 40 Q140 46 140 76 Q140 102 117 108" fill="none" stroke="#2F6B3E" stroke-width="3"/>
+      <path d="M110 62 L102 50 L112 50 L116 60 Z" fill="#8FBF7F" stroke="#2F6B3E" stroke-width="1.3"/>
+      <path d="M112 84 L104 100 L114 100 L118 88 Z" fill="#C6A46B" stroke="#7A5A22" stroke-width="1.3"/>
+      <path d="M114 62 V84" stroke="#2F6B3E" stroke-width="2.2"/>
+      <text x="4" y="18" font-size="10" font-weight="700" fill="#B9862A">① 각질배유</text>
+      <text x="4" y="40" font-size="10" font-weight="700" fill="#C9A03A">② 분질배유</text>
+      <text x="4" y="76" font-size="10" font-weight="700" fill="#2F6B3E">③ 배반</text>
+      <text x="4" y="102" font-size="10" font-weight="700" fill="#4E7C4A">④ 유아</text>
+      <text x="176" y="102" font-size="10" font-weight="700" fill="#7A5A22">⑤ 유근</text>
+      <path d="M40 22 L58 34 M40 44 L66 54 M34 80 L94 76 M32 106 L102 96 M174 98 L124 96" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    key:'벼와 같은 배유종자지만, <b>배가 낟알의 넓은 면 아래쪽 중앙</b>에 크게 자리합니다. 배유는 바깥의 단단한 <b>각질배유</b>와 배 주변의 무른 <b>분질배유</b>로 나뉩니다.' },
+
+  { name:'콩 (쌍자엽 · 무배유종자 · 자엽 2매)',
+    kind:'무배유종자',
+    svg:`<svg viewBox="0 0 230 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:132px">
+      <path d="M40 64 q0 -44 66 -46 q70 -2 100 24 q26 22 0 44 q-30 26 -100 24 q-66 -2 -66 -46 Z" fill="#EFE0BE" stroke="#8B6B3A" stroke-width="2.4"/>
+      <path d="M52 64 q0 -34 56 -36 q60 -2 88 20 q20 16 0 32 q-28 22 -88 20 q-56 -2 -56 -36 Z" fill="#F7EED6" stroke="#C9A96B" stroke-width="1.6"/>
+      <path d="M52 64 H196" stroke="#C9A96B" stroke-width="2" stroke-dasharray="5 4"/>
+      <path d="M64 62 q6 -18 24 -18 q12 0 14 12 l-4 12 q-2 12 -16 12 q-16 0 -18 -18 Z" fill="#DFF0D4" stroke="#4E7C4A" stroke-width="1.8"/>
+      <path d="M70 70 l-16 14" stroke="#7A5A22" stroke-width="4" stroke-linecap="round"/>
+      <path d="M88 48 l-8 -16" stroke="#4E7C4A" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="46" cy="80" rx="7" ry="4" fill="#6B4E22" transform="rotate(-30 46 80)"/>
+      <text x="140" y="16" font-size="10" font-weight="700" fill="#8B6B3A">① 종피</text>
+      <text x="146" y="116" font-size="10" font-weight="700" fill="#C9A96B">② 자엽 2매</text>
+      <text x="88" y="18" font-size="10" font-weight="700" fill="#4E7C4A">③ 유아</text>
+      <text x="4" y="112" font-size="10" font-weight="700" fill="#7A5A22">④ 유근</text>
+      <text x="4" y="66" font-size="10" font-weight="700" fill="#6B4E22">⑤ 제(배꼽)</text>
+      <path d="M146 20 L122 36 M150 108 L124 88 M92 24 L86 34 M30 104 L48 88 M40 60 L44 74" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    key:'배유가 퇴화하여 없고 <b>두툼한 자엽 2매가 종자 부피의 대부분</b>을 차지하며 양분을 저장합니다. <b>유근은 제(배꼽) 바로 옆</b> 종피 가까이에 있어 발아 시 가장 먼저 밖으로 나옵니다. 유아는 두 자엽 사이에 끼어 있습니다.' },
+
+  { name:'피마자 (쌍자엽 · 배유종자 · 자엽 2매)',
+    kind:'배유종자',
+    svg:`<svg viewBox="0 0 230 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:132px">
+      <ellipse cx="118" cy="64" rx="86" ry="42" fill="#EFE4D2" stroke="#7A5A46" stroke-width="2.4"/>
+      <ellipse cx="118" cy="64" rx="78" ry="35" fill="#FBF6EC" stroke="#C9B49B" stroke-width="1.4"/>
+      <path d="M32 64 q-10 -12 2 -18 q12 -4 14 8 q1 8 -6 12 Z" fill="#D9C7A8" stroke="#7A5A46" stroke-width="1.6"/>
+      <path d="M100 34 V94 M124 34 V94" stroke="#4E7C4A" stroke-width="3.4"/>
+      <path d="M100 34 H124" stroke="#4E7C4A" stroke-width="1.6"/>
+      <path d="M112 94 V104 L104 112" stroke="#7A5A22" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+      <text x="4" y="20" font-size="10" font-weight="700" fill="#7A5A46">① 종피</text>
+      <text x="152" y="20" font-size="10" font-weight="700" fill="#B08D6A">② 배유(대부분)</text>
+      <text x="140" y="118" font-size="10" font-weight="700" fill="#4E7C4A">③ 얇은 자엽 2매</text>
+      <text x="4" y="118" font-size="10" font-weight="700" fill="#7A5A22">④ 유근</text>
+      <text x="4" y="52" font-size="9.5" font-weight="700" fill="#7A5A46">⑤ 종부</text>
+      <path d="M28 24 L52 40 M170 24 L146 44 M146 110 L128 92 M34 110 L96 108 M30 46 L38 54" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    key:'같은 쌍자엽이라도 콩과 정반대입니다. 양분은 <b>배유</b>에 있고 <b>자엽 2매는 종잇장처럼 얇은 판</b>으로 배유 속에 들어 있습니다. 즉 <b>자엽 수(2매)와 배유 유무는 별개</b>입니다. 한쪽 끝의 돌기를 <b>종부(caruncle)</b>라 합니다.' },
+
+  { name:'양파·부추 (단자엽 · 배유종자 · 자엽 1매)',
+    kind:'배유종자',
+    svg:`<svg viewBox="0 0 230 128" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:132px">
+      <path d="M74 22 Q160 18 176 62 Q188 100 130 112 Q78 118 62 84 Q50 52 74 22 Z" fill="#4A4A52" stroke="#26262C" stroke-width="2.4"/>
+      <path d="M82 32 Q152 28 166 64 Q176 96 128 104 Q84 108 72 82 Q62 56 82 32 Z" fill="#F3EFDC" stroke="#B9B29A" stroke-width="1.4"/>
+      <path d="M100 96 Q86 66 106 48 Q126 30 146 44" fill="none" stroke="#4E7C4A" stroke-width="7" stroke-linecap="round"/>
+      <path d="M100 96 Q96 106 104 110" fill="none" stroke="#7A5A22" stroke-width="6" stroke-linecap="round"/>
+      <text x="6" y="20" font-size="10" font-weight="700" fill="#26262C">① 종피(검은색)</text>
+      <text x="176" y="24" font-size="10" font-weight="700" fill="#9A9276">② 배유</text>
+      <text x="164" y="70" font-size="10" font-weight="700" fill="#4E7C4A">③ 자엽 1매</text>
+      <text x="6" y="118" font-size="10" font-weight="700" fill="#7A5A22">④ 유근</text>
+      <path d="M62 24 L78 34 M188 28 L166 44 M172 66 L146 50 M56 112 L96 108" stroke="#9AA0A6" stroke-width="0.9"/></svg>`,
+    key:'자엽이 <b>1매이고 가늘고 길게 구부러진 원통 모양</b>으로 배유 속에 들어 있습니다. 발아할 때 이 자엽이 먼저 활처럼 굽어 올라오는데, 이것이 파·양파 싹이 초기에 구부러져 나오는 이유입니다.' }
+];
+
+const GERMTYPE = {
+  name:'발아형 — 자엽이 땅 위로 나오는가?',
+  svg:`<svg viewBox="0 0 240 162" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:168px">
+    <path d="M4 88 H236" stroke="#A9793F" stroke-width="2.4"/>
+    <rect x="4" y="88" width="232" height="42" fill="#F0E2CE"/>
+    <path d="M120 6 V130" stroke="#D6D9D4" stroke-width="1" stroke-dasharray="4 4"/>
+    <path d="M60 128 V70 Q60 48 44 46" fill="none" stroke="#4E7C4A" stroke-width="4"/>
+    <path d="M44 46 Q30 44 30 32" fill="none" stroke="#4E7C4A" stroke-width="4"/>
+    <ellipse cx="24" cy="28" rx="12" ry="7" fill="#A8CE9A" stroke="#2F6B3E" stroke-width="1.6" transform="rotate(-20 24 28)"/>
+    <ellipse cx="46" cy="24" rx="12" ry="7" fill="#A8CE9A" stroke="#2F6B3E" stroke-width="1.6" transform="rotate(15 46 24)"/>
+    <path d="M35 30 V14" stroke="#4E7C4A" stroke-width="2.4"/>
+    <path d="M35 14 q8 -8 14 -2 q-6 8 -14 2" fill="#8FBF7F" stroke="#2F6B3E" stroke-width="1.2"/>
+    <path d="M60 128 q-14 -8 -20 -22 M60 120 q14 -6 20 -20" fill="none" stroke="#7A5A22" stroke-width="2.4"/>
+    <path d="M180 128 V56" fill="none" stroke="#4E7C4A" stroke-width="4"/>
+    <ellipse cx="164" cy="104" rx="13" ry="8" fill="#C9A96B" stroke="#7A5A22" stroke-width="1.6"/>
+    <ellipse cx="196" cy="104" rx="13" ry="8" fill="#C9A96B" stroke="#7A5A22" stroke-width="1.6"/>
+    <path d="M180 56 q10 -12 18 -6 q-8 12 -18 6" fill="#8FBF7F" stroke="#2F6B3E" stroke-width="1.3"/>
+    <path d="M180 56 q-10 -14 -18 -8 q8 13 18 8" fill="#8FBF7F" stroke="#2F6B3E" stroke-width="1.3"/>
+    <path d="M180 128 q-14 -6 -18 -18 M180 122 q14 -6 18 -18" fill="none" stroke="#7A5A22" stroke-width="2.4"/>
+    <text x="62" y="146" font-size="11" font-weight="800" text-anchor="middle" fill="#2F6B3E">지상자엽형</text>
+    <text x="62" y="158" font-size="9.5" text-anchor="middle" fill="#4E7C4A">콩 · 오이 · 목화</text>
+    <text x="180" y="146" font-size="11" font-weight="800" text-anchor="middle" fill="#7A5A22">지하자엽형</text>
+    <text x="180" y="158" font-size="9.5" text-anchor="middle" fill="#7A5A22">완두 · 팥 · 벼 · 옥수수</text>
+    <text x="228" y="84" font-size="9" text-anchor="end" fill="#9AA0A6">지면</text>
+</svg>`,
+  key:'<b>지상자엽형</b> — 배축(하배축)이 길게 자라 <b>자엽을 땅 위로 밀어 올림</b>(콩·오이·목화·소나무). 그래서 콩 싹에는 떡잎 두 장이 보입니다.<br><b>지하자엽형</b> — 상배축만 자라 <b>자엽은 땅속에 남음</b>(완두·팥·잠두·벼·옥수수). 그래서 완두 싹에는 떡잎이 보이지 않습니다.<div style="margin-top:6px;padding:6px 9px;background:#FFF3CD;border-left:3px solid #F4B740;border-radius:0 8px 8px 0;color:#7B4F00">💡 파종 깊이와 직결됩니다. <b>지상자엽형은 얕게</b> 심어야 자엽이 흙을 뚫고 올라옵니다.</div>'
+};
+
+// ── 그림자료 탭 렌더링 ──────────────────────────────────────
+function buildDiagrams() {
+  const sec = document.getElementById('sec9');
+  let html = '';
+
+  html += `<div class="note-box blue" style="margin-bottom:14px">
+    <div class="note-title">🖼 그림 보고 이름 쓰기 — 출제 포인트</div>
+    <div class="note-key">화서 그림을 보여주고 <b>명칭을 쓰게 하는 문제</b>가 대표적입니다.
+    아래 그림을 먼저 보고 이름을 떠올린 뒤 카드를 눌러 정답을 확인하세요.<br>
+    <button class="btn-primary" style="border:none;border-radius:9px;padding:9px 14px;margin-top:8px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit" onclick="openFigQuiz()">🎯 그림 퀴즈 시작 (화서 14종)</button>
+    </div></div>`;
+
+  html += `<div style="font-size:13px;font-weight:800;color:var(--green);margin:6px 0 10px">🌸 화서(꽃차례) 14종 — 탭하면 명칭 공개</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px">`;
+  INFLOR.forEach((d, i) => {
+    html += `<div class="q-card" style="margin:0" onclick="this.querySelector('.fig-ans').style.display=(this.querySelector('.fig-ans').style.display==='block'?'none':'block')">
+      <div style="padding:8px 6px 2px">${d.svg}</div>
+      <div style="text-align:center;font-size:10.5px;color:#9AA0A6;padding-bottom:6px">그림 ${i + 1} · 탭하여 확인</div>
+      <div class="fig-ans" style="display:none;background:#F1FAF6;border-top:1px solid var(--green-pale);padding:8px 10px;font-size:12px">
+        <b style="color:var(--green);font-size:13px">${d.name}</b><br>
+        <span style="color:#6B7280">${d.crop}</span><br>${d.tip}
+      </div></div>`;
+  });
+  html += `</div>`;
+
+  html += `<div style="font-size:13px;font-weight:800;color:var(--green);margin:20px 0 10px">✂️ 접목 방법 5종</div>`;
+  GRAFT.forEach(d => {
+    html += `<div class="q-card" style="margin-bottom:9px">
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 12px">
+        <div style="width:96px;flex-shrink:0">${d.svg}</div>
+        <div><div style="font-size:13.5px;font-weight:800;color:var(--green);margin-bottom:4px">${d.name}</div>
+        <div style="font-size:12px;color:#374151;line-height:1.7">${d.tip}</div></div>
+      </div></div>`;
+  });
+
+  html += `<div style="font-size:13px;font-weight:800;color:var(--green);margin:20px 0 10px">🔎 종자·화기 구조 도해</div>`;
+  STRUCT.forEach(d => {
+    html += `<div class="q-card" style="margin-bottom:9px;padding:10px 12px">
+      <div style="font-size:13.5px;font-weight:800;color:var(--green);margin-bottom:6px">${d.name}</div>
+      ${d.svg}
+      <div style="font-size:12px;color:#374151;line-height:1.8;margin-top:8px;background:#F1FAF6;border-radius:8px;padding:8px 10px">${d.legend}</div>
+    </div>`;
+  });
+
+  html += `<div style="font-size:13px;font-weight:800;color:var(--green);margin:20px 0 10px">🌱 종자 유형별 <b>배유·자엽·유근 위치</b> 비교</div>`;
+
+  html += `<div class="note-box brown" style="margin-bottom:12px">
+    <div class="note-title">한눈에 보는 비교표</div>
+    <table class="note-table">
+      <tr><td style="font-weight:800;color:#17202A">작물</td><td style="font-weight:800;color:#17202A">배유 / 자엽 수 / 양분 저장 위치</td></tr>
+      <tr><td>벼 · 보리 · 옥수수</td><td>배유 O / 1매(배반) / <b>배유</b></td></tr>
+      <tr><td>양파 · 부추</td><td>배유 O / 1매(원통형) / <b>배유</b></td></tr>
+      <tr><td>피마자 · 감 · 커피</td><td>배유 O / <b>2매(얇은 막)</b> / <b>배유</b></td></tr>
+      <tr><td>콩 · 팥 · 완두 · 땅콩</td><td>배유 X / 2매(두꺼움) / <b>자엽</b></td></tr>
+      <tr><td>상추 · 오이 · 밤</td><td>배유 X / 2매 / <b>자엽</b></td></tr>
+    </table>
+    <div class="note-key">
+      ⚠ <b>자주 틀리는 함정</b><br>
+      ① <b>자엽 2매 = 무배유</b>가 아닙니다 → 피마자는 <b>자엽 2매 + 배유종자</b><br>
+      ② 화본과의 자엽(배반)은 <b>저장기관이 아니라 흡수기관</b><br>
+      ③ 유근의 위치 : 화본과는 <b>종자 기부(배 쪽)</b>, 콩은 <b>제(배꼽) 바로 옆</b>
+    </div></div>`;
+
+  SEEDTYPE.forEach(d => {
+    html += `<div class="q-card" style="margin-bottom:9px;padding:10px 12px">
+      <div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px">${d.name}
+        <span style="background:${d.kind === '배유종자' ? '#2F5D9E' : '#1F6F5C'};color:#fff;font-size:10px;padding:1px 6px;border-radius:5px;margin-left:4px">${d.kind}</span></div>
+      ${d.svg}
+      <div style="font-size:12px;color:#374151;line-height:1.85;margin-top:8px;background:#F1FAF6;border-radius:8px;padding:8px 10px">${d.key}</div>
+    </div>`;
+  });
+
+  html += `<div class="q-card" style="margin-bottom:9px;padding:10px 12px">
+    <div style="font-size:13px;font-weight:800;color:var(--green);margin-bottom:6px">${GERMTYPE.name}</div>
+    ${GERMTYPE.svg}
+    <div style="font-size:12px;color:#374151;line-height:1.85;margin-top:8px;background:#F1FAF6;border-radius:8px;padding:8px 10px">${GERMTYPE.key}</div>
+  </div>`;
+
+  sec.insertAdjacentHTML('beforeend', html);
+}
+
+// ── 🎯 그림 퀴즈 (4지선다) ─────────────────────────────────
+let figList = [], figIdx = 0, figScore = 0;
+
+function openFigQuiz() {
+  stopSpeaking();
+  figList = [...INFLOR].sort(() => Math.random() - 0.5);
+  figIdx = 0; figScore = 0;
+  document.getElementById('figModal').classList.add('open');
+  showFig();
+}
+function closeFigQuiz() { document.getElementById('figModal').classList.remove('open'); }
+
+function showFig() {
+  const d = figList[figIdx];
+  const wrong = INFLOR.filter(x => x.name !== d.name).sort(() => Math.random() - 0.5).slice(0, 3);
+  const opts = [d, ...wrong].sort(() => Math.random() - 0.5);
+  document.getElementById('figNum').textContent = `그림 ${figIdx + 1} / ${figList.length}  ·  ${figScore}점`;
+  document.getElementById('figImg').innerHTML = d.svg;
+  document.getElementById('figOpts').innerHTML = opts.map(o =>
+    `<button class="fig-opt" onclick="answerFig(this,'${o.name}','${d.name}')">${o.name}</button>`).join('');
+  document.getElementById('figFb').style.display = 'none';
+}
+
+function answerFig(btn, picked, correct) {
+  document.querySelectorAll('.fig-opt').forEach(b => b.disabled = true);
+  const ok = picked === correct;
+  btn.style.background = ok ? '#D9F0E7' : '#FFE3E3';
+  btn.style.borderColor = ok ? '#1F6F5C' : '#E63946';
+  if (ok) figScore++;
+  const d = INFLOR.find(x => x.name === correct);
+  const fb = document.getElementById('figFb');
+  fb.style.display = 'block';
+  fb.innerHTML = `${ok ? '⭕ 정답!' : '❌ 정답은 <b>' + correct + '</b>'}<br><span style="color:#6B7280">${d.crop}</span><br>${d.tip}`;
+  speakText(correct + '. ' + d.crop);
+}
+
+function nextFig() {
+  figIdx++;
+  if (figIdx >= figList.length) {
+    closeFigQuiz();
+    showToast(`🎉 그림 퀴즈 완료! ${figScore} / ${figList.length}점`);
+    return;
+  }
+  showFig();
+}
+
+// ══════════════════════════════════════════════════════════
+// 헤더 높이에 맞춰 탭 위치 자동 보정 (기기별 어긋남 방지)
+// ══════════════════════════════════════════════════════════
+function fitTabs() {
+  const h = document.querySelector('.header').offsetHeight;
+  document.querySelector('.tabs').style.top = h + 'px';
+}
+window.addEventListener('resize', fitTabs);
+window.addEventListener('orientationchange', () => setTimeout(fitTabs, 200));
+
+// ══════════════════════════════════════════════════════════
+// 렌더링 시작
+// ══════════════════════════════════════════════════════════
 buildCards();
 buildFlashCards();
+buildDiagrams();
+fitTabs();
 </script>
 </body>
 </html>
