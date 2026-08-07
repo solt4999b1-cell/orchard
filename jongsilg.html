@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>종자기능사 실기 필답형 & 실물사진 감별 120 Master</title>
+<style>
+  :root {
+    --green: #1B5E20;
+    --green-light: #4CAF50;
+    --green-pale: #E8F5E9;
+    --brown: #4E342E;
+    --soil: #795548;
+    --yellow: #FBC02D;
+    --red: #D32F2F;
+    --bg: #F4F6F0;
+    --card: #FFFFFF;
+    --text: #1A1A2E;
+    --gray: #6B7280;
+    --border: #E0E0E0;
+    --shadow: 0 2px 12px rgba(27,94,32,0.10);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* 헤더 */
+  .header {
+    background: linear-gradient(135deg, #0D3B13 0%, #1B5E20 60%, #388E3C 100%);
+    padding: 20px 16px 15px;
+    text-align: center;
+    position: sticky; top: 0; z-index: 100;
+    box-shadow: 0 3px 16px rgba(0,0,0,0.18);
+  }
+  .header h1 { font-size: 18px; font-weight: 800; color: white; letter-spacing: -0.5px; }
+  .header p  { font-size: 12px; color: rgba(255,255,255,0.8); margin-top: 4px; }
+  
+  /* TTS 제어 패널 */
+  .tts-panel {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    margin-top: 10px;
+    padding: 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: white;
+    font-size: 12px;
+  }
+  .tts-row { display: flex; justify-content: center; align-items: center; gap: 15px; }
+  .tts-ctrl-group { display: flex; align-items: center; gap: 6px; }
+  .tts-panel input[type="range"] { width: 70px; accent-color: var(--yellow); }
+  .tts-panel select { 
+    background: white; border: none; border-radius: 4px; 
+    padding: 2px 6px; font-size: 12px; font-weight: bold; color: var(--green);
+  }
+  .audio-status {
+    font-weight: bold; color: var(--yellow); text-align: center; font-size: 11px;
+    min-height: 16px; display: none;
+  }
+
+  .progress-bar {
+    background: rgba(255,255,255,0.25); border-radius: 10px;
+    height: 6px; margin: 8px auto 0; max-width: 340px;
+  }
+  .progress-fill {
+    background: var(--yellow); border-radius: 10px;
+    height: 100%; width: 0%; transition: width 0.3s;
+  }
+
+  /* 탭 */
+  .tabs {
+    display: flex; overflow-x: auto; gap: 0;
+    background: white; border-bottom: 2px solid var(--green-pale);
+    padding: 0 8px; scrollbar-width: none;
+    position: sticky; top: 162px; z-index: 99;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab-btn {
+    flex-shrink: 0; padding: 10px 14px;
+    font-size: 12px; font-weight: 700; color: var(--gray);
+    background: none; border: none; cursor: pointer;
+    border-bottom: 3px solid transparent; margin-bottom: -2px;
+    font-family: inherit; white-space: nowrap;
+  }
+  .tab-btn.active { color: var(--green); border-bottom-color: var(--green); }
+
+  /* 섹션 */
+  .section { display: none; padding: 12px 12px 120px; }
+  .section.active { display: block; }
+  .section-title {
+    font-size: 14px; font-weight: 800; color: var(--green);
+    padding: 10px 0 8px; text-align: center; letter-spacing: -0.3px;
+  }
+
+  /* 카드 디자인 */
+  .q-card {
+    background: var(--card); border-radius: 12px;
+    box-shadow: var(--shadow); margin-bottom: 10px;
+    overflow: hidden; border: 1px solid var(--border);
+  }
+  .q-card.playing-now { border: 2.5px solid var(--yellow); background: #FFFDF0; }
+  .q-head {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px; cursor: pointer;
+    background: transparent;
+  }
+  .q-num {
+    flex-shrink: 0; width: 28px; height: 28px;
+    background: var(--green); color: white;
+    border-radius: 50%; font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .q-text { font-size: 14px; font-weight: 600; flex: 1; color: var(--text); }
+  .q-arrow {
+    flex-shrink: 0; color: var(--gray); font-size: 16px;
+    transition: transform 0.2s; margin-top: 2px;
+  }
+  .q-card.open .q-arrow { transform: rotate(180deg); }
+  .q-answer {
+    display: none; padding: 0 14px 14px 52px;
+    font-size: 13px; color: #1B3320;
+    border-top: 1px solid var(--green-pale);
+    background: #F1F8E9;
+  }
+  .q-card.open .q-answer { display: block; padding-top: 10px; }
+  .q-answer strong { color: var(--green); }
+
+  /* 사진 이미지 박스 스타일 */
+  .img-container {
+    background: #FFFFFF; border: 1.5px solid #A5D6A7; border-radius: 8px;
+    padding: 8px; margin: 10px 0; text-align: center;
+  }
+  .img-container img {
+    max-width: 100%; height: auto; border-radius: 6px; display: block; margin: 0 auto;
+    max-height: 220px; object-fit: contain;
+  }
+  .img-caption { font-size: 11px; color: #555; margin-top: 6px; font-weight: bold; }
+
+  /* 우측 제어 버튼 */
+  .btn-group {
+    display: flex; flex-direction: column; gap: 4px; align-items: flex-end; flex-shrink: 0;
+  }
+  .check-btn, .speaker-btn {
+    background: none; border: 1.5px solid var(--border);
+    border-radius: 20px; padding: 2px 10px; font-size: 11px;
+    color: var(--gray); cursor: pointer; font-family: inherit;
+  }
+  .check-btn.checked { background: var(--green); color: white; border-color: var(--green); }
+  .speaker-btn { background: #FFF; border-color: var(--green-light); color: var(--green); font-weight: bold; }
+
+  /* 통계 바 */
+  .stat-bar {
+    background: white; border-radius: 12px; padding: 14px;
+    margin-bottom: 12px; box-shadow: var(--shadow);
+    display: flex; gap: 12px; align-items: center;
+  }
+  .stat-item { text-align: center; flex: 1; }
+  .stat-num { font-size: 22px; font-weight: 800; color: var(--green); }
+  .stat-label { font-size: 10px; color: var(--gray); }
+  .stat-div { width: 1px; background: var(--border); height: 36px; }
+
+  /* 하단 액션 바 */
+  .action-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: white; padding: 10px 12px;
+    box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; z-index: 101;
+  }
+  .action-bar button {
+    padding: 10px 4px; border: none; border-radius: 8px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; text-align: center;
+  }
+  .btn-primary { background: var(--green); color: white; }
+  .btn-secondary { background: var(--green-pale); color: var(--green); }
+  .btn-yellow { background: var(--yellow); color: #3E2723; }
+  .btn-danger { background: var(--red); color: white; }
+
+  /* 퀴즈 모달 */
+  .quiz-modal {
+    display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6); z-index: 200;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .quiz-modal.open { display: flex; }
+  .quiz-box {
+    background: white; border-radius: 16px; padding: 24px;
+    width: 100%; max-width: 480px; max-height: 80vh; overflow-y: auto;
+  }
+  .quiz-q { font-size: 16px; font-weight: 700; margin-bottom: 16px; color: var(--text); }
+  .quiz-input {
+    width: 100%; padding: 12px; border: 2px solid var(--border);
+    border-radius: 10px; font-size: 14px; font-family: inherit;
+    margin-bottom: 12px;
+  }
+  .quiz-input:focus { border-color: var(--green); outline: none; }
+  .quiz-result {
+    padding: 12px; border-radius: 10px; font-size: 13px;
+    margin-bottom: 12px; display: none;
+  }
+  .quiz-result.correct { background: #E8F5E9; color: #1B5E20; }
+  .quiz-result.wrong   { background: #FFEBEE; color: #B71C1C; }
+  .quiz-btns { display: flex; gap: 8px; }
+
+  /* 요약 노트 스타일 */
+  .note-box { border-radius:12px; padding:14px; margin-bottom:12px; }
+  .note-box.green  { background:#F1F8E9; border:1.5px solid #C8E6C9; }
+  .note-box.brown  { background:#EFEBE9; border:1.5px solid #D7CCC8; }
+  .note-box.blue   { background:#E3F2FD; border:1.5px solid #BBDEFB; }
+  .note-title { font-size:14px; font-weight:800; margin-bottom:10px; padding-bottom:6px; border-bottom:2px solid rgba(0,0,0,0.08); color:#1A1A2E; }
+  .note-table { width:100%; border-collapse:collapse; margin-bottom:10px; font-size:13px; }
+  .note-table tr { border-bottom:1px solid rgba(0,0,0,0.07); }
+  .note-table td { padding:6px 4px; }
+  .note-table td:first-child { color:#455A64; width:50%; font-weight:600; }
+  .note-table td:last-child  { font-weight:700; color:#1B5E20; }
+  .note-key { background:rgba(255,255,255,0.7); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.9; color:#2D2D2D; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🌾 종자기능사 실기 필답형 & 실물사진 감별 120</h1>
+  <p>실제 사진 연동 모드 지원 · 화서/종자/접목/병해 감별 완벽 대비</p>
+  
+  <div class="tts-panel">
+    <div class="tts-row">
+      <div class="tts-ctrl-group">
+        <label for="ttsRate">속도: <span id="rateVal">1.0</span>x</label>
+        <input type="range" id="ttsRate" min="0.5" max="2.0" step="0.1" value="1.0" oninput="document.getElementById('rateVal').innerText=this.value">
+      </div>
+      <div class="tts-ctrl-group">
+        <label for="ttsLoop">개별반복:</label>
+        <select id="ttsLoop">
+          <option value="1" selected>1회</option>
+          <option value="2">2회</option>
+          <option value="3">3회</option>
+        </select>
+      </div>
+    </div>
+    <div class="audio-status" id="audioStatus"></div>
+  </div>
+  
+  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+
+<!-- 탭 메인 메뉴 -->
+<div class="tabs" id="tabBar">
+  <button class="tab-btn active" onclick="showTab(0)">Ⅰ 종자 감별 & 생리 (1~30)</button>
+  <button class="tab-btn" onclick="showTab(1)">Ⅱ 화서 & 화기 구조 (31~60)</button>
+  <button class="tab-btn" onclick="showTab(2)">Ⅲ 접목 & 검사계산 (61~90)</button>
+  <button class="tab-btn" onclick="showTab(3)">Ⅳ 병해충 & 법규 (91~120)</button>
+  <button class="tab-btn" onclick="showTab(4)">★ 핵심 실물사진 암기카드</button>
+  <button class="tab-btn" onclick="showTab(5)">📓 합격 핵심요약</button>
+</div>
+
+<!-- 통계 -->
+<div id="statBar" style="padding:10px 12px 0">
+  <div class="stat-bar">
+    <div class="stat-item"><div class="stat-num" id="totalStat">120</div><div class="stat-label">전체문제</div></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><div class="stat-num" id="checkedStat">0</div><div class="stat-label">학습완료</div></div>
+    <div class="stat-div"></div>
+    <div class="stat-item"><div class="stat-num" id="rateStat">0%</div><div class="stat-label">진도율</div></div>
+  </div>
+</div>
+
+<!-- 각 섹션 컨테이너 -->
+<div class="section active" id="sec0"><div class="section-title">🔍 Ⅰ. 주요 작물·잡초 종자 감별 및 생리 특성 (1~30번)</div></div>
+<div class="section" id="sec1"><div class="section-title">🌸 Ⅱ. 화서(꽃차례), 화기 구조 및 채종 기술 (31~60번)</div></div>
+<div class="section" id="sec2"><div class="section-title">✂️ Ⅲ. 접목 기술, 종자 처리 및 필수 계산식 (61~90번)</div></div>
+<div class="section" id="sec3"><div class="section-title">🐛 Ⅳ. 병해충, 잡초 감별 및 종자법 관련 규정 (91~120번)</div></div>
+<div class="section" id="sec4"><div class="section-title">★ 실제 사진 감별 연결 핵심 암기카드</div></div>
+
+<!-- 📓 합격 핵심 요약 노트 -->
+<div class="section" id="sec5">
+  <div class="section-title">📓 종자기능사 120문항 합격 핵심 요약</div>
+
+  <div class="note-box green">
+    <div class="note-title">🔍 종자 감별 및 형태 특징 요약</div>
+    <table class="note-table">
+      <tr><td>벼 종자</td><td>외영과 내영으로 둘러싸여 있으며 까락(芒)이 있거나 없음</td></tr>
+      <tr><td>보리 종자</td><td>벼보다 굵고 복면에 깊은 종구(溝) 홈이 형성되어 있음</td></tr>
+      <tr><td>콩 종자</td><td>구형 또는 타원형이며 배꼽(제) 부위 색상이 뚜렷함 (무배유)</td></tr>
+      <tr><td>옥수수 종자</td><td>자루에 밀생하며 배유 부분이 크고 평평함 (유배유)</td></tr>
+      <tr><td>피 종자 (논잡초)</td><td>벼보다 작은 달걀형으로 광택이 나고 단단함</td></tr>
+      <tr><td>메꽃 종자 (밭잡초)</td><td>검은 갈색으로 3개의 각이 진 각형 형태를 띰</td></tr>
+    </table>
+  </div>
+
+  <div class="note-box brown">
+    <div class="note-title">🌸 화서(꽃차례) 형태 핵심 요약</div>
+    <table class="note-table">
+      <tr><td>총상화서</td><td>꽃대에 자루가 있는 꽃이 아래에서 위로 피어남 (유채, 무)</td></tr>
+      <tr><td>두상화서</td><td>꽃대 끝 원판에 자루 없는 소화가 모여 피어남 (해바라기, 국화)</td></tr>
+      <tr><td>육수화서</td><td>두껍고 육질인 꽃대에 소화가 밀생하고 불염포가 싸움 (천남성, 칼라)</td></tr>
+      <tr><td>유이화서</td><td>밑으로 늘어지는 자루 없는 단성화 꽃차례 (버드나무, 자작나무)</td></tr>
+      <tr><td>수상화서</td><td>긴 꽃대에 자루 없는 꽃이 직접 붙음 (보리, 밀)</td></tr>
+    </table>
+  </div>
+
+  <div class="note-box blue">
+    <div class="note-title">📐 필수 계산식 및 법규 주요 요약</div>
+    <div class="note-key">
+      <b>발아율 (%)</b> = (발아 종자 수 / 총 파종 수) × 100<br>
+      <b>순도율 (%)</b> = (순정 종자 무게 / 검사 시료 무게) × 100<br>
+      <b>수분 함량 (%)</b> = [(건조 전 - 건조 후) / 건조 전] × 100<br>
+      <b>순량발아율 (%)</b> = (순도율 × 발아율) / 100<br><br>
+      <b>볍씨 온탕소독</b>: 60℃ 물에 10분간 침지<br>
+      <b>DUS 검사</b>: 구별성(Distinctness), 균일성(Uniformity), 안정성(Stability)<br>
+      <b>품종보호권 유효기간</b>: 일반 작물 20년, 과수/목본 25년
+    </div>
+  </div>
+</div>
+
+<!-- 하단 스마트 액션 바 -->
+<div class="action-bar">
+  <button class="btn-secondary" onclick="openQuiz()">🎲 랜덤 퀴즈</button>
+  <button class="btn-secondary" onclick="toggleAll()">📖 전체펼치기</button>
+  <button class="btn-danger" onclick="stopSpeaking()">🛑 음성 정지</button>
+  
+  <button class="btn-yellow" onclick="playSectionAudio()">▶️ 메뉴별 다듣기</button>
+  <button class="btn-primary" onclick="playAllAudio()">📢 전체 다듣기</button>
+  <button class="btn-secondary" style="background:#E5E7EB; color:#374151;" onclick="window.scrollTo(0,0)">⬆️ 맨 위로</button>
+</div>
+
+<!-- 퀴즈 모달 -->
+<div class="quiz-modal" id="quizModal">
+  <div class="quiz-box">
+    <div style="font-size:12px;color:#9E9E9E;margin-bottom:8px" id="quizNum">문제 1/10</div>
+    <div class="quiz-q" id="quizQ"></div>
+    <input class="quiz-input" id="quizInput" placeholder="정답을 입력하세요" onkeypress="if(event.key==='Enter')checkQuiz()">
+    <div class="quiz-result" id="quizResult"></div>
+    <div class="quiz-btns">
+      <button class="btn-secondary" onclick="closeQuiz()">닫기</button>
+      <button class="btn-primary" id="quizBtn" onclick="checkQuiz()">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// 사진 연동용 이미지 박스 생성 함수 (이미지가 없으면 대체 텍스트 출력)
+function createImgBox(fileName, caption) {
+  return `<div class="img-container">
+    <img src="./images/${fileName}" alt="${caption}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\\'padding:10px; font-size:11px; color:#777; background:#F5F5F5; border-radius:6px;\\'>📷 [${caption}] 사진 저장 위치: ./images/${fileName}</div>';">
+    <div class="img-caption">▲ [실기 감별 사진] ${caption}</div>
+  </div>`;
+}
+
+// 종자기능사 실기 출제 문제 데이터 120문항
+const QUESTIONS = [
+  // Ⅰ. 종자 감별 및 생리 (1 ~ 30)
+  {n:1, q:"[화상 감별] 외영과 내영으로 쌓여 있으며 끝에 까락(芒)이 있거나 없고 길쭉한 곡류 종자의 명칭을 쓰시오.", a:`<strong>벼 종자</strong><br>특징: 껍질(외영·내영)로 싸여 있으며 유배유 종자임${createImgBox('rice.jpg', '벼 종자 외형')}`, cat:0},
+  {n:2, q:"[화상 감별] 복면(배면) 중앙에 깊은 종구(홈)가 세로로 길게 파여 있는 곡류 종자의 명칭을 쓰시오.", a:`<strong>보리 종자</strong><br>특징: 벼보다 통통하며 중앙에 종구(홈)가 형성됨${createImgBox('barley.jpg', '보리 종자 종구 홈')}`, cat:0},
+  {n:3, q:"[화상 감별] 둥글거나 타원형이며 배꼽(제) 부위의 색깔 선이 뚜렷한 대표적 무배유 종자 명칭을 쓰시오.", a:`<strong>콩 종자</strong><br>특징: 무배유 종자로 2개의 비대한 자엽에 영양분을 저장함${createImgBox('bean.jpg', '콩 종자 배꼽')}`, cat:0},
+  {n:4, q:"[화상 감별] 대표적인 논 일년생 잡초로 벼 종자보다 훨씬 작고 윤이 나는 달걀 모양 종자 명칭을 쓰시오.", a:`<strong>피 종자 (잡초)</strong><br>특징: 논에 서식하며 벼 종자보다 훨씬 작고 표면이 매끄러움${createImgBox('pi.jpg', '논잡초 피 종자')}`, cat:0},
+  {n:5, q:"[화상 감별] 밭에 주로 발생하며 흑갈색을 띠고 3개의 모서리가 각진 형태를 가진 잡초 종자 명칭을 쓰시오.", a:`<strong>메꽃 종자 (잡초)</strong><br>특징: 3개의 평면 각이 진 검은 갈색 종자${createImgBox('bindweed.jpg', '밭잡초 메꽃 종자')}`, cat:0},
+  {n:6, q:"옥수수 종자의 외형과 내부 배유 구조 형태를 쓰시오.", a:`<strong>유배유 종자 (배유 조직에 녹말 저장)</strong>${createImgBox('corn.jpg', '옥수수 종자 단면')}`, cat:0},
+  {n:7, q:"상추, 담배 종자의 광 반응 생리적 발아 특성을 쓰시오.", a:"<strong>광발아성 종자 (호광성 종자)</strong>", cat:0},
+  {n:8, q:"오이, 호박, 토마토 종자의 광 반응 생리적 발아 특성을 쓰시오.", a:"<strong>암발아성 종자 (혐광성 종자)</strong>", cat:0},
+  {n:9, q:"토마토, 고추 종자의 외형적 모양 특징을 쓰시오.", a:"<strong>납작한 편평한 신장형(콩팥 모양) 종자</strong>", cat:0},
+  {n:10, q:"무, 배추 종자의 외형 형태와 구별 특성을 쓰시오.", a:"<strong>작은 적갈색 또는 흑갈색 구형(구슬 모양) 종자</strong>", cat:0},
+  {n:11, q:"양파, 파 종자의 색상과 형태 특성을 쓰시오.", a:"<strong>검은색(흑색)의 주름진 각형 종자</strong>", cat:0},
+  {n:12, q:"당근 종자의 표면 외형상 특징을 쓰시오.", a:"<strong>종자 표면에 작은 가시 같은 돌기가 발달함</strong>", cat:0},
+  {n:13, q:"시금치 종자의 두 가지 외형적 형태 구분을 쓰시오.", a:"<strong>유극종(가시 있는 종자)과 무극종(가시 없는 종자)</strong>", cat:0},
+  {n:14, q:"완두, 상추, 콩 종자의 공통적인 배유 유무 분류를 쓰시오.", a:"<strong>무배유 종자</strong>", cat:0},
+  {n:15, q:"벼, 보리, 밀, 옥수수 종자의 공통적인 배유 유무 분류를 쓰시오.", a:"<strong>유배유 종자</strong>", cat:0},
+  {n:16, q:"귀리 종자의 외형적 특징과 까락 발달 유무를 쓰시오.", a:"<strong>원통형으로 길쭉하며 긴 까락이 발달되어 있음</strong>", cat:0},
+  {n:17, q:"호밀 종자의 외형 형태 특징을 쓰시오.", a:"<strong>보리보다 작고 가늘며 표면에 미세한 주름이 형성되어 있음</strong>", cat:0},
+  {n:18, q:"수수 종자의 외형 모양과 색상 특성을 쓰시오.", a:"<strong>구형에 가까운 타원형으로 적갈색을 띰</strong>", cat:0},
+  {n:19, q:"해바라기 종자의 외형 표면 줄무늬 특징을 쓰시오.", a:"<strong>검은색과 흰색 줄무늬가 세로로 평행하게 그려짐</strong>", cat:0},
+  {n:20, q:"우엉 종자의 발아 생리 특성과 표면 특징을 쓰시오.", a:"<strong>광발아성 종자이며 흑갈색 얼룩무늬가 있음</strong>", cat:0},
+  {n:21, q:"밭잡초 바랭이 종자의 모양 특성을 쓰시오.", a:"<strong>작은 바소꼴 형태로 표면에 미세한 털이 있음</strong>", cat:0},
+  {n:22, q:"밭잡초 여뀌 종자의 외형적 특징을 쓰시오.", a:"<strong>검은색 윤이 나는 3각 모서리가 진 각형 종자</strong>", cat:0},
+  {n:23, q:"논 다년생 잡초 중 지하 덩이줄기(괴경)로 번식하는 잡초 명칭을 쓰시오.", a:"<strong>올방개</strong>", cat:0},
+  {n:24, q:"논 잡초 중 방동사니과 일년생/다년생 잡초 명칭을 쓰시오.", a:"<strong>너도방동사니</strong>", cat:0},
+  {n:25, q:"논 다년생 잡초로 잎이 넓은 수생 잡초 명칭을 쓰시오.", a:"<strong>올미</strong>", cat:0},
+  {n:26, q:"종자 휴면의 주요 내부 원인 3가지를 쓰시오.", a:"① <strong>종피의 불투수성</strong> ② <strong>종피의 기계적 저해</strong> ③ <strong>배의 미숙 및 생리적 휴면</strong>", cat:0},
+  {n:27, q:"종자 퇴화의 주요 원인 3가지를 쓰시오.", a:"① <strong>유전적 퇴화</strong> ② <strong>생리적 퇴화</strong> ③ <strong>병리적 퇴화</strong>", cat:0},
+  {n:28, q:"종자 활력 검사 중 테트라졸륨(TTZ) 검사의 발색 원리를 쓰시오.", a:"<strong>살아있는 배 조직의 탈수소효소가 TTZ를 환원시켜 붉은색 포르마잔을 형성함</strong>", cat:0},
+  {n:29, q:"속씨식물의 수정 시 배유와 배의 염색체 수(n)를 각각 쓰시오.", a:"<strong>배유: 3n / 배: 2n</strong>", cat:0},
+  {n:30, q:"종자의 세력(Vigor)을 검사하는 대표적 방법 2가지를 쓰시오.", a:"① <strong>전기전도도 검사법</strong> ② <strong>저온 발아 검사법</strong>", cat:0},
+
+  // Ⅱ. 화서 & 화기구조 및 채종 (31 ~ 60)
+  {n:31, q:"긴 중심 꽃대에 자루가 있는 여러 개의 꽃이 아래에서 위로 순차적으로 달리는 화서 명칭과 작물 2가지를 쓰시오.", a:`<strong>총상화서 (Raceme)</strong><br>대표 작물: <strong>유채, 무</strong>${createImgBox('raceme.jpg', '총상화서 구조')}`, cat:1},
+  {n:32, q:"꽃대 끝에 자루 없는 작은 소화들이 원판 모양으로 밀집하여 하나의 꽃처럼 보이는 화서 명칭과 작물 2가지를 쓰시오.", a:`<strong>두상화서 (Capitulum)</strong><br>대표 작물: <strong>해바라기, 국화</strong>${createImgBox('capitulum.jpg', '두상화서 구조')}`, cat:1},
+  {n:33, q:"두껍고 육질인 꽃대에 자루 없는 꽃이 밀생하고 대형 포가 싸고 있는 화서 명칭을 쓰시오.", a:`<strong>육수화서 (Spadix)</strong><br>대표 식물: <strong>천남성, 칼라, 토란</strong>${createImgBox('spadix.jpg', '육수화서 구조')}`, cat:1},
+  {n:34, q:"늘어지는 꽃대에 자루 없는 단성화 꽃이 피는 유이화서(미상화서) 나무 2가지를 쓰시오.", a:"<strong>버드나무, 자작나무</strong>", cat:1},
+  {n:35, q:"긴 꽃대에 자루 없는 꽃이 직접 붙어 피는 수상화서 작물 2가지를 쓰시오.", a:"<strong>보리, 밀</strong>", cat:1},
+  {n:36, q:"꽃대 끝 한 점에서 자루 길이가 같은 꽃들이 우산 모양으로 피는 산형화서 작물 2가지를 쓰시오.", a:"<strong>당근, 미나리</strong>", cat:1},
+  {n:37, q:"벼, 수수처럼 가지가 갈라져 여러 소화가 달리는 원추화서 작물 2가지를 쓰시오.", a:"<strong>벼, 수수</strong>", cat:1},
+  {n:38, q:"꽃대 끝의 꽃이 먼저 피고 그 아래에서 옆 가지가 나와 피는 취산화서 식물을 쓰시오.", a:"<strong>지치, 작약</strong>", cat:1},
+  {n:39, q:"꽃의 기본 4대 구성 요소를 쓰시오.", a:"<strong>꽃받침, 꽃잎, 수술, 암술</strong>", cat:1},
+  {n:40, q:"암술의 기본 3대 구조 부위를 쓰시오.", a:`<strong>암술머리(주두), 암술대(화주), 씨방(자방)</strong>${createImgBox('pistil.jpg', '암술 구조도')}`, cat:1},
+  {n:41, q:"수술의 기본 2대 구조 부위를 쓰시오.", a:"<strong>꽃밥(약), 수술대(화사)</strong>", cat:1},
+  {n:42, q:"교배 작업 시 수술의 꽃밥을 제거하여 자가 수분을 차단하는 작업 명칭을 쓰시오.", a:"<strong>제웅 (Emasculation)</strong>", cat:1},
+  {n:43, q:"암꽃과 수꽃이 한 포기 내 다른 위치에 피는 자웅이화 작물 2가지를 쓰시오.", a:"<strong>옥수수, 오이</strong>", cat:1},
+  {n:44, q:"암꽃과 수꽃이 서로 다른 포기에 피는 자웅이주 식물 2가지를 쓰시오.", a:"<strong>시금치, 삼(대마)</strong>", cat:1},
+  {n:45, q:"벼의 꽃을 둘러싸고 있는 외영과 내영의 합칭 명칭을 쓰시오.", a:"<strong>왕겨</strong>", cat:1},
+  {n:46, q:"개화를 유도하기 위해 식물에 일정 기간 저온 처리를 가하는 생리 현상을 쓰시오.", a:"<strong>춘화 처리 (버널리제이션)</strong>", cat:1},
+  {n:47, q:"식물이 자기 꽃가루로 수정하여 결실하는 양식을 쓰시오.", a:"<strong>자화수정 (자가수정)</strong>", cat:1},
+  {n:48, q:"타 포기의 꽃가루가 수분되어 결실하는 양식을 쓰시오.", a:"<strong>타화수정 (타가수정)</strong>", cat:1},
+  {n:49, q:"자가불화합성을 가진 대표적 십자화과 작물 2가지를 쓰시오.", a:"<strong>무, 배추</strong>", cat:1},
+  {n:50, q:"웅성 불임성을 이용해 F1 종자를 생산하는 작물 2가지를 쓰시오.", a:"<strong>양파, 고추</strong>", cat:1},
+  {n:51, q:"웅성 불임성의 대표적인 3가지 표현형 발현 형태를 쓰시오.", a:"① <strong>유전적 웅성불임</strong> ② <strong>세포질적 웅성불임</strong> ③ <strong>세포질-유전적 웅성불임</strong>", cat:1},
+  {n:52, q:"타가수정 작물 채종 시 고립거리를 확보해야 하는 주요 목적을 쓰시오.", a:"<strong>타 품종 꽃가루 교잡에 의한 유전적 오염 방지</strong>", cat:1},
+  {n:53, q:"정부 보급 종자 생산 수증 체계 순서를 순서대로 나열하시오.", a:"<strong>보증종자(원원종대) → 원원종 → 원종 → 보급종</strong>", cat:1},
+  {n:54, q:"종자 채종의 가장 적절한 수확 적기를 생리적 명칭으로 쓰시오.", a:"<strong>생리적 성숙기 (황숙기 또는 성숙기)</strong>", cat:1},
+  {n:55, q:"종자용 벼 건조 시 종자 손상을 막기 위한 건조 적정 열풍 온도를 쓰시오.", a:"<strong>40 ~ 45℃ 이하</strong>", cat:1},
+  {n:56, q:"종자의 수명 기간에 따른 3가지 분류 명칭을 쓰시오.", a:"① <strong>단명 종자</strong> ② <strong>상명 종자</strong> ③ <strong>장명 종자</strong>", cat:1},
+  {n:57, q:"단명 종자에 속하는 채소 대표 3가지를 쓰시오.", a:"<strong>고추, 파, 양파</strong>", cat:1},
+  {n:58, q:"장명 종자에 속하는 대표 작물 3가지를 쓰시오.", a:"<strong>콩, 알파파, 클로버</strong>", cat:1},
+  {n:59, q:"종자 장기 보관 시 밀폐 용기 밀폐 저장을 수행하는 목적을 쓰시오.", a:"<strong>외부 습도 흡수 차단 및 해충/균 침입 방지</strong>", cat:1},
+  {n:60, q:"수확 후 일정 기간 두어 종자 성숙을 도모하는 작물 관리 조치를 쓰시오.", a:"<strong>후숙 (숙성)</strong>", cat:1},
+
+  // Ⅲ. 접목 & 검사계산 (61 ~ 90)
+  {n:61, q:"수박, 오이 접목 시 대목과 접수의 줄기 측면 절단면을 맞붙여 고정하는 접목법 명칭을 쓰시오.", a:`<strong>맞접 (인접)</strong><br>특징: 뿌리가 유지되어 활착률이 매우 높음${createImgBox('grafting.jpg', '맞접 절차 구조')}`, cat:2},
+  {n:62, q:"대목 줄기 끝을 쪼개고 깎아낸 접수를 끼워 넣는 과수 접목법 명칭을 쓰시오.", a:"<strong>깍기접 (절접)</strong>", cat:2},
+  {n:63, q:"토마토, 가지에 주로 쓰이며 핀이나 튜브로 접목 부위를 고정하는 접목법을 쓰시오.", a:"<strong>핀접 (튜브접)</strong>", cat:2},
+  {n:64, q:"대목에 대각선으로 홈을 내고 접수를 매립하듯 꽂는 접목법을 쓰시오.", a:"<strong>호접 (홈접)</strong>", cat:2},
+  {n:65, q:"수박 접목 시 만할병(시들음병) 저항성을 위해 사용하는 대목 작물을 쓰시오.", a:"<strong>박 또는 호박</strong>", cat:2},
+  {n:66, q:"접목 부위 형성층이 치유되며 생성되는 세포 조직 명칭을 쓰시오.", a:"<strong>유합 조직 (캘러스)</strong>", cat:2},
+  {n:67, q:"볍씨 온탕소독 적정 물의 온도와 침지 시간을 쓰시오.", a:"<strong>60℃ 물에 10분간 침지</strong>", cat:2},
+  {n:68, q:"고구마 수확 후 상처를 치유하는 큐어링 적정 온도와 상대습도를 쓰시오.", a:"<strong>온도 32~33℃, 상대습도 90~95%</strong>", cat:2},
+  {n:69, q:"씨감자 큐어링 적정 온도와 상대습도를 쓰시오.", a:"<strong>온도 12~15℃, 상대습도 80~85%</strong>", cat:2},
+  {n:70, q:"발아율(%) 계산 공식을 쓰시오.", a:"<strong>(발아 종자 수 / 총 파종 종자 수) × 100</strong>", cat:2},
+  {n:71, q:"순도율(%) 계산 공식을 쓰시오.", a:"<strong>(순정 종자 무게 / 검사 시료 무게) × 100</strong>", cat:2},
+  {n:72, q:"수분 함량(%) 계산 공식을 쓰시오.", a:"<strong>[(건조 전 무게 - 건조 후 무게) / 건조 전 무게] × 100</strong>", cat:2},
+  {n:73, q:"순도율이 90%이고 발아율이 80%일 때 순량발아율(진율, %)을 구하시오.", a:"<strong>72%</strong> [공식: (90 × 80) / 100]", cat:2},
+  {n:74, q:"순정 종자 1,000립의 건조 무게를 뜻하는 수량 지표를 쓰시오.", a:"<strong>천립중 (g)</strong>", cat:2},
+  {n:75, q:"발아 검사 단기간 내 최대 발아된 종자 비율을 뜻하는 지표를 쓰시오.", a:"<strong>발아세 (%)</strong>", cat:2},
+  {n:76, q:"접목 직후 활착 관리에 최절한 상대습도를 쓰시오.", a:"<strong>90 ~ 95% 이상</strong>", cat:2},
+  {n:77, q:"줄기나 잎을 잘라 흙에 심어 발근시키는 영양 번식법을 쓰시오.", a:"<strong>꺾꽂이 (삽목)</strong>", cat:2},
+  {n:78, q:"딸기의 주된 영양 번식 줄기 기관 명칭을 쓰시오.", a:"<strong>런너 (포복지)</strong>", cat:2},
+  {n:79, q:"바이러스 무병묘를 생산할 때 사용하는 조직 부위를 쓰시오.", a:"<strong>생장점</strong>", cat:2},
+  {n:80, q:"종자 수용액 처리(PEG 등)로 발아 속도와 균일도를 높이는 기술 명칭을 쓰시오.", a:"<strong>프라이밍 (Priming) 처리</strong>", cat:2},
+  {n:81, q:"작고 불규칙한 종자를 미세 자재로 코팅하여 일정 규격으로 만드는 기술을 쓰시오.", a:"<strong>펠렛팅 (Pelleting) 종자</strong>", cat:2},
+  {n:82, q:"종자 표면에 농약이나 착색 피막을 얇게 씌우는 기술을 쓰시오.", a:"<strong>필름 코팅 (Film coating)</strong>", cat:2},
+  {n:83, q:"종자 정선 방법 중 바람이나 기류 차이를 이용하는 선별법을 쓰시오.", a:"<strong>풍선 (풍력 정선)</strong>", cat:2},
+  {n:84, q:"볍씨 염수선 시 메벼와 찹벼의 적정 염수 비중 수치를 쓰시오.", a:"<strong>메벼: 1.13 / 찹벼: 1.08</strong>", cat:2},
+  {n:85, q:"종자 수분 측정 고온 건조기법의 표준 온도 조건 2가지를 쓰시오.", a:"① <strong>130 ~ 133℃ (1시간)</strong> ② <strong>103 ± 2℃ (17시간)</strong>", cat:2},
+  {n:86, q:"종자 발아지수(GI) 산출 시 사용되는 2가지 측정 요소를 쓰시오.", a:"<strong>일자별 발아 종자 수와 해당 발아 일수</strong>", cat:2},
+  {n:87, q:"순도 검사 시 구분하는 3가지 물리적 시료 대상을 쓰시오.", a:"① <strong>순정 종자</strong> ② <strong>이물</strong> ③ <strong>타종자</strong>", cat:2},
+  {n:88, q:"국제종자검사협회 약어 표기를 쓰시오.", a:"<strong>ISTA</strong>", cat:2},
+  {n:89, q:"수분 측정 시료를 밀폐 용기에 수송 보관해야 하는 이유를 쓰시오.", a:"<strong>시료의 수분 증발 및 공기 중 수분 흡수 변동 차단</strong>", cat:2},
+  {n:90, q:"종자 검사 시 대량 종자 더미에서 제일 먼저 수거하는 시료 명칭을 쓰시오.", a:"<strong>1차 시료 (Primary sample)</strong>", cat:2},
+
+  // Ⅳ. 병해충, 잡초 & 법규 (91 ~ 120)
+  {n:91, q:"[화상 감별] 고추 과실 표면에 동심원을 그리며 움푹 들어간 흑갈색 병반을 형성하는 종자 전염성 병해 명칭을 쓰시오.", a:`<strong>고추 탄저병</strong>${createImgBox('anthracnose.jpg', '고추 탄저병 병반')}`, cat:3},
+  {n:92, q:"[화상 감별] 벼의 잎이나 이삭목에 紡錘形(방사형/방추형) 갈색 병반을 형성하는 병해 명칭을 쓰시오.", a:`<strong>벼 도열병</strong>${createImgBox('blast.jpg', '벼 도열병 병반')}`, cat:3},
+  {n:93, q:"벼 키다리병의 주요 증상과 병원균 분비 물질을 쓰시오.", a:"증상: 벼가 이상 웃자람 / 물질: <strong>지베렐린</strong>", cat:3},
+  {n:94, q:"배추 무름병의 병원균 종류와 특징을 쓰시오.", a:"종류: <strong>세균성 병해</strong> / 특징: 조직이 무르고 심한 악취 발생", cat:3},
+  {n:95, q:"감자 잎말림 바이러스(PLRV)를 전염시키는 매개충을 쓰시오.", a:"<strong>복숭아혹진딧물</strong>", cat:3},
+  {n:96, q:"볍씨 속에서 월동하며 벼 잎 끝을 말라죽게 하는 선충을 쓰시오.", a:"<strong>벼잎선충</strong>", cat:3},
+  {n:97, q:"벼 겉깜부기병의 주요 전염 경로를 쓰시오.", a:"<strong>종자 전염 (개화기 침입 내부 월동)</strong>", cat:3},
+  {n:98, q:"보리 붉은곰팡이병 발생 기후 조건을 쓰시오.", a:"<strong>출수기 전후 비가 자주 오고 다습한 기후</strong>", cat:3},
+  {n:99, q:"곡물 저장 중 쌀알 내부를 가해하는 저장 해충 2가지를 쓰시오.", a:"<strong>쌀바구미, 화랑곡나방</strong>", cat:3},
+  {n:100, q:"채소류 노균병 발생 환경 조건 2가지를 쓰시오.", a:"① <strong>저온다습 환경</strong> ② <strong>통풍 불량</strong>", cat:3},
+  {n:101, q:"논에 발생하는 대표적인 일년생 잡초 2가지를 쓰시오.", a:"<strong>피, 물달개비</strong>", cat:3},
+  {n:102, q:"밭에 발생하는 대표적인 잡초 2가지를 쓰시오.", a:"<strong>여뀌, 메꽃</strong>", cat:3},
+  {n:103, q:"60℃ 따뜻한 물을 이용하는 친환경 종자 소독법을 쓰시오.", a:"<strong>온탕 소독법</strong>", cat:3},
+  {n:104, q:"가루 약제를 종자 표면에 묻히는 소독법을 쓰시오.", a:"<strong>분의 소독법</strong>", cat:3},
+  {n:105, q:"고구마 덩이뿌리를 검게 썩히는 대표 전염 병해를 쓰시오.", a:"<strong>검은무늬병 (검은썩음병)</strong>", cat:3},
+  {n:106, q:"보리의 영줄기 이삭 마디당 달리는 띌 알 수에 따른 두 가지 구분 명칭을 쓰시오.", a:"<strong>두줄보리(이조보리) 및 여섯줄보리(육조보리)</strong>", cat:3},
+  {n:107, q:"씨감자 바이러스 무병묘 성분 검사에 정밀하게 사용되는 기법 명칭을 쓰시오.", a:"<strong>ELISA 검사법 (효소면역측정법) 또는 RT-PCR</strong>", cat:3},
+  {n:108, q:"볍씨로 전염되며 이삭이 하얗게 마르고 썩는 세균성 병해 명칭을 쓰시오.", a:"<strong>벼 세균성알마름병</strong>", cat:3},
+  {n:109, q:"토양 비옥도가 낮을 때 벼 잎에 참깨 모양 작은 갈색 점을 형성하는 병해를 쓰시오.", a:"<strong>벼 깨씨무늬병</strong>", cat:3},
+  {n:110, q:"콩 종피 표면에 붉은 자색 반점을 형성하는 종자 전염성 병해 명칭을 쓰시오.", a:"<strong>콩 자반병 (자색반점병)</strong>", cat:3},
+  {n:111, q:"종자 분의 소독 시 약제가 종자 표면에 잘 부착되도록 돕는 보조 물질을 쓰시오.", a:"<strong>전착제</strong>", cat:3},
+  {n:112, q:"저장 곡물 겉면에 거미줄을 치고 곡류를 가해하는 저장 나방 해충 명칭을 쓰시오.", a:"<strong>화랑곡나방</strong>", cat:3},
+  {n:113, q:"잡초 씨앗이 전파되는 대표적 자연 전달 수단 3가지를 쓰시오.", a:"① <strong>바람(풍력)</strong> ② <strong>물(수력)</strong> ③ <strong>동물 및 사람</strong>", cat:3},
+  {n:114, q:"영양 기관(괴경 등)으로 지속 번식하는 논 다년생 잡초 2가지를 쓰시오.", a:"<strong>올방개, 가래</strong>", cat:3},
+  {n:115, q:"제초제 처리 시기에 따른 3가지 분류 기준을 쓰시오.", a:"① <strong>파종 전 처리</strong> ② <strong>파종 후 발아 전 처리</strong> ③ <strong>생육기(발아 후) 처리</strong>", cat:3},
+  {n:116, q:"종자 포장 겉면에 반드시 보증 명시해야 할 필수 기재 사항 4가지를 쓰시오.", a:"① <strong>품종명</strong> ② <strong>포장년월</strong> ③ <strong>발아율</strong> ④ <strong>보증유효기간</strong>", cat:3},
+  {n:117, q:"종자업 등록 시 법적으로 필적으로 갖추어야 할 자격 요건 2가지를 쓰시오.", a:"① <strong>종자보증 기술자(종자기능사 이상) 확보</strong> ② <strong>지정 시설 및 장비 구비</strong>", cat:3},
+  {n:118, q:"종자법 상 품종보호권의 유효기간(일반 작물 vs 과수/목본)을 쓰시오.", a:"<strong>일반 작물: 20년 / 과수 및 목본류: 25년</strong>", cat:3},
+  {n:119, q:"신품종 등록을 위한 DUS 검사의 3대 요건 한글 명칭을 쓰시오.", a:"① <strong>구별성</strong> ② <strong>균일성</strong> ③ <strong>안정성</strong>", cat:3},
+  {n:120, q:"종자 보관 창고 관리 시 발아력을 보존하는 3대 환경 관리 요소를 쓰시오.", a:"① <strong>저온 유지</strong> ② <strong>저습(건조) 유지</strong> ③ <strong>병해충 차단</strong>", cat:3}
+];
+
+// 실물 사진 연동 암기카드 (30개)
+const FLASHCARDS = [
+  {front:"벼 종자 특징", back:`외영·내영으로 싸임, 유배유${createImgBox('rice.jpg', '벼 종자')}`},
+  {front:"보리 종자 특징", back:`복면에 길고 깊은 종구(홈) 형성${createImgBox('barley.jpg', '보리 종자')}`},
+  {front:"콩 종자 특징", back:`구형·타원형, 배꼽 뚜렷, 무배유${createImgBox('bean.jpg', '콩 종자')}`},
+  {front:"피 종자 (논잡초)", back:`벼보다 작고 윤나며 단단함${createImgBox('pi.jpg', '피 종자')}`},
+  {front:"메꽃 종자 (밭잡초)", back:`흑갈색, 3개 각이 진 각형${createImgBox('bindweed.jpg', '메꽃 종자')}`},
+  {front:"총상화서 대표 작물", back:`유채, 무, 아까시나무${createImgBox('raceme.jpg', '총상화서')}`},
+  {front:"두상화서 대표 작물", back:`해바라기, 국화, 민들레${createImgBox('capitulum.jpg', '두상화서')}`},
+  {front:"육수화서 대표 식물", back:`천남성, 칼라, 토란${createImgBox('spadix.jpg', '육수화서')}`},
+  {front:"유이/미상화서 대표 나무", back:"버드나무, 자작나무, 밤나무"},
+  {front:"수상화서 대표 작물", back:"보리, 밀, 질경이"},
+  {front:"산형화서 대표 작물", back:"당근, 미나리, 파"},
+  {front:"꽃의 4대 구성 요소", back:"꽃받침, 꽃잎, 수술, 암술"},
+  {front:"수술 꽃밥 제거 작업", back:"제웅 (Emasculation)"},
+  {front:"유배유 종자 3가지", back:"벼, 보리, 옥수수"},
+  {front:"무배유 종자 3가지", back:"콩, 팥, 완두"},
+  {front:"광발아성 종자 3가지", back:"상추, 담배, 우엉"},
+  {front:"암발아성 종자 3가지", back:"오이, 호박, 토마토"},
+  {front:"볍씨 온탕소독 조건", back:"60℃ 물에 10분간 침지"},
+  {front:"고구마 큐어링 조건", back:"32~33℃, 습도 90~95%, 3~4일"},
+  {front:"씨감자 큐어링 조건", back:"12~15℃, 습도 80~85%, 1주일"},
+  {front:"수박 접목 대목 작물", back:`박 또는 호박${createImgBox('grafting.jpg', '맞접 절차')}`},
+  {front:"자가불화합성 작물", back:"무, 배추 (십자화과)"},
+  {front:"딸기 주 번식 기관", back:"런너 (포복지)"},
+  {front:"무병묘 생산 조직 부위", back:"생장점"},
+  {front:"벼 키다리병 유발 물질", back:"지베렐린"},
+  {front:"벼 도열병 병반 특징", back:`방추형 갈색 병반${createImgBox('blast.jpg', '벼 도열병')}`},
+  {front:"고추 탄저병 병반 특징", back:`과실 표면 동심원 움푹 들어간 병반${createImgBox('anthracnose.jpg', '고추 탄저병')}`},
+  {front:"배추 무름병 특징", back:"세균성, 무르고 심한 악취"},
+  {front:"감자 바이러스 매개충", back:"복숭아혹진딧물"},
+  {front:"볍씨 내 월동 선충", back:"벼잎선충"}
+];
+
+const checked = JSON.parse(localStorage.getItem('seed_checked') || '{}');
+let currentTabIdx = 0;
+
+let audioQueue = [];
+let queueIndex = 0;
+let isContinuousPlaying = false;
+
+function buildCards() {
+  const secs = [0,1,2,3];
+  secs.forEach(cat => {
+    const sec = document.getElementById('sec'+cat);
+    if(!sec) return;
+    QUESTIONS.filter(q=>q.cat===cat).forEach(q=>{
+      const card = document.createElement('div');
+      card.className = 'q-card' + (checked[q.n] ? ' checked-card' : '');
+      card.id = 'card'+q.n;
+      card.innerHTML = `
+        <div class="q-head" onclick="toggleCard(${q.n})">
+          <div class="q-num">${q.n}</div>
+          <div class="q-text">${q.q}</div>
+          <div class="btn-group">
+            <button class="speaker-btn" onclick="event.stopPropagation();speakSingleQuestion(${q.n})">🔊 읽기</button>
+            <button class="check-btn ${checked[q.n]?'checked':''}" onclick="event.stopPropagation();toggleCheck(${q.n})">
+              ${checked[q.n]?'✓ 완료':'학습완료'}
+            </button>
+          </div>
+          <div class="q-arrow">▾</div>
+        </div>
+        <div class="q-answer">${q.a}</div>`;
+      sec.appendChild(card);
+    });
+  });
+  updateStats();
+}
+
+function buildFlashCards() {
+  const sec = document.getElementById('sec4');
+  FLASHCARDS.forEach((fc, i) => {
+    const d = document.createElement('div');
+    d.style.cssText = 'background:white;border-radius:12px;box-shadow:0 2px 8px rgba(27,94,32,0.1);margin-bottom:8px;overflow:hidden';
+    d.innerHTML = `
+      <div style="background:linear-gradient(135deg,#0D3B13,#1B5E20);padding:12px 16px;cursor:pointer; display:flex; justify-content:space-between; align-items:center;"
+        onclick="this.nextSibling.style.display=this.nextSibling.style.display==='block'?'none':'block'">
+        <span style="font-size:13px;font-weight:700;color:white">Q. ${fc.front}</span>
+        <button class="speaker-btn" style="padding:1px 8px; font-size:10px;" onclick="event.stopPropagation();speakText('${fc.front}. 정답은 ${fc.back}입니다.')">🔊</button>
+      </div>
+      <div style="display:none;padding:12px 16px;font-size:14px;font-weight:700;color:#1B5E20;text-align:center">
+        ✅ ${fc.back}
+      </div>`;
+    sec.appendChild(d);
+  });
+}
+
+function stopSpeaking() {
+  isContinuousPlaying = false;
+  audioQueue = [];
+  queueIndex = 0;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+  }
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('playing-now'));
+  const statusDiv = document.getElementById('audioStatus');
+  statusDiv.style.display = 'none';
+  statusDiv.innerText = '';
+}
+
+function numberToKorean(num) {
+  const units = ['', '십', '백'];
+  const nums = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+  let result = '';
+  let str = num.toString();
+  for (let i = 0; i < str.length; i++) {
+    let n = parseInt(str[str.length - 1 - i]);
+    if (n !== 0) {
+      result = (n === 1 && i > 0 ? '' : nums[n]) + units[i] + result;
+    }
+  }
+  return result || '영';
+}
+
+function speakText(text, onEndCallback = null) {
+  if (!('speechSynthesis' in window)) {
+    alert('TTS 오디오 음성을 지원하지 않는 브라우저입니다.');
+    return;
+  }
+  window.speechSynthesis.cancel();
+
+  const rate = parseFloat(document.getElementById('ttsRate').value) || 1.0;
+  
+  let cleanText = text.replace(/<[^>]*>/g, ' ').replace(/💡|✅|⚙️|🌱|🌍|🍂|🌾|🌶️|🥬|📐|🌡️|🔬|🔍|✂️|🐛|📊|🌸|📷/g, '');
+  cleanText = cleanText.replace(/\([^)]*\)/g, ' ');
+
+  cleanText = cleanText.replace(/(\d+)\s*가지/g, function(match, p1) {
+    const numMap = { '1': '한', '2': '두', '3': '세', '4': '네', '5': '다섯', '6': '여섯', '7': '일곱', '8': '여덟', '9': '아홉', '10': '열' };
+    return (numMap[p1] || p1) + '가지';
+  });
+
+  cleanText = cleanText.replace(/문제\s*(\d+)번?/g, function(match, p1) {
+    return '문제 ' + numberToKorean(p1) + '번';
+  });
+
+  const utterance = new SpeechSynthesisUtterance(cleanText);
+  utterance.lang = 'ko-KR';
+  utterance.rate = rate;
+
+  utterance.onend = function() {
+    if (onEndCallback) onEndCallback();
+  };
+  utterance.onerror = function() {
+    if (onEndCallback) onEndCallback();
+  };
+
+  window.speechSynthesis.speak(utterance);
+}
+
+function speakSingleQuestion(num) {
+  stopSpeaking();
+  const item = QUESTIONS.find(q => q.n === num);
+  if (!item) return;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(item.a, 'text/html');
+  const cleanAnswer = doc.body.textContent || doc.body.innerText;
+  
+  const numText = numberToKorean(item.n);
+  const script = `문제 ${numText}번. ${item.q} 정답 설명입니다. ${cleanAnswer}`;
+  
+  const loops = parseInt(document.getElementById('ttsLoop').value) || 1;
+  let currentLoop = 0;
+  
+  function runLoop() {
+    speakText(script, () => {
+      currentLoop++;
+      if (currentLoop < loops) {
+        setTimeout(runLoop, 400);
+      }
+    });
+  }
+  runLoop();
+}
+
+function startQueuePlayback() {
+  if (queueIndex >= audioQueue.length) {
+    const statusDiv = document.getElementById('audioStatus');
+    statusDiv.innerText = '🎉 모든 대기열 안내 재생이 완료되었습니다.';
+    setTimeout(() => { statusDiv.style.display = 'none'; }, 3000);
+    stopSpeaking();
+    return;
+  }
+
+  isContinuousPlaying = true;
+  const currentItem = audioQueue[queueIndex];
+  
+  document.querySelectorAll('.q-card').forEach(c => c.classList.remove('playing-now'));
+  const targetCard = document.getElementById('card' + currentItem.n);
+  if (targetCard) {
+    targetCard.classList.add('playing-now');
+    targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  const statusDiv = document.getElementById('audioStatus');
+  statusDiv.style.display = 'block';
+  statusDiv.innerText = `🎧 연속 재생 중: [${queueIndex + 1} / ${audioQueue.length}] 문항 청취 중`;
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(currentItem.a, 'text/html');
+  const cleanAnswer = doc.body.textContent || doc.body.innerText;
+  
+  const numText = numberToKorean(currentItem.n);
+  const script = `문제 ${numText}번. ${currentItem.q} 정답은 ${cleanAnswer}입니다.`;
+
+  speakText(script, () => {
+    if (isContinuousPlaying) {
+      queueIndex++;
+      setTimeout(startQueuePlayback, 600);
+    }
+  });
+}
+
+function playSectionAudio() {
+  stopSpeaking();
+  if (currentTabIdx > 3) {
+    alert('Ⅰ파트부터 Ⅳ파트까지의 문제 메뉴를 선택하신 후 실행해 주세요.');
+    return;
+  }
+  audioQueue = QUESTIONS.filter(q => q.cat === currentTabIdx);
+  queueIndex = 0;
+  if(audioQueue.length === 0) {
+    alert('해당 메뉴에 로드된 문제가 없습니다.');
+    return;
+  }
+  startQueuePlayback();
+}
+
+function playAllAudio() {
+  stopSpeaking();
+  allOpen = true;
+  document.querySelectorAll('.q-card').forEach(c=>c.classList.add('open'));
+  
+  audioQueue = [...QUESTIONS];
+  queueIndex = 0;
+  startQueuePlayback();
+}
+
+function toggleCard(n) {
+  document.getElementById('card'+n).classList.toggle('open');
+}
+
+function toggleCheck(n) {
+  checked[n] = !checked[n];
+  localStorage.setItem('seed_checked', JSON.stringify(checked));
+  const btn = document.querySelector('#card'+n+' .check-btn');
+  if (btn) { btn.textContent = checked[n]?'✓ 완료':'학습완료'; btn.className='check-btn'+(checked[n]?' checked':''); }
+  updateStats();
+}
+
+function updateStats() {
+  const cnt = Object.values(checked).filter(Boolean).length;
+  document.getElementById('checkedStat').textContent = cnt;
+  document.getElementById('rateStat').textContent = Math.round(cnt/120*100)+'%';
+  document.getElementById('progressFill').style.width = (cnt/120*100)+'%';
+}
+
+function showTab(i) {
+  currentTabIdx = i;
+  document.querySelectorAll('.section').forEach((s,j)=>s.classList.toggle('active',j===i));
+  document.querySelectorAll('.tab-btn').forEach((b,j)=>b.classList.toggle('active',j===i));
+  window.scrollTo(0,0);
+}
+
+let allOpen = false;
+function toggleAll() {
+  allOpen = !allOpen;
+  document.querySelectorAll('.q-card').forEach(c=>c.classList.toggle('open',allOpen));
+  document.querySelector('.action-bar button:nth-child(2)').textContent = allOpen ? '📖 전체접기' : '📖 전체펼치기';
+}
+
+let quizList = [], quizIdx = 0, quizAnswered = false;
+function openQuiz() {
+  stopSpeaking();
+  quizList = [...QUESTIONS].sort(()=>Math.random()-0.5).slice(0,10);
+  quizIdx = 0; quizAnswered = false;
+  document.getElementById('quizModal').classList.add('open');
+  showQuiz();
+}
+function closeQuiz() { stopSpeaking(); document.getElementById('quizModal').classList.remove('open'); }
+function showQuiz() {
+  const q = quizList[quizIdx];
+  document.getElementById('quizNum').textContent = `문제 ${quizIdx+1}/10`;
+  document.getElementById('quizQ').textContent = q.q;
+  document.getElementById('quizInput').value = '';
+  const res = document.getElementById('quizResult');
+  res.style.display = 'none'; res.className = 'quiz-result';
+  document.getElementById('quizBtn').textContent = '확인';
+  quizAnswered = false;
+  
+  const numText = numberToKorean(q.n);
+  speakText(`문제 ${numText}번. ${q.q}`);
+  document.getElementById('quizInput').focus();
+}
+function checkQuiz() {
+  if (quizAnswered) {
+    quizIdx++;
+    if (quizIdx >= quizList.length) { closeQuiz(); showToast('🎉 퀴즈 완료!'); return; }
+    showQuiz(); return;
+  }
+  const ans = document.getElementById('quizInput').value.trim();
+  if (!ans) return;
+  const res = document.getElementById('quizResult');
+  res.style.display = 'block';
+  const q = quizList[quizIdx];
+  res.className = 'quiz-result correct';
+  res.innerHTML = '✅ 정답 확인:<br>' + q.a;
+  document.getElementById('quizBtn').textContent = quizIdx<9 ? '다음 문제 →' : '완료';
+  quizAnswered = true;
+  
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(q.a, 'text/html');
+  speakText(`정답 설명입니다. ${doc.body.textContent}`);
+  toggleCheck(q.n);
+}
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.style.cssText = 'position:fixed;bottom:70px;left:50%;transform:translateX(-50%);background:#0D3B13;color:white;padding:8px 18px;border-radius:20px;font-size:13px;z-index:300;font-weight:700';
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(()=>t.remove(),2000);
+}
+
+// 초기화 가동
+buildCards();
+buildFlashCards();
+</script>
+</body>
+</html>
