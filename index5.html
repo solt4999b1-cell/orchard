@@ -6,10 +6,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <title>🌱 내 농약장 관리 (Google Sheets)</title>
-  <link rel="apple-touch-icon" sizes="180x180" href="icon4-180.png">
-  <link rel="shortcut icon" href="icon4-192.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon4-192.png">
-  <link rel="icon" type="image/jpeg" sizes="512x512" href="icon4-512.jpg">
+  <!-- 외부 아이콘 파일 대신 인라인 SVG 사용 — 파일이 없어도 404가 나지 않는다 -->
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%232E7D32'/%3E%3Ctext x='32' y='45' font-size='36' text-anchor='middle'%3E%F0%9F%8C%B1%3C/text%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap" rel="stylesheet">
   
@@ -24,6 +22,7 @@
       --gray-100: #F5F5F5;
       --gray-200: #EEEEEE;
       --gray-300: #E0E0E0;
+      --gray-500: #9E9E9E;
       --gray-600: #757575;
       --gray-700: #616161;
       --gray-900: #212121;
@@ -253,7 +252,7 @@ function normalizeType(typeValue) {
 // 1. 구글 시트 데이터 로드 (Read)
 // GAS 배포본이 아는 action 이름이 무엇인지 확실치 않아, 후보를 순서대로 시도한다.
 // 과수원 앱(동일 배포본)에서 검증된 'readCollection'을 1순위로 둔다.
-const READ_ACTIONS = ['readCollection', 'read', 'list', 'getAll'];
+const READ_ACTIONS = ['getMyPesticides', 'readCollection', 'read', 'list', 'getAll'];
 let _workingReadAction = localStorage.getItem('pesticideReadAction') || null;
 
 // action 하나로 읽기를 시도. 성공하면 배열, 실패하면 예외.
@@ -460,6 +459,132 @@ function buildCropMemo(cropDetails, toxicInfo) {
   return result;
 }
 
+// ── PSIS 응답 파서 (서버 응답 형태가 무엇이든 목록을 찾아낸다) ──────────
+
+// PSIS 항목이 가지고 있을 법한 필드 이름들
+const PSIS_KEYS = ['pestiKorName','pestiCode','compName','cropName','diseaseWeedName',
+                   'cmpaItmNm','useName','pestiUse','dilutUnit','ingredientName',
+                   'pestiBrandName','diseaseUseSeq','useSuittime','useNum'];
+
+// 객체 어디에 숨어 있든 '농약 항목 배열'을 재귀로 찾아낸다
+function psisFindList(node, depth) {
+  depth = depth || 0;
+  if (!node || depth > 6) return null;
+
+  if (Array.isArray(node)) {
+    if (node.length && typeof node[0] === 'object' && node[0] !== null
+        && PSIS_KEYS.some(k => k in node[0])) return node;
+    for (const el of node) {
+      const found = psisFindList(el, depth + 1);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  if (typeof node === 'object') {
+    // 항목이 1개면 배열이 아니라 객체 하나로 오는 경우가 흔하다
+    if (PSIS_KEYS.some(k => k in node)) return [node];
+    for (const k of Object.keys(node)) {
+      const found = psisFindList(node[k], depth + 1);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+// XML 문자열로 오는 경우 대비
+function psisParseXml(text) {
+  try {
+    const doc = new DOMParser().parseFromString(text, 'text/xml');
+    if (doc.getElementsByTagName('parsererror').length) return null;
+    const items = doc.getElementsByTagName('item');
+    if (!items.length) return null;
+    return Array.from(items).map(node => {
+      const o = {};
+      Array.from(node.children).forEach(c => { o[c.tagName] = (c.textContent || '').trim(); });
+      return o;
+    });
+  } catch (e) { return null; }
+}
+
+// GAS가 아는 파라미터 이름이 target인지 action인지 불확실하므로 둘 다 시도
+// GAS에 handleIndex4Search_ 함수가 이미 있으므로,
+// 그것이 어떤 action 이름으로 연결돼 있는지 후보를 훑어본다.
+const PSIS_PARAM_SETS = [
+  { action: 'psis' },              // doGet에 2줄 추가하면 이것 (전체 목록 반환 — 권장)
+  { action: 'searchPesticide' },   // GAS에 이미 존재 (요약 1건만 반환)
+  { action: 'index4Search' }
+];
+let _workingPsisParams = null;
+
+async function psisFetchList(keyword) {
+  const base = {
+    keyword: keyword,
+    searchType: 'brand',
+    displayCount: '50',
+    startPoint: '1'
+  };
+
+  const sets = _workingPsisParams ? [_workingPsisParams, ...PSIS_PARAM_SETS] : PSIS_PARAM_SETS;
+  let lastRaw = null;
+
+  for (const extra of sets) {
+    const q = new URLSearchParams({ ...base, ...extra });
+    let raw = null;
+    try {
+      const res = await fetch(`${CONFIG_GAS_URL}?${q}`);
+      const text = await res.text();
+      try { raw = JSON.parse(text); }
+      catch (e) { raw = psisParseXml(text) || text; }   // JSON이 아니면 XML/문자열로
+    } catch (e) {
+      console.warn('PSIS 요청 실패:', e.message);
+      continue;
+    }
+
+    console.log('📡 PSIS 응답 (' + JSON.stringify(extra) + '):', raw);
+    lastRaw = raw;
+
+    const list = psisFindList(raw);
+    if (list && list.length) {
+      _workingPsisParams = extra;
+      console.log(`✅ PSIS 검색 성공 — 파라미터 ${JSON.stringify(extra)}, ${list.length}건`);
+      return { list: list, raw: raw };
+    }
+  }
+
+  return { list: [], raw: lastRaw };
+}
+
+// 결과가 없을 때 서버 응답을 사람이 읽을 수 있게 요약
+function psisDiagnose(raw) {
+  if (raw == null) return '서버에서 응답이 오지 않았습니다. 네트워크를 확인해 주세요.';
+
+  // {ok:true, data:{service:[], message:'...'}} 처럼 한 겹 안에 든 메시지도 끌어올린다
+  if (typeof raw === 'object' && raw.data && typeof raw.data === 'object'
+      && !raw.message && !raw.error && (raw.data.message || raw.data.error)) {
+    raw = Object.assign({}, raw, { message: raw.data.message || raw.data.error });
+  }
+
+  if (typeof raw === 'string') {
+    return '서버 응답(원문): <code style="word-break:break-all">'
+         + raw.slice(0, 200).replace(/</g, '&lt;') + '</code>';
+  }
+  if (raw.success === false || raw.error || raw.message) {
+    const msg = String(raw.message || raw.error);
+    let extra = '';
+    if (/알 수 없는 action/.test(msg)) {
+      extra = '<br><b style="color:#C62828">→ Google Apps Script에 PSIS 검색 기능이 없습니다.</b>'
+            + '<br><span style="color:#666">GAS에 psis 핸들러를 추가해야 합니다. '
+            + 'PSIS API는 브라우저에서 직접 부를 수 없어(CORS 차단) 서버를 반드시 거쳐야 합니다.</span>';
+    }
+    return '서버 메시지: <b style="color:#C62828">' + msg.replace(/</g, '&lt;') + '</b>' + extra;
+  }
+  const keys = Object.keys(raw).slice(0, 8).join(', ');
+  return '해당 제품명으로 등록된 농약이 없거나, 응답 형식이 예상과 다릅니다.<br>'
+       + '응답 최상위 항목: <code>' + (keys || '(비어 있음)') + '</code><br>'
+       + '<span style="color:#999">F12 콘솔의 「📡 PSIS 응답」 로그에서 전체 내용을 볼 수 있습니다.</span>';
+}
+
 // 4. PSIS 및 svc02 통합 검색 기능
 async function searchPsisFromModal() {
   const keyword = document.getElementById('form-name').value.trim();
@@ -476,38 +601,57 @@ async function searchPsisFromModal() {
   container.style.display = 'none';
 
   try {
-    const urlSvc01 = `${CONFIG_GAS_URL}?target=psis&keyword=${encodeURIComponent(keyword)}&searchType=brand&displayCount=50&startPoint=1`;
-    const resSvc01 = await fetch(urlSvc01);
-    const gasData = await resSvc01.json();
-
-    let serviceList = [];
-    if (gasData.service) serviceList = gasData.service;
-    else if (gasData.data && gasData.data.service) serviceList = gasData.data.service;
-    else if (Array.isArray(gasData)) serviceList = gasData;
+    const { list: serviceList, raw: gasData } = await psisFetchList(keyword);
 
     if (serviceList.length === 0) {
       loadingEl.style.display = 'none';
       container.style.display = 'block';
-      resultsList.innerHTML = '<div style="padding: 10px; text-align: center; color: #666; font-size: 11px;">검색 결과가 없습니다.</div>';
+      // 서버가 뭐라고 답했는지 그대로 보여준다 — 원인 파악을 위해
+      const hint = psisDiagnose(gasData);
+      resultsList.innerHTML =
+        '<div style="padding:10px;color:#666;font-size:11px;line-height:1.7">'
+        + '<div style="font-weight:600;color:#C62828;margin-bottom:4px">검색 결과가 없습니다.</div>'
+        + hint
+        + '</div>';
       return;
     }
 
+    // ── 독성 정보 ──────────────────────────────────────────────
+    // GAS의 _psisSearch()가 내부적으로 _fetchDetail(SVC02)을 이미 호출해
+    // toxicGubun / toxicName / fishToxic 을 함께 실어 보낸다.
+    // 따라서 별도 요청 없이 첫 응답에서 바로 꺼내 쓴다.
     let toxicInfo = { toxicGubun: '-', toxicName: '-', fishToxic: '-' };
-    const firstItem = serviceList[0];
-    const pestiCode = firstItem.pestiCode || firstItem.code || '';
+    const firstItem = serviceList[0] || {};
 
-    if (pestiCode) {
-      try {
-        const urlSvc02 = `${CONFIG_GAS_URL}?target=psis_toxic&pestiCode=${pestiCode}`;
-        const resSvc02 = await fetch(urlSvc02);
-        const toxicData = await resSvc02.json();
-        if (toxicData && toxicData.success && toxicData.data) {
-          toxicInfo = toxicData.data;
-        } else if (toxicData) {
-          toxicInfo = toxicData;
+    const svc01Toxic = (gasData && gasData.data) ? gasData.data : {};
+    if (svc01Toxic.toxicGubun || svc01Toxic.toxicName || svc01Toxic.fishToxic) {
+      toxicInfo = {
+        toxicGubun: svc01Toxic.toxicGubun || '-',
+        toxicName:  svc01Toxic.toxicName  || '-',
+        fishToxic:  svc01Toxic.fishToxic  || '-'
+      };
+      console.log('☠️ 독성 정보 (첫 응답에 포함됨):', toxicInfo);
+    } else {
+      // 첫 응답에 없을 때만 보조 요청 — GAS에 psisToxic 라우팅이 있어야 동작
+      const pestiCode = firstItem.pestiCode || firstItem.code || '';
+      if (pestiCode) {
+        try {
+          const q2 = new URLSearchParams({
+            action: 'psisToxic',
+            pestiCode: pestiCode,
+            diseaseUseSeq: firstItem.diseaseUseSeq || '1'
+          });
+          const resSvc02 = await fetch(`${CONFIG_GAS_URL}?${q2}`);
+          const toxicData = await resSvc02.json();
+          if (toxicData && toxicData.data && !Array.isArray(toxicData.data)) {
+            toxicInfo = toxicData.data;
+            console.log('☠️ 독성 정보 (보조 요청):', toxicInfo);
+          } else {
+            console.info('ℹ️ 독성 정보 없음 — 표시는 "-" 로 대체됩니다 (기능에 지장 없음)');
+          }
+        } catch (toxicErr) {
+          console.info('ℹ️ 독성 정보 조회 생략:', toxicErr.message);
         }
-      } catch (toxicErr) {
-        console.warn('⚠️ svc02 독성 정보 로드 실패:', toxicErr);
       }
     }
 
@@ -557,7 +701,7 @@ async function searchPsisFromModal() {
   } catch (err) {
     loadingEl.style.display = 'none';
     console.error('PSIS 및 독성 검색 실패:', err);
-    alert('PSIS 검색 중 오류가 발생했습니다.');
+    alert('PSIS 검색 중 오류가 발생했습니다.\n\n' + (err && err.message ? err.message : err));
   }
 }
 
