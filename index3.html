@@ -7,7 +7,14 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="병해충 진단">
-<link rel="manifest" href="manifest3.webmanifest">
+<!-- manifest는 http(s)에서만 붙인다 — file:// 로 열면 CORS 오류가 나기 때문 -->
+<script>
+  if (location.protocol === 'http:' || location.protocol === 'https:') {
+    var _m = document.createElement('link');
+    _m.rel = 'manifest'; _m.href = 'manifest3.webmanifest';
+    document.head.appendChild(_m);
+  }
+</script>
 
 <!-- 파비콘 설정 -->
 <link rel="icon" type="image/png" sizes="192x192" href="icon5-192.png">
@@ -288,6 +295,27 @@ body{margin:0;background:var(--bg);color:var(--ink);
 <div id="toast"></div>
 
 <script>
+// ════════════════════════════════════════════════════════════
+// 🔍 처리되지 않은 Promise 오류의 출처 추적
+//    이 앱 코드인지 브라우저 확장 프로그램인지 가려낸다
+// ════════════════════════════════════════════════════════════
+window.addEventListener('unhandledrejection', function (ev) {
+  var r = ev.reason;
+  var stack = (r && r.stack) ? String(r.stack) : '(스택 없음)';
+  var fromExtension = /chrome-extension:\/\/|moz-extension:\/\/|safari-extension:\/\//.test(stack);
+
+  console.group('%c⚠️ 처리되지 않은 Promise 오류',
+                'color:#C62828;font-weight:bold');
+  console.log('출처 판정:', fromExtension
+    ? '🧩 브라우저 확장 프로그램 (이 앱과 무관 — 무시해도 됩니다)'
+    : (stack === '(스택 없음)'
+        ? '❓ 불명 — 스택이 없어 확장 프로그램일 가능성이 높습니다'
+        : '📄 이 앱의 코드'));
+  console.log('내용:', r);
+  console.log('스택:', stack);
+  console.groupEnd();
+});
+
 const CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
   GAS_URL_SHEETS: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
@@ -306,6 +334,38 @@ const CONFIG = {
   displayCount: 100
 };
 
+// ════════════════════════════════════════════════════════════
+// 🔧 콘솔 진단 명령 — 브라우저 콘솔에 진단() 이라고 입력하세요
+// ════════════════════════════════════════════════════════════
+window.진단 = window.diag = async function(){
+  const 후보 = [
+    { action:'readCollection', collectionName:'plants' },
+    { action:'readCollection', collectionName:'growPlants' },
+    { action:'getPlants' },
+    { action:'read', sheetName:'plants' },
+    { action:'read_all_web' }
+  ];
+  console.log('%c🔎 작물 데이터 진단 시작', 'color:#2E7D32;font-weight:bold');
+  console.log('GAS 주소:', CONFIG.GAS_URL_SHEETS);
+
+  for(const q of 후보){
+    const url = `${CONFIG.GAS_URL_SHEETS}?${new URLSearchParams(q)}`;
+    try{
+      const jr = await (await fetch(url)).json();
+      const n  = Array.isArray(jr.data) ? jr.data.length : (jr.data ? '객체' : 0);
+      const 표시 = jr.success ? (n ? `✅ ${n}건` : '⚪ 0건') : `❌ ${jr.message||'실패'}`;
+      console.log(`${표시}  ←  ${JSON.stringify(q)}`);
+      if(jr.success && Array.isArray(jr.data) && jr.data.length){
+        const rows = DB._toObjects(jr.data);
+        if(Array.isArray(jr.data[0])) console.log('    ↳ 2차원 배열 형식 (헤더 1줄 + 데이터)');
+        console.log('    필드명:', rows.length ? Object.keys(rows[0]).join(', ') : '(없음)');
+        console.log('    첫 데이터:', rows[0]);
+      }
+    }catch(e){ console.log(`❌ 통신오류 (${e.message})  ←  ${JSON.stringify(q)}`); }
+  }
+  console.log('%c진단 끝 — ✅ 가 붙은 조합의 필드명을 확인하세요', 'color:#2E7D32');
+};
+
 const AppBus = {
   _h:{},
   on(evt, fn){ (this._h[evt] ||= []).push(fn); return this; },
@@ -313,13 +373,71 @@ const AppBus = {
 };
 
 const DB = {
+  // 이 GAS가 어떤 action 이름으로 읽기를 지원하는지 확실치 않아 후보를 순서대로 시도
+  _readActions(collName){
+    return [
+      { action:'readCollection', collectionName: collName },
+      { action:'getPlants' },                                   // doGet에 존재 (growPlants 시트)
+      { action:'read',  sheetName: collName },
+      { action:'getMyPesticides' }                              // myPesticides 전용
+    ].filter(q => {
+      // 컬렉션과 무관한 전용 action은 제외
+      if(q.action === 'getPlants')        return collName === CONFIG.plantsCollection;
+      if(q.action === 'getMyPesticides')  return collName === CONFIG.pesticidesCollection;
+      return true;
+    });
+  },
+
+  // GAS가 시트를 [[헤더],[행],[행]...] 2차원 배열로 넘기는 경우를 객체 배열로 변환
+  _toObjects(rows){
+    if(!Array.isArray(rows) || !rows.length) return rows || [];
+    if(!Array.isArray(rows[0])) return rows;          // 이미 객체 배열이면 그대로
+
+    const head = rows[0].map(h => String(h == null ? '' : h).trim());
+    const out = [];
+    for(let i=1; i<rows.length; i++){
+      const r = rows[i];
+      if(!Array.isArray(r)) { out.push(r); continue; }
+      const o = {};
+      for(let c=0; c<head.length; c++){ if(head[c]) o[head[c]] = r[c]; }
+      out.push(o);
+    }
+    return out;
+  },
+
   async list(collName){
+    const tries = this._readActions(collName);
+    for(const q of tries){
+      const url = `${CONFIG.GAS_URL_SHEETS}?${new URLSearchParams(q)}`;
+      try{
+        const res = await fetch(url);
+        const jr  = await res.json();
+
+        if(jr && jr.success && Array.isArray(jr.data) && jr.data.length){
+          const wasMatrix = Array.isArray(jr.data[0]);
+          const rows = this._toObjects(jr.data);
+          console.log(`✅ [${collName}] ${rows.length}건 로드 — action='${q.action}'`
+                    + (wasMatrix ? ' (2차원 배열 → 객체 변환됨)' : ''));
+          if(rows.length) console.log(`   필드:`, Object.keys(rows[0]).join(', '));
+          return rows;
+        }
+        if(jr && jr.success && Array.isArray(jr.data)){
+          console.warn(`⚠️ [${collName}] action='${q.action}' 은 성공했으나 데이터가 0건입니다 (시트가 비었거나 시트 이름이 다름)`);
+          continue;
+        }
+        console.warn(`… [${collName}] action='${q.action}' 실패:`, (jr && jr.message) || jr);
+      }catch(e){
+        console.warn(`… [${collName}] action='${q.action}' 요청 오류:`, e.message);
+      }
+    }
+
+    console.info(`ℹ️ [${collName}] 서버에 없는 컬렉션 → localStorage 캐시 사용`);
     try{
-      const res = await fetch(`${CONFIG.GAS_URL_SHEETS}?action=readCollection&collectionName=${encodeURIComponent(collName)}`);
-      const jr = await res.json();
-      if(jr.success && Array.isArray(jr.data)) return jr.data;
-    }catch(e){ console.warn('Google Sheets list 오류:', e); }
-    try{ const v = localStorage.getItem('orchard.'+collName); return v ? JSON.parse(v) : []; }catch(e){ return []; }
+      const v = localStorage.getItem('orchard.'+collName);
+      const arr = v ? JSON.parse(v) : [];
+      console.log(`   localStorage 캐시: ${arr.length}건`);
+      return arr;
+    }catch(e){ return []; }
   },
   async add(collName, obj){
     const id = 'x' + Date.now().toString(36) + Math.random().toString(36).slice(2,5);
@@ -383,22 +501,12 @@ const Owned = {
 
 const NCPMS = {
   async call(params){
-	  try {
-	    const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
-	    const url = CONFIG.GAS_URL + '?' + qs;
-	    const res = await fetch(url);
-	    const jr  = await res.json();
-	    
-	    // HTTP 상태 및 응답 객체 내 code가 403인 경우 처리
-	    if (res.status === 403 || jr.code === 403) {
-	      throw new Error('API 접근 권한이 없습니다. (GAS 또는 NCPMS Key 권한 확인 필요)');
-	    }
-	    if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
-	    return jr.data;
-	  } catch(e) {
-	    console.error('NCPMS 통신 실패:', e);
-	    throw e;
-	  }
+    const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
+    const url = CONFIG.GAS_URL + '?' + qs;
+    const res = await fetch(url);
+    const jr  = await res.json();
+    if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
+    return jr.data;
   },
   listSick(cropName){ return this.call({ serviceCode:'SVC01', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
   listInsect(cropName){ return this.call({ serviceCode:'SVC03', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
@@ -519,10 +627,14 @@ const App = {
   async loadCrops(){
     const raw = await DB.rawPlants();
     const seen=new Set(), out=[];
+    let skipStatus=0, skipNoName=0, skipDup=0;
     for(const p of (raw||[])){
-      if(p.status === 'deleted' || p.status === '고사' || p.status === '수확 완료') continue;
-      const originalName = p.name||p.cropName||''; if(!originalName) continue;
-      if(seen.has(originalName)) continue; seen.add(originalName);
+      const st = p.status || p['상태'] || '';
+      if(st === 'deleted' || st === '고사' || st === '수확 완료'){ skipStatus++; continue; }
+      // 시트 헤더가 한글일 수 있으므로 후보를 넓게 잡는다
+      const originalName = p.name || p.cropName || p['작물명'] || p['이름'] || p['작물'] || '';
+      if(!originalName){ skipNoName++; continue; }
+      if(seen.has(originalName)){ skipDup++; continue; } seen.add(originalName);
       const stdName = this.getStandardName(originalName);
       out.push({
         id: p.id||originalName, name: originalName,
@@ -531,6 +643,11 @@ const App = {
         ncpmsName: stdName, psisName: CONFIG.cropMapToPsis[stdName] || stdName,
         location: p.location || p.spot || '' 
       });
+    }
+    console.log(`🌱 작물 정리 결과: 원본 ${(raw||[]).length}건 → 표시 ${out.length}건`
+              + ` (상태제외 ${skipStatus}, 이름없음 ${skipNoName}, 중복 ${skipDup})`);
+    if((raw||[]).length && !out.length && (raw||[])[0]){
+      console.warn('⚠️ 데이터는 있으나 작물명을 못 찾았습니다. 첫 행 내용:', (raw||[])[0]);
     }
     return out.sort((a,b)=> (a.category===b.category ? a.displayName.localeCompare(b.displayName,'ko') : (a.category==='유실수'?-1:1)));
   },
@@ -659,7 +776,11 @@ const App = {
   imgFallback(img, encUrl){
     if(img.dataset.tried) { img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; return; }
     img.dataset.tried='1';
-    fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl))).then(r=>r.json()).then(d=>{ if(d.ok) img.src=d.dataUri; else img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; });
+    fetch(NCPMS.proxyUrl(decodeURIComponent(encUrl)))
+      .then(r=>r.json())
+      .then(d=>{ if(d.ok) img.src=d.dataUri; else img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; })
+      .catch(err=>{ console.info('ℹ️ 병해충 사진 로드 실패:', err.message);
+                    if(img.parentNode) img.parentNode.innerHTML='<div class="ph">사진 없음</div>'; });
   },
 
   async openDetail(i){
