@@ -250,31 +250,73 @@ function normalizeType(typeValue) {
   return mapping[normalized] || normalized;
 }
 
-// 1. 구글 시트 데이터 로드 (Read) - Google Sheets API 사용
+// 1. 구글 시트 데이터 로드 (Read)
+// GAS 배포본이 아는 action 이름이 무엇인지 확실치 않아, 후보를 순서대로 시도한다.
+// 과수원 앱(동일 배포본)에서 검증된 'readCollection'을 1순위로 둔다.
+const READ_ACTIONS = ['readCollection', 'read', 'list', 'getAll'];
+let _workingReadAction = localStorage.getItem('pesticideReadAction') || null;
+
+// action 하나로 읽기를 시도. 성공하면 배열, 실패하면 예외.
+async function _tryRead(action) {
+  const q = new URLSearchParams({
+    action: action,
+    sheetName: CURRENT_SHEET_NAME,
+    collectionName: CURRENT_SHEET_NAME,   // GAS가 어느 쪽 이름을 쓰든 대응
+    t: Date.now()
+  });
+
+  // ① GET 시도
+  let result = null;
+  try {
+    const res = await fetch(`${GAS_URL_SHEETS}?${q}`, { method: 'GET', mode: 'cors' });
+    result = await res.json();
+  } catch (e) { result = null; }
+
+  // ② GET이 실패하거나 거절당하면 POST로 재시도 (과수원 앱과 동일한 방식)
+  if (!result || !result.success) {
+    const res2 = await fetch(GAS_URL_SHEETS, { method: 'POST', body: q });
+    result = await res2.json();
+  }
+
+  if (!result.success) throw new Error(result.message || '데이터 로드 실패');
+  return result.data || [];
+}
+
 async function loadDataFromGoogleSheets() {
   try {
     updateSyncText('🔄 구글 시트 동기화 중...');
-    const url = `${GAS_URL_SHEETS}?action=read&sheetName=${CURRENT_SHEET_NAME}&t=${new Date().getTime()}`;
-    
-    // mode: 'cors' 명시 및 헤더 추가
-    const response = await fetch(url, {
-      method: 'GET',
-      mode: 'cors'
-    });
-    
-    const result = await response.json();
 
-    if (!result.success) {
-      throw new Error(result.message || '데이터 로드 실패');
+    // 지난번에 통한 action이 있으면 그것부터, 없으면 후보 전체를 순서대로
+    const candidates = _workingReadAction
+      ? [_workingReadAction, ...READ_ACTIONS.filter(a => a !== _workingReadAction)]
+      : READ_ACTIONS;
+
+    let data = null, lastErr = null;
+    for (const action of candidates) {
+      try {
+        data = await _tryRead(action);
+        if (_workingReadAction !== action) {
+          _workingReadAction = action;
+          localStorage.setItem('pesticideReadAction', action);
+          console.log(`✅ 읽기 성공 — 이 GAS는 action='${action}' 을 사용합니다`);
+        }
+        break;
+      } catch (e) {
+        lastErr = e;
+        console.warn(`… action='${action}' 실패: ${e.message}`);
+      }
     }
 
-    sheetsData = result.data || [];
+    if (data === null) throw lastErr || new Error('모든 action 시도 실패');
+
+    sheetsData = data;
     renderSheetsList();
     updateStats();
     updateSyncText('✅ 동기화 완료');
   } catch (err) {
     console.error('❌ 로드 에러:', err);
-    updateSyncText('❌ 동기화 실패');
+    // 서버가 보낸 실제 사유를 화면에 그대로 노출 — 원인 파악이 훨씬 쉬워진다
+    updateSyncText('❌ ' + (err.message || '동기화 실패'));
   }
 }
 
