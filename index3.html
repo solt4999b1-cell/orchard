@@ -383,12 +383,22 @@ const Owned = {
 
 const NCPMS = {
   async call(params){
-    const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
-    const url = CONFIG.GAS_URL + '?' + qs;
-    const res = await fetch(url);
-    const jr  = await res.json();
-    if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
-    return jr.data;
+	  try {
+	    const qs = new URLSearchParams({ target:'ncpms', ...params }).toString();
+	    const url = CONFIG.GAS_URL + '?' + qs;
+	    const res = await fetch(url);
+	    const jr  = await res.json();
+	    
+	    // HTTP 상태 및 응답 객체 내 code가 403인 경우 처리
+	    if (res.status === 403 || jr.code === 403) {
+	      throw new Error('API 접근 권한이 없습니다. (GAS 또는 NCPMS Key 권한 확인 필요)');
+	    }
+	    if(!jr.ok) throw new Error(jr.error || 'NCPMS 오류');
+	    return jr.data;
+	  } catch(e) {
+	    console.error('NCPMS 통신 실패:', e);
+	    throw e;
+	  }
   },
   listSick(cropName){ return this.call({ serviceCode:'SVC01', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
   listInsect(cropName){ return this.call({ serviceCode:'SVC03', cropName, displayCount:CONFIG.displayCount, startPoint:1 }); },
