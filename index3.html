@@ -330,9 +330,25 @@ const CONFIG = {
   GAS_URL: 'https://script.google.com/macros/s/AKfycbylDKpNwxsbkj4lZV7tgBnTEAWBOX5FZ65zrtH66nrqH4IRSIBX8vlTtqACbpr_xLAz/exec',
   GAS_URL_SHEETS: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
   cropMapToPsis: { '단감':'감', '참다래':'참다래(키위)', '키위':'참다래(키위)' },
-  plantsCollection: 'plants',
+  // 실제 구글 시트 탭 이름과 일치시킨다 (GAS의 getPlants 가 읽는 시트)
+  plantsCollection: 'growPlants',
   pesticidesCollection: 'myPesticides',
-  fruitKeywords: ['유실수','과수','사과','배','포도','감귤','복숭아','매실','자두','무화과','살구','블루베리','블랙베리','다래','감','밤','대추','아로니아','체리','망고','용과','모과','앵두','패션푸룻','오미자','복분자','산수유','키위','참다래','헤이즐넛','헤이즐럿','호두','피칸','아몬드'],
+  fruitKeywords: [
+      '유실수','과수','묘목',
+      // 인과류·핵과류
+      '사과','아그배','꽃사과','배','돌배','산돌배','복숭아','천도','자두','살구','매실','앵두','자엽',
+      // 감·대추·밤
+      '감','대추','밤','약대추',
+      // 장과류·베리
+      '포도','머루','블루베리','블랙베리','라즈베리','산딸기','복분자','아로니아','오디','뽕','보리수','구기자',
+      // 덩굴·기타
+      '다래','참다래','키위','으름','오미자','꾸지뽕','石榴','석류','무화과','모과','비파','유자','탱자',
+      '감귤','귤','한라봉','천혜향','레몬','라임','오렌지','금귤','금감',
+      '체리','앵도','산수유','마가목','산사','호랑가시',
+      '망고','용과','패션푸룻','아보카도','올리브','대봉',
+      // 견과류
+      '호두','가래','피칸','아몬드','헤이즐넛','헤이즐럿','개암','잣','은행'
+    ],
   psisDetail: {
     build: (svc, item) => {
       const q = new URLSearchParams();
@@ -347,6 +363,112 @@ const CONFIG = {
 // ════════════════════════════════════════════════════════════
 // 🔧 콘솔 진단 명령 — 브라우저 콘솔에 진단() 이라고 입력하세요
 // ════════════════════════════════════════════════════════════
+// 시트의 category / status 값을 표준으로 정리한다.
+//   작물정리()      → 검사만 (아무것도 바꾸지 않음)
+//   작물정리(true)  → 실제로 시트에 반영
+window.작물정리 = window.fixCrops = async function(apply){
+  const rows = await DB.list(CONFIG.plantsCollection);
+  const bad = [];
+
+  (rows||[]).forEach(p => {
+    const name = p.name || '';
+    if(!name) return;
+    // 예전 데이터는 cat 열에만 값이 있을 수 있으므로 그것도 읽어 category 로 승격한다
+    const curCat = String((p.category != null && String(p.category).trim()) ? p.category : (p.cat || '')).trim();
+    const curSt  = String(p.status   == null ? '' : p.status  ).trim();
+    const newCat = App.normCategory(curCat || p.cat, name);
+    const newSt  = App.normStatus(curSt);
+    const catBad = (curCat !== newCat);
+    const stBad  = (curSt  !== newSt);
+    if(catBad || stBad){
+      bad.push({ id:p.id, name, curCat, newCat, curSt, newSt });
+    }
+  });
+
+  console.log('%c🧹 작물 데이터 정리', 'color:#2E7D32;font-weight:bold');
+  console.log(`전체 ${(rows||[]).length}건 중 손볼 것 ${bad.length}건`);
+  if(bad.length) console.table(bad.map(b => ({
+    작물: b.name,
+    'category(현재)': b.curCat || '(빈칸)',
+    'category(수정)': b.newCat,
+    'status(현재)':   b.curSt  || '(빈칸)',
+    'status(수정)':   b.newSt
+  })));
+
+  if(!bad.length){ console.log('✅ 정리할 것이 없습니다'); return; }
+
+  if(!apply){
+    console.log('%c검사만 했습니다. 실제로 반영하려면  작물정리(true)  를 입력하세요.',
+                'color:#E65100;font-weight:bold');
+    return bad;
+  }
+
+  console.log('시트에 반영 중… (건당 약 1초)');
+  let ok = 0, fail = 0;
+  for(const b of bad){
+    try{
+      await DB.update(CONFIG.plantsCollection, b.id,
+                      { category: b.newCat, status: b.newSt });
+      ok++;
+    }catch(e){ fail++; console.warn('실패:', b.name, e.message); }
+  }
+  console.log(`✅ 완료 — 성공 ${ok}건, 실패 ${fail}건`);
+  App._crops = await App.loadCrops();
+  App.renderCrops();
+};
+
+// ════════════════════════════════════════════════════════════
+// 🆔 아이디검사() — 엉뚱한 작물이 바뀌는 원인을 찾는다
+//    ① id 가 비어 있는 행  ② id 가 겹치는 행
+//    ③ 이름이 다른 이름의 앞부분인 쌍 (아주까리 / 아주까리콩)
+//    아무것도 바꾸지 않습니다.
+// ════════════════════════════════════════════════════════════
+window.아이디검사 = window.auditIds = async function () {
+  const rows = await DB.list(CONFIG.plantsCollection);
+  if(!rows || !rows.length){ console.warn('데이터를 못 받았습니다'); return; }
+
+  const blank = rows.filter(r => !String(r.id == null ? '' : r.id).trim());
+  const byId = {};
+  rows.forEach(r => {
+    const k = String(r.id == null ? '' : r.id).trim();
+    if(k) (byId[k] = byId[k] || []).push(r.name);
+  });
+  const dup = Object.keys(byId).filter(k => byId[k].length > 1)
+                .map(k => ({ id:k, 겹치는작물: byId[k].join(', ') }));
+
+  // 이름이 다른 이름의 앞부분인 쌍 — 이름으로 행을 찾을 때 헷갈릴 수 있다
+  const names = rows.map(r => String(r.name || '').trim()).filter(Boolean);
+  const prefix = [];
+  names.forEach(a => names.forEach(b => {
+    if(a !== b && b.startsWith(a)) prefix.push({ 짧은이름:a, 긴이름:b });
+  }));
+
+  console.log('%c🆔 작물 id 검사 (전체 ' + rows.length + '행)', 'color:#1565C0;font-weight:bold');
+
+  if(blank.length){
+    console.warn('⚠️ id 가 비어 있는 행 ' + blank.length + '건 — 수정 시 이름으로 찾게 되어 위험합니다');
+    console.table(blank.map(r => ({ 작물:r.name, category:r.category, status:r.status })));
+  } else console.log('%c✅ id 가 빈 행 없음', 'color:#2E7D32');
+
+  if(dup.length){
+    console.warn('⚠️ id 가 겹치는 행 ' + dup.length + '쌍 — 한쪽을 고치면 다른 쪽도 바뀝니다');
+    console.table(dup);
+  } else console.log('%c✅ id 중복 없음', 'color:#2E7D32');
+
+  if(prefix.length){
+    console.warn('⚠️ 이름이 앞부분만 같은 쌍 ' + prefix.length + '개 — id 가 정상이면 문제없습니다');
+    console.table(prefix);
+  }
+
+  // 실제 저장된 값도 같이 보여준다
+  const watch = rows.filter(r => prefix.some(p => p.짧은이름 === r.name || p.긴이름 === r.name));
+  if(watch.length){
+    console.log('%c▼ 해당 작물들의 현재 시트 값', 'font-weight:bold');
+    console.table(watch.map(r => ({ id:r.id, name:r.name, category:r.category, cat:r.cat, status:r.status })));
+  }
+  return { blank, dup, prefix };
+};
+
 window.진단 = window.diag = async function(){
   const 후보 = [
     { action:'readCollection', collectionName:'plants' },
@@ -357,6 +479,7 @@ window.진단 = window.diag = async function(){
   ];
   console.log('%c🔎 작물 데이터 진단 시작', 'color:#2E7D32;font-weight:bold');
   console.log('GAS 주소:', CONFIG.GAS_URL_SHEETS);
+  console.log(`작물 컬렉션 이름표: '${CONFIG.plantsCollection}'  →  실제 시트: 'growPlants'`);
 
   for(const q of 후보){
     const url = `${CONFIG.GAS_URL_SHEETS}?${new URLSearchParams(q)}`;
@@ -389,6 +512,16 @@ const DB = {
   // 서버에 없는 컬렉션은 요청 자체를 건너뛴다 (요청 1건당 1~2초 소요)
   LOCAL_ONLY: ['cropNameOverrides'],
 
+  // 각 action 이 GAS 안에서 실제로 여는 구글 시트 탭 이름
+  //   getPlants        → growPlants   (doGet: gasGetRows('growPlants'))
+  //   getMyPesticides  → myPesticides (doGet: gasGetRows('myPesticides'))
+  SHEET_OF: {
+    getPlants:       'growPlants',
+    getMyPesticides: 'myPesticides',
+    readCollection:  '(collectionName 로 지정)',
+    read:            '(sheetName 로 지정)'
+  },
+
   _readActions(collName){
     if(this.LOCAL_ONLY.includes(collName)) return [];
     if(collName === CONFIG.plantsCollection)     return [{ action:'getPlants' }];
@@ -417,7 +550,22 @@ const DB = {
     return out;
   },
 
+  // 컬렉션 이름표를 plants → growPlants 로 바꾸면서
+  // 예전 키(orchard.plants)에 남아 있는 캐시를 새 키로 한 번만 옮긴다.
+  _migrateCacheKey(){
+    try{
+      if(localStorage.getItem('_orchardKeyMigrated_v1')) return;
+      const oldV = localStorage.getItem('orchard.plants');
+      if(oldV && !localStorage.getItem('orchard.growPlants')){
+        localStorage.setItem('orchard.growPlants', oldV);
+        console.log('🔁 캐시 이월: orchard.plants → orchard.growPlants');
+      }
+      localStorage.setItem('_orchardKeyMigrated_v1', '1');
+    }catch(e){}
+  },
+
   async list(collName){
+    this._migrateCacheKey();
     const tries = this._readActions(collName);
     for(const q of tries){
       const url = `${CONFIG.GAS_URL_SHEETS}?${new URLSearchParams(q)}`;
@@ -428,7 +576,8 @@ const DB = {
         if(jr && jr.success && Array.isArray(jr.data) && jr.data.length){
           const wasMatrix = Array.isArray(jr.data[0]);
           const rows = this._toObjects(jr.data);
-          console.log(`✅ [${collName}] ${rows.length}건 로드 — action='${q.action}'`
+          const sheet = this.SHEET_OF[q.action] || collName;
+          console.log(`✅ [${collName}] ${rows.length}건 로드 — action='${q.action}' → 구글시트 탭 '${sheet}'`
                     + (wasMatrix ? ' (2차원 배열 → 객체 변환됨)' : ''));
           if(rows.length) console.log(`   필드:`, Object.keys(rows[0]).join(', '));
           return rows;
@@ -613,6 +762,68 @@ const App = {
     else if(q.get('crop')){ this.selectByName(q.get('crop'), q.get('psis')); }
   },
 
+  // 시트 값 표준화 ────────────────────────────────────
+  // status : 항상 영문 코드. '재배 중' 같은 한글은 active 로 본다.
+  // category/cat : 항상 유실수 또는 채소. 그 밖의 값(재배중 등)은 작물명으로 다시 판정.
+  STATUS_MAP: {
+    '재배 중':'active', '재배중':'active', '생육중':'active', '생육 중':'active',
+    '활성':'active', 'active':'active',
+    '수확중':'harvest', '수확 중':'harvest', 'harvest':'harvest',
+    '준비중':'prepare', '준비 중':'prepare', 'prepare':'prepare',
+    '대기중':'wait', '대기 중':'wait', 'wait':'wait',
+    '고사':'dead', 'dead':'dead',
+    '수확 완료':'done', '수확완료':'done', 'done':'done',
+    '삭제':'deleted', 'deleted':'deleted'
+  },
+
+  normStatus(v){
+    const s = String(v == null ? '' : v).trim();
+    if(!s) return 'active';                       // 비어 있으면 재배중으로 본다
+    return this.STATUS_MAP[s] || this.STATUS_MAP[s.replace(/\s+/g,'')] || s;
+  },
+
+  // 분류 칸에 상태값이 잘못 들어간 경우를 걸러낸다
+  normCategory(v, name){
+    return this.classify(name, v).category;
+  },
+
+  // 작물 분류를 판정하고 '확신 여부'까지 알려준다.
+  //   sure=false 면 키워드에 없어 이름만 보고 추측한 것 → 사용자 확인이 필요
+  classify(name, category){
+    const cat = String(category || '').trim();
+    if(cat === '유실수' || cat === '채소') return { category: cat, sure: true };
+
+    const nm  = String(name || '').toLowerCase();
+    const std = this.getStandardName(name || '');
+
+    // 유실수 키워드에 걸리면 확실
+    if(this.isFruit(std, '')) return { category: '유실수', sure: true };
+
+    // 채소 쪽 단서가 있으면 확실
+    const vegHints = [
+      // 잎·뿌리채소
+      '배추','무','열무','상추','시금치','쑥갓','파','마늘','양파','고추','오이',
+      '당근','근대','아욱','케일','갓','부추','생강','토란','우엉','야콘','더덕','도라지',
+      '브로콜리','양배추','비트','샐러리','치커리','시래기',
+      // 과채·박과
+      '호박','수박','참외','멜론','토마토','가지','감자','고구마','옥수수','딸기',
+      '오이','여주','수세미','박','동아',
+      // 콩·유지작물
+      '콩','깨','땅콩','들깨','참깨','유채','해바라기',
+      // ⭐ 아주까리(피마자) — 나무처럼 크게 자라지만 한해살이 밭작물이다
+      '아주까리','피마자',
+      // ⭐ 산나물 — 나무가 아니라 여러해살이 풀
+      '어수리','곤드레','고려엉겅퀴','취나물','참나물','눈개승마','곰취','미나리',
+      '냉이','달래','쑥','머위','방풍','당귀','신선초','명이','부지깽이',
+      // 허브
+      '바질','루꼴라','고수','민트','로즈마리','타임','오레가노','딜','차이브'
+    ];
+    if(vegHints.some(k => nm.includes(k))) return { category: '채소', sure: true };
+
+    // 어느 쪽 단서도 없으면 채소로 두되 '불확실' 표시
+    return { category: '채소', sure: false };
+  },
+
   isFruit(name, category){
     const cat=(category||'').toLowerCase(), nm=(name||'').toLowerCase();
     if(cat.includes('유실수')||cat.includes('과수')) return true;
@@ -644,7 +855,7 @@ const App = {
   getStandardName(name) {
     if(!name) return '';
     if(this._stdOverrides && this._stdOverrides[name]) return this._stdOverrides[name].stdName;
-    const customMap = { '선비잡이콩': '콩', '머루콩': '콩', '하나가리': '콩', '단감': '감', '참다래': '참다래(키위)', '키위': '참다래(키위)', '방울토마토': '토마토' };
+    const customMap = { '선비잡이콩': '콩', '머루콩': '콩', '아주까리콩': '콩', '작두콩': '콩', '동부콩': '콩', '하나가리': '콩', '단감': '감', '참다래': '참다래(키위)', '키위': '참다래(키위)', '방울토마토': '토마토' };
     if(customMap[name]) return customMap[name];
     let best = null, bestEnd = -1, bestLen = 0;
     for(const std of this.STD_CROPS){
@@ -661,8 +872,8 @@ const App = {
     const seen=new Set(), out=[];
     let skipStatus=0, skipNoName=0, skipDup=0;
     for(const p of (raw||[])){
-      const st = p.status || p['상태'] || '';
-      if(st === 'deleted' || st === '고사' || st === '수확 완료'){ skipStatus++; continue; }
+      const st = this.normStatus(p.status || p['상태'] || '');
+      if(st === 'deleted' || st === 'dead' || st === 'done'){ skipStatus++; continue; }
       // 시트 헤더가 한글일 수 있으므로 후보를 넓게 잡는다
       const originalName = p.name || p.cropName || p['작물명'] || p['이름'] || p['작물'] || '';
       if(!originalName){ skipNoName++; continue; }
@@ -670,14 +881,31 @@ const App = {
       const stdName = this.getStandardName(originalName);
       out.push({
         id: p.id||originalName, name: originalName,
-        displayName: stdName !== originalName ? `${stdName}(${originalName})` : originalName,
-        category: this.isFruit(stdName, p.category) ? '유실수' : '채소',
+        // 실제 작물명이 앞, 검색용 표준명은 괄호 안.
+        // (예전엔 '아주까리(아주까리콩)' 처럼 표준명이 앞에 와서 다른 작물로 착각하기 쉬웠다)
+        displayName: stdName !== originalName ? `${originalName} (${stdName})` : originalName,
+        // category 가 비었거나 이상하면 cat 열을, 그것도 아니면 작물명으로 판정
+        category: this.normCategory(p.category || p.cat, originalName),
+        rawCategory: String(p.category == null ? '' : p.category).trim(),   // 시트에 실제로 적힌 값
+        catSure:    this.classify(originalName, p.category || p.cat).sure,  // 판정을 믿어도 되는가
+        status: st,
         ncpmsName: stdName, psisName: CONFIG.cropMapToPsis[stdName] || stdName,
         location: p.location || p.spot || '' 
       });
     }
+    const needFix = out.filter(c => c.rawCategory !== '유실수' && c.rawCategory !== '채소');
+    const unsure  = needFix.filter(c => !c.catSure);
     console.log(`🌱 작물 정리 결과: 원본 ${(raw||[]).length}건 → 표시 ${out.length}건`
               + ` (상태제외 ${skipStatus}, 이름없음 ${skipNoName}, 중복 ${skipDup})`);
+    if(needFix.length){
+      console.warn(`🟠 시트 분류값이 유실수/채소가 아닌 작물 ${needFix.length}종 — 목록에 • 로 표시됩니다`);
+      console.table(needFix.map(c => ({ 작물:c.name, '시트값':c.rawCategory || '(빈칸)',
+                                        '자동판정':c.category, '확신':c.catSure ? '높음' : '낮음 ?' })));
+    }
+    if(unsure.length){
+      console.warn(`❓ 이름만으로 분류를 확신할 수 없는 작물 ${unsure.length}종 — 목록에 빨간 ? 로 표시됩니다. `
+                 + `✏️ 로 직접 지정해 주세요: ${unsure.map(c=>c.name).join(', ')}`);
+    }
     if((raw||[]).length && !out.length && (raw||[])[0]){
       console.warn('⚠️ 데이터는 있으나 작물명을 못 찾았습니다. 첫 행 내용:', (raw||[])[0]);
     }
@@ -696,10 +924,22 @@ const App = {
       const rows=this._crops.filter(x=>(x.category||'기타')===key);
       if(!rows.length) return '';
       return `<div class="cropcat">${icon} ${label} <span class="cnt">(${rows.length}종)</span></div><div class="crops-row">`
-        + rows.map(x=>`<span class="crop-wrap">
-      		<button class="crop ${this.cropObj&&this.cropObj.id===x.id?'on':''}" onclick="App.selectCrop('${x.id}')">${x.displayName}</button>
+        + rows.map(x=>{
+          // 시트의 category 가 유실수/채소가 아니면(예: 재배중) 눈에 띄게 표시
+          const raw = x.rawCategory || '';
+          const isValid = (raw === '유실수' || raw === '채소');
+          let mark = '';
+          if(!isValid && !x.catSure){
+            // 시트값도 없고 이름으로도 판단이 안 됨 → 확인 필요
+            mark = `<span title="분류를 확신할 수 없습니다 — ✏️ 로 직접 지정해 주세요" style="color:#C62828;font-weight:900">?</span> `;
+          } else if(!isValid){
+            mark = `<span title="시트 분류값이 '${raw || '빈칸'}' 입니다 — 유실수/채소로 정리하세요" style="color:#E65100;font-weight:900">•</span> `;
+          }
+          return `<span class="crop-wrap">
+      		<button class="crop ${this.cropObj&&this.cropObj.id===x.id?'on':''}" onclick="App.selectCrop('${x.id}')">${mark}${x.displayName}</button>
       		<button class="crop-pen" title="작물 편집" onclick="event.stopPropagation();App.quickEdit('${x.id}')">✏️</button>
-	</span>`).join('') + `</div>`;
+	</span>`;
+        }).join('') + `</div>`;
     };
     box.innerHTML = cat('🌳','유실수','유실수') + cat('🥬','채소','채소·작물') + cat('🌱','기타','기타');
   },
@@ -719,7 +959,7 @@ const App = {
     let c=this._crops.find(x=>x.name===name);
     if(!c){
       const stdName = this.getStandardName(name);
-      c={ id:name, name, displayName: stdName!==name ? `${stdName}(${name})` : name,
+      c={ id:name, name, displayName: stdName!==name ? `${name} (${stdName})` : name,
           category:this.isFruit(stdName,'')?'유실수':'채소',
           ncpmsName:stdName, psisName: psis || CONFIG.cropMapToPsis[stdName] || stdName, location:'' };
     }
@@ -1028,7 +1268,17 @@ const CropManager = {
     const v = (el.value || '').trim();
     if(!v) return;
     const stdName = App.getStandardName(v);
-    const newCrop = { name: v, category: App.isFruit(stdName, '') ? '유실수' : '채소', status: '재배 중', createdAt: Date.now() };
+    // 이름만으로 분류가 확실하지 않으면 사용자에게 직접 묻는다.
+    // (키워드 목록에 없는 유실수가 조용히 채소로 등록되는 것을 막는다)
+    const guess = App.classify(v, '');
+    let cat0 = guess.category;
+    if(!guess.sure){
+      cat0 = confirm(`'${v}' 은(는) 유실수(과일나무) 인가요?\n\n확인 = 🌳 유실수\n취소 = 🥬 채소·작물`)
+             ? '유실수' : '채소';
+    }
+    // 분류는 category 열 하나로 통일 (cat 열은 더 이상 기록하지 않음)
+    // status 는 영문 코드로 통일 (과수원 앱과 동일)
+    const newCrop = { name: v, category: cat0, status: 'active', createdAt: Date.now() };
     await DB.add(CONFIG.plantsCollection, newCrop);
     el.value = '';
     Toast.show(`'${v}' 작물이 새로 등록되었습니다.`);
@@ -1041,7 +1291,8 @@ const CropManager = {
     this.render();
   },
   async setStatus(id, status) {
-    await DB.update(CONFIG.plantsCollection, id, {status});
+    // normStatus 는 App 의 메서드다. CropManager 안에서 this. 로 부르면 undefined.
+    await DB.update(CONFIG.plantsCollection, id, { status: App.normStatus(status) });
     App._crops = await App.loadCrops();
     App.renderCrops();
   },
@@ -1058,11 +1309,11 @@ const CropManager = {
     document.getElementById('planBg').classList.add('on');
     const rows = (this.plants||[]).map(p => `
        <div class="info" style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; margin-bottom:8px;">
-          <div><b>${p.name}</b> <span style="font-size:11px">${p.category||''}</span></div>
+          <div><b>${p.name}</b> <span style="font-size:11px">${App.normCategory(p.category || p.cat, p.name)}</span></div>
           <select onchange="CropManager.setStatus('${p.id}', this.value)" style="padding:6px; border-radius:8px;">
-            <option value="재배 중" ${p.status!=='수확 완료'&&p.status!=='고사'?'selected':''}>🌱 재배 중</option>
-            <option value="수확 완료" ${p.status==='수확 완료'?'selected':''}>🧺 수확 완료</option>
-            <option value="고사" ${p.status==='고사'?'selected':''}>🥀 고사</option>
+            <option value="active" ${App.normStatus(p.status)==='active'?'selected':''}>🌱 재배 중</option>
+            <option value="done"   ${App.normStatus(p.status)==='done'?'selected':''}>🧺 수확 완료</option>
+            <option value="dead"   ${App.normStatus(p.status)==='dead'?'selected':''}>🥀 고사</option>
           </select>
        </div>`).join('');
     box.innerHTML = `<div class="rx-hd"><h2>🌱 작물 상태 관리</h2><button class="x" onclick="Plan.close()">✕</button></div>${rows || '<div class="state">등록된 작물이 없습니다.</div>'}`;
