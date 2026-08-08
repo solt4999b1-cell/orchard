@@ -252,10 +252,29 @@ function normalizeType(typeValue) {
 // 1. 구글 시트 데이터 로드 (Read)
 // GAS 배포본이 아는 action 이름이 무엇인지 확실치 않아, 후보를 순서대로 시도한다.
 // 과수원 앱(동일 배포본)에서 검증된 'readCollection'을 1순위로 둔다.
-const READ_ACTIONS = ['getMyPesticides', 'readCollection', 'read', 'list', 'getAll'];
+// 진단으로 확정된 action (이 GAS는 getMyPesticides 만 지원)
+const READ_ACTIONS = ['getMyPesticides'];
 let _workingReadAction = localStorage.getItem('pesticideReadAction') || null;
 
 // action 하나로 읽기를 시도. 성공하면 배열, 실패하면 예외.
+// GAS가 시트를 [[헤더],[행],[행]...] 2차원 배열로 넘기는 경우를 객체 배열로 변환한다.
+// getMyPesticides 가 바로 이 형태이며, 변환하지 않으면 item.name 이 전부 undefined 가 된다.
+function toObjects(rows) {
+  if (!Array.isArray(rows) || !rows.length) return rows || [];
+  if (!Array.isArray(rows[0])) return rows;        // 이미 객체 배열이면 그대로
+
+  const head = rows[0].map(h => String(h == null ? '' : h).trim());
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = rows[i];
+    if (!Array.isArray(r)) { out.push(r); continue; }
+    const o = {};
+    for (let c = 0; c < head.length; c++) { if (head[c]) o[head[c]] = r[c]; }
+    out.push(o);
+  }
+  return out;
+}
+
 async function _tryRead(action) {
   const q = new URLSearchParams({
     action: action,
@@ -278,7 +297,14 @@ async function _tryRead(action) {
   }
 
   if (!result.success) throw new Error(result.message || '데이터 로드 실패');
-  return result.data || [];
+
+  const wasMatrix = Array.isArray(result.data) && Array.isArray(result.data[0]);
+  const rows = toObjects(result.data || []);
+  if (rows.length) {
+    console.log(`✅ ${rows.length}건 로드${wasMatrix ? ' (2차원 배열 → 객체 변환됨)' : ''}`);
+    console.log('   필드:', Object.keys(rows[0]).join(', '));
+  }
+  return rows;
 }
 
 async function loadDataFromGoogleSheets() {
