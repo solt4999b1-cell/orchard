@@ -62,6 +62,16 @@ body{margin:0;background:var(--bg);color:var(--ink);
 .hdr-qrcode { position: absolute; top: 0; right: 2px; flex-shrink: 0; }
 .hdr-qrcode img { width: 120px; height: 120px; border: 1px solid #ddd; border-radius: 6px; display: block; }
 
+/* 등록 농약 목록 — 보유 우선 표시 */
+.rx-own-cnt{ color:#2E7D32; font-weight:700; }
+.rx-divider{
+  display:flex; align-items:center; gap:8px;
+  margin:14px 2px 8px; color:#9E9E9E; font-size:11px; font-weight:600;
+}
+.rx-divider::before,.rx-divider::after{
+  content:''; flex:1; height:1px; background:#E0E0E0;
+}
+
 /* 작물 추가 입력칸 한 줄 최적화 스타일 */
 .crop-manual{display:flex;gap:6px;margin:10px 0 4px;align-items:center;width:100%;}
 .crop-manual input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;font-size:13px;background:var(--panel);height:36px;}
@@ -373,19 +383,21 @@ const AppBus = {
 };
 
 const DB = {
-  // 이 GAS가 어떤 action 이름으로 읽기를 지원하는지 확실치 않아 후보를 순서대로 시도
+  // 이 GAS가 실제로 지원하는 action (콘솔 진단으로 확정됨)
+  //   plants        → getPlants
+  //   myPesticides  → getMyPesticides
+  // 서버에 없는 컬렉션은 요청 자체를 건너뛴다 (요청 1건당 1~2초 소요)
+  LOCAL_ONLY: ['cropNameOverrides'],
+
   _readActions(collName){
+    if(this.LOCAL_ONLY.includes(collName)) return [];
+    if(collName === CONFIG.plantsCollection)     return [{ action:'getPlants' }];
+    if(collName === CONFIG.pesticidesCollection) return [{ action:'getMyPesticides' }];
+    // 그 밖의 컬렉션은 예전처럼 후보를 훑는다
     return [
       { action:'readCollection', collectionName: collName },
-      { action:'getPlants' },                                   // doGet에 존재 (growPlants 시트)
-      { action:'read',  sheetName: collName },
-      { action:'getMyPesticides' }                              // myPesticides 전용
-    ].filter(q => {
-      // 컬렉션과 무관한 전용 action은 제외
-      if(q.action === 'getPlants')        return collName === CONFIG.plantsCollection;
-      if(q.action === 'getMyPesticides')  return collName === CONFIG.pesticidesCollection;
-      return true;
-    });
+      { action:'read', sheetName: collName }
+    ];
   },
 
   // GAS가 시트를 [[헤더],[행],[행]...] 2차원 배열로 넘기는 경우를 객체 배열로 변환
@@ -431,11 +443,15 @@ const DB = {
       }
     }
 
-    console.info(`ℹ️ [${collName}] 서버에 없는 컬렉션 → localStorage 캐시 사용`);
+    if(!tries.length){
+      // 서버에 없는 것이 정상인 컬렉션 — 조용히 로컬만 사용
+    } else {
+      console.info(`ℹ️ [${collName}] 서버에 없는 컬렉션 → localStorage 캐시 사용`);
+    }
     try{
       const v = localStorage.getItem('orchard.'+collName);
       const arr = v ? JSON.parse(v) : [];
-      console.log(`   localStorage 캐시: ${arr.length}건`);
+      if(tries.length) console.log(`   localStorage 캐시: ${arr.length}건`);
       return arr;
     }catch(e){ return []; }
   },
@@ -495,7 +511,21 @@ const Owned = {
   has(brand){ return this._set.has(this.norm(brand)); },
   async load(){
     const ps = await DB.rawPesticides();
-    this._set = new Set((ps||[]).filter(p=>(p.quantity==null||p.quantity>0)).map(p=>this.norm(p.brandName||p.pestiBrandName||p.name)));
+    // 수량이 0 이하일 때만 제외한다.
+    // 시트 셀이 비어 있으면 '' 또는 null 로 오는데, 이런 공란은 '보유'로 본다.
+    const inStock = p => {
+      const q = p.quantity;
+      if(q === null || q === undefined) return true;          // 값 자체가 없음
+      const s = String(q).trim();
+      if(s === '' || s === '-') return true;                  // 공란 / 하이픈
+      const n = parseFloat(s.replace(/[^0-9.\-]/g, ''));      // '3개', '1.5L' 등 대응
+      if(!isFinite(n)) return true;                           // 숫자로 못 읽으면 보유로
+      return n > 0;
+    };
+
+    const list = (ps||[]).filter(inStock);
+    this._set = new Set(list.map(p=>this.norm(p.brandName||p.pestiBrandName||p.name)));
+    console.log(`💊 보유 농약 ${this._set.size}종 (전체 ${(ps||[]).length}건 중 수량 0 제외 ${(ps||[]).length - list.length}건)`);
   }
 };
 
@@ -571,9 +601,11 @@ const App = {
     this._external = q.get('embed')==='1' || window.self!==window.top || q.has('crop') || q.has('cropId');
     if(q.get('embed')==='1' || (window.self!==window.top && q.has('crop'))) document.body.classList.add('embed');
 
-    await Owned.load();
-    await this.loadStdOverrides();
+    // 서로 의존하지 않는 작업이므로 동시에 진행한다 (순차 대기 → 병렬)
+    const t0 = performance.now();
+    await Promise.all([ Owned.load(), this.loadStdOverrides() ]);
     this._crops = await this.loadCrops();
+    console.log(`⏱️ 초기 로딩 ${((performance.now()-t0)/1000).toFixed(1)}초`);
     this.renderCrops();
     AppBus.on('reference:request', d=>this.openFromName(d));
 
@@ -878,7 +910,19 @@ const Rx = {
   },
   render(cropName, name, rows){
     const box=document.getElementById('rx');
+
+    // 보유 농약을 맨 앞으로 (같은 그룹 안에서는 원래 순서 유지 = 안정 정렬)
+    const isOwned = r => Owned.has(NCPMS.pick(r,['pestiBrandName','상표명'])||'');
+    rows = rows
+      .map((r,idx)=>({ r, idx, own: isOwned(r) }))
+      .sort((a,b)=> (a.own === b.own) ? a.idx - b.idx : (a.own ? -1 : 1))
+      .map(x=>x.r);
+
+    const ownCount = rows.filter(isOwned).length;
+
+    // ⚠️ Plan.open(i) 이 _items 의 인덱스를 쓰므로 정렬한 배열을 그대로 저장해야 한다
     this._items = rows;
+
     const cardHtml=(r,i)=>{
       const brand = NCPMS.pick(r,['pestiBrandName','상표명'])||'';
       const komp = NCPMS.pick(r,['pestiKorName','품목명']);
@@ -896,8 +940,16 @@ const Rx = {
       </div>`;
     };
     box.innerHTML=`<div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
-      <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 등록 약제 ${rows.length}건</p>
-      ${rows.length ? rows.map((r,i)=>cardHtml(r,i)).join('') : '<div class="state">등록된 약제를 찾지 못했습니다.</div>'}`;
+      <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 등록 약제 ${rows.length}건
+        ${ownCount ? `<span class="rx-own-cnt">· 보유 ${ownCount}건 먼저 표시</span>` : ''}</p>
+      ${rows.length
+        ? rows.map((r,i)=>{
+            // 보유 목록이 끝나는 지점에 구분선을 한 번 넣는다
+            const sep = (ownCount && i === ownCount)
+              ? '<div class="rx-divider">아래는 보유하지 않은 약제</div>' : '';
+            return sep + cardHtml(r,i);
+          }).join('')
+        : '<div class="state">등록된 약제를 찾지 못했습니다.</div>'}`;
   },
   close(){ document.getElementById('rxBg').classList.remove('on'); document.body.style.overflow=''; }
 };
