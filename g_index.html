@@ -800,8 +800,8 @@
 }
 
 </style>
-  <!-- Firebase SDK (compat version — 브라우저 직접 사용) -->
-  <!-- Firebase SDK는 연결 시 ensureFirebaseSDK()가 여러 CDN 중 가능한 곳에서 동적 로드 -->
+  <!-- 예전 Firebase SDK 는 제거됨 — 모든 저장은 구글 시트로 -->
+  
 
 </head>
 <body>
@@ -3225,33 +3225,19 @@
 
     </div><!-- /grow-panel-days -->
 
-    <!-- ▶ 탭B: 생육 기록 (Firebase 통합) -->
+    <!-- ▶ 탭B: 생육 기록 (구글 시트 통합) -->
     <div id="grow-panel-record" style="display:none">
-      <!-- Firebase growRecords → plants 통합 뷰 -->
+      <!-- '구글 시트 통합' 카드는 제거하고 개별 기록 하나로 통일했다.
+           (growUnifiedList 는 다른 코드가 참조하므로 자리만 숨겨서 남긴다) -->
+      <div id="growUnifiedList" style="display:none"></div>
+
       <div class="card" style="margin-top:10px">
         <div class="card-header">
-          <span class="card-icon">📝</span>
-          <div>
-            <div class="card-title">생육 기록 — Firebase 우선 통합</div>
-            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">Firebase DB 기록이 생육일수 추적 형식으로 통합 표시됩니다</div>
-          </div>
-          <button onclick="syncAndRenderGrowUnified()"
-            style="background:var(--green);color:white;border:none;border-radius:8px;
-            padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
-            🔄 동기화
-          </button>
-        </div>
-        <div class="card-body" id="growUnifiedList">
-          <div style="text-align:center;padding:16px;color:#9E9E9E;font-size:13px">
-            동기화 버튼을 눌러 Firebase 기록을 불러오세요
-          </div>
-        </div>
-      </div>
-      <!-- 기존 개별 기록 추가 폼 (하단 유지) -->
-      <div class="card" style="margin-top:8px">
-        <div class="card-header">
           <span class="card-icon">➕</span>
-          <div><div class="card-title">개별 이벤트 직접 추가</div></div>
+          <div>
+            <div class="card-title">생육 기록</div>
+            <div style="font-size:11px;color:#9E9E9E;margin-top:2px">파종·정식·개화·착과·수확 기록을 남깁니다</div>
+          </div>
           <button onclick="toggleGrowForm()"
             style="background:#546E7A;color:white;border:none;border-radius:8px;
             padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">
@@ -3277,6 +3263,7 @@
                 <option value="개화">🌸 개화</option>
                 <option value="착과">🍎 착과</option>
                 <option value="수확">🎉 수확</option>
+                <option value="최종수확">🏁 최종수확 (이후 목록에서 숨김)</option>
               </select>
             </div>
             <div>
@@ -3394,12 +3381,12 @@
       </div>
     </div>
 
-    <!-- ③ Firebase (백업용) -->
+    <!-- ③ 구글 시트 (백업용) -->
     <div style="background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);padding:16px;margin-bottom:12px;border-left:4px solid #6A1B9A">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="display:flex;align-items:center;gap:8px">
           <span style="font-size:22px">☁️</span>
-          <div style="font-size:15px;font-weight:800;color:#6A1B9A">Firebase <span style="font-size:11px;font-weight:600;color:#AB47BC">· 클라우드 백업</span></div>
+          <div style="font-size:15px;font-weight:800;color:#6A1B9A">구글 시트 <span style="font-size:11px;font-weight:600;color:#AB47BC">· 클라우드 백업</span></div>
         </div>
         <span id="fbConnState" style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:10px;background:#F5F5F5;color:#9E9E9E">미연결</span>
       </div>
@@ -3410,14 +3397,14 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
         <button onclick="backupToFirebase()"
           style="padding:13px;background:#6A1B9A;color:white;border:none;border-radius:10px;
-          font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">📤 폰 → Firebase 백업</button>
+          font-size:13px;font-weight:800;cursor:pointer;font-family:inherit">📤 폰 → 구글 시트 백업</button>
         <button onclick="restoreFromFirebase()"
           style="padding:13px;background:#F3E5F5;color:#6A1B9A;border:1.5px solid #CE93D8;border-radius:10px;
-          font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 Firebase → 폰 복원</button>
+          font-size:13px;font-weight:700;cursor:pointer;font-family:inherit">📥 구글 시트 → 폰 복원</button>
       </div>
       <button onclick="connectFirebaseManual()"
         style="width:100%;padding:11px;background:#FAFAFA;color:#6A1B9A;border:1.5px dashed #CE93D8;border-radius:10px;
-        font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box">🔌 Firebase 연결하기</button>
+        font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;box-sizing:border-box">🔌 구글 시트 연결하기</button>
     </div>
 
     <!-- 상태 표시 -->
@@ -4498,12 +4485,12 @@
 </div>
 
 
-<!-- Firebase SDK 제거됨 - Google Sheets API 사용 -->
+<!-- 예전 Firebase SDK 제거됨 — 구글 시트 API 사용 -->
 <!-- Google Sheets와 GAS를 통한 데이터 관리 -->
 
 <script>
 // ════════════════════════════════════════════════════════════════
-// 🎯 Google Sheets 통합 설정 (Firebase 제거)
+// 🎯 Google Sheets 통합 설정 (구글 시트 제거)
 // ════════════════════════════════════════════════════════════════
 
 // Google Sheets 설정
@@ -4560,7 +4547,7 @@ async function loadFromGoogleSheets(collectionName) {
 //   신방식:  saveToGoogleSheets('create', 'growPlants', {...})
 //   구방식:  saveToGoogleSheets('growPlants').doc(id).set({...})
 //            saveToGoogleSheets('growPlants').get()
-//   구방식(예전 Firebase 문법)이 24곳에 남아 있어, 호출부를 하나하나 고치는
+//   구방식(예전 구글 시트 문법)이 24곳에 남아 있어, 호출부를 하나하나 고치는
 //   대신 같은 모양의 껍데기를 만들어 내부에서 구글 시트를 쓰도록 했다.
 // ════════════════════════════════════════════════════════════
 function sheetRef(sheetName) {
@@ -4668,7 +4655,7 @@ let growRecords = [];
 let irangChanges = [];
 let irangLog = [];
 
-// Google Sheets 초기화 (Firebase 대체)
+// Google Sheets 초기화 (구글 시트 대체)
 async function initializeGoogleSheets() {
   try {
     console.log('🔧 Google Sheets 초기화 중...');
@@ -4730,7 +4717,7 @@ async function initializeGoogleSheets() {
   } catch (err) {
     console.error('❌ Google Sheets 초기화 실패:', err);
     
-    // Firebase 오류시 localStorage에서 복원
+    // 구글 시트 오류시 localStorage에서 복원
     try {
       workLog = JSON.parse(localStorage.getItem('workLog') || '[]');
       plants = JSON.parse(localStorage.getItem('plants') || '[]');
@@ -5118,13 +5105,13 @@ console.log('✅ Google Sheets 함수 로드 완료');
 let weatherMode = localStorage.getItem('weatherMode') || 'drought';
 
 // ══════════════════════════════════════════════════════════
-// Firebase Firestore 연동 모듈
+// 구글 시트 연동 모듈
 // ══════════════════════════════════════════════════════════
 
-// Google Sheets 초기화 (Firebase 대체)
+// Google Sheets 초기화 (구글 시트 대체)
 // 페이지 로드 시 자동 실행
 let _fbReady = false; // 호환성 유지용
-// _db 는 예전 Firebase 시절 변수. 이제 모든 저장이 구글 시트로 바뀌어
+// _db 는 예전 구글 시트 시절 변수. 이제 모든 저장이 구글 시트로 바뀌어
 // 참조하는 곳이 없지만, 혹시 남은 코드가 있어도 오류가 나지 않도록 선언만 남겨둔다.
 var _db = null;
 
@@ -5166,7 +5153,7 @@ function toggleHeader() {
   }
 }
 
-// Firebase 상태 UI 업데이트
+// 구글 시트 상태 UI 업데이트
 function updateFirebaseStatus(status) {
   const el = document.getElementById('firebaseStatus');
   if (!el) return;
@@ -5194,14 +5181,17 @@ async function fbSaveSupply(entry) {
     // 농약장에서 온 항목은 농약장으로, 나머지는 자재 시트로 되돌려 저장한다.
     // 새로 등록하는 농약도 농약장에 넣어 세 앱이 같은 목록을 보게 한다.
     var toPest = (entry._sheet === 'myPesticides') || (entry.type === '농약');
+    // 이미 시트에서 온 항목(_sheet 표시가 있음)은 update.
+    // create 로 보내면 시트 끝에 같은 항목이 또 붙는다.
+    var act = entry._sheet ? 'update' : 'create';
     if (toPest) {
-      await saveToGoogleSheets('create', COLLECTIONS.myPesticides, supplyToPest(entry));
+      await saveToGoogleSheets(act, COLLECTIONS.myPesticides, supplyToPest(entry));
       entry._sheet = 'myPesticides';
     } else {
       var clean = Object.assign({}, entry);
       delete clean._sheet;
       clean.crops = Array.isArray(clean.crops) ? clean.crops.join('|') : (clean.crops || '');
-      await saveToGoogleSheets('create', COLLECTIONS.supplies, clean);
+      await saveToGoogleSheets(act, COLLECTIONS.supplies, clean);
       entry._sheet = 'supplies';
     }
   } catch(e) { console.error('fbSaveSupply:', e.message); }
@@ -5292,7 +5282,7 @@ async function fbLoadPlants() {
   } catch(e) { console.error('fbLoadPlants:', e.message); return null; }
 }
 
-// ── 전체 Firebase → 로컬 동기화 ──────────────────────────
+// ── 전체 구글 시트 → 로컬 동기화 ──────────────────────────
 async function syncFromFirebase() {
   if (!_fbReady) return;
   updateFirebaseStatus('syncing');
@@ -5300,13 +5290,13 @@ async function syncFromFirebase() {
     // 농자재
     const fbSupplies = await fbLoadSupplies();
     if (fbSupplies && fbSupplies.length > 0) {
-      // Firebase 데이터가 있으면 병합
+      // 구글 시트 데이터가 있으면 병합
       fbSupplies.forEach(s => {
         if (!mySupplies.some(x => x.id === s.id)) mySupplies.push(s);
       });
       localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
     } else {
-      // Firebase가 비어 있으면 로컬 → Firebase 업로드
+      // Firebase가 비어 있으면 로컬 → 구글 시트 업로드
       for (const s of mySupplies) await fbSaveSupply(s);
     }
 
@@ -5372,10 +5362,8 @@ async function syncFromFirebase() {
         });
         savePlantsLocal();
       } else if (plants.length > 0) {
-        // 시트가 비었으면 브라우저에 있는 것을 올린다
-        for (const p of plants) {
-          saveToGoogleSheets('create', COLLECTIONS.growPlants, p).catch(()=>{});
-        }
+        // 시트가 비었으면 브라우저에 있는 것을 올린다 (id 대조 후 중복은 건너뜀)
+        syncToSheet(COLLECTIONS.growPlants, plants, {kind:'plants'}).catch(()=>{});
       }
     } catch(e) { console.warn('sync growPlants:', e.message); }
 
@@ -5390,9 +5378,7 @@ async function syncFromFirebase() {
         localStorage.setItem('growRecords', JSON.stringify(growRecords));
         try { migrateGrowRecords(); } catch(e2) {}
       } else if (growRecords.length > 0) {
-        for (const r of growRecords) {
-          saveToGoogleSheets('create', COLLECTIONS.growRecords, r).catch(()=>{});
-        }
+        syncToSheet(COLLECTIONS.growRecords, growRecords, {kind:'growRecords'}).catch(()=>{});
       }
     } catch(e) { console.warn('sync growRecords:', e.message); }
 
@@ -5409,25 +5395,25 @@ async function syncFromFirebase() {
 }
 
 // ── 실시간 리스너 (Firestore onSnapshot) ─────────────────
-// ⚠️ Google Sheets 사용 중이므로 Firebase 리스너 제거됨
+// ⚠️ Google Sheets 사용 중이므로 구글 시트 리스너 제거됨
 function startRealtimeSync() {
-  // Google Sheets 사용 중 - Firebase 실시간 동기화 비활성화
+  // Google Sheets 사용 중 - 구글 시트 실시간 동기화 비활성화
   console.log('✅ 실시간 동기화 스킵 (Google Sheets 사용)');
 }
 
-// ── Firebase 수동 동기화 버튼 ─────────────────────────────
+// ── 구글 시트 수동 동기화 버튼 ─────────────────────────────
 function fbManualSync() {
   if (!_fbReady) {
-    showToast('❌ Firebase 연결 안됨');
+    showToast('❌ 구글 시트 연결 안됨');
     return;
   }
   // 자동 동기화 제거 - 사용자가 백업·복원 탭에서 수동으로 실행
 }
 
-// ── Firebase 전체 초기화 (개발용) ────────────────────────
+// ── 구글 시트 전체 초기화 (개발용) ────────────────────────
 // Google Sheets 사용 중 - 비활성화됨
 async function fbClearAll() {
-  showToast('⚠️ Google Sheets 사용 중 - Firebase 초기화는 사용할 수 없습니다');
+  showToast('⚠️ 구글 시트 사용 중 — 초기화는 지원하지 않습니다');
   return;
 }
 
@@ -6909,6 +6895,176 @@ async function confirmEditQuantity() {
   _eqPlantId = null;
 }
 
+// ════════════════════════════════════════════════════════════
+// 🔀 안전 병합 엔진
+//   백업을 합칠 때 두 가지 사고를 막는다.
+//     ① 역행  — 오래된 백업이 최근 작업을 덮어쓰는 것
+//     ② 중복  — 내용은 같은데 id 가 달라 두 벌로 쌓이는 것
+//   적용하기 전에 무엇이 바뀌는지 먼저 보여준다.
+// ════════════════════════════════════════════════════════════
+
+// 시각을 비교 가능한 문자열로 뽑는다. 없으면 대체 필드를 차례로 본다.
+function _stamp(o){
+  if(!o) return '';
+  var v = o.updatedAt || o.modifiedAt || o.date || o.dateStr || o.plantDate
+       || o.createdAt || o.addedDate || o.registeredAt || '';
+  v = String(v).trim();
+  if(v) return v.length >= 10 ? v : v.padEnd(10, '0');
+  // 그래도 없으면 id 가 타임스탬프인 경우를 활용 (1786135179772 형태)
+  var n = Number(o.id);
+  if(isFinite(n) && n > 1000000000000) return new Date(n).toISOString();
+  return '';
+}
+
+// 내용이 같은 기록인지 판단하는 지문. id 가 달라도 이걸로 중복을 잡는다.
+function _fingerprint(kind, o){
+  var s = function(v){ return String(v==null?'':v).replace(/\s+/g,'').toLowerCase(); };
+  switch(kind){
+    case 'workLog':     return s(String(o.date).slice(0,10)) + '|' + s(o.name);
+    case 'plants':      return s(o.name) + '|' + s(String(o.dateStr||o.plantDate).slice(0,10));
+    case 'growRecords': return s(String(o.date).slice(0,10)) + '|' + s(o.plantName||o.name) + '|' + s(o.type||o.title);
+    case 'mySupplies':  return s(o.name) + '|' + s(o.type);
+    case 'plantsDB':    return s(o.name) + '|' + s(o.irang) + '|' + s(o.zone) + '|' + s(o.spot);
+    default:            return s(o.name);
+  }
+}
+
+// 병합 계획을 세운다 (아직 적용하지 않는다)
+function planMerge(kind, current, incoming){
+  current  = current  || [];
+  incoming = incoming || [];
+
+  var byId = {}, byFp = {};
+  current.forEach(function(o,i){
+    if(o && o.id != null) byId[String(o.id)] = i;
+    var fp = _fingerprint(kind, o);
+    if(fp && byFp[fp] === undefined) byFp[fp] = i;
+  });
+
+  var plan = { add:[], replace:[], skipOld:[], skipDup:[], kind:kind };
+
+  incoming.forEach(function(inc){
+    if(!inc) return;
+    var idKey = (inc.id != null) ? String(inc.id) : null;
+    var i = (idKey !== null && byId[idKey] !== undefined) ? byId[idKey] : -1;
+
+    if(i >= 0){
+      // 같은 id — 어느 쪽이 최신인가
+      var a = _stamp(inc), b = _stamp(current[i]);
+      if(a && b && a > b) plan.replace.push({ inc:inc, idx:i, from:b, to:a });
+      else                plan.skipOld.push({ inc:inc, idx:i, from:b, to:a });
+      return;
+    }
+
+    // id 는 다른데 내용이 같은가 → 중복
+    var fp = _fingerprint(kind, inc);
+    if(fp && byFp[fp] !== undefined){
+      plan.skipDup.push({ inc:inc, idx:byFp[fp] });
+      return;
+    }
+    plan.add.push(inc);
+  });
+  return plan;
+}
+
+// 계획을 사람이 읽을 수 있게 요약
+function describeMerge(plan){
+  return plan.kind + ': 추가 ' + plan.add.length
+       + ' · 최신본 교체 ' + plan.replace.length
+       + ' · 오래되어 건너뜀 ' + plan.skipOld.length
+       + ' · 내용중복 건너뜀 ' + plan.skipDup.length;
+}
+
+// 계획을 실제로 적용한다
+function applyMerge(plan, arr){
+  plan.replace.forEach(function(r){ arr.splice(r.idx, 1, r.inc); });
+  plan.add.forEach(function(o){ arr.push(o); });
+  return arr;
+}
+
+// ════════════════════════════════════════════════════════════
+// ☁️ 시트 안전 동기화 — 중복 행이 쌓이지 않게 한다
+//   'create' 는 무조건 시트 끝에 행을 붙인다. 그래서 이미 있는 항목까지
+//   create 로 보내면 실행할 때마다 시트가 두 배로 불어난다.
+//   → 시트를 먼저 읽어 id 로 대조한 뒤, 있으면 update / 없으면 create.
+//   → 시트 쪽이 더 최신이면 아예 건너뛴다 (역행 방지).
+// ════════════════════════════════════════════════════════════
+// CSV 가져오기는 행마다 시트에 쏘지 않고 여기 모았다가 한 번에 올린다
+var _csvSyncQueue = { growRecords:[], workLog:[], supplies:[], growPlants:[] };
+
+async function flushCsvSync(){
+  var q = _csvSyncQueue;
+  var jobs = [];
+  if(q.growPlants.length)  jobs.push(syncToSheet(COLLECTIONS.growPlants,  q.growPlants,  {kind:'plants'}));
+  if(q.growRecords.length) jobs.push(syncToSheet(COLLECTIONS.growRecords, q.growRecords, {kind:'growRecords'}));
+  if(q.workLog.length)     jobs.push(syncToSheet(COLLECTIONS.workLog,     q.workLog,     {kind:'workLog'}));
+  if(q.supplies.length)    jobs.push(syncToSheet(COLLECTIONS.supplies,    q.supplies,    {kind:'mySupplies'}));
+  _csvSyncQueue = { growRecords:[], workLog:[], supplies:[], growPlants:[] };
+  if(!jobs.length) return;
+
+  var rs = await Promise.all(jobs);
+  var c=0,u=0,s=0,d=0;
+  rs.forEach(function(r){ c+=r.create; u+=r.update; s+=r.skipNewer; d+=r.skipDup; });
+  console.log('☁️ CSV 가져오기 → 시트 반영: 추가 '+c+' · 갱신 '+u+' · 건너뜀 '+(s+d));
+  if(typeof showToast==='function') showToast('☁️ 시트 반영: 추가 '+c+', 건너뜀 '+(s+d));
+}
+
+async function syncToSheet(sheetName, rows, opts){
+  opts = opts || {};
+  rows = (rows || []).filter(function(r){ return r && r.id != null; });
+  var kind = opts.kind || sheetName;
+  var res  = { sheet:sheetName, create:0, update:0, skipNewer:0, skipDup:0, fail:0 };
+  if(!rows.length) return res;
+
+  // ① 시트의 현재 내용을 읽는다
+  var exist = [];
+  try { exist = (await loadFromGoogleSheets(sheetName)) || []; }
+  catch(e){
+    console.warn('☁️ ' + sheetName + ' 현재 내용을 못 읽어 동기화를 중단합니다:', e.message);
+    res.fail = rows.length;
+    return res;                       // 못 읽으면 아무것도 보내지 않는다 (중복 방지 우선)
+  }
+
+  var byId = {}, byFp = {};
+  exist.forEach(function(o){
+    if(o && o.id != null) byId[String(o.id)] = o;
+    var fp = _fingerprint(kind, o);
+    if(fp && !byFp[fp]) byFp[fp] = o;
+  });
+
+  // ② 항목마다 create / update / skip 을 정한다
+  var jobs = [];
+  rows.forEach(function(r){
+    var cur = byId[String(r.id)];
+    if(cur){
+      var a = _stamp(r), b = _stamp(cur);
+      if(a && b && a <= b){ res.skipNewer++; return; }   // 시트가 더 최신 → 건드리지 않음
+      if(!a || !b){        res.skipNewer++; return; }    // 판단 불가 → 안전하게 유지
+      jobs.push({ act:'update', row:r });
+      return;
+    }
+    var fp = _fingerprint(kind, r);
+    if(fp && byFp[fp]){ res.skipDup++; return; }         // id 는 달라도 내용이 이미 있음
+    jobs.push({ act:'create', row:r });
+  });
+
+  // ③ 실행 (동시에 보내되 시트당 한 번에 몰아서)
+  var out = await Promise.allSettled(jobs.map(function(j){
+    return _saveToGoogleSheets(j.act, sheetName, j.row);
+  }));
+  out.forEach(function(x, i){
+    if(x.status === 'fulfilled') res[jobs[i].act]++;
+    else res.fail++;
+  });
+
+  console.log('☁️ ' + sheetName + ': 새로 추가 ' + res.create
+            + ' · 갱신 ' + res.update
+            + ' · 시트가 최신이라 건너뜀 ' + res.skipNewer
+            + ' · 내용중복 건너뜀 ' + res.skipDup
+            + (res.fail ? ' · 실패 ' + res.fail : ''));
+  return res;
+}
+
 function catOf(p) {
   if (!p) return '';
   return String(p.category || p.cat || '').trim();
@@ -7551,7 +7707,7 @@ function renderTasks() {
   // 완료된 반복 작업(월 기반) 제외 옵션
   const monthKey = todayKey.slice(0,7);
   const hideDone = localStorage.getItem('hideDoneTasks') === 'true';
-  // workLog 최신 상태 로드 (Firebase 로드 전일 수 있으므로 localStorage 직접 읽기)
+  // workLog 최신 상태 로드 (구글 시트 로드 전일 수 있으므로 localStorage 직접 읽기)
   const _wlForTask = JSON.parse(localStorage.getItem('workLog') || '[]');
   const todayStr = toYMD(REAL_TODAY);
   // 오늘 이전에 기록된 작업 이름 목록
@@ -7671,9 +7827,9 @@ function toggleTask(key, el) {
   checkedTasks[key] = !checkedTasks[key];
   if (!checkedTasks[key]) {
     delete checkedTasks[key];
-    fbSaveChecked(key, false);  // Firebase 삭제
+    fbSaveChecked(key, false);  // 구글 시트 삭제
   } else {
-    fbSaveChecked(key, true);   // Firebase 저장
+    fbSaveChecked(key, true);   // 구글 시트 저장
   }
   localStorage.setItem('checkedTasks', JSON.stringify(checkedTasks));
 
@@ -7931,7 +8087,7 @@ function renderIrang() {
   const month = getMonthNum();
   const data = getIrangData(month);
   const statusLabel = {active:'생육중', harvest:'수확중', prepare:'준비중', wait:'대기중'};
-  const statusClass = {active:'status-active', harvest:'status-harvest', prepare:'status-prepare', wait:'status-wait'};
+  const statusClass = {active:'status-active', harvest:'status-harvest', prepare:'status-prepare', wait:'status-wait', '최종수확':'status-harvest'};
   document.getElementById('irangList').innerHTML = data.map(d =>
     `<div class="irang-item" style="background:${d.color};border-left-color:${d.border}">
       <div class="irang-zone">${d.zone}</div>
@@ -8120,7 +8276,7 @@ function showTab(id) {
     else { workLog = []; }
     renderWorkLog();
     if (_fbReady) {
-      // Google Sheets 사용 중 - Firebase 로드 비활성화
+      // Google Sheets 사용 중 - 구글 시트 로드 비활성화
       // _db.collection('workLog').get()
       //   .then(snap => {
       //     const fbLogs = [];
@@ -8341,9 +8497,9 @@ function getProgressColor(days, total) {
   return '#C62828';
 }
 
-// 작물 객체의 모든 필드를 안전한 기본값으로 보정 (Firebase 불완전 데이터 방어)
+// 작물 객체의 모든 필드를 안전한 기본값으로 보정 (구글 시트 불완전 데이터 방어)
 // 위치가 아닌데 위치 칸에 들어간 값들 — 화면에는 빈칸으로 처리
-var _NOT_A_LOCATION = ['직접입력', '직접 입력', 'Firebase 기록', '-', 'undefined', 'null'];
+var _NOT_A_LOCATION = ['직접입력', '직접 입력', '구글 시트 기록', '-', 'undefined', 'null'];
 
 function sanitizePlant(p) {
   if (!p || typeof p !== 'object') return null;
@@ -8380,6 +8536,40 @@ function sanitizePlant(p) {
   return p;
 }
 
+var HIDE_HARVESTED = true;     // 콘솔에서 수확표시(true/false) 로 바꿀 수 있다
+
+// 재배가 끝난 작물인가 — '최종수확' 기록이 있을 때만 끝난 것으로 본다.
+//   ⚠️ '수확' 은 여러 번 딸 수 있으므로 숨기지 않는다.
+//      오이·고추·애호박은 첫 수확 뒤에도 서리 내릴 때까지 계속 딴다.
+function isHarvested(p){
+  if(!p) return false;
+
+  // ① 생육 기록(events)에 '최종수확' 이 있는가
+  if(Array.isArray(p.events) && p.events.some(function(e){
+       return e && String(e.type||'').replace(/\s/g,'') === '최종수확'; })) return true;
+
+  // ② growRecords 에 이 작물의 '최종수확' 기록이 있는가
+  if(typeof growRecords !== 'undefined' && Array.isArray(growRecords)){
+    var nm = String(p.name||'').replace(/\s/g,'');
+    if(nm && growRecords.some(function(r){
+         return r && String(r.eventType||r.type||'').replace(/\s/g,'') === '최종수확'
+             && String(r.plantName||r.name||'').replace(/\s/g,'') === nm; })) return true;
+  }
+
+  // ③ 상태로 직접 지정한 경우 (고사·삭제 포함)
+  var st = String(p.status || '').trim().toLowerCase();
+  return ['최종수확','harvested','done','수확완료','수확 완료',
+          'dead','고사','deleted','삭제'].indexOf(st) >= 0;
+}
+
+// 콘솔 명령: 수확표시(true) 로 숨긴 작물을 다시 볼 수 있다
+window.수확표시 = window.showHarvested = function (on) {
+  HIDE_HARVESTED = (on === false || on === undefined) ? !HIDE_HARVESTED : !on;
+  console.log(HIDE_HARVESTED ? '🙈 최종수확한 작물을 숨깁니다' : '👁 최종수확한 작물도 표시합니다');
+  try { renderGrow(); } catch(e) {}
+  return !HIDE_HARVESTED;
+};
+
 function renderGrow() {
   const list = document.getElementById('growList');
   const subtitle = document.getElementById('growSubtitle');
@@ -8389,13 +8579,27 @@ function renderGrow() {
   // 생육일수 추적 대상만 화면에 올린다 (유실수·totalDays 0 인 행 제외)
   var growList = plants.filter(function(p){ return p._growTrack; });
   var _skipped = plants.length - growList.length;
+
+  // '최종수확' 기록이 있는 작물은 목록에서 뺀다
+  var _harvested = growList.filter(isHarvested);
+  if (HIDE_HARVESTED && _harvested.length) {
+    growList = growList.filter(function(p){ return !isHarvested(p); });
+  }
   if (!growList.length) {
-    list.innerHTML = `<div class="grow-empty">
-      <div class="grow-empty-icon">🌰</div>
-      <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
-      <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
-    </div>`;
-    subtitle.textContent = '심은 작물이 없습니다';
+    var allDone = HIDE_HARVESTED && _harvested && _harvested.length;
+    list.innerHTML = allDone
+      ? `<div class="grow-empty">
+          <div class="grow-empty-icon">🧺</div>
+          <div class="grow-empty-text">재배 중인 작물이 없습니다</div>
+          <div class="grow-empty-sub">최종수확한 ${_harvested.length}종은 숨겨져 있어요<br>
+            <span style="cursor:pointer;text-decoration:underline" onclick="수확표시(true)">모두 보기</span></div>
+        </div>`
+      : `<div class="grow-empty">
+          <div class="grow-empty-icon">🌰</div>
+          <div class="grow-empty-text">아직 등록된 작물이 없어요</div>
+          <div class="grow-empty-sub">위 ＋버튼을 눌러 추가해 보세요</div>
+        </div>`;
+    subtitle.textContent = allDone ? `최종수확 ${_harvested.length}종 숨김` : '심은 작물이 없습니다';
     return;
   }
 
@@ -8409,8 +8613,9 @@ function renderGrow() {
     if (remA !== remB) return remA - remB;   // 수확까지 남은 일수 오름차순
     return elB - elA;                         // 경과일수 내림차순
   });
-  subtitle.textContent = `${growList.length}종 관리 중`
-    + (_skipped ? ` (유실수 등 ${_skipped}종은 제외)` : '');
+  subtitle.textContent = `${growList.length}종 재배 중`
+    + (HIDE_HARVESTED && _harvested.length ? ` · 최종수확 ${_harvested.length}종 숨김` : '')
+    + (_skipped ? ` · 유실수 등 ${_skipped}종 제외` : '');
 
   list.innerHTML = sorted.map(p => {
     const planted   = new Date(p.dateStr + 'T00:00:00');
@@ -11467,7 +11672,7 @@ function saveSupply() {
   };
   mySupplies.push(entry);
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-  fbSaveSupply(entry);  // Firebase 저장
+  fbSaveSupply(entry);  // 구글 시트 저장
 
   // 폼 초기화
   ['supplyName','supplyIngredient','supplyAmount','supplyMonths']
@@ -11549,7 +11754,7 @@ function deleteSupply(id) {
   if (!s || !confirm(`"${s.name}" 삭제할까요?`)) return;
   mySupplies = mySupplies.filter(x=>x.id!==id);
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
-  fbDeleteSupply(id);  // Firebase 삭제
+  fbDeleteSupply(id);  // 구글 시트 삭제
   renderSupplyList();
   renderPurchasePlan();
   showToast('🗑️ 삭제 완료');
@@ -11845,7 +12050,7 @@ function recordWork(taskName, taskDetail, taskLoc, taskJudge) {
   workLog.unshift(entry);
   if (workLog.length > 500) workLog = workLog.slice(0, 500);
   localStorage.setItem('workLog', JSON.stringify(workLog));
-  fbSaveLog(entry);  // Firebase 저장
+  fbSaveLog(entry);  // 구글 시트 저장
   // 기록장 탭이 열려있으면 즉시 갱신
   if (document.getElementById('sec-sheet')?.classList.contains('active')) {
     renderWorkLog();
@@ -12105,7 +12310,7 @@ function _saveLogEdit(id) {
 function deleteLogEntry(id) {
   workLog = workLog.filter(e => e.id !== id);
   localStorage.setItem('workLog', JSON.stringify(workLog));
-  fbDeleteLog(id);  // Firebase 삭제
+  fbDeleteLog(id);  // 구글 시트 삭제
   renderWorkLog();
 }
 
@@ -12521,7 +12726,7 @@ async function loadDriveCSV() {
 }
 
 
-// ── 이랑 현황 + 생육일수 Firebase 연동 ──────────────────────
+// ── 이랑 현황 + 생육일수 구글 시트 연동 ──────────────────────
 
 // ─ 이랑 현황: 작물 이동 저장 ─────────────────────────────
 function saveIrangChange(plantId, fromIrang, toIrang, note) {
@@ -12641,9 +12846,20 @@ function renderGrowRecords() {
     if (!grouped[r.plantName]) grouped[r.plantName] = [];
     grouped[r.plantName].push(r);
   });
-  const typeIcon = {'파종':'🌾','정식':'🌿','발아':'🌱','개화':'🌸','착과':'🍎','수확':'🎉'};
+  // 구글 시트가 날짜를 '2026-05-08T15:00:00.000Z' 형태로 돌려주므로
+  // 화면에 뿌리기 전에 YYYY-MM-DD 로 맞춘다 (기록장과 동일한 처리)
+  var _fixedDate = 0;
+  growRecords.forEach(function(r){
+    if(!r) return;
+    var ymd = normalizeYMD(r.date);
+    if(ymd && ymd !== r.date){ r.date = ymd; _fixedDate++; }
+  });
+  if(_fixedDate) console.log('🗓️ 생육기록 날짜 ' + _fixedDate + '건을 YYYY-MM-DD 로 정리했습니다');
+
+  const typeIcon = {'파종':'🌾','정식':'🌿','발아':'🌱','개화':'🌸','착과':'🍎','수확':'🎉','최종수확':'🏁'};
   const typeColor= {'파종':'#E8F5E9','정식':'#E8F5E9','발아':'#F1F8E9',
-                    '개화':'#FCE4EC','착과':'#E3F2FD','수확':'#FFF3E0'};
+                    '개화':'#FCE4EC','착과':'#E3F2FD','수확':'#FFF3E0',
+                    '최종수확':'#ECEFF1'};
   let html = '';
   Object.entries(grouped).forEach(([name, recs]) => {
     const sorted = [...recs].sort((a,b) => a.date.localeCompare(b.date));
@@ -12653,13 +12869,13 @@ function renderGrowRecords() {
     html += `<div style="border:1.5px solid #E0E0E0;border-radius:10px;margin-bottom:8px;overflow:hidden">
       <div style="background:#1B5E20;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
         <span style="font-size:14px;font-weight:700;color:white;flex:1;min-width:0">${name}</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.75);white-space:nowrap">${first.date} · ${diffD}일 경과</span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.75);white-space:nowrap">${(first.date||'').replace(/-/g,'.')} · ${diffD}일 경과</span>
       </div>
       <div style="padding:4px 0">
         ${recs.map(r => `
           <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid #F5F5F5;flex-wrap:nowrap">
             <span style="background:${typeColor[r.eventType]||'#F5F5F5'};padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0">${typeIcon[r.eventType]||'•'} ${r.eventType}</span>
-            <span style="font-size:12px;color:#37474F;white-space:nowrap;flex-shrink:0">${r.date}</span>
+            <span style="font-size:12px;color:#37474F;white-space:nowrap;flex-shrink:0;margin-left:2px">${(r.date||'').replace(/-/g,'.')}</span>
             ${r.daysFrom ? `<span style="font-size:10px;color:#9E9E9E;flex-shrink:0">+${r.daysFrom}일</span>` : ''}
             <span style="font-size:12px;color:#546E7A;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.note||''}</span>
             <button onclick="openGrowRecordEditModal('${r.id}')" style="flex-shrink:0;background:#E3F2FD;border:1px solid #90CAF9;color:#1565C0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️</button>
@@ -12677,7 +12893,7 @@ function openGrowRecordEditModal(id) {
   if (!r) { showToast('기록을 찾을 수 없습니다'); return; }
   var ex = document.getElementById('growRecEditModal');
   if (ex) ex.remove();
-  var types = ['파종','정식','발아','개화','착과','수확','순치기','북주기','배토','기타'];
+  var types = ['파종','정식','발아','개화','착과','수확','최종수확','순치기','북주기','배토','기타'];
   var opts = types.map(function(t){ return '<option value="'+t+'"'+(r.eventType===t?' selected':'')+'>'+t+'</option>'; }).join('');
   var modal = document.createElement('div');
   modal.id = 'growRecEditModal';
@@ -13147,7 +13363,7 @@ function addRecommendToSupply(name, type, cropStr) {
 // ── 런타임 식물 배열 (allPlants 복사본, CRUD로 변경됨) ───
 let plantsDB = [];  // Firestore에서 로드한 현재 식물 목록
 
-// ── plantsDB 로컬 저장/로드 (Firebase 없어도 영구 저장) ───
+// ── plantsDB 로컬 저장/로드 (구글 시트 없어도 영구 저장) ───
 function savePlantsDBLocal() {
   try { localStorage.setItem('plantsDB', JSON.stringify(plantsDB)); } catch(e) {}
 }
@@ -13246,7 +13462,7 @@ function mergeLocationChangesToPlantsDB() {
 }
 
 function startPlantsListener() {
-  // Google Sheets 사용 중 - Firebase 리스너 완전 비활성화
+  // Google Sheets 사용 중 - 구글 시트 리스너 완전 비활성화
   return;
 }
 
@@ -13263,7 +13479,7 @@ async function addPlant(plant) {
   };
   plantsDB.push(entry);
   savePlantsDBLocal();
-  // 구글 시트에 저장 (예전 Firebase 방식 호출을 실제 API 로 교체)
+  // 구글 시트에 저장 (예전 구글 시트 방식 호출을 실제 API 로 교체)
   try {
     await saveToGoogleSheets('create', COLLECTIONS.growPlants, entry);
     await saveToGoogleSheets('create', COLLECTIONS.irangChanges, {
@@ -13709,6 +13925,7 @@ function openEditPlantModal(id) {
             font-size:17px;font-family:inherit;background:white">
             <option value="active"  ${p.status==='active'  ?'selected':''}>생육중</option>
             <option value="harvest" ${p.status==='harvest' ?'selected':''}>수확중</option>
+            <option value="최종수확" ${p.status==='최종수확'?'selected':''}>🏁 최종수확 (목록에서 숨김)</option>
             <option value="prepare" ${p.status==='prepare' ?'selected':''}>준비중</option>
             <option value="wait"    ${p.status==='wait'    ?'selected':''}>대기중</option>
             <option value="dead"    ${p.status==='dead'    ?'selected':''}>고사</option>
@@ -13888,7 +14105,7 @@ function renderSearchResults(query, filter) {
 
 // DOMContentLoaded 후 plantsDB 초기화
 document.addEventListener('DOMContentLoaded', function() {
-  // Firebase 준비 후 1초 뒤 초기화 (Firebase initFirebase보다 늦게)
+  // 구글 시트 준비 후 1초 뒤 초기화 (구글 시트 initFirebase보다 늦게)
   setTimeout(() => initPlantsDB(), 1500);
   // 영구 저장 요청 (앱 삭제 전까지 데이터 보존 — 저장공간 부족 시 자동삭제 방지)
   requestPersistentStorage();
@@ -13923,7 +14140,7 @@ function openWorkLogPopup() {
   renderPopupWorkLog();
   // Firebase에서도 로드
   if (typeof _fbReady !== 'undefined' && _fbReady) {
-    // Google Sheets 사용 중 - Firebase 로드 비활성화
+    // Google Sheets 사용 중 - 구글 시트 로드 비활성화
     // _db.collection('workLog').get()
     //   .then(snap => {
     //     const fbLogs = [];
@@ -13939,7 +14156,7 @@ function openWorkLogPopup() {
     //       localStorage.setItem('workLog', JSON.stringify(workLog));
     //       renderPopupWorkLog();
     //       const st = document.getElementById('popupStatus');
-    //       if (st) { st.style.display = 'block'; st.textContent = 'Firebase: ' + fbLogs.length + '건 동기화됨'; }
+    //       if (st) { st.style.display = 'block'; st.textContent = '구글 시트: ' + fbLogs.length + '건 동기화됨'; }
     //     }
     //   }).catch(() => {});
   }
@@ -14318,7 +14535,7 @@ window.addEventListener('DOMContentLoaded', function() {
   }
   // 보유 농자재 초기화
   initDefaultSupplies();
-  // Firebase 초기화는 수동으로만 (사용자가 Firebase 버튼 누를 때)
+  // 구글 시트 초기화는 수동으로만 (사용자가 구글 시트 버튼 누를 때)
   // 자동 실행 안 함 - 기본은 내 폰(localStorage) 사용
   updateFirebaseStatus('offline');
   // 월 탭 버튼 생성
@@ -14368,7 +14585,7 @@ window.addEventListener('DOMContentLoaded', function() {
   try {
     updateGrowStorageBanner();
     migrateGrowRecords();
-    // Firebase 기본 모드면 앱 시작 시 자동 로드
+    // 구글 시트 기본 모드면 앱 시작 시 자동 로드
     if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady) {
       loadGrowFromFirebaseAndRender();
     }
@@ -14526,7 +14743,7 @@ function toggleDdayPanel() {
   if (!isOpen) renderDDay(); // 열 때 렌더링
 }
 
-// ③ 생육 관리 내부 탭 (생육일수 / Firebase 기록)
+// ③ 생육 관리 내부 탭 (생육일수 / 구글 시트 기록)
 function switchGrowTab(tab) {
   var pDays   = document.getElementById('grow-panel-days');
   var pRecord = document.getElementById('grow-panel-record');
@@ -14538,14 +14755,14 @@ function switchGrowTab(tab) {
     pRecord.style.display = 'block';
     if (tDays)   { tDays.style.background='white';   tDays.style.color='#2E7D32'; }
     if (tRecord) { tRecord.style.background='#2E7D32'; tRecord.style.color='white'; }
-    // Firebase 우선 통합 렌더
-    try { syncAndRenderGrowUnified(); } catch(e) { renderGrowRecords(); }
+    // 구글 시트 우선 통합 렌더
+    try { renderGrowRecords(); } catch(e) { console.warn('생육기록 렌더:', e.message); }
   } else {
     pDays.style.display   = 'block';
     pRecord.style.display = 'none';
     if (tDays)   { tDays.style.background='#2E7D32'; tDays.style.color='white'; }
     if (tRecord) { tRecord.style.background='white';  tRecord.style.color='#2E7D32'; }
-    // Firebase 모드면 최신 데이터 자동 반영 후 렌더
+    // 구글 시트 모드면 최신 데이터 자동 반영 후 렌더
     if (growStorageMode === 'firebase' && typeof _fbReady !== 'undefined' && _fbReady) {
       loadGrowFromFirebaseAndRender();
     } else {
@@ -14559,12 +14776,12 @@ function setGrowStorage(mode) {
   localStorage.setItem('growStorageMode', mode);
   updateGrowStorageBanner();
   if (mode === 'firebase') {
-    showToast('☁️ Firebase 모드 — 데이터를 불러옵니다...');
+    showToast('☁️ 구글 시트 모드 — 데이터를 불러옵니다...');
     setTimeout(function() {
       if (typeof _fbReady !== 'undefined' && _fbReady) {
         loadGrowFromFirebaseAndRender();
       } else {
-        showToast('⚠ Firebase 미연결 상태입니다');
+        showToast('⚠ 구글 시트 미연결 상태입니다');
       }
     }, 300);
   } else {
@@ -14587,7 +14804,7 @@ function updateGrowStorageBanner() {
     if (bL) { bL.style.background='white'; bL.style.color='#9E9E9E'; bL.style.borderColor='#E0E0E0'; bL.style.fontWeight='600'; }
   } else {
     lbl.textContent = '📱 내 폰에만 저장 (선택됨)';
-    sub.textContent = 'Firebase 미사용 · 이 기기에만 저장';
+    sub.textContent = '구글 시트 미사용 · 이 기기에만 저장';
     if (bL) { bL.style.background='#1B5E20'; bL.style.color='white'; bL.style.borderColor='#1B5E20'; bL.style.fontWeight='700'; }
     if (bF) { bF.style.background='white'; bF.style.color='#9E9E9E'; bF.style.borderColor='#E0E0E0'; bF.style.fontWeight='600'; }
   }
@@ -14658,13 +14875,13 @@ function savePlantsAll(immediate) {
   _growSaveTimer = setTimeout(function () { saveGrowPlantsToSheet(list); }, 1200);
 }
 
-// 📥 Firebase → 내 폰 (불러오기)
+// 📥 구글 시트 → 내 폰 (불러오기)
 async function loadGrowFromFirebaseAndRender() {
   var statusEl = document.getElementById('growSyncStatus');
   if (statusEl) statusEl.textContent = '⏳ 불러오는 중...';
-  // Firebase 아직 초기화 중이면 최대 5초 대기
+  // 구글 시트 아직 초기화 중이면 최대 5초 대기
   if (typeof _fbReady === 'undefined' || !_fbReady) {
-    if (statusEl) statusEl.textContent = '⏳ Firebase 연결 대기 중...';
+    if (statusEl) statusEl.textContent = '⏳ 구글 시트 연결 대기 중...';
     var waited = 0;
     await new Promise(function(resolve) {
       var iv = setInterval(function() {
@@ -14675,10 +14892,10 @@ async function loadGrowFromFirebaseAndRender() {
       }, 300);
     });
     if (!_fbReady) {
-      // Firebase 없이 로컬 데이터로 렌더
+      // 구글 시트 없이 로컬 데이터로 렌더
       renderGrow();
       if (statusEl) statusEl.textContent = '📱 로컬 데이터';
-      showToast('📱 Firebase 미연결 — 로컬 데이터를 표시합니다');
+      showToast('📱 구글 시트 미연결 — 로컬 데이터를 표시합니다');
       return;
     }
   }
@@ -14698,7 +14915,7 @@ async function loadGrowFromFirebaseAndRender() {
         if (li < 0) {
           plants.push(fp); added++;
         } else {
-          // Firebase 버전이 최신이거나 같으면 업데이트
+          // 구글 시트 버전이 최신이거나 같으면 업데이트
           if ((fp.updatedAt||'2000') >= (plants[li].updatedAt||'2000')) {
             plants.splice(li, 1, fp); updated++;
           }
@@ -14731,7 +14948,7 @@ async function loadGrowFromFirebaseAndRender() {
     if (statusEl) statusEl.textContent = '✅ ' + new Date().toLocaleTimeString();
   } catch(e) {
     const msg = e.code === 'permission-denied'
-      ? '❌ Firebase 권한 없음 — Firestore 규칙(Rules)을 allow read,write:if true 로 변경하세요'
+      ? '❌ 접근 권한 없음 — Apps Script 배포 설정에서 액세스를 「모든 사용자」로 바꿔주세요'
       : ('❌ 불러오기 오류: ' + (e.message||String(e)));
     showToast(msg);
     if (statusEl) statusEl.textContent = '❌ ' + (e.message||String(e));
@@ -14739,11 +14956,11 @@ async function loadGrowFromFirebaseAndRender() {
   }
 }
 
-// 📤 내 폰 → Firebase (올리기)
+// 📤 내 폰 → 구글 시트 (올리기)
 async function uploadGrowToFirebase() {
   var statusEl = document.getElementById('growSyncStatus');
   if (typeof _fbReady === 'undefined' || !_fbReady) {
-    showToast('⚠ Firebase 연결이 없습니다');
+    showToast('⚠ 구글 시트 연결이 없습니다');
     return;
   }
   if (!plants.length) {
@@ -14763,7 +14980,7 @@ async function uploadGrowToFirebase() {
       await saveToGoogleSheets('growRecords').doc(growRecords[j].id).set(growRecords[j]);
     }
     savePlantsLocal();
-    showToast('📤 Firebase 업로드 완료 — ' + plants.length + '건');
+    showToast('📤 구글 시트 업로드 완료 — ' + plants.length + '건');
     if (statusEl) statusEl.textContent = '✅ ' + new Date().toLocaleTimeString();
   } catch(e) {
     showToast('❌ 업로드 오류: ' + e.message);
@@ -14824,7 +15041,7 @@ function migrateGrowRecords() {
           id: 'gr_' + name.replace(/[^가-힣a-zA-Z0-9]/g,'_') + '_' + dateStr.replace(/-/g,''),
           name: name,
           emoji: emoji,
-          loc: 'Firebase 기록',
+          loc: '',
           dateStr: dateStr,
           totalDays: 120,
           pinchDay: 0,
@@ -14859,13 +15076,13 @@ function migrateGrowRecords() {
   } catch(e) { console.warn('migrateGrowRecords:', e); }
 }
 
-// ══ Firebase growRecords → plants 통합 렌더 ══════════════
+// ══ 구글 시트 growRecords → plants 통합 렌더 ══════════════
 async function syncAndRenderGrowUnified() {
   var el = document.getElementById('growUnifiedList');
   if (!el) return;
   el.innerHTML = '<div style="text-align:center;padding:20px;color:#9E9E9E">⏳ Firebase에서 불러오는 중...</div>';
 
-  // 1. Firebase growRecords 동기화
+  // 1. 구글 시트 growRecords 동기화
   if (typeof _fbReady !== 'undefined' && _fbReady) {
     try {
       var snap = await saveToGoogleSheets('growRecords').get();
@@ -14952,7 +15169,7 @@ async function syncAndRenderGrowUnified() {
     html += '<div style="background:white;border:1.5px solid #FFCC80;border-radius:10px;margin-bottom:8px;overflow:hidden">'
       + '<div style="background:#E65100;padding:8px 12px;display:flex;align-items:center;justify-content:space-between">'
       + '<span style="font-size:14px;font-weight:700;color:white">'+name+'</span>'
-      + '<span style="font-size:10px;color:rgba(255,255,255,0.8)">Firebase 전용 기록</span>'
+      + '<span style="font-size:10px;color:rgba(255,255,255,0.8)">구글 시트 기록</span>'
       + '</div>'
       + '<div style="padding:8px 12px">'+evHtml+'</div>'
       + '</div>';
@@ -14970,7 +15187,7 @@ function openAddEventModal(plantId) {
     var p = plants.find(function(x) { return x.id === plantId; });
     if (!p) return;
     var ex = document.getElementById('growEventModal'); if (ex) ex.remove();
-    var types = ['파종','정식','발아','개화','착과','수확','순치기','북주기','배토','기타'];
+    var types = ['파종','정식','발아','개화','착과','수확','최종수확','순치기','북주기','배토','기타'];
     var opts  = types.map(function(t){ return '<option value="'+t+'">'+t+'</option>'; }).join('');
     var today = toYMD(REAL_TODAY);
     var d = document.createElement('div');
@@ -15028,7 +15245,7 @@ function editGrowEvent(plantId, eventId) {
     var ev = p&&Array.isArray(p.events)?p.events.find(function(e){ return e.id===eventId; }):null;
     if (!ev) return;
     var ex = document.getElementById('growEventEditModal'); if (ex) ex.remove();
-    var types = ['파종','정식','발아','개화','착과','수확','순치기','북주기','배토','기타'];
+    var types = ['파종','정식','발아','개화','착과','수확','최종수확','순치기','북주기','배토','기타'];
     var opts = types.map(function(t){ return '<option value="'+t+'"'+(ev.type===t?' selected':'')+'>'+t+'</option>'; }).join('');
     var d = document.createElement('div');
     d.id = 'growEventEditModal';
@@ -15216,6 +15433,7 @@ function openUnifiedAddModal(existingPlantId) {
     +       '<option value="개화">🌸 개화</option>'
     +       '<option value="착과">🍎 착과</option>'
     +       '<option value="수확">🎉 수확</option>'
+    +       '<option value="최종수확">🏁 최종수확</option>'
     +       '<option value="순치기">✂️ 순치기</option>'
     +       '<option value="기타">📝 기타</option>'
     +     '</select>'
@@ -15335,7 +15553,7 @@ function saveUnifiedAdd() {
     targetPlant.events.push({ id:Date.now().toString(), type:evType, date:evDate, note:evNote, daysFrom:daysFrom });
     targetPlant.updatedAt = new Date().toISOString();
     savePlantsAll();
-    // growRecords에도 저장 (Firebase 생육기록 탭과 동기화)
+    // growRecords에도 저장 (구글 시트 생육기록 탭과 동기화)
     saveGrowRecord(targetPlant.name, evType, evDate, evNote);
     return; // saveGrowRecord 내부에서 renderGrow 호출됨
   }
@@ -15345,7 +15563,7 @@ function saveUnifiedAdd() {
 }
 
 // ══════════════════════════════════════════════════════════
-// 전체 데이터 백업 · 복원 · Firebase 동기화
+// 전체 데이터 백업 · 복원 · 구글 시트 동기화
 // ══════════════════════════════════════════════════════════
 
 // 백업 대상 전체 데이터 수집
@@ -15403,41 +15621,67 @@ function importFullBackup(event) {
         return;
       }
 
-      if (!confirm('백업 파일(' + (data.exportDate||'?') + ')을 복원할까요?\n현재 데이터와 병합됩니다.')) return;
+      // ── 병합 계획을 먼저 세워 사용자에게 보여준다 ──────────────
+      (data.plants||[]).forEach(function(p){ if(!Array.isArray(p.events)) p.events = []; });
 
-      var restored = 0;
+      var plans = {
+        plants:      planMerge('plants',      plants,      data.plants),
+        growRecords: planMerge('growRecords', growRecords,  data.growRecords),
+        workLog:     planMerge('workLog',     workLog,      data.workLog),
+        mySupplies:  planMerge('mySupplies',  mySupplies,   data.supplies)
+      };
+
+      var label = { plants:'생육일수 작물', growRecords:'생육기록',
+                    workLog:'기록장', mySupplies:'농자재' };
+      var totAdd=0, totRep=0, totOld=0, totDup=0, detail='';
+      Object.keys(plans).forEach(function(k){
+        var p = plans[k];
+        totAdd+=p.add.length; totRep+=p.replace.length;
+        totOld+=p.skipOld.length; totDup+=p.skipDup.length;
+        if(p.add.length||p.replace.length||p.skipOld.length||p.skipDup.length){
+          detail += '\n· ' + label[k] + ' — 추가 ' + p.add.length
+                 + ', 교체 ' + p.replace.length
+                 + ', 오래됨 ' + p.skipOld.length
+                 + ', 중복 ' + p.skipDup.length;
+        }
+        console.log('🔀 ' + describeMerge(p));
+      });
+
+      if(!totAdd && !totRep){
+        alert('백업 파일(' + (data.exportDate||'?') + ')\n\n'
+            + '새로 들어올 내용이 없습니다.\n'
+            + '(오래되어 건너뜀 ' + totOld + '건, 내용중복 ' + totDup + '건)');
+        return;
+      }
+
+      if (!confirm('백업 파일(' + (data.exportDate||'?') + ') 복원'
+        + '\n\n▶ 새로 추가: ' + totAdd + '건'
+        + '\n▶ 최신본으로 교체: ' + totRep + '건'
+        + '\n\n다음은 건너뜁니다 (현재 내용 유지)'
+        + '\n· 백업이 더 오래됨: ' + totOld + '건'
+        + '\n· 내용이 이미 있음: ' + totDup + '건'
+        + '\n' + detail
+        + '\n\n진행할까요?')) return;
+
+      var restored = totAdd + totRep;
 
       // plants (생육일수 추적)
-      if (Array.isArray(data.plants) && data.plants.length) {
-        var localIds = new Set(plants.map(function(p){ return p.id; }));
-        data.plants.forEach(function(p) {
-          if (!Array.isArray(p.events)) p.events = [];
-          if (!localIds.has(p.id)) { plants.push(p); restored++; }
-          else {
-            var li = plants.findIndex(function(x){ return x.id === p.id; });
-            if (li >= 0 && (p.updatedAt||'') > (plants[li].updatedAt||'')) { plants.splice(li,1,p); restored++; }
-          }
-        });
+      if (plans.plants.add.length || plans.plants.replace.length) {
+        applyMerge(plans.plants, plants);
         savePlantsLocal();
       }
 
       // growRecords (생육기록)
-      if (Array.isArray(data.growRecords) && data.growRecords.length) {
-        var rids = new Set(growRecords.map(function(r){ return r.id; }));
-        data.growRecords.forEach(function(r) {
-          if (!rids.has(r.id)) { growRecords.unshift(r); restored++; }
-        });
+      if (plans.growRecords.add.length || plans.growRecords.replace.length) {
+        applyMerge(plans.growRecords, growRecords);
         growRecords.sort(function(a,b){ return b.id > a.id ? 1 : -1; });
         localStorage.setItem('growRecords', JSON.stringify(growRecords));
         try { migrateGrowRecords(); } catch(e2){}
       }
 
       // workLog (기록장)
-      if (Array.isArray(data.workLog) && data.workLog.length) {
-        var wids = new Set(workLog.map(function(e){ return String(e.id); }));
-        data.workLog.forEach(function(e) {
-          if (!wids.has(String(e.id))) { workLog.unshift(e); restored++; }
-        });
+      if (plans.workLog.add.length || plans.workLog.replace.length) {
+        applyMerge(plans.workLog, workLog);
         workLog.sort(function(a,b){ return (b.id||0)-(a.id||0); });
         localStorage.setItem('workLog', JSON.stringify(workLog));
       }
@@ -15450,11 +15694,9 @@ function importFullBackup(event) {
       }
 
       // mySupplies (농자재)
-      if (Array.isArray(data.supplies) && data.supplies.length) {
-        var sids = new Set(mySupplies.map(function(s){ return s.id; }));
-        data.supplies.forEach(function(s) {
-          if (!sids.has(s.id)) { mySupplies.push(s); restored++; }
-        });
+      if (plans.mySupplies.add.length || plans.mySupplies.replace.length) {
+        applyMerge(plans.mySupplies, mySupplies);
+        mySupplies = normalizeSupplies(mySupplies);
         localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
       }
 
@@ -15489,24 +15731,24 @@ function importFullBackup(event) {
   reader.readAsText(file, 'UTF-8');
 }
 
-// 🔄 전체 Firebase 동기화 (양방향 병합)
+// 🔄 전체 구글 시트 동기화 (양방향 병합)
 async function fullFirebaseSync() {
   var st = document.getElementById('shareStatus');
-  if (!_fbReady) { showToast('⚠ Firebase 미연결'); return; }
+  if (!_fbReady) { showToast('⚠ 구글 시트 미연결'); return; }
   if (st) st.textContent = '⏳ 동기화 중...';
   try {
     await syncFromFirebase();
-    if (st) st.textContent = '✅ Firebase 동기화 완료 — ' + new Date().toLocaleTimeString();
-    showToast('🔄 전체 Firebase 동기화 완료');
+    if (st) st.textContent = '✅ 구글 시트 동기화 완료 — ' + new Date().toLocaleTimeString();
+    showToast('🔄 전체 구글 시트 동기화 완료');
   } catch(e) {
     if (st) st.textContent = '❌ 오류: ' + e.message;
     showToast('❌ 동기화 오류: ' + e.message);
   }
 }
 
-// 📤 내 폰 → Firebase 전체 업로드
+// 📤 내 폰 → 구글 시트 전체 업로드
 async function fullFirebaseUpload() {
-  if (!_fbReady) { showToast('⚠ Firebase 미연결'); return; }
+  if (!_fbReady) { showToast('⚠ 구글 시트 미연결'); return; }
   var cnt = plants.length + growRecords.length + workLog.length + mySupplies.length;
   if (!confirm('내 폰의 모든 데이터(' + cnt + '건)를 Firebase에 업로드할까요?\nFirebase의 기존 데이터와 병합됩니다.')) return;
 
@@ -15601,7 +15843,7 @@ async function fullFirebaseUpload() {
       });
     }
 
-    // Google Sheets 사용 중 - Firebase 배치 업로드 비활성화
+    // Google Sheets 사용 중 - 구글 시트 배치 업로드 비활성화
     // for (var start = 0; start < total; start += CHUNK) {
     //   var slice = jobs.slice(start, start + CHUNK);
     //   var batch = _db.batch();
@@ -15786,6 +16028,8 @@ function importIndividualCSVFiles(event) {
         try { renderBackupSummary(); } catch(e3){}
         setSt('✅ ' + done + '개 파일 복원 — 신규 ' + total.added + '건, 업데이트 ' + total.updated + '건');
         showToast('✅ CSV 복원 완료 — ' + total.added + '+' + total.updated + '건');
+        // 모아둔 항목을 시트에 한 번에 반영 (id 대조 후 중복은 건너뜀)
+        flushCsvSync().catch(function(e){ console.warn('시트 반영 실패:', e.message); });
       }
     };
     reader.readAsText(file, 'UTF-8');
@@ -15845,7 +16089,7 @@ function importCSVGrowRecords(text) {
     rids.add(id);
     added++;
     // 가져온 항목을 구글 시트에도 올린다
-    if (_fbReady) saveToGoogleSheets('create', COLLECTIONS.growRecords, r).catch(function(){});
+    if (_fbReady) _csvSyncQueue.growRecords.push(r);   // 모았다가 마지막에 한 번에 올린다
   });
   growRecords.sort(function(a,b){ return b.id>a.id?1:-1; });
   localStorage.setItem('growRecords', JSON.stringify(growRecords));
@@ -15875,7 +16119,7 @@ function importCSVWorkLog(text) {
     wids.add(id);
     added++;
     // 가져온 항목을 구글 시트에도 올린다
-    if (_fbReady) saveToGoogleSheets('create', COLLECTIONS.workLog, e).catch(function(){});
+    if (_fbReady) _csvSyncQueue.workLog.push(e);   // 모았다가 마지막에 한 번에 올린다
   });
   workLog.sort(function(a,b){ return (b.id||0)-(a.id||0); });
   localStorage.setItem('workLog', JSON.stringify(workLog));
@@ -15908,7 +16152,7 @@ function importCSVSupplies(text) {
     if (li<0) { mySupplies.push(obj); added++; }
     else { mySupplies.splice(li,1,obj); updated++; }
     // 가져온 항목을 구글 시트에도 올린다
-    if (_fbReady) saveToGoogleSheets('create', COLLECTIONS.supplies, obj).catch(function(){});
+    if (_fbReady) _csvSyncQueue.supplies.push(obj);   // 모았다가 마지막에 한 번에 올린다
   });
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
   return { added:added, updated:updated };
@@ -15956,7 +16200,7 @@ function onPruningImgError(img) {
     '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="120">'
     + '<rect width="200" height="120" fill="#F5F5F5" rx="8"/>'
     + '<text x="50%" y="45%" font-size="11" fill="#9E9E9E" text-anchor="middle">🖼️ 이미지 로딩 중</text>'
-    + '<text x="50%" y="62%" font-size="10" fill="#BDBDBD" text-anchor="middle">Firebase Storage 연결 확인</text>'
+    + '<text x="50%" y="62%" font-size="10" fill="#BDBDBD" text-anchor="middle">이미지를 불러올 수 없습니다</text>'
     + '</svg>'
   );
 }
@@ -16283,7 +16527,7 @@ function ttsUpdateUI() {
 // 🗂️ 통합 백업·복원 시스템 (백업·복원 메뉴 전용)
 //   - 내 폰: 수시 저장(자동) + 스냅샷
 //   - CSV  : 앱 밖 파일 보관·엑셀 편집
-//   - Firebase: 클라우드 안전 백업
+//   - 구글 시트: 클라우드 안전 백업
 // ══════════════════════════════════════════════════════════
 
 var BACKUP_DATA = [
@@ -16365,7 +16609,7 @@ function renderBackupSummary() {
   renderPerMethodUsage();
 }
 
-// ── 방식별(내폰/CSV/Firebase) 용량 표시 ──────────────────
+// ── 방식별(내폰/CSV/구글 시트) 용량 표시 ──────────────────
 function _coreDataBytes() {
   // 핵심 입력 데이터(스냅샷 제외)의 추정 용량
   var total = 0;
@@ -16648,11 +16892,11 @@ function importUnifiedCSV(text) {
   showToast('✅ CSV 복원 완료 — ' + (added+updated) + '건');
 }
 
-// ── ③ Firebase — 백업/복원 ───────────────────────────────
+// ── ③ 구글 시트 — 백업/복원 ───────────────────────────────
 
-// Firebase SDK 로드 보장
+// 구글 시트 연결 확인
 // iPhone WKWebView/Safari: gstatic 차단(사설릴레이·차단기) 대비 여러 CDN을 순서대로 시도
-// Google Sheets 버전 - Firebase SDK 로드 불필요
+// Google Sheets 버전 - 구글 시트는 별도 SDK 가 필요 없다
 function ensureFirebaseSDK() {
   return Promise.resolve(); // Google Sheets 사용으로 SDK 불필요
 }
@@ -16674,45 +16918,27 @@ function ensureFirebaseConnected() {
 }
 
 function backupToFirebase() {
-  if (!confirm('내 폰의 모든 데이터를 Google Sheets에 동기화할까요?')) return;
-  setSt('🔄 Google Sheets 동기화 중...');
-  
+  if (!confirm('내 폰의 데이터를 구글 시트에 올릴까요?\n\n'
+    + '· 시트에 없는 것만 새로 추가합니다\n'
+    + '· 시트 쪽이 더 최신이면 건드리지 않습니다\n'
+    + '· 같은 내용이 이미 있으면 건너뜁니다')) return;
+  setSt('🔄 구글 시트 동기화 중...');
+
   try {
-    // 모든 데이터를 Google Sheets에 저장
+    // ⚠️ 예전에는 전부 create 로 보내 실행할 때마다 시트가 두 배로 불어났다.
+    //    이제 시트를 먼저 읽어 id 로 대조한 뒤 create/update/건너뛰기를 정한다.
     Promise.all([
-      (async () => {
-        for (const entry of workLog) {
-          await saveToGoogleSheets('create', COLLECTIONS.workLog, entry).catch(() => {});
-        }
-      })(),
-      (async () => {
-        for (const entry of plants) {
-          await saveToGoogleSheets('create', COLLECTIONS.growPlants, entry).catch(() => {});
-        }
-      })(),
-      (async () => {
-        for (const entry of mySupplies) {
-          await saveToGoogleSheets('create', COLLECTIONS.supplies, entry).catch(() => {});
-        }
-      })(),
-      (async () => {
-        for (const entry of growRecords) {
-          await saveToGoogleSheets('create', COLLECTIONS.growRecords, entry).catch(() => {});
-        }
-      })(),
-      (async () => {
-        for (const entry of irangChanges) {
-          await saveToGoogleSheets('create', COLLECTIONS.irangChanges, entry).catch(() => {});
-        }
-      })(),
-      (async () => {
-        for (const entry of irangLog) {
-          await saveToGoogleSheets('create', COLLECTIONS.irangLog, entry).catch(() => {});
-        }
-      })()
-    ]).then(() => {
-      setSt('✅ Google Sheets 동기화 완료');
-      showToast('✅ Google Sheets에 백업 완료');
+      syncToSheet(COLLECTIONS.workLog,      workLog,      { kind:'workLog' }),
+      syncToSheet(COLLECTIONS.growPlants,   plants,       { kind:'plants' }),
+      syncToSheet(COLLECTIONS.supplies,     mySupplies,   { kind:'mySupplies' }),
+      syncToSheet(COLLECTIONS.growRecords,  growRecords,  { kind:'growRecords' }),
+      syncToSheet(COLLECTIONS.irangChanges, irangChanges, { kind:'irangChanges' }),
+      syncToSheet(COLLECTIONS.irangLog,     irangLog,     { kind:'irangLog' })
+    ]).then((results) => {
+      var c=0,u=0,s=0,d=0,f=0;
+      results.forEach(function(r){ c+=r.create; u+=r.update; s+=r.skipNewer; d+=r.skipDup; f+=r.fail; });
+      setSt('✅ 동기화 완료 — 추가 '+c+' · 갱신 '+u+' · 건너뜀 '+(s+d)+(f?' · 실패 '+f:''));
+      showToast('✅ 시트 동기화: 추가 '+c+', 갱신 '+u+', 건너뜀 '+(s+d));
       renderBackupSummary();
     }).catch(function(e) {
       setSt('❌ 동기화 실패: ' + (e && e.message || ''));
