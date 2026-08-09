@@ -6842,6 +6842,73 @@ async function loadPesticidesForSupplies() {
   return [];
 }
 
+// ── 수량·상태 변경 모달 (editQuantityModal) ─────────────────
+// onclick 에서 부르는데 정의가 없어 누르면 오류가 나던 함수들.
+var _eqPlantId = null;
+var _eqType    = '추가';
+
+function openEditQuantity(id) {
+  var p = (typeof plantsDB !== 'undefined') ? plantsDB.find(function (x) { return String(x.id) === String(id); }) : null;
+  if (!p) { if (typeof showToast === 'function') showToast('⚠ 작물을 찾을 수 없습니다'); return; }
+  _eqPlantId = id;
+  var m = document.getElementById('editQuantityModal');
+  if (!m) return;
+  var el = function (i) { return document.getElementById(i); };
+  if (el('eqTitle'))  el('eqTitle').textContent = p.name + ' 수량·상태 변경';
+  if (el('eqAmount')) el('eqAmount').value = '';
+  if (el('eqNote'))   el('eqNote').value = '';
+  if (el('eqDate'))   el('eqDate').value = (typeof toYMD === 'function' ? toYMD(REAL_TODAY) : '');
+  setQType('추가');
+  m.style.display = 'block';
+}
+
+function setQType(type) {
+  _eqType = type;
+  ['추가', '수정', '고사'].forEach(function (k) {
+    var b = document.getElementById('qt-' + k);
+    if (!b) return;
+    var on = (k === type);
+    b.style.background   = on ? '#E8F5E9' : 'white';
+    b.style.color        = on ? '#1B5E20' : '#546E7A';
+    b.style.borderColor  = on ? '#2E7D32' : '#E0E0E0';
+    b.style.fontWeight   = on ? '700' : '400';
+  });
+}
+
+async function confirmEditQuantity() {
+  var m = document.getElementById('editQuantityModal');
+  if (!_eqPlantId) { if (m) m.style.display = 'none'; return; }
+
+  var val  = (document.getElementById('eqAmount') || {}).value || '';
+  var note = (document.getElementById('eqNote')   || {}).value || '';
+  var date = (document.getElementById('eqDate')   || {}).value || '';
+  var num  = parseInt(String(val).replace(/[^0-9]/g, ''), 10);
+
+  var p = plantsDB.find(function (x) { return String(x.id) === String(_eqPlantId); });
+  if (!p) { if (m) m.style.display = 'none'; return; }
+
+  var cur = Number(p.qty) || 1;
+  var next = cur;
+  if (isFinite(num)) {
+    if (_eqType === '추가')      next = cur + num;
+    else if (_eqType === '고사') next = Math.max(0, cur - num);
+    else                          next = num;          // 수정 = 절대값
+  }
+
+  var patch = { qty: next, memo: (date ? date + ' ' : '') + _eqType + (note ? ' · ' + note : '') };
+  if (next === 0) patch.status = 'dead';
+
+  try {
+    await updatePlant(_eqPlantId, patch);
+    if (typeof showToast === 'function') showToast('✅ ' + p.name + ' ' + cur + ' → ' + next + '그루');
+  } catch (e) {
+    console.error('수량 변경 실패:', e);
+    if (typeof showToast === 'function') showToast('⚠ 저장 실패');
+  }
+  if (m) m.style.display = 'none';
+  _eqPlantId = null;
+}
+
 function catOf(p) {
   if (!p) return '';
   return String(p.category || p.cat || '').trim();
@@ -8119,7 +8186,9 @@ function savePlant() {
   renderGrow();
 }
 
-function deletePlant(id) {
+// ⚠️ 아래에 같은 이름의 deletePlant(id, reason) 가 또 있어 이 함수가 가려져 있었다.
+//    생육일수 화면 전용이므로 이름을 분리한다.
+function deleteGrowPlant(id) {
   if (!confirm('삭제할까요?')) return;
   // 구글 시트에서도 삭제
   if (typeof _fbReady !== 'undefined' && _fbReady) {
@@ -8460,7 +8529,7 @@ function renderGrow() {
       +   '</div>'
       +   '<div style="display:flex;align-items:center;gap:6px;flex-shrink:0">'
       +     harvestBadge
-      +     '<button onclick="event.stopPropagation();deletePlant(\''+p.id+'\')" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">✕</button>'
+      +     '<button onclick="event.stopPropagation();deleteGrowPlant(\''+p.id+'\')" style="background:none;border:none;color:rgba(255,255,255,0.7);font-size:16px;cursor:pointer;padding:0 2px;line-height:1">✕</button>'
       +     '<button onclick="event.stopPropagation();editPlant(\''+ p.id +'\')" style="background:none;border:none;color:rgba(255,255,255,0.85);font-size:14px;cursor:pointer;padding:0 4px">✏️</button>'
       +   '</div>'
       + '</div>'
