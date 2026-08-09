@@ -64,6 +64,21 @@ body{margin:0;background:var(--bg);color:var(--ink);
 
 /* 등록 농약 목록 — 보유 우선 표시 */
 .rx-own-cnt{ color:#2E7D32; font-weight:700; }
+.rx-sim-cnt{ color:#E65100; font-weight:700; }
+.rx-alt-cnt{ color:#1565C0; font-weight:700; }
+.rx-drop-cnt{ color:#9E9E9E; font-weight:600; }
+.alt-badge{ background:#E3F2FD; color:#0D47A1; border:1px solid #64B5F6;
+  font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; }
+.pesti.alt{ border-color:#64B5F6; background:#F8FBFF; }
+.cmp-note{ font-size:11px; margin-top:5px; line-height:1.6; color:#546E7A; }
+.cmp-same{ color:#2E7D32; font-weight:700; }
+.cmp-diff{ color:#C62828; font-weight:700; }
+.cmp-unk { color:#9E9E9E; font-weight:600; }
+.sim-badge{ background:#FFF3E0; color:#E65100; border:1px solid #FFB74D;
+  font-size:10px; font-weight:700; padding:1px 6px; border-radius:8px; }
+.pesti.similar{ border-color:#FFB74D; background:#FFFDF7; }
+.sim-note{ font-size:11px; color:#E65100; margin-top:4px; line-height:1.5; }
+.own-note{ font-size:11px; color:#9E9E9E; margin-top:4px; line-height:1.5; }
 .rx-divider{
   display:flex; align-items:center; gap:8px;
   margin:14px 2px 8px; color:#9E9E9E; font-size:11px; font-weight:600;
@@ -280,7 +295,9 @@ body{margin:0;background:var(--bg);color:var(--ink);
     </div>
 
     <!-- 3순위: 🌳 유실수 및 채소 목록 영역 (작물 추가 및 버튼들보다 아래에 위치) -->
-    <div class="crops" id="crops"></div>
+    <div class="crops" id="crops">
+    <div class="state" style="padding:16px">⏳ 작물 목록을 불러오는 중입니다…</div>
+  </div>
   </div>
 
   <div id="embedCrop"></div>
@@ -290,7 +307,7 @@ body{margin:0;background:var(--bg);color:var(--ink);
     <button class="tab pest" data-type="insect" onclick="App.switchTab('insect')">🐛 해충</button>
   </div>
 
-  <div id="list"><div class="state">위에서 작물을 선택하세요.</div></div>
+  <div id="list"><div class="state" id="listPlaceholder"></div></div>
 
   <div class="foot">
     자료 출처: 국가농작물병해충관리시스템(NCPMS)·농촌진흥청 · 농약정보: 농약안전정보시스템(PSIS)<br>
@@ -423,6 +440,34 @@ window.작물정리 = window.fixCrops = async function(apply){
 //    ③ 이름이 다른 이름의 앞부분인 쌍 (아주까리 / 아주까리콩)
 //    아무것도 바꾸지 않습니다.
 // ════════════════════════════════════════════════════════════
+// ════════════════════════════════════════════════════════════
+// 💊 농약대조('삼진왕') — 농약장에 저장된 실제 값을 그대로 보여준다
+//    판정이 이상할 때 시트에 무엇이 적혀 있는지 확인하는 용도.
+// ════════════════════════════════════════════════════════════
+window.농약대조 = window.checkPesticide = async function (keyword) {
+  const rows = await DB.list(CONFIG.pesticidesCollection);
+  const norm = s => String(s||'').replace(/[\s()·\-]/g,'').toLowerCase();
+  const key  = norm(keyword||'');
+  const hit  = key ? (rows||[]).filter(p => norm(p.name).indexOf(key)>=0 || key.indexOf(norm(p.name))>=0)
+                   : (rows||[]);
+
+  console.log(`%c💊 농약장 저장값 ${hit.length}건` + (keyword?` — '${keyword}' 검색`:''),
+              'color:#1565C0;font-weight:bold');
+  if(!hit.length){ console.warn('해당 이름의 농약이 없습니다'); return; }
+
+  console.table(hit.map(p => ({
+    상표명: p.name,
+    '용도(type)':  p.type        || '(빈칸)',
+    '용도 정규화':  Owned.normUse(p.type) || '(빈칸)',
+    '회사':        p.manufacturer || '(빈칸)',
+    '품목명':      p.ingredient   || '(빈칸)',
+    수량: (p.quantity===''||p.quantity==null) ? '(빈칸)' : p.quantity
+  })));
+  console.log('%c※ PSIS 용도(살균/살충/제초…)와 「용도 정규화」 값이 같아야 보유로 잡힙니다.',
+              'color:#E65100');
+  return hit;
+};
+
 window.아이디검사 = window.auditIds = async function () {
   const rows = await DB.list(CONFIG.plantsCollection);
   if(!rows || !rows.length){ console.warn('데이터를 못 받았습니다'); return; }
@@ -576,6 +621,7 @@ const DB = {
         if(jr && jr.success && Array.isArray(jr.data) && jr.data.length){
           const wasMatrix = Array.isArray(jr.data[0]);
           const rows = this._toObjects(jr.data);
+          if(this._loadFailed) this._loadFailed[collName] = false;
           const sheet = this.SHEET_OF[q.action] || collName;
           console.log(`✅ [${collName}] ${rows.length}건 로드 — action='${q.action}' → 구글시트 탭 '${sheet}'`
                     + (wasMatrix ? ' (2차원 배열 → 객체 변환됨)' : ''));
@@ -595,7 +641,10 @@ const DB = {
     if(!tries.length){
       // 서버에 없는 것이 정상인 컬렉션 — 조용히 로컬만 사용
     } else {
-      console.info(`ℹ️ [${collName}] 서버에 없는 컬렉션 → localStorage 캐시 사용`);
+      // 서버에서 못 받았다는 사실을 기록해 둔다 (화면 안내를 구분하기 위해)
+      this._loadFailed = this._loadFailed || {};
+      this._loadFailed[collName] = true;
+      console.info(`ℹ️ [${collName}] 서버에서 못 받음 → localStorage 캐시 사용`);
     }
     try{
       const v = localStorage.getItem('orchard.'+collName);
@@ -655,8 +704,129 @@ const DB = {
 };
 
 const Owned = {
-  _set:new Set(),
-  norm(s){ return String(s||'').replace(/[\s()]/g,'').toLowerCase(); },
+  _set:new Set(),      // 상표명만 모은 집합 (예전 방식 호환용)
+  _list:[],            // 보유 농약 원본 (4개 항목 대조용)
+  norm(s){ return String(s||'').replace(/[\s()·\-]/g,'').toLowerCase(); },
+
+  // 용도 표기 차이를 흡수한다: '살균' / '살균제' / '살균(수)' → 살균
+  normUse(s){
+    const v = this.norm(s);
+    if(!v) return '';
+    if(v.indexOf('살균')>=0 && v.indexOf('살충')>=0) return '균충';
+    if(v.indexOf('살충')>=0 && v.indexOf('제초')>=0) return '충초';
+    if(v.indexOf('살균')>=0) return '살균';
+    if(v.indexOf('살충')>=0) return '살충';
+    if(v.indexOf('제초')>=0) return '제초';
+    if(v.indexOf('생장')>=0 || v.indexOf('생조')>=0) return '생조';
+    return v;
+  },
+
+  // ── 용도 적합성 ──────────────────────────────────────
+  // 병(sick) 탭에 제초제가 뜨면 작물을 죽일 수 있다. 탭에 맞는 용도만 남긴다.
+  //   병   → 살균 · 균충 · 생조 · 기타
+  //   해충 → 살충 · 균충 · 생조 · 기타
+  //   제초 · 충초(살충제초) 는 어느 쪽에도 넣지 않는다.
+  USE_FOR: {
+    sick:   ['살균', '균충', '생조', '기타'],
+    insect: ['살충', '균충', '생조', '기타']
+  },
+
+  // 용도가 실제로 갖는 '작용'을 펼친다.
+  //   균충(살균살충) 은 살균 작용을 포함하므로 살균과 호환된다.
+  //   충초(살충제초) 는 살충 작용을 포함하므로 살충과 호환된다.
+  USE_ACTS: {
+    '살균':['살균'], '살충':['살충'], '제초':['제초'],
+    '균충':['살균','살충'], '충초':['살충','제초'],
+    '생조':['생조'], '기타':['*']
+  },
+  useActs(use){
+    const u = this.normUse(use);
+    if(!u) return [];
+    return this.USE_ACTS[u] || [u];
+  },
+
+  // 두 용도가 같은 약으로 볼 만한가 (작용이 하나라도 겹치면 호환)
+  useCompatible(a, b){
+    const A = this.useActs(a), B = this.useActs(b);
+    if(!A.length || !B.length) return null;              // 판단 불가
+    if(A.indexOf('*')>=0 || B.indexOf('*')>=0) return true;   // '기타'는 어디에나
+    return A.some(x => B.indexOf(x) >= 0);
+  },
+
+  // 이 약이 지금 보고 있는 탭(병/해충)에 써도 되는가
+  useFits(tabType, use){
+    const allow = this.USE_FOR[tabType];
+    if(!allow) return true;                 // 탭 정보가 없으면 거르지 않는다
+    const u = this.normUse(use);
+    if(!u) return true;                     // 용도가 비어 있으면 판단 보류 → 보여준다
+    return allow.indexOf(u) >= 0;
+  },
+
+  // 두 값이 같은가. 한쪽이라도 비어 있으면 '확인 불가'(null)로 돌려준다.
+  _cmp(a, b){
+    const x = this.norm(a), y = this.norm(b);
+    if(!x || !y) return null;                       // 비교할 수 없음
+    return (x === y) || x.indexOf(y)>=0 || y.indexOf(x)>=0;
+  },
+
+  // 상표명·회사·용도·품목명을 대조해 4단계로 판정한다.
+  //   'own'     보유     — 4개 항목 모두 일치
+  //   'alt'     대체제   — 용도와 품목명이 같음 (회사·상표명만 다름) → 같은 약효
+  //   'similar' 확인필요 — 상표명은 같은데 용도나 품목명이 어긋남 → 다른 약일 수 있음
+  //   'none'    구입필요 — 보유 목록에 없음
+  //
+  // ⚠️ '대체제'가 '확인필요'보다 위인 이유:
+  //    농약은 품목명(유효성분)과 용도가 같으면 회사가 달라도 약효가 같다.
+  //    반대로 상표명이 같아도 품목명이 다르면 전혀 다른 약이다.
+  match(row){
+    const brand = row.pestiBrandName || row['상표명'] || row.brand || '';
+    const rComp = row.compName     || row['회사명'] || '';
+    const rUse  = row.useName      || row['용도']   || '';
+    const rKomp = row.pestiKorName || row['품목명'] || '';
+
+    // 용도는 '완전히 같은 글자'가 아니라 '작용이 겹치는가'로 본다.
+    // (농약장 '균충' ↔ PSIS '살균' 은 같은 제품이다)
+    const cmpUse = (a,b)=> this.useCompatible(a,b);
+
+    let bestOwn=null, bestAlt=null, bestSim=null;
+
+    for(const p of this._list){
+      const pName = p.brandName || p.pestiBrandName || p.name;
+      const pComp = p.manufacturer || p.compName;
+      const pUse  = p.type || p.useName;
+      const pKomp = p.ingredient || p.pestiKorName || p.komp;
+
+      const c = {
+        상표명: this._cmp(pName, brand),
+        회사:   this._cmp(pComp, rComp),
+        용도:   cmpUse(pUse, rUse),
+        품목명: this._cmp(pKomp, rKomp)
+      };
+      const same = Object.keys(c).filter(k=>c[k]===true);
+      const diff = Object.keys(c).filter(k=>c[k]===false);
+      const unk  = Object.keys(c).filter(k=>c[k]===null);
+      // 어긋난 항목은 '무엇과 무엇이' 다른지 실제 값을 남긴다
+      const vals = { 상표명:[pName,brand], 회사:[pComp,rComp], 용도:[pUse,rUse], 품목명:[pKomp,rKomp] };
+      const detail = diff.map(k => ({ 항목:k, 내것:String(vals[k][0]||'(빈칸)'), 등록:String(vals[k][1]||'(빈칸)') }));
+      const info = { same, mismatch:diff, unknown:unk, detail, item:p };
+
+      // ① 어긋난 것이 하나도 없고 상표명이 맞으면 → 보유
+      if(c.상표명 === true && !diff.length){ return Object.assign({state:'own'}, info); }
+
+      // ② 용도·품목명이 같으면 → 대체제 (상표명·회사는 달라도 무방)
+      if(c.용도 === true && c.품목명 === true && !diff.filter(k=>k==='용도'||k==='품목명').length){
+        if(!bestAlt) bestAlt = Object.assign({state:'alt'}, info);
+        continue;
+      }
+
+      // ③ 상표명만 같고 용도나 품목명이 어긋남 → 확인필요
+      if(c.상표명 === true && diff.length){
+        if(!bestSim) bestSim = Object.assign({state:'similar'}, info);
+      }
+    }
+    return bestOwn || bestAlt || bestSim || { state:'none' };
+  },
+
   has(brand){ return this._set.has(this.norm(brand)); },
   async load(){
     const ps = await DB.rawPesticides();
@@ -673,6 +843,7 @@ const Owned = {
     };
 
     const list = (ps||[]).filter(inStock);
+    this._list = list;
     this._set = new Set(list.map(p=>this.norm(p.brandName||p.pestiBrandName||p.name)));
     console.log(`💊 보유 농약 ${this._set.size}종 (전체 ${(ps||[]).length}건 중 수량 0 제외 ${(ps||[]).length - list.length}건)`);
   }
@@ -752,9 +923,22 @@ const App = {
 
     // 서로 의존하지 않는 작업이므로 동시에 진행한다 (순차 대기 → 병렬)
     const t0 = performance.now();
-    await Promise.all([ Owned.load(), this.loadStdOverrides() ]);
-    this._crops = await this.loadCrops();
-    console.log(`⏱️ 초기 로딩 ${((performance.now()-t0)/1000).toFixed(1)}초`);
+    try {
+      await Promise.all([ Owned.load(), this.loadStdOverrides() ]);
+      this._crops = await this.loadCrops();
+      console.log(`⏱️ 초기 로딩 ${((performance.now()-t0)/1000).toFixed(1)}초`);
+    } catch (e) {
+      // 불러오기에 실패해도 '불러오는 중…' 문구가 계속 남아 있지 않도록 한다
+      console.error('❌ 작물 목록 로드 실패:', e);
+      this._crops = this._crops || [];
+      const box = document.getElementById('crops');
+      if (box) box.innerHTML = '<div class="state" style="padding:16px;color:#C62828">'
+        + '⚠️ 작물 목록을 불러오지 못했습니다.<br>'
+        + '<span style="font-size:12px;opacity:0.8">인터넷 연결을 확인한 뒤 새로고침해 주세요.</span></div>';
+      const lp = document.getElementById('listPlaceholder');
+      if (lp) lp.textContent = '작물 목록을 불러오지 못했습니다.';
+      return;
+    }
     this.renderCrops();
     AppBus.on('reference:request', d=>this.openFromName(d));
 
@@ -796,8 +980,9 @@ const App = {
     const nm  = String(name || '').toLowerCase();
     const std = this.getStandardName(name || '');
 
-    // 유실수 키워드에 걸리면 확실
-    if(this.isFruit(std, '')) return { category: '유실수', sure: true };
+    // 유실수 키워드에 걸리면 확실.
+    // ⚠️ 표준명만 보면 '보리수'가 '보리'로 축약돼 놓치므로 원래 이름도 함께 본다.
+    if(this.isFruit(name, '') || this.isFruit(std, '')) return { category: '유실수', sure: true };
 
     // 채소 쪽 단서가 있으면 확실
     const vegHints = [
@@ -912,14 +1097,39 @@ const App = {
     return out.sort((a,b)=> (a.category===b.category ? a.displayName.localeCompare(b.displayName,'ko') : (a.category==='유실수'?-1:1)));
   },
 
+  // 아래 진단 영역의 안내 문구를 현재 상황에 맞게 바꾼다
+  setListPlaceholder(state){
+    const el = document.getElementById('listPlaceholder');
+    if(!el) return;                       // 이미 진단 결과가 그려졌으면 없음
+    if(state === 'failed'){
+      el.innerHTML = '<span style="color:#C62828">작물 목록을 불러오지 못했습니다 — 새로고침해 주세요.</span>';
+    } else if(state === 'empty'){
+      el.innerHTML = '아래 <b>＋ 작물 추가</b>로 재배 중인 작물을 등록해 주세요.';
+    } else {
+      el.innerHTML = `위에서 진단할 작물을 선택하세요. `
+        + `<span style="opacity:0.7">(${this._crops.length}종 등록됨)</span>`;
+    }
+  },
+
   renderCrops(){
     const box=document.getElementById('crops');
     const mw=document.getElementById('cropManualWrap');
     if(mw) mw.style.display = this._external ? 'none' : 'block';
     if(!this._crops.length){
-      box.innerHTML = `<div class="state" style="padding:16px">아래에 <b>작물을 추가</b>해 진단을 시작하세요.</div>`;
+      const failed = DB._loadFailed && DB._loadFailed[CONFIG.plantsCollection];
+      if(failed){
+        // 서버에서 못 받은 것 — '등록된 작물이 없다'와 구분해야 한다
+        box.innerHTML = `<div class="state" style="padding:16px;color:#C62828">`
+          + `⚠️ 작물 목록을 불러오지 못했습니다.<br>`
+          + `<span style="font-size:12px;opacity:0.85">인터넷 연결을 확인한 뒤 새로고침해 주세요.</span></div>`;
+        this.setListPlaceholder('failed');
+      } else {
+        box.innerHTML = `<div class="state" style="padding:16px">아래에 <b>작물을 추가</b>해 진단을 시작하세요.</div>`;
+        this.setListPlaceholder('empty');
+      }
       return;
     }
+    this.setListPlaceholder('ready');
     const cat=(icon,key,label)=>{
       const rows=this._crops.filter(x=>(x.category||'기타')===key);
       if(!rows.length) return '';
@@ -1151,14 +1361,29 @@ const Rx = {
   render(cropName, name, rows){
     const box=document.getElementById('rx');
 
+    // 탭(병/해충)에 맞지 않는 용도를 먼저 제외한다 — 제초제가 섞이면 위험하다
+    const tabType = (this._hctx && this._hctx.type) || '';
+    const before  = rows.length;
+    const dropped = rows.filter(r => !Owned.useFits(tabType, NCPMS.pick(r,['useName','용도'])));
+    rows = rows.filter(r => Owned.useFits(tabType, NCPMS.pick(r,['useName','용도'])));
+    if(dropped.length){
+      const kinds = [...new Set(dropped.map(r => NCPMS.pick(r,['useName','용도'])||'?'))];
+      console.info(`🚫 ${tabType==='sick'?'병':'해충'} 방제에 맞지 않는 용도 ${dropped.length}건 제외: ${kinds.join(', ')}`);
+    }
+
     // 보유 농약을 맨 앞으로 (같은 그룹 안에서는 원래 순서 유지 = 안정 정렬)
-    const isOwned = r => Owned.has(NCPMS.pick(r,['pestiBrandName','상표명'])||'');
+    // 상표명·회사·용도·품목명을 모두 대조해 판정한다
+    const rank = { own:0, alt:1, similar:2, none:3 };
+    const matchOf = r => Owned.match(r);
     rows = rows
-      .map((r,idx)=>({ r, idx, own: isOwned(r) }))
-      .sort((a,b)=> (a.own === b.own) ? a.idx - b.idx : (a.own ? -1 : 1))
+      .map((r,idx)=>({ r, idx, m: matchOf(r) }))
+      .sort((a,b)=> (rank[a.m.state] !== rank[b.m.state])
+                     ? rank[a.m.state] - rank[b.m.state] : a.idx - b.idx)
       .map(x=>x.r);
 
-    const ownCount = rows.filter(isOwned).length;
+    const ownCount = rows.filter(r => matchOf(r).state === 'own').length;
+    const altCount = rows.filter(r => matchOf(r).state === 'alt').length;
+    const simCount = rows.filter(r => matchOf(r).state === 'similar').length;
 
     // ⚠️ Plan.open(i) 이 _items 의 인덱스를 쓰므로 정렬한 배열을 그대로 저장해야 한다
     this._items = rows;
@@ -1168,12 +1393,34 @@ const Rx = {
       const komp = NCPMS.pick(r,['pestiKorName','품목명']);
       const comp = NCPMS.pick(r,['compName','회사명']);
       const use  = NCPMS.pick(r,['useName','용도'])||'';
-      const own  = Owned.has(brand);
-      return `<div class="pesti ${own?'owned':''}">
+      const m   = Owned.match(r);
+      const st  = m.state;
+      const badge = st==='own' ? `<span class="own-badge">보유</span>`
+                  : st==='alt' ? `<span class="alt-badge" title="용도와 품목명이 같아 같은 약효입니다">🔄 대체제</span>`
+                  : st==='similar' ? `<span class="sim-badge" title="상표명은 같지만 ${(m.mismatch||[]).join('·')}이(가) 다릅니다">⚠ 확인필요</span>`
+                  : `<span class="buy-badge">구입필요</span>`;
+
+      // 같은 점 / 다른 점을 나눠 보여준다
+      const mine = (m.item && (m.item.name || m.item.brandName)) || '';
+      let note = '';
+      if(st !== 'none' && m.item){
+        const same = (m.same||[]).filter(k=>k!=='상표명');
+        note = `<div class="cmp-note ${st}">`
+          + `<b>보유:</b> ${mine}`
+          + (same.length     ? ` <span class="cmp-same">✓ ${same.join('·')} 같음</span>` : '')
+          + ((m.detail||[]).length
+              ? ` <span class="cmp-diff">✕ ` + m.detail.map(d =>
+                  `${d.항목} 다름(내것 <b>${d.내것}</b> / 등록 <b>${d.등록}</b>)`).join(', ') + `</span>`
+              : ((m.mismatch||[]).length ? ` <span class="cmp-diff">✕ ${m.mismatch.join('·')} 다름</span>` : ''))
+          + ((m.unknown||[]).length  ? ` <span class="cmp-unk">? ${m.unknown.join('·')} 정보없음</span>` : '')
+          + `</div>`;
+      }
+      return `<div class="pesti ${st==='own'?'owned':''} ${st==='alt'?'alt':''} ${st==='similar'?'similar':''}">
         <div class="top"><span class="brand">${brand||'-'}</span>
-          ${own?`<span class="own-badge">보유</span>`:`<span class="buy-badge">구입필요</span>`}
+          ${badge}
           ${use?`<span class="use">${use}</span>`:''}</div>
         <div class="meta">${komp?komp+' · ':''}${comp||''}</div>
+        ${note}
         <div style="display:flex;gap:6px;margin-top:8px">
           <button class="back prim" onclick="Plan.open(${i})">📅 방제계획</button>
         </div>
@@ -1181,12 +1428,20 @@ const Rx = {
     };
     box.innerHTML=`<div class="rx-hd"><h2>💊 등록 농약</h2><button class="x" onclick="Rx.close()">✕</button></div>
       <p class="rx-sub"><b>${cropName}</b> · <b>${name}</b> 등록 약제 ${rows.length}건
-        ${ownCount ? `<span class="rx-own-cnt">· 보유 ${ownCount}건 먼저 표시</span>` : ''}</p>
+        ${dropped.length ? `<span class="rx-drop-cnt">· ${tabType==='sick'?'병':'해충'} 방제용이 아닌 ${dropped.length}건 제외</span>` : ''}
+        ${ownCount ? `<span class="rx-own-cnt">· 보유 ${ownCount}</span>` : ''}
+        ${altCount ? `<span class="rx-alt-cnt">· 대체제 ${altCount}</span>` : ''}
+        ${simCount ? `<span class="rx-sim-cnt">· 확인필요 ${simCount}</span>` : ''}</p>
       ${rows.length
         ? rows.map((r,i)=>{
             // 보유 목록이 끝나는 지점에 구분선을 한 번 넣는다
-            const sep = (ownCount && i === ownCount)
-              ? '<div class="rx-divider">아래는 보유하지 않은 약제</div>' : '';
+            let sep = '';
+            if(altCount && i === ownCount)
+              sep = '<div class="rx-divider">아래는 대체제 — 용도·품목명이 같아 같은 약효</div>';
+            else if(simCount && i === ownCount + altCount)
+              sep = '<div class="rx-divider">아래는 상표명만 같은 약제 — 확인 필요</div>';
+            else if(i === ownCount + altCount + simCount && i < rows.length)
+              sep = '<div class="rx-divider">아래는 보유하지 않은 약제</div>';
             return sep + cardHtml(r,i);
           }).join('')
         : '<div class="state">등록된 약제를 찾지 못했습니다.</div>'}`;
