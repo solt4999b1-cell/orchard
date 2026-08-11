@@ -1024,7 +1024,9 @@
             <option value="사이구역">사이구역</option>
             <option value="2구역">2구역</option>
             <option value="온실">온실</option>
+
                 <option value="울타리앞">울타리앞</option>
+
           </select>
         </div>
         <div>
@@ -1266,7 +1268,9 @@
           <option value="사이구역">사이구역</option>
           <option value="2구역">2구역 (과수원 이랑)</option>
           <option value="온실">온실</option>
+
                 <option value="울타리앞">울타리앞</option>
+
         </select>
       </div>
 
@@ -3290,6 +3294,25 @@
             ✅ 기록 저장
           </button>
         </div>
+        <!-- 검색 · 바로가기 · 펼치기 -->
+        <div style="padding:0 12px 8px">
+          <input type="text" id="growRecSearch" oninput="searchGrowRecords(this.value)"
+            placeholder="🔎 작물명 · 종류 · 내용 · 날짜로 찾기"
+            style="width:100%;padding:9px;border-radius:8px;border:1.5px solid #E0E0E0;
+            font-size:14px;font-family:inherit;box-sizing:border-box;margin-bottom:8px">
+          <div style="display:flex;gap:5px;margin-bottom:8px;flex-wrap:wrap">
+            <button onclick="openBulkGrowRecord()"
+              style="background:#1B5E20;color:white;border:none;padding:6px 11px;border-radius:6px;
+              cursor:pointer;font-size:12px;font-weight:700;font-family:inherit">🧾 여러 작물 기록</button>
+            <button onclick="toggleAllGrowRecGroups(true)"
+              style="background:#8BC34A;color:white;border:none;padding:6px 11px;border-radius:6px;
+              cursor:pointer;font-size:12px;font-family:inherit">⬇ 모두 펼치기</button>
+            <button onclick="toggleAllGrowRecGroups(false)"
+              style="background:#BDBDBD;color:white;border:none;padding:6px 11px;border-radius:6px;
+              cursor:pointer;font-size:12px;font-family:inherit">⬆ 모두 접기</button>
+          </div>
+          <div id="growRecIndex"></div>
+        </div>
         <div class="card-body" id="growRecordList">
           <div style="text-align:center;padding:16px;color:#9E9E9E;font-size:13px">
             + 버튼으로 생육 기록을 추가하세요
@@ -4500,7 +4523,7 @@
 
 // Google Sheets 설정
 let SHEET_ID = '12cRWUcZah1z3DaZq5aJcojV8m3J5UU3m2F2ux6GwCec';
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec';
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec';
 
 // 컬렉션 매핑
 const COLLECTIONS = {
@@ -7217,6 +7240,19 @@ async function deleteFromSheet(sheetName, id, opts){
       lastMsg = e.message;
       console.warn('… action=\'' + act + '\' 요청 오류: ' + lastMsg);
     }
+
+    // '항목 없음' = 그 action 은 통했고 시트에 이미 그 행이 없다는 뜻.
+    // 지우려던 목적은 이미 이뤄졌으므로 성공으로 본다.
+    if (/항목 없음|이미 없음|not found/i.test(String(lastMsg))) {
+      _delActions = act;
+      console.log('🗑 시트에 이미 없습니다 (id=' + key + ')');
+      return { ok: true, action: act, already: true };
+    }
+    // 그 밖의 구체적 오류면 다른 이름을 더 시도해도 소용없다
+    if (lastMsg && !/알 수 없는 action/.test(String(lastMsg))) {
+      _delActions = act;
+      break;
+    }
   }
 
   // 전부 실패 — 사용자에게 알린다. 안 그러면 시트에 그대로 남는다.
@@ -7326,6 +7362,109 @@ window.시트찌꺼기청소 = window.cleanTestRows = async function (apply, she
 // 특정 id 가 시트에 실제로 있는지 찾는다
 //   행찾기('1784606534257_mos9')            ← growPlants 에서
 //   행찾기('w1', 'workLog')
+// 화면과 시트의 id 를 대조해 어긋난 작물을 찾는다
+//   id대조()  → growPlants 기준으로 전부 검사
+// 🔬 id정밀검사('아이디') — 시트에 저장된 실제 문자를 하나씩 뜯어본다
+//    눈에는 같아 보여도 공백·제로폭문자·전각 때문에 다를 수 있다.
+window.id정밀검사 = window.inspectId = async function (id, sheetName) {
+  var sheet = sheetName || COLLECTIONS.growPlants;
+  var rows = [];
+  try { rows = (await loadFromGoogleSheets(sheet)) || []; }
+  catch (e) { console.error('시트를 못 읽었습니다:', e.message); return; }
+
+  var want = String(id);
+  var dump = function (s) {
+    s = String(s == null ? '' : s);
+    return {
+      값: JSON.stringify(s),
+      길이: s.length,
+      코드: Array.from(s).map(function (c) {
+        var n = c.codePointAt(0);
+        return (n < 32 || n > 126) ? (c + '(U+' + n.toString(16).toUpperCase() + ')') : c;
+      }).join(' ')
+    };
+  };
+
+  // 1) 완전히 같은 행
+  var exact = rows.filter(function (r) { return String(r.id) === want; });
+  // 2) 다듬으면 같은 행
+  var trimmed = rows.filter(function (r) { return String(r.id).trim() === want.trim() && String(r.id) !== want; });
+  // 3) 눈에 보이는 문자만 남기면 같은 행
+  var clean = function (s) { return String(s).replace(/[\s\u200B-\u200D\uFEFF]/g, ''); };
+  var loose = rows.filter(function (r) { return clean(r.id) === clean(want) && String(r.id).trim() !== want.trim(); });
+
+  console.log('%c🔬 ' + sheet + ' 에서 id 정밀검사', 'color:#1565C0;font-weight:bold');
+  var _w = dump(want);
+  console.log('  찾는 값: ' + _w.값 + '  (길이 ' + _w.길이 + ')');
+
+  if (exact.length) {
+    console.log('%c✅ 완전히 같은 행 ' + exact.length + '건 — id 는 문제가 없습니다', 'color:#2E7D32');
+    console.table(exact.map(function (r) { return { id: r.id, name: r.name }; }));
+    console.warn('👉 그런데도 GAS 가 못 찾는다면 gasUpdateRow 쪽 문제입니다.');
+    return exact;
+  }
+
+  if (trimmed.length || loose.length) {
+    var bad = trimmed.concat(loose);
+    console.warn('⚠️ 눈에는 같아 보이지만 실제 문자가 다른 행 ' + bad.length + '건');
+    bad.forEach(function (r) {
+      var a = dump(r.id), b = dump(want);
+      console.log('  [' + r.name + ']');
+      console.log('    시트 : ' + a.값 + '  (길이 ' + a.길이 + ')  ' + a.코드);
+      console.log('    화면 : ' + b.값 + '  (길이 ' + b.길이 + ')  ' + b.코드);
+    });
+    console.warn('👉 구글 시트에서 그 칸을 지우고 아래 값을 다시 입력하세요:');
+    console.warn('   ' + want);
+    return bad;
+  }
+
+  console.warn('❌ 비슷한 행조차 없습니다. 이름으로 찾아봅니다…');
+  var mine = (plantsDB || []).find(function (p) { return String(p.id) === want; });
+  if (mine) {
+    var byName = rows.filter(function (r) { return String(r.name).trim() === String(mine.name).trim(); });
+    console.table(byName.map(function (r) { return { 시트id: r.id, name: r.name }; }));
+  }
+  return [];
+};
+
+window.id대조 = window.compareIds = async function (sheetName) {
+  var sheet = sheetName || COLLECTIONS.growPlants;
+  var rows = [];
+  try { rows = (await loadFromGoogleSheets(sheet)) || []; }
+  catch (e) { console.error('시트를 못 읽었습니다:', e.message); return; }
+
+  var sheetIds = new Set(rows.map(function (r) { return String(r.id).trim(); }));
+  var local = (sheet === COLLECTIONS.growPlants)
+    ? (plantsDB || []) : [];
+
+  var missing = local.filter(function (p) {
+    return p && p.id && !sheetIds.has(String(p.id).trim());
+  });
+
+  console.log('%c🔗 ' + sheet + ' — 시트 ' + rows.length + '행 / 화면 ' + local.length + '건',
+              'color:#1565C0;font-weight:bold');
+
+  if (!missing.length) {
+    console.log('%c✅ 화면의 모든 작물이 시트에 있습니다', 'color:#2E7D32');
+    return;
+  }
+
+  console.warn('⚠️ 화면에는 있으나 시트에서 그 id 를 못 찾는 작물 ' + missing.length + '건');
+  console.warn('   → 이 작물들은 수정·삭제가 「항목 없음」 으로 실패합니다.');
+  console.table(missing.map(function (p) {
+    // 같은 이름의 행이 시트에 있는지도 확인
+    var byName = rows.filter(function (r) { return String(r.name || '').trim() === String(p.name || '').trim(); });
+    return {
+      작물: p.name,
+      '화면 id': p.id,
+      '시트의 같은 이름 id': byName.map(function (r) { return r.id; }).join(', ') || '(없음)',
+      원인: byName.length ? 'id 가 서로 다름' : '시트에서 지워진 행'
+    };
+  }));
+  console.log('%c👉 해당 작물을 한 번 수정하면 자동으로 시트에 다시 만들어집니다.', 'color:#E65100');
+  return missing;
+};
+
 window.행찾기 = window.findRow = async function (id, sheetName) {
   var sheet = sheetName || COLLECTIONS.growPlants;
   var rows = [];
@@ -8847,14 +8986,14 @@ function deleteGrowPlant(id) {
   if (typeof _fbReady !== 'undefined' && _fbReady) {
     deleteFromSheet(COLLECTIONS.growPlants, id);
   }
-  plants = plants.filter(function(p){ return p.id !== id; });
+  plants = plants.filter(function(p){ return String(p.id) !== String(id); });
   savePlantsLocal();
   renderGrow();
 }
 
 // ── 생육일수 항목 수정 모달 ──────────────────────────────
 function openGrowEditModal(id) {
-  var p = plants.find(function(x){ return x.id === id; });
+  var p = plants.find(function(x){ return String(x.id) === String(id); });
   if (!p) return;
   var existing = document.getElementById('growEditModal');
   if (existing) existing.remove();
@@ -8912,7 +9051,7 @@ function onGrowPlaceChange(key){
 }
 
 function editPlant(id) {
-  var p = plants.find(function(x){ return x.id === id; });
+  var p = plants.find(function(x){ return String(x.id) === String(id); });
   if (!p) return;
   var ov = document.createElement('div');
   ov.setAttribute('data-editov','1');
@@ -8972,7 +9111,7 @@ function _savePlantEdit(id) {
 }
 
 function saveGrowEdit(id) {
-  var p = plants.find(function(x){ return x.id === id; });
+  var p = plants.find(function(x){ return String(x.id) === String(id); });
   if (!p) return;
   var dateVal = document.getElementById('geDate')?.value;
   if (!dateVal) { showToast('⚠ 날짜를 선택하세요'); return; }
@@ -8982,10 +9121,25 @@ function saveGrowEdit(id) {
   p.fruitDay   = parseInt(document.getElementById('geFruitDay')?.value)  || 0;
   p.loc        = document.getElementById('geLoc')?.value.trim()  || p.loc;
   p.note       = document.getElementById('geNote')?.value.trim() || '';
+  p.updatedAt  = new Date().toISOString();
+
   localStorage.setItem('plants', JSON.stringify(plants));
   document.getElementById('growEditModal')?.remove();
   renderGrow();
   showToast('✅ 생육 기록 수정 완료');
+
+  // ⭐ 구글 시트에도 반영한다 (예전에는 브라우저에만 저장됐다)
+  if (typeof _fbReady !== 'undefined' && _fbReady) {
+    saveWithAlias('update', COLLECTIONS.growPlants, {
+      id: p.id, name: p.name, plantDate: p.dateStr, dateStr: p.dateStr,
+      totalDays: p.totalDays, pinchDays: p.pinchDay, fruitDays: p.fruitDay,
+      spot: p.loc, memo: p.note, updatedAt: p.updatedAt
+    }).then(function(){ console.log('✏️ 생육 기록 시트 반영 완료:', p.id); })
+      .catch(function(e){
+        console.error('생육 기록 시트 저장 실패:', e.message);
+        showToast('⚠ 시트 저장 실패 — 화면에만 반영됨');
+      });
+  }
 }
 
 function getStage(days, total, pinchDay, fruitDay, name) {
@@ -12233,7 +12387,7 @@ function saveSupply() {
 }
 
 function editSupply(id) {
-  const s = mySupplies.find(x => x.id === id);
+  const s = mySupplies.find(x => String(x.id) === String(id));
   if (!s) return;
 
   const overlay = document.createElement('div');
@@ -12278,7 +12432,7 @@ function editSupply(id) {
 }
 
 function _saveSupplyEdit(id) {
-  const idx = mySupplies.findIndex(x => x.id === id);
+  const idx = mySupplies.findIndex(x => String(x.id) === String(id));
   if (idx < 0) return;
   mySupplies[idx].name  = document.getElementById('_sName').value  || mySupplies[idx].name;
   mySupplies[idx].date  = document.getElementById('_sDate').value  || mySupplies[idx].date;
@@ -12293,9 +12447,9 @@ function _saveSupplyEdit(id) {
 }
 
 function deleteSupply(id) {
-  const s = mySupplies.find(x=>x.id===id);
+  const s = mySupplies.find(x=>String(x.id)===String(id));
   if (!s || !confirm(`"${s.name}" 삭제할까요?`)) return;
-  mySupplies = mySupplies.filter(x=>x.id!==id);
+  mySupplies = mySupplies.filter(x=>String(x.id)!==String(id));
   localStorage.setItem('mySupplies', JSON.stringify(mySupplies));
   fbDeleteSupply(id);  // 구글 시트 삭제
   renderSupplyList();
@@ -12851,10 +13005,15 @@ function _saveLogEdit(id) {
 }
 
 function deleteLogEntry(id) {
-  workLog = workLog.filter(e => e.id !== id);
+  var key = String(id);
+  var target = workLog.find(function(e){ return String(e.id) === key; });
+  if (!target) { console.warn('삭제할 기록장 항목을 찾지 못했습니다:', id); return; }
+  if (!confirm((target.name || '이 기록') + ' 을(를) 삭제할까요?')) return;
+
+  workLog = workLog.filter(function(e){ return String(e.id) !== key; });
   localStorage.setItem('workLog', JSON.stringify(workLog));
-  fbDeleteLog(id);  // 구글 시트 삭제
   renderWorkLog();
+  deleteFromSheet(COLLECTIONS.workLog, key);   // 시트에서도 지우고 결과를 확인
 }
 
 function clearWorkLog() {
@@ -13391,9 +13550,23 @@ function renderGrowRecords() {
       + '아직 기록이 없습니다<br>+ 버튼으로 기록을 추가하세요</div>';
     return;
   }
+  // 검색어로 먼저 거른다 (작물명·종류·내용·날짜 어디든 포함되면 표시)
+  const q = String(window._growRecQuery || '').trim().toLowerCase();
+  const source = q
+    ? growRecords.filter(r => [r.plantName, r.eventType, r.note, r.date]
+        .some(v => String(v || '').toLowerCase().includes(q)))
+    : growRecords;
+
+  if (!source.length) {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:#9E9E9E;font-size:15px">'
+      + '\'' + q + '\' 에 맞는 기록이 없습니다</div>';
+    renderGrowRecIndex({});
+    return;
+  }
+
   // 작물별 그룹
   const grouped = {};
-  growRecords.forEach(r => {
+  source.forEach(r => {
     if (!grouped[r.plantName]) grouped[r.plantName] = [];
     grouped[r.plantName].push(r);
   });
@@ -13411,24 +13584,39 @@ function renderGrowRecords() {
   const typeColor= {'파종':'#E8F5E9','정식':'#E8F5E9','발아':'#F1F8E9',
                     '개화':'#FCE4EC','착과':'#E3F2FD','수확':'#FFF3E0',
                     '최종수확':'#ECEFF1'};
+  // 가장 최근 작업일이 빠른 작물부터 (작물이 많아도 최근 것이 위로 온다)
+  const latestOf = rs => rs.reduce((m, r) => {
+    const d = new Date(String(r.date) + 'T00:00:00').getTime();
+    return (!isNaN(d) && d > m) ? d : m;
+  }, 0);
+
   let html = '';
-  Object.entries(grouped).forEach(([name, recs]) => {
-    const sorted = [...recs].sort((a,b) => a.date.localeCompare(b.date));
+  Object.entries(grouped)
+    .sort((a, b) => (latestOf(b[1]) - latestOf(a[1])) || a[0].localeCompare(b[0], 'ko'))
+    .forEach(([name, recsRaw]) => {
+    const sorted = [...recsRaw].sort((a,b) => String(a.date).localeCompare(String(b.date)));
+    const recs   = [...recsRaw].sort((a,b) => String(b.date).localeCompare(String(a.date)));
     const first  = sorted[0];
+    const latest = recs[0];
     const lastD  = new Date(first.date + 'T00:00:00');
     const diffD  = Math.round((REAL_TODAY - lastD) / 86400000);
-    html += `<div style="border:1.5px solid #E0E0E0;border-radius:10px;margin-bottom:8px;overflow:hidden">
-      <div style="background:#1B5E20;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px">
-        <span style="font-size:14px;font-weight:700;color:white;flex:1;min-width:0">${name}</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.75);white-space:nowrap">${(first.date||'').replace(/-/g,'.')} · ${diffD}일 경과</span>
+    html += `<div id="grec-${name}" style="border:1.5px solid #E0E0E0;border-radius:10px;margin-bottom:8px;overflow:hidden">
+      <div onclick="toggleGrowRecGroup(this)" style="background:#1B5E20;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;user-select:none">
+        <span style="font-size:14px;font-weight:700;color:white;flex:1;min-width:0">${name}
+          <span style="font-weight:400;opacity:0.8;font-size:11px">· ${recs.length}건</span>
+        </span>
+        <span style="font-size:10px;color:rgba(255,255,255,0.75);white-space:nowrap">
+          최근 ${(latest.date||'').replace(/-/g,'.')} · 심은지 ${diffD}일 <span data-grec-arrow>▼</span>
+        </span>
       </div>
-      <div style="padding:4px 0">
+      <div data-grec-body style="padding:4px 0;display:none">
         ${recs.map(r => `
           <div style="display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid #F5F5F5;flex-wrap:nowrap">
             <span style="background:${typeColor[r.eventType]||'#F5F5F5'};padding:2px 7px;border-radius:8px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0">${typeIcon[r.eventType]||'•'} ${r.eventType}</span>
             <span style="font-size:12px;color:#37474F;white-space:nowrap;flex-shrink:0;margin-left:2px">${(r.date||'').replace(/-/g,'.')}</span>
             ${r.daysFrom ? `<span style="font-size:10px;color:#9E9E9E;flex-shrink:0">+${r.daysFrom}일</span>` : ''}
             <span style="font-size:12px;color:#546E7A;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.note||''}</span>
+            <button onclick="copyGrowRecord('${r.id}')" title="같은 작업을 다른 날짜로 복사" style="flex-shrink:0;background:#F1F8E9;border:1px solid #C5E1A5;color:#33691E;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">📋</button>
             <button onclick="openGrowRecordEditModal('${r.id}')" style="flex-shrink:0;background:#E3F2FD;border:1px solid #90CAF9;color:#1565C0;border-radius:6px;padding:3px 8px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit">✏️</button>
             <button onclick="deleteGrowRecord('${r.id}')" style="flex-shrink:0;background:none;border:none;color:#BDBDBD;font-size:15px;cursor:pointer;padding:0 2px">✕</button>
           </div>`).join('')}
@@ -13436,6 +13624,271 @@ function renderGrowRecords() {
     </div>`;
   });
   el.innerHTML = html;
+  renderGrowRecIndex(grouped);
+}
+
+// ── 생육기록 보조 기능 ─────────────────────────────────
+function toggleGrowRecGroup(headEl){
+  var body = headEl.nextElementSibling;
+  if(!body) return;
+  var hidden = (body.style.display === 'none');
+  body.style.display = hidden ? 'block' : 'none';
+  var ar = headEl.querySelector('[data-grec-arrow]');
+  if(ar) ar.textContent = hidden ? '\u25B2' : '\u25BC';
+}
+
+function toggleAllGrowRecGroups(open){
+  document.querySelectorAll('[data-grec-body]').forEach(function(b){
+    var head = b.previousElementSibling;
+    if(head && (b.style.display === 'none') === !!open) toggleGrowRecGroup(head);
+  });
+}
+
+function renderGrowRecIndex(grouped){
+  var box = document.getElementById('growRecIndex');
+  if(!box) return;
+  var names = Object.keys(grouped || {}).sort(function(a,b){ return a.localeCompare(b,'ko'); });
+  if(!names.length){ box.innerHTML = ''; return; }
+  box.innerHTML =
+    '<div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:6px">'
+  + '\uD83D\uDD0E \uC791\uBB3C \uBC14\uB85C\uAC00\uAE30 <span style="font-weight:400;opacity:0.8">\u00b7 \uAC00\uB098\uB2E4\uC21C ' + names.length + '\uC885</span></div>'
+  + '<div style="display:flex;flex-wrap:wrap;gap:5px">'
+  + names.map(function(nm){
+      return '<button onclick="jumpToGrowRec(&quot;' + nm.replace(/"/g,'') + '&quot;)" '
+           + 'style="background:#F1F8E9;border:1px solid #C5E1A5;color:#33691E;padding:4px 9px;'
+           + 'border-radius:12px;cursor:pointer;font-size:12px;font-family:inherit;white-space:nowrap">'
+           + nm + '<span style="opacity:0.7;font-size:11px"> ' + grouped[nm].length + '</span></button>';
+    }).join('')
+  + '</div>';
+}
+
+function jumpToGrowRec(name){
+  var el = document.getElementById('grec-' + name);
+  if(!el) return;
+  var body = el.querySelector('[data-grec-body]');
+  if(body && body.style.display === 'none') toggleGrowRecGroup(el.firstElementChild);
+  try { el.scrollIntoView({behavior:'smooth', block:'start'}); } catch(e){}
+  el.style.transition = 'box-shadow .3s';
+  el.style.boxShadow = '0 0 0 3px #AED581';
+  setTimeout(function(){ el.style.boxShadow = 'none'; }, 1200);
+}
+
+// 📋 같은 작업을 다른 날짜로 복사한다.
+//    기존 기록은 그대로 두고 새 id 로 한 줄을 추가할 뿐이라 안전하다.
+// ════════════════════════════════════════════════════════════
+// 🧾 여러 작물 한꺼번에 기록 — 방제처럼 같은 작업을 여러 작물에 할 때
+//    작물마다 growRecords 에 한 줄씩 추가한다.
+//    ⚠️ 일부만 저장될 수 있으므로 결과를 건별로 확인해 알려준다.
+// ════════════════════════════════════════════════════════════
+function openBulkGrowRecord(){
+  var ex = document.getElementById('grecBulkModal'); if(ex) ex.remove();
+
+  // 재배 중인 작물 목록 (최종수확·고사 제외)
+  var names = [];
+  (typeof plantsDB !== 'undefined' ? plantsDB : []).forEach(function(p){
+    if(!p || !p.name) return;
+    var st = String(p.status||'').toLowerCase();
+    if(['dead','deleted','최종수확','고사','삭제'].indexOf(st) >= 0) return;
+    if(names.indexOf(p.name) < 0) names.push(p.name);
+  });
+  (typeof plants !== 'undefined' ? plants : []).forEach(function(p){
+    if(p && p.name && names.indexOf(p.name) < 0) names.push(p.name);
+  });
+  names.sort(function(a,b){ return a.localeCompare(b,'ko'); });
+
+  if(!names.length){ showToast('\u26A0 \uB4F1\uB85D\uB41C \uC791\uBB3C\uC774 \uC5C6\uC2B5\uB2C8\uB2E4'); return; }
+
+  var types = ['\uBC29\uC81C','\uC2DC\uBE44','\uAD00\uC218','\uC81C\uCD08','\uC21C\uCE58\uAE30','\uC801\uACFC',
+               '\uD30C\uC885','\uC815\uC2DD','\uAC1C\uD654','\uCC29\uACFC','\uC218\uD655','\uCD5C\uC885\uC218\uD655','\uAE30\uD0C0'];
+
+  var box = document.createElement('div');
+  box.id = 'grecBulkModal';
+  box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;'
+    + 'display:flex;align-items:center;justify-content:center;padding:14px';
+  box.innerHTML =
+    '<div style="background:white;border-radius:12px;width:100%;max-width:420px;max-height:90vh;'
+  + 'display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,0.25);overflow:hidden">'
+  + '<div style="background:#1B5E20;color:white;padding:13px 16px;font-weight:700;font-size:15px">'
+  + '\uD83E\uDDFE \uC5EC\uB7EC \uC791\uBB3C \uD55C\uAEBC\uBC88\uC5D0 \uAE30\uB85D</div>'
+  + '<div style="padding:14px 16px;overflow-y:auto;flex:1">'
+
+  + '<div style="display:flex;gap:8px;margin-bottom:12px">'
+  + '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">\uC791\uC5C5\uC885\uB958</div>'
+  + '<select id="bulkType" style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:14px;font-family:inherit;background:white">'
+  + types.map(function(c){ return '<option value="'+c+'">'+c+'</option>'; }).join('')
+  + '</select></div>'
+  + '<div style="flex:1"><div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">\uB0A0\uC9DC</div>'
+  + '<input type="date" id="bulkDate" value="'+toYMD(REAL_TODAY)+'" style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:14px;font-family:inherit;box-sizing:border-box"></div>'
+  + '</div>'
+
+  + '<div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">\uBA54\uBAA8</div>'
+  + '<input type="text" id="bulkNote" placeholder="\uC608: \uB9CC\uC0AC 1000\uBC30 \uC0B4\uD3EC" '
+  + 'style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:14px;'
+  + 'box-sizing:border-box;margin-bottom:12px;font-family:inherit">'
+
+  + '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+  + '<span style="font-size:12px;font-weight:700;color:#546E7A">\uC791\uBB3C \uC120\uD0DD '
+  + '<span id="bulkCount" style="color:#1B5E20">0</span>/'+names.length+'</span>'
+  + '<span><button onclick="bulkSelectAll(true)" style="background:#8BC34A;color:white;border:none;'
+  + 'padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit">\uBAA8\uB450</button>'
+  + '<button onclick="bulkSelectAll(false)" style="background:#BDBDBD;color:white;border:none;'
+  + 'padding:4px 9px;border-radius:6px;font-size:11px;cursor:pointer;font-family:inherit;margin-left:4px">\uD574\uC81C</button></span>'
+  + '</div>'
+  + '<div style="display:flex;flex-wrap:wrap;gap:5px;border:1.5px solid #E0E0E0;border-radius:8px;padding:9px;max-height:190px;overflow-y:auto">'
+  + names.map(function(nm){
+      return '<label style="display:inline-flex;align-items:center;gap:4px;background:#FAFAFA;'
+           + 'border:1px solid #E0E0E0;border-radius:12px;padding:4px 9px;font-size:12px;cursor:pointer">'
+           + '<input type="checkbox" class="bulk-crop" value="'+nm.replace(/"/g,'')+'" onchange="bulkUpdateCount()" style="margin:0">'
+           + nm + '</label>';
+    }).join('')
+  + '</div>'
+  + '</div>'
+
+  + '<div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid #EEE">'
+  + '<button onclick="document.getElementById(\'grecBulkModal\').remove()" '
+  + 'style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:white;color:#666;'
+  + 'border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">\uCDE8\uC18C</button>'
+  + '<button id="bulkSaveBtn" onclick="submitBulkGrowRecord()" '
+  + 'style="flex:2;padding:11px;border:none;background:#1B5E20;color:white;border-radius:8px;'
+  + 'cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">\u2705 \uAE30\uB85D \uC800\uC7A5</button>'
+  + '</div></div>';
+  document.body.appendChild(box);
+}
+
+function bulkSelectAll(on){
+  document.querySelectorAll('.bulk-crop').forEach(function(c){ c.checked = !!on; });
+  bulkUpdateCount();
+}
+
+function bulkUpdateCount(){
+  var n = document.querySelectorAll('.bulk-crop:checked').length;
+  var el = document.getElementById('bulkCount');
+  if(el) el.textContent = n;
+}
+
+async function submitBulkGrowRecord(){
+  var picked = [].slice.call(document.querySelectorAll('.bulk-crop:checked')).map(function(c){ return c.value; });
+  if(!picked.length){ showToast('\u26A0 \uC791\uBB3C\uC744 \uD558\uB098 \uC774\uC0C1 \uACE8\uB77C\uC8FC\uC138\uC694'); return; }
+
+  var type = (document.getElementById('bulkType')||{}).value || '';
+  var date = (document.getElementById('bulkDate')||{}).value || toYMD(REAL_TODAY);
+  var note = (document.getElementById('bulkNote')||{}).value || '';
+
+  var btn = document.getElementById('bulkSaveBtn');
+  if(btn){ btn.disabled = true; btn.textContent = '\u23F3 \uC800\uC7A5 \uC911\u2026'; }
+
+  var okList = [], failList = [], skipList = [];
+
+  for(var i = 0; i < picked.length; i++){
+    var nm = picked[i];
+
+    // 같은 작물·종류·날짜가 이미 있으면 건너뛴다
+    var dup = growRecords.some(function(r){
+      return r.plantName === nm && r.eventType === type
+          && String(r.date).slice(0,10) === String(date).slice(0,10);
+    });
+    if(dup){ skipList.push(nm); continue; }
+
+    var entry = {
+      id: String(Date.now()) + '_' + i,
+      plantName: nm, eventType: type,
+      date: date, note: note, daysFrom: 0
+    };
+    var base = growRecords.find(function(r){
+      return r.plantName === nm && ['\uD30C\uC885','\uC815\uC2DD'].indexOf(r.eventType) >= 0;
+    });
+    if(base){
+      var d1 = new Date(base.date + 'T00:00:00'), d2 = new Date(date + 'T00:00:00');
+      entry.daysFrom = Math.round((d2 - d1) / 86400000);
+    }
+
+    growRecords.unshift(entry);   // 화면에는 먼저 반영
+
+    try {
+      await saveWithAlias('create', COLLECTIONS.growRecords, entry);
+      okList.push(nm);
+    } catch(e){
+      failList.push(nm + ' (' + e.message + ')');
+    }
+  }
+
+  localStorage.setItem('growRecords', JSON.stringify(growRecords));
+  try { migrateGrowRecords(); savePlantsLocal(); } catch(e){}
+  var m = document.getElementById('grecBulkModal'); if(m) m.remove();
+  renderGrowRecords();
+  try { renderGrow(); } catch(e){}
+
+  // 결과를 반드시 알려준다 — 일부만 저장될 수 있으므로
+  var msg = '\u2705 \uC800\uC7A5 ' + okList.length + '\uAC74';
+  if(skipList.length) msg += '\\n\u23ED \uC774\uBBF8 \uC788\uC5B4 \uAC74\uB108\uB700 ' + skipList.length + '\uAC74: ' + skipList.join(', ');
+  if(failList.length) msg += '\\n\u274C \uC2E4\uD328 ' + failList.length + '\uAC74:\\n' + failList.join('\\n')
+                           + '\\n\\n\uC2E4\uD328\uD55C \uAC83\uC740 \uD654\uBA74\uC5D0\uB9CC \uB0A8\uC544 \uC788\uC2B5\uB2C8\uB2E4.\\n'
+                           + '\uC2DC\uD2B8\uC815\uB9AC() \uB85C \uD655\uC778\uD558\uAC70\uB098 \uB2E4\uC2DC \uC800\uC7A5\uD574 \uC8FC\uC138\uC694.';
+
+  console.log('\uD83E\uDDFE \uC77C\uAD04 \uAE30\uB85D:', {\uC131\uACF5:okList, \uAC74\uB108\uB700:skipList, \uC2E4\uD328:failList});
+  if(failList.length) alert(msg); else showToast(msg.split('\\n')[0]);
+}
+
+function copyGrowRecord(id){
+  var src = growRecords.find(function(r){ return String(r.id) === String(id); });
+  if(!src){ showToast('\u26A0 \uBCF5\uC0AC\uD560 \uAE30\uB85D\uC744 \uCC3E\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4'); return; }
+
+  var ex = document.getElementById('grecCopyModal'); if(ex) ex.remove();
+  var esc = function(s){ return String(s==null?'':s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); };
+
+  var box = document.createElement('div');
+  box.id = 'grecCopyModal';
+  box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;'
+    + 'display:flex;align-items:center;justify-content:center;padding:16px';
+  box.innerHTML =
+    '<div style="background:white;border-radius:12px;width:100%;max-width:380px;'
+  + 'box-shadow:0 8px 24px rgba(0,0,0,0.25);overflow:hidden">'
+  + '<div style="background:#33691E;color:white;padding:13px 16px;font-weight:700;font-size:15px">'
+  + '\uD83D\uDCCB \uAE30\uB85D \uBCF5\uC0AC</div>'
+  + '<div style="padding:16px">'
+  + '<div style="background:#F1F8E9;border-radius:8px;padding:10px 12px;margin-bottom:14px;font-size:13px;color:#33691E">'
+  + '<b>' + esc(src.plantName) + '</b> \u00b7 ' + esc(src.eventType)
+  + '<div style="font-size:12px;opacity:0.85;margin-top:3px">' + esc(src.note || '(\uBA54\uBAA8 \uC5C6\uC74C\uC74C)') + '</div></div>'
+  + '<div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">\uC0C8 \uB0A0\uC9DC</div>'
+  + '<input type="date" id="grecCopyDate" value="' + esc(toYMD(REAL_TODAY)) + '" '
+  + 'style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:15px;'
+  + 'box-sizing:border-box;margin-bottom:12px;font-family:inherit">'
+  + '<div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">\uBA54\uBAA8</div>'
+  + '<input type="text" id="grecCopyNote" value="' + esc(src.note || '') + '" '
+  + 'style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;font-size:14px;'
+  + 'box-sizing:border-box;font-family:inherit">'
+  + '<div style="display:flex;gap:8px;margin-top:16px">'
+  + '<button onclick="document.getElementById(\'grecCopyModal\').remove()" '
+  + 'style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:white;color:#666;'
+  + 'border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">\uCDE8\uC18C</button>'
+  + '<button onclick="confirmCopyGrowRecord(&quot;' + esc(src.id) + '&quot;)" '
+  + 'style="flex:2;padding:11px;border:none;background:#33691E;color:white;border-radius:8px;'
+  + 'cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">\u2705 \uBCF5\uC0AC</button>'
+  + '</div></div></div>';
+  document.body.appendChild(box);
+}
+
+function confirmCopyGrowRecord(id){
+  var src = growRecords.find(function(r){ return String(r.id) === String(id); });
+  if(!src) return;
+  var date = (document.getElementById('grecCopyDate') || {}).value || toYMD(REAL_TODAY);
+  var note = (document.getElementById('grecCopyNote') || {}).value || '';
+
+  // 같은 작물·종류·날짜가 이미 있으면 막는다 (중복 방지)
+  var dup = growRecords.some(function(r){
+    return r.plantName === src.plantName && r.eventType === src.eventType
+        && String(r.date).slice(0,10) === String(date).slice(0,10);
+  });
+  if(dup && !confirm('\uAC19\uC740 \uB0A0\uC9DC\uC5D0 \uAC19\uC740 \uAE30\uB85D\uC774 \uC774\uBBF8 \uC788\uC2B5\uB2C8\uB2E4.\\n\uADF8\uB798\uB3C4 \uCD94\uAC00\uD560\uAE4C\uC694?')) return;
+
+  var m = document.getElementById('grecCopyModal'); if(m) m.remove();
+  saveGrowRecord(src.plantName, src.eventType, date, note);   // 새 id 로 추가
+}
+
+function searchGrowRecords(v){
+  window._growRecQuery = v;
+  renderGrowRecords();
 }
 
 // ── 생육 기록 수정 모달 ──────────────────────────────────
@@ -14049,14 +14502,71 @@ async function addPlant(plant) {
 
 // ── 식물 수량/상태 수정 ───────────────────────────────────
 async function updatePlant(id, updates) {
-  const idx = plantsDB.findIndex(p => p.id === id);
+  const idx = plantsDB.findIndex(p => String(p.id) === String(id));
   if (idx < 0) return;
   const old = {...plantsDB[idx]};
   plantsDB[idx] = {...plantsDB[idx], ...updates, updatedAt: new Date().toISOString()};
   savePlantsDBLocal();
   try {
-    await saveToGoogleSheets('update', COLLECTIONS.growPlants,
-      { id: id, ...updates, updatedAt: new Date().toISOString() });
+    try {
+      await saveToGoogleSheets('update', COLLECTIONS.growPlants,
+        { id: id, ...updates, updatedAt: new Date().toISOString() });
+    } catch (upErr) {
+      // '항목 없음' = 시트에 그 id 의 행이 없다는 뜻.
+      // 정말 없는지 확인하고, 없으면 그 행을 새로 만들어 넣는다(복구).
+      if (!/항목 없음|not found/i.test(String(upErr.message))) throw upErr;
+
+      var sheetRows = [];
+      try { sheetRows = (await loadFromGoogleSheets(COLLECTIONS.growPlants)) || []; } catch (e2) {}
+      // 보이지 않는 문자(제로폭 공백 등)까지 걷어내고 비교한다
+      var _clean = function (s) { return String(s == null ? '' : s).replace(/[\s\u200B-\u200D\uFEFF]/g, ''); };
+      var exists = sheetRows.some(function (r) { return r && _clean(r.id) === _clean(id); });
+
+      if (exists) {
+        // 시트에는 있는데 GAS 가 못 찾는다 = 보이지 않는 문자가 섞였을 가능성.
+        // 시트에 저장된 '진짜 id' 를 찾아 그 값으로 다시 보낸다.
+        var realRow = sheetRows.find(function (r) {
+          return r && String(r.id).replace(/[\s\u200B-\u200D\uFEFF]/g, '')
+                   === String(id).replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+        });
+        if (realRow && String(realRow.id) !== String(id)) {
+          console.warn('⚠️ 시트의 id 에 보이지 않는 문자가 있습니다. 시트 값으로 다시 시도합니다.');
+          await saveToGoogleSheets('update', COLLECTIONS.growPlants,
+            { id: realRow.id, ...updates, updatedAt: new Date().toISOString() });
+          console.log('✅ 시트 id 로 수정 성공:', JSON.stringify(realRow.id));
+          showToast('✅ 저장됨 (시트 id 보정)');
+        } else {
+          // 시트에 그대로 있는데도 실패 = gasUpdateRow 가 그 행을 못 훑는 것.
+          // GAS 에는 같은 일을 하는 _orchardUpdateRow 가 따로 있고,
+          // 일반 action 'update' 로 부르면 그쪽으로 간다. 그 경로로 다시 시도한다.
+          console.warn('⚠️ updatePlant 가 못 찾아 다른 경로(update)로 다시 시도합니다');
+          var alt = null;
+          try {
+            alt = await _saveToGoogleSheets('update', COLLECTIONS.growPlants,
+              { id: id, ...updates, updatedAt: new Date().toISOString() });
+          } catch (e3) { alt = null; }
+
+          if (alt && alt.success) {
+            _actionOk['update|' + COLLECTIONS.growPlants] = 'update';   // 다음부터 이 이름을 먼저 쓴다
+            console.log('✅ update 경로로 수정 성공 — 앞으로 이 이름을 씁니다');
+            showToast('✅ 저장됨');
+          } else {
+            console.error('❌ 두 경로 모두 실패했습니다. GAS 의 gasUpdateRow 를 확인해 주세요.');
+            console.error('   id정밀검사(\'' + id + '\') 결과: 시트에는 정상적으로 존재함');
+            throw upErr;
+          }
+        }
+      } else {
+
+        console.warn('⚠️ 시트에 id=' + id + ' 행이 없어 새로 추가합니다 (복구)');
+        var full = Object.assign({}, plantsDB[idx]);
+        delete full._sheet; delete full._growTrack;
+        if (Array.isArray(full.crops)) full.crops = full.crops.join('|');
+        await saveWithAlias('create', COLLECTIONS.growPlants, full);
+        showToast('🔧 시트에 없던 행을 새로 만들었습니다');
+      }
+    }
+
     await saveToGoogleSheets('create', COLLECTIONS.irangChanges, {
       id: 'ic' + Date.now(),
       type: 'update', plantId: id, plantName: old.name,
@@ -14071,9 +14581,9 @@ async function updatePlant(id, updates) {
 
 // ── 식물 삭제 (소멸) ──────────────────────────────────────
 async function deletePlant(id, reason) {
-  const plant = plantsDB.find(p => p.id === id);
+  const plant = plantsDB.find(p => String(p.id) === String(id));
   if (!plant) return;
-  const idx = plantsDB.findIndex(p => p.id === id);
+  const idx = plantsDB.findIndex(p => String(p.id) === String(id));
   plantsDB.splice(idx, 1);
   savePlantsDBLocal();
   try {
