@@ -861,7 +861,6 @@
         <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
         <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
         <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
-        <button class="tab-btn" data-tab="fertilizer-info">💊 비료정보</button>
         <button class="tab-btn" data-tab="records">📋 기록 일지</button>
         <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
     </div>
@@ -884,6 +883,14 @@
                 <div class="section-title">
                     <span class="emoji">🧪</span>
                     <span>보유 농약</span>
+                    <button onclick="openScanApp('pesticide')"
+                        style="margin-left:auto;margin-right:6px;padding:8px 13px;background:#33691E;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">📷 스캔으로 등록</button>
+                    <button onclick="reloadFromSheets()" id="reload-btn-pest"
+                        style="padding:8px 13px;background:#607D8B;color:white;border:none;
+                        border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+                        font-family:inherit">🔄 새로고침</button>
                 </div>
                 <div class="table-container">
                     <table id="pesticides-table">
@@ -910,6 +917,14 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
+                    <button onclick="openScanApp('supply')"
+                        style="margin-left:auto;margin-right:8px;padding:8px 14px;background:#33691E;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">📷 스캔으로 등록</button>
+                    <button onclick="reloadFromSheets()"
+                        style="margin-right:8px;padding:8px 14px;background:#607D8B;color:white;
+                        border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+                        font-family:inherit">🔄 새로고침</button>
                     <button onclick="fillSuppliesMemo()" style="margin-left: auto; margin-right: 8px; padding: 8px 14px; background: #FF9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
                         📋 사용방법 채우기
                     </button>
@@ -938,27 +953,6 @@
             </div>
 
             <!-- 🌾 재배 작물 -->
-        <!-- ✅ 비료 정보 탭 -->
-        <div id="fertilizer-info" class="tab-content" style="display: none;">
-            <div style="padding: 16px; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <h3 style="margin-bottom: 16px; color: var(--primary-color); font-size: 16px;">💊 비료 정보 조회</h3>
-                
-                <div style="margin-bottom: 16px;">
-                    <label style="font-weight: 600; display: block; margin-bottom: 8px;">비료명 선택:</label>
-                    <select id="fertilizer-select" onchange="displayFertilizerInfo(this.value)" style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 6px; font-size: 14px; background: white;">
-                        <option value="">-- 비료를 선택하세요 --</option>
-                        <option value="슈퍼복합비료">🌾 슈퍼복합비료 (N:P:K = 21:17:17)</option>
-                        <option value="유황">🔬 유황 (천연 살충살균제)</option>
-                        <option value="요소">⚪ 요소 (질소비료 N:46%)</option>
-                    </select>
-                </div>
-                
-                <div id="fertilizer-details" style="background: #f9f9f9; padding: 14px; border-radius: 6px; border-left: 5px solid var(--primary-color); display: none;">
-                    <!-- 동적으로 콘텐츠 삽입됨 -->
-                </div>
-            </div>
-        </div>
-
             <div id="plants" class="tab-content">
                 <div class="section-title">
                     <span class="emoji">🌾</span>
@@ -1026,7 +1020,33 @@
                     <span class="emoji">📋</span>
                     <span>기록 일지</span>
                 </div>
-                <div class="table-container">
+
+                <!-- 작물 바로가기 (가나다순) -->
+                <div id="records-crop-index" style="background:white;border-radius:8px;padding:10px;
+                     margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,0.1)"></div>
+
+                <!-- 날짜순 표 보기/숨기기 -->
+                <div style="margin-bottom:10px">
+                    <button id="records-flat-toggle" onclick="toggleFlatRecords()"
+                        style="background:#607D8B;color:white;border:none;padding:7px 12px;
+                        border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit">
+                        📅 날짜순 표 보기
+                    </button>
+                    <button onclick="toggleAllCropGroups(true)"
+                        style="background:#8BC34A;color:white;border:none;padding:7px 12px;
+                        border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;margin-left:5px">
+                        ⬇ 모두 펼치기
+                    </button>
+                    <button onclick="toggleAllCropGroups(false)"
+                        style="background:#BDBDBD;color:white;border:none;padding:7px 12px;
+                        border-radius:6px;cursor:pointer;font-size:12px;font-family:inherit;margin-left:5px">
+                        ⬆ 모두 접기
+                    </button>
+                </div>
+
+                <!-- 날짜순 표는 숨김 — 아래 작물별 묶음만 보여준다.
+                     되돌리려면 style="display:none" 을 지우면 된다. -->
+                <div class="table-container" id="records-flat-wrap" style="display:none">
                     <table id="records-table">
                         <thead>
                             <tr>
@@ -1043,6 +1063,10 @@
                     <span class="empty-state-icon">📋</span>
                     <p>작물 기록이 없습니다.</p>
                 </div>
+
+                <!-- ✅ 작물별 기록 (날짜순 표 대신 이것만 보여준다) -->
+                <div id="records-grouped-container"></div>
+
         <!-- ✅ 로컬 저장소 정보 -->
         <div id="storage-info-panel" style="background: white; border-radius: 8px; padding: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: none;">
             <div style="font-weight: 600; margin-bottom: 8px; font-size: 13px;">💾 로컬 저장소</div>
@@ -1052,9 +1076,6 @@
                 <p>⏰ 저장: <span id="storage-date">없음</span></p>
             </div>
         </div>
-
-        <!-- ✅ 작물별 기록 -->
-        <div id="records-grouped-container"></div>
 
             </div>
 
@@ -1149,7 +1170,7 @@
         }
 
         const APP = {
-            gasUrl: 'https://script.google.com/macros/s/AKfycbwFkOeNwDjDCRqHUM93NTSTxeQTaoRlbh8yVPR41LURA8d31hgWXxgRxe8Xi5lkV0j1/exec',
+            gasUrl: 'https://script.google.com/macros/s/AKfycbwXbgptSmUJ8vhr_crTAsnbMhoSPzronQdJNWfLN2z7xaJpb-k3Pr8Ts9aNjfqKDI4b/exec',
             data: {
                 준비사항: [],
                 growPlants: [],
@@ -1238,6 +1259,32 @@
             const date = today.getDate();
             const week = Math.ceil(date / 7);
             return { month, week, date, day: getDayName(today) };
+        }
+
+// ⚠️ 쓰기(추가·수정·삭제)는 반드시 POST 로 보내야 한다.
+        //    fetchFromGAS 는 GET(doGet) 이라 삭제 처리가 없어 실패한다.
+// 여러 action 이름을 차례로 시도한다.
+        // 'action 을 모른다' 가 아닌 응답을 받으면 그 이름은 통한 것이므로 멈춘다.
+        async function postWithAlias(names, params) {
+            let lastMsg = '';
+            for (const act of names) {
+                try {
+                    const res = await postToGAS(act, params);
+                    if (res && (res.success === true || res.ok === true)) return { ok: true, action: act };
+                    lastMsg = (res && (res.message || res.error)) || '';
+                    if (lastMsg && !/알 수 없는 action/.test(String(lastMsg))) break;
+                } catch (e) { lastMsg = e.message; }
+            }
+            return { ok: false, message: lastMsg };
+        }
+
+        async function postToGAS(action, params = {}) {
+            const body = new URLSearchParams({ action, ...params });
+            const res  = await fetch(APP.gasUrl, { method: 'POST', body: body });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            console.log(`✓ POST ${action}:`, data);
+            return data;
         }
 
         async function fetchFromGAS(action, params = {}) {
@@ -2281,14 +2328,24 @@
         }
 
         // 작물 분류 - 포함 매칭 방식 + 오버라이드 확인
-        function classifyPlant(cropName) {
+        function classifyPlant(cropName, sheetCategory) {
             // 1️⃣ 오버라이드 확인 (사용자가 변경한 타입)
             if (APP.plantTypeOverrides[cropName]) {
                 return APP.plantTypeOverrides[cropName];
             }
-            
-            // 2️⃣ 유실수 키워드 (포함 매칭용)
-            const fruitKeywords = ['사과', '배', '포도', '딸기', '블루베리', '복분자', '수박', '참외', '메론', '귤', '레몬', '망고', '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리', '머루포도', '다래', '감'];
+
+            // 2️⃣ ⭐ 시트의 category 열이 있으면 그것을 그대로 믿는다.
+            //    이름으로 추측하면 '딸기·수박·참외'처럼 채소인데 유실수로 잘못 잡힌다.
+            const sc = String(sheetCategory || '').trim();
+            if (sc === '유실수') return 'fruits';
+            if (sc === '채소')   return 'vegetables';
+
+            // 3️⃣ 시트값이 없거나 '재배중' 같은 값이면 이름으로 판단한다
+            //    ※ 딸기·수박·참외·메론은 채소이므로 아래 목록에서 뺐다
+            const fruitKeywords = ['사과', '배', '포도', '블루베리', '복분자', '귤', '레몬', '망고',
+                '살구', '매실', '앵두', '모과', '무화과', '헤이즐넛', '마르멜로', '바이오체리',
+                '머루포도', '다래', '감', '대추', '밤', '자두', '복숭아', '으름', '꾸지뽕',
+                '보리수', '산딸기', '아로니아', '오디', '체리', '유자', '석류', '비파', '개암', '호두'];
             
             for (let fruit of fruitKeywords) {
                 if (cropName.includes(fruit)) {
@@ -2352,7 +2409,7 @@
             const vegPlants = [];
             
             APP.data.growPlants.forEach(r => {
-                if (classifyPlant(r[1]) === 'fruits') {
+                if (classifyPlant(r[1], r[4]) === 'fruits') {
                     fruitPlants.push(r);
                 } else {
                     vegPlants.push(r);
@@ -3287,14 +3344,14 @@
             const container = document.getElementById('records-grouped-container');
             
             if (!APP.data.growRecords || APP.data.growRecords.length === 0) {
-                document.getElementById('records-table').style.display = 'none';
+                // (표는 이미 숨김 상태)
                 if (empty) empty.style.display = 'block';
                 if (container) container.innerHTML = '';
                 return;
             }
 
             if (empty) empty.style.display = 'none';
-            document.getElementById('records-table').style.display = 'table';
+            // 날짜순 표는 계속 숨겨둔다 (작물별 묶음만 표시)
 
             // 🔄 날짜순으로 정렬 (최근이 먼저)
             const sortedRecords = [...APP.data.growRecords].sort((a, b) => {
@@ -3331,19 +3388,45 @@
                     groupedRecords[cropName].push(record);
                 });
 
+                // 🔄 작물 그룹을 '가장 최근 작업일' 순으로 정렬한다.
+                //    (예전에는 작물명 가나다순이라 최근 작업이 아래로 묻혔다)
+                const latestOf = recs => {
+                    let best = 0;
+                    recs.forEach(r => {
+                        const d = new Date(r[2]);
+                        if (!isNaN(d.getTime()) && d.getTime() > best) best = d.getTime();
+                    });
+                    return best;
+                };
+
                 const html = Object.entries(groupedRecords)
-                    .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([crop, records]) => {
-                        const cropType = classifyPlant(crop);
+                    .sort((a, b) => {
+                        const diff = latestOf(b[1]) - latestOf(a[1]);
+                        return diff !== 0 ? diff : a[0].localeCompare(b[0], 'ko');
+                    })
+                    .map(([crop, recordsRaw]) => {
+                        // 그룹 안에서도 최신 작업이 위로 오게 한다
+                        const records = [...recordsRaw].sort((x, y) => {
+                            const dx = new Date(x[2]).getTime() || 0;
+                            const dy = new Date(y[2]).getTime() || 0;
+                            return dy - dx;
+                        });
+                        // 작물 목록에서 그 작물의 시트 분류를 찾아 쓴다
+                        const _p = (APP.data.growPlants || []).find(r => r && r[1] === crop);
+                        const cropType = classifyPlant(crop, _p ? _p[4] : '');
                         const emoji = cropType === 'fruits' ? '🍎' : '🥬';
                         
                         return `
-                            <div style="background: white; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
+                            <div id="cropgrp-${crop}" style="background: white; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden;">
                                 <div onclick="toggleCropGroup(this)" style="background: var(--primary-color); color: white; padding: 12px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; user-select: none;">
-                                    <span>${emoji} <strong>${crop}</strong> (${records.length}건)</span>
-                                    <span>▼</span>
+                                    <span>${emoji} <strong>${crop}</strong>
+                                      <span style="font-weight:400;opacity:0.85;font-size:12px">· ${records.length}건</span>
+                                    </span>
+                                    <span style="font-size:12px;font-weight:400;opacity:0.9">
+                                      ${formatDate(records[0] ? records[0][2] : '')} <span data-arrow>▼</span>
+                                    </span>
                                 </div>
-                                <div style="display: block; max-height: 600px; overflow-y: auto;">
+                                <div data-crop-body style="display: none; max-height: 600px; overflow-y: auto;">
                                     ${records.map((record) => `
                                         <div style="padding: 10px 12px; border-bottom: 1px solid #eee;">
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
@@ -3361,8 +3444,8 @@
                                                 <div style="font-size: 12px; color: #333;">${record[4]||'-'}</div>
                                             </div>
                                             <div style="text-align: right; padding-top: 8px; border-top: 1px solid #f0f0f0;">
-                                                <button onclick="editCropRecord(this, ${JSON.stringify(record)})" style="background: #2196F3; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px;">✏️ 수정</button>
-                                                <button onclick="deleteCropRecord(this)" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">🗑️ 삭제</button>
+                                                <button onclick="editCropRecord('${record[0]}')" style="background: #2196F3; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px; margin-right: 4px;">✏️ 수정</button>
+                                                <button onclick="deleteCropRecord('${record[0]}')" style="background: #f44336; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 11px;">🗑️ 삭제</button>
                                             </div>
                                         </div>
                                     `).join('')}
@@ -3372,6 +3455,7 @@
                     }).join('');
 
                 container.innerHTML = html;
+                renderCropIndex(groupedRecords);   // 작물 바로가기 갱신
             }
 
             updateStorageInfo();
@@ -3569,43 +3653,349 @@
             const itemsEl = headerEl.nextElementSibling;
             const isHidden = itemsEl.style.display === 'none';
             itemsEl.style.display = isHidden ? 'block' : 'none';
-            headerEl.style.background = isHidden ? 'var(--primary-color)' : 'var(--primary-dark)';
+            headerEl.style.background = isHidden ? 'var(--primary-dark)' : 'var(--primary-color)';
+            // 화살표 방향 바꾸기
+            const arrow = headerEl.querySelector('[data-arrow]');
+            if (arrow) arrow.textContent = isHidden ? '▲' : '▼';
+        }
+
+        // 모두 펼치기 / 모두 접기
+        function toggleAllCropGroups(open) {
+            document.querySelectorAll('[data-crop-body]').forEach(function (body) {
+                const head = body.previousElementSibling;
+                const isHidden = body.style.display === 'none';
+                if (open === isHidden && head) toggleCropGroup(head);
+            });
         }
 
         // ✅ 기록 수정
-        function editCropRecord(btn, record) {
-            const newType = prompt('작업종류를 수정하세요:', record[3] || '');
-            if (newType === null) return;
-
-            const newContent = prompt('작업내용을 수정하세요:', record[4] || '');
-            if (newContent === null) return;
-
-            // 실제 데이터 업데이트
-            const idx = APP.data.growRecords.findIndex(r => 
-                r[1] === record[1] && r[2] === record[2] && r[3] === record[3]
-            );
-            if (idx >= 0) {
-                APP.data.growRecords[idx][3] = newType;
-                APP.data.growRecords[idx][4] = newContent;
-                saveRecordsToStorage();
-                renderRecords();
+        // 기록 수정 — 네 항목을 한 화면에서 고친다.
+        // ⚠️ 예전에는 onclick 에 JSON.stringify(record) 를 넣어 큰따옴표가 속성을 끊었고,
+        //    prompt 두 번으로 작업종류·내용만 고칠 수 있었다.
+        function editCropRecord(id) {
+            const key = String(id);
+            const rec = (APP.data.growRecords || []).find(r => String(r[0]) === key);
+            if (!rec) {
+                alert('수정할 기록을 찾지 못했습니다.\n새로고침 후 다시 시도해 주세요.');
+                return;
             }
+
+            const esc = s => String(s == null ? '' : s)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+            // 작물 목록 (직접 입력도 가능)
+            const crops = [...new Set((APP.data.growPlants || [])
+                .map(r => r && r[1]).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ko'));
+            // 지금 기록의 작물이 목록에 없을 수도 있으니 반드시 넣는다
+            const cur = String(rec[1] || '').trim();
+            const cropList = (cur && crops.indexOf(cur) < 0) ? [cur, ...crops] : crops;
+
+            // 작업종류 — ⭐ 시트에 실제로 쓰인 값을 먼저 보여준다.
+            //    (미리 정한 목록만 쓰면 실제 기록과 어긋난다)
+            const usedTypes = [...new Set((APP.data.growRecords || [])
+                .map(r => r && r[3]).filter(Boolean).map(s => String(s).trim()))];
+
+            const commonTypes = ['파종','육묘','정식','발아','생장','적심','순치기','유인',
+                                 '개화','인공수분','착과','적과','봉지씌우기','비대',
+                                 '수확','최종수확','방제','시비','추비','관수','제초',
+                                 '멀칭','북주기','전정','정리','기타'];
+
+            // 실제 쓰인 것 → 그 외 자주 쓰는 것 순으로, 중복 없이
+            const types = [...usedTypes,
+                           ...commonTypes.filter(c => usedTypes.indexOf(c) < 0)];
+
+            const old = document.getElementById('rec-edit-modal');
+            if (old) old.remove();
+
+            const html = `
+              <div id="rec-edit-modal" style="position:fixed;inset:0;background:rgba(0,0,0,0.45);
+                   z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px">
+                <div style="background:white;border-radius:12px;width:100%;max-width:420px;
+                     max-height:88vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.25)">
+                  <div style="background:var(--primary-color);color:white;padding:14px 16px;
+                       font-weight:700;font-size:15px;border-radius:12px 12px 0 0">
+                    ✏️ 기록 수정
+                  </div>
+                  <div style="padding:16px">
+
+                    <div style="font-size:12px;color:#666;font-weight:600;margin-bottom:4px">🌱 작물명</div>
+                    <select id="rec-edit-crop" onchange="onRecCropChange()"
+                      style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;
+                      font-size:15px;box-sizing:border-box;margin-bottom:8px;font-family:inherit;background:white">
+                      ${cropList.map(c => `<option value="${esc(c)}" ${c === String(rec[1] || '').trim() ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+                      <option value="__custom__">✏️ 직접 입력…</option>
+                    </select>
+                    <input id="rec-edit-crop-custom" placeholder="작물명을 입력하세요"
+                      style="display:none;width:100%;padding:9px;border:1.5px solid #FFB74D;
+                      border-radius:8px;font-size:15px;box-sizing:border-box;margin-bottom:12px;
+                      font-family:inherit">
+                    <div style="height:4px"></div>
+
+                    <div style="font-size:12px;color:#666;font-weight:600;margin-bottom:4px">📅 작업일</div>
+                    <input id="rec-edit-date" type="date" value="${esc(String(rec[2] || '').slice(0, 10))}"
+                      style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;
+                      font-size:15px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+                    <div style="font-size:12px;color:#666;font-weight:600;margin-bottom:4px">🔧 작업종류</div>
+                    <select id="rec-edit-type" onchange="onRecTypeChange()"
+                      style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;
+                      font-size:15px;box-sizing:border-box;margin-bottom:8px;font-family:inherit;background:white">
+                      ${types.map(c => `<option value="${esc(c)}" ${c === String(rec[3] || '').trim() ? 'selected' : ''}>${esc(c)}</option>`).join('')}
+                      <option value="__custom__">✏️ 직접 입력…</option>
+                    </select>
+                    <input id="rec-edit-type-custom" placeholder="새 작업종류를 입력하세요"
+                      style="display:none;width:100%;padding:9px;border:1.5px solid #FFB74D;
+                      border-radius:8px;font-size:15px;box-sizing:border-box;margin-bottom:12px;
+                      font-family:inherit">
+                    <div style="height:4px"></div>
+
+                    <div style="font-size:12px;color:#666;font-weight:600;margin-bottom:4px">
+                      📝 작업내용 <span style="font-weight:400;opacity:0.75">· 줄바꿈 가능</span>
+                    </div>
+                    <textarea id="rec-edit-note" rows="6"
+                      style="width:100%;padding:9px;border:1.5px solid #E0E0E0;border-radius:8px;
+                      font-size:14px;box-sizing:border-box;font-family:inherit;resize:vertical;
+                      line-height:1.6">${esc(rec[4])}</textarea>
+
+                    <div style="font-size:11px;color:#BDBDBD;margin-top:8px">id: ${esc(rec[0])}</div>
+
+                    <div style="display:flex;gap:8px;margin-top:16px">
+                      <button onclick="closeRecEdit()"
+                        style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:white;
+                        color:#666;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">
+                        취소
+                      </button>
+                      <button onclick="saveRecEdit('${esc(rec[0])}')"
+                        style="flex:2;padding:11px;border:none;background:var(--primary-color);
+                        color:white;border-radius:8px;cursor:pointer;font-size:14px;
+                        font-weight:700;font-family:inherit">
+                        ✅ 저장
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+
+            document.body.insertAdjacentHTML('beforeend', html);
+        }
+
+        // '직접 입력…' 을 고르면 입력칸을 보여준다
+        function onRecCropChange() {
+            const sel = document.getElementById('rec-edit-crop');
+            const box = document.getElementById('rec-edit-crop-custom');
+            if (!sel || !box) return;
+            const custom = (sel.value === '__custom__');
+            box.style.display = custom ? 'block' : 'none';
+            if (custom) box.focus();
+        }
+
+        function onRecTypeChange() {
+            const sel = document.getElementById('rec-edit-type');
+            const box = document.getElementById('rec-edit-type-custom');
+            if (!sel || !box) return;
+            const custom = (sel.value === '__custom__');
+            box.style.display = custom ? 'block' : 'none';
+            if (custom) box.focus();
+        }
+
+        function closeRecEdit() {
+            const m = document.getElementById('rec-edit-modal');
+            if (m) m.remove();
+        }
+
+        async function saveRecEdit(id) {
+            const key = String(id);
+            const idx = (APP.data.growRecords || []).findIndex(r => String(r[0]) === key);
+            if (idx < 0) { alert('기록을 찾지 못했습니다.'); closeRecEdit(); return; }
+
+            const v = i => (document.getElementById(i) || {}).value || '';
+            let crop = v('rec-edit-crop').trim();
+            if (crop === '__custom__') crop = v('rec-edit-crop-custom').trim();
+            const date = v('rec-edit-date').trim();
+            let type = v('rec-edit-type').trim();
+            if (type === '__custom__') type = v('rec-edit-type-custom').trim();
+            if (!type) { alert('작업종류를 입력해 주세요.'); return; }
+            const note = v('rec-edit-note');
+
+            if (!crop) { alert('작물명을 입력해 주세요.'); return; }
+
+            const row = APP.data.growRecords[idx];
+            row[1] = crop;
+            row[2] = date;
+            row[3] = type;
+            row[4] = note;
+
+            saveRecordsToStorage();
+            renderRecords();
+            closeRecEdit();
+
+            const r = await postWithAlias(
+                ['updateGrowRecord', 'update', 'updateRow'],
+                { sheetName: 'growRecords', sheet: 'growRecords', collectionName: 'growRecords',
+                  id: row[0], plantName: crop, date: date, type: type, note: note });
+
+            if (r.ok) console.log('✏️ 시트에도 수정 완료:', row[0]);
+            else alert('화면에서는 바뀌었지만 구글 시트 반영에 실패했습니다.\n' +
+                       (r.message || '') + '\n\n시트에서 직접 수정해 주세요. (id: ' + row[0] + ')');
         }
 
         // ✅ 기록 삭제
-        function deleteCropRecord(btn) {
-            if (!confirm('정말 삭제하시겠습니까?')) return;
-            
-            const recordDiv = btn.closest('[style*="border-bottom: 1px solid #eee"]');
-            const contentText = recordDiv.textContent;
-            
-            APP.data.growRecords = APP.data.growRecords.filter(r => {
-                return !(r[4] && r[4].includes(contentText.split('📝')[1]?.split('수정')[0]?.trim()));
+        // ⚠️ 예전에는 화면 글자를 잘라내 비교해서 지웠다.
+        //    같은 내용이 여러 건이면 함께 지워지고, 못 찾으면 아무것도 안 지워졌다.
+        //    이제 id 로 정확히 찾고, 구글 시트에서도 지운다.
+        // 날짜순 표를 보였다 숨겼다 한다
+        // ══ 농약장(index5) 새 창으로 열기 ══════════════════
+        //   iframe 은 카메라(getUserMedia)가 막혀 스캔이 안 되므로 새 창을 쓴다.
+        var _scanWin = null, _scanWatch = null;
+
+        function openScanApp(kind){
+            var url = 'index5.html';
+            try { _scanWin = window.open(url, 'orchard_scan'); } catch(e){ _scanWin = null; }
+
+            if(!_scanWin){
+                alert('새 창이 차단되었습니다.\n주소창의 팝업 차단을 해제하거나\n'
+                    + 'index5.html 을 직접 열어주세요.');
+                return;
+            }
+            try { _scanWin.focus(); } catch(e){}
+
+            // 창이 닫히면 자동으로 새로고침한다
+            if(_scanWatch) clearInterval(_scanWatch);
+            _scanWatch = setInterval(function(){
+                var closed = false;
+                try { closed = _scanWin.closed; } catch(e){ closed = false; }
+                if(closed){
+                    clearInterval(_scanWatch); _scanWatch = null;
+                    console.log('📷 농약장 창이 닫혔습니다 — 데이터를 다시 불러옵니다');
+                    reloadFromSheets(true);
+                }
+            }, 1200);
+
+            // 이 창으로 돌아왔을 때도 한 번 갱신한다 (창을 닫지 않고 전환한 경우)
+            _armFocusReload();
+        }
+
+        var _focusArmed = false;
+        function _armFocusReload(){
+            if(_focusArmed) return;
+            _focusArmed = true;
+            window.addEventListener('focus', function onBack(){
+                window.removeEventListener('focus', onBack);
+                _focusArmed = false;
+                // 창이 아직 열려 있으면(전환만 한 경우) 갱신
+                var open = false;
+                try { open = _scanWin && !_scanWin.closed; } catch(e){}
+                if(open){
+                    console.log('↩ 돌아옴 — 데이터를 다시 불러옵니다');
+                    reloadFromSheets(true);
+                }
             });
-            
+        }
+
+        // 시트에서 다시 읽어온다 (수동 버튼 · 자동 갱신 공용)
+        async function reloadFromSheets(auto){
+            var btn = document.getElementById('reload-btn-pest');
+            var old = btn ? btn.textContent : '';
+            if(btn){ btn.textContent = '⏳ 불러오는 중…'; btn.disabled = true; }
+            updateStatus('새로고침 중');
+
+            try {
+                // 캐시를 비우고 다시 읽는다
+                try { localStorage.removeItem('orchard_data'); localStorage.removeItem('orchard_time'); } catch(e){}
+                APP.data = {};
+                await loadAllData();
+                console.log('🔄 새로고침 완료' + (auto ? ' (자동)' : ''));
+                if(!auto) alert('✅ 최신 데이터를 불러왔습니다.');
+            } catch(e){
+                console.error('새로고침 실패:', e);
+                if(!auto) alert('❌ 새로고침에 실패했습니다.\n' + e.message);
+            } finally {
+                if(btn){ btn.textContent = old || '🔄 새로고침'; btn.disabled = false; }
+            }
+        }
+
+        function toggleFlatRecords() {
+            const wrap = document.getElementById('records-flat-wrap');
+            const btn  = document.getElementById('records-flat-toggle');
+            if (!wrap) return;
+            const showing = wrap.style.display !== 'none';
+            wrap.style.display = showing ? 'none' : 'block';
+            if (btn) btn.textContent = showing ? '📅 날짜순 표 보기' : '📅 날짜순 표 숨기기';
+        }
+
+        // 작물 이름을 가나다순으로 늘어놓아 바로 이동할 수 있게 한다
+        function renderCropIndex(groupedRecords) {
+            const box = document.getElementById('records-crop-index');
+            if (!box) return;
+
+            const crops = Object.keys(groupedRecords).sort((a, b) => a.localeCompare(b, 'ko'));
+            if (!crops.length) { box.innerHTML = ''; return; }
+
+            box.innerHTML =
+                '<div style="font-size:12px;font-weight:600;color:#666;margin-bottom:7px">'
+              + '🔎 작물 바로가기 <span style="font-weight:400;opacity:0.8">· 가나다순 ' + crops.length + '종</span></div>'
+              + '<div style="display:flex;flex-wrap:wrap;gap:5px">'
+              + crops.map(function (c) {
+                  var n = (groupedRecords[c] || []).length;
+                  return '<button onclick="jumpToCrop(\'' + c.replace(/'/g, "\\'") + '\')" '
+                       + 'style="background:#F1F8E9;border:1px solid #C5E1A5;color:#33691E;'
+                       + 'padding:4px 9px;border-radius:12px;cursor:pointer;font-size:12px;'
+                       + 'font-family:inherit;white-space:nowrap">' + c
+                       + '<span style="opacity:0.7;font-size:11px"> ' + n + '</span></button>';
+                }).join('')
+              + '</div>';
+        }
+
+        // 그 작물 묶음으로 스크롤하고 펼친다
+        function jumpToCrop(crop) {
+            var el = document.getElementById('cropgrp-' + crop);
+            if (!el) return;
+            var body = el.querySelector('[data-crop-body]');
+            if (body && body.style.display === 'none') {
+                var head = el.querySelector('[onclick*=toggleCropGroup]');
+                if (head) toggleCropGroup(head);
+            }
+            try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+            // 잠깐 강조
+            el.style.transition = 'box-shadow .3s';
+            el.style.boxShadow = '0 0 0 3px #AED581';
+            setTimeout(function () { el.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)'; }, 1200);
+        }
+
+        async function deleteCropRecord(id) {
+            const key = String(id);
+            const rows = APP.data.growRecords || [];
+            const target = rows.find(r => String(r[0]) === key);
+
+            if (!target) {
+                alert('삭제할 기록을 찾지 못했습니다.\n새로고침 후 다시 시도해 주세요.');
+                console.warn('deleteCropRecord: id 를 못 찾음', id);
+                return;
+            }
+
+            const label = (target[1] || '') + ' ' + (target[3] || '');
+            if (!confirm(label + ' 기록을 삭제할까요?')) return;
+
+            // ① 화면에서 먼저 지운다
+            APP.data.growRecords = rows.filter(r => String(r[0]) !== key);
             saveRecordsToStorage();
             renderRecords();
-            alert('✅ 삭제되었습니다');
+
+            // ② 구글 시트에서도 지운다 (GAS 가 아는 이름을 차례로 시도)
+            const res = await postWithAlias(
+                ['deleteGrowRecord', 'delete', 'deleteRow', 'remove'],
+                { sheetName: 'growRecords', sheet: 'growRecords',
+                  collectionName: 'growRecords', id: key });
+            const ok = res.ok, lastMsg = res.message;
+
+            if (ok) {
+                console.log('🗑️ 시트에서도 삭제 완료:', key);
+            } else {
+                alert('화면에서는 지웠지만 구글 시트 반영에 실패했습니다.\n' +
+                      (lastMsg || '') + '\n\n시트에서 직접 지워주세요. (id: ' + key + ')');
+                console.warn('시트 삭제 실패:', lastMsg);
+            }
         }
 
         // ✅ 로컬 스토리지
