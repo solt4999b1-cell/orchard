@@ -842,7 +842,39 @@
                 gap: 3px;
             }
         }
-    </style>
+    
+    /* ── 농약 등록·수정 모달 ── */
+    #pest-modal .modal-box{background:#fff;border-radius:12px;width:100%;max-width:440px;
+      max-height:90vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+    #pest-modal .modal-title{background:#1B5E20;color:#fff;padding:13px 16px;font-weight:700;
+      font-size:15px;display:flex;align-items:center;justify-content:space-between;
+      border-radius:12px 12px 0 0}
+    #pest-modal .form-group{margin-bottom:12px}
+    #pest-modal .form-row{display:flex;gap:8px}
+    #pest-modal .form-row .form-group{flex:1}
+    #pest-modal .form-label{display:block;font-size:12px;font-weight:700;color:#546E7A;
+      margin-bottom:4px}
+    #pest-modal .form-input,#pest-modal .form-select{width:100%;padding:10px;
+      border:1.5px solid #E0E0E0;border-radius:8px;font-size:15px;box-sizing:border-box;
+      font-family:inherit;background:#fff}
+    #pest-modal .form-input:focus,#pest-modal .form-select:focus{outline:none;
+      border-color:#8BC34A}
+    #pest-modal textarea.form-input{resize:vertical;min-height:60px}
+    #pest-modal .form-btns{display:flex;gap:8px;margin-top:16px}
+    #pest-modal .btn{flex:1;padding:11px;border:none;border-radius:8px;cursor:pointer;
+      font-size:14px;font-weight:600;font-family:inherit;background:#1B5E20;color:#fff}
+    #pest-modal .btn.gray{background:#fff;color:#666;border:1.5px solid #E0E0E0}
+    #pest-modal .btn-small{padding:8px 12px;border:none;border-radius:6px;cursor:pointer;
+      font-size:12px;font-weight:600;font-family:inherit;background:#607D8B;color:#fff;flex:0 0 auto}
+    #pest-modal .loading{text-align:center;padding:14px;color:#999;font-size:13px}
+</style>
+  <!-- 스캔 라이브러리 (필요할 때만 내려받음) -->
+  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
+          onerror="window._jsqrFail=true"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js"
+          onerror="window._zxingFail=true"></script>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"
+          onerror="window._tessFail=true"></script>
 </head>
 <body>
     <!-- 헤더 -->
@@ -883,12 +915,16 @@
                 <div class="section-title">
                     <span class="emoji">🧪</span>
                     <span>보유 농약</span>
-                    <button onclick="openScanApp('pesticide')"
-                        style="margin-left:auto;margin-right:6px;padding:8px 13px;background:#33691E;
+                    <button onclick="openRegisterModal()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 13px;background:#1B5E20;
                         color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
-                        font-weight:600;font-family:inherit">📷 스캔으로 등록</button>
+                        font-weight:600;font-family:inherit">➕ 농약 등록</button>
+                    <button onclick="openPestScan()"
+                        style="margin-right:6px;padding:8px 13px;background:#33691E;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">📷 스캔</button>
                     <button onclick="reloadFromSheets()" id="reload-btn-pest"
-                        style="padding:8px 13px;background:#607D8B;color:white;border:none;
+                        style="padding:8px 13px;background:#90A4AE;color:white;border:none;
                         border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
                         font-family:inherit">🔄 새로고침</button>
                 </div>
@@ -917,20 +953,24 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
-                    <button onclick="openScanApp('supply')"
-                        style="margin-left:auto;margin-right:8px;padding:8px 14px;background:#33691E;
+                    <button onclick="openSupEdit()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 14px;background:#2E7D32;
                         color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
-                        font-weight:600;font-family:inherit">📷 스캔으로 등록</button>
-                    <button onclick="reloadFromSheets()"
-                        style="margin-right:8px;padding:8px 14px;background:#607D8B;color:white;
-                        border:none;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
-                        font-family:inherit">🔄 새로고침</button>
-                    <button onclick="fillSuppliesMemo()" style="margin-left: auto; margin-right: 8px; padding: 8px 14px; background: #FF9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        font-weight:600;font-family:inherit">➕ 자재 등록</button>
+                    <button onclick="openSupplyScan()"
+                        style="margin-right:8px;padding:8px 14px;background:#33691E;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">📷 스캔</button>
+                    <button onclick="fillSuppliesMemo()" style="display:none" style="margin-left: auto; margin-right: 8px; padding: 8px 14px; background: #FF9800; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
                         📋 사용방법 채우기
                     </button>
-                    <button onclick="exportSuppliesExcel()" style="padding: 8px 14px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                    <button onclick="exportSuppliesExcel()" style="margin-right:8px;padding: 8px 14px; background: #4CAF50; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
                         📥 엑셀 다운로드
                     </button>
+                    <button onclick="reloadFromSheets()"
+                        style="padding:8px 14px;background:#90A4AE;color:white;border:none;
+                        border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+                        font-family:inherit">🔄 새로고침</button>
                 </div>
                 <div class="table-container">
                     <table id="supplies-table">
@@ -957,6 +997,14 @@
                 <div class="section-title">
                     <span class="emoji">🌾</span>
                     <span>재배 작물</span>
+                    <button onclick="openPlantModal()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 13px;background:#2E7D32;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">➕ 작물 등록</button>
+                    <button onclick="reloadFromSheets()"
+                        style="padding:8px 13px;background:#90A4AE;color:white;border:none;
+                        border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+                        font-family:inherit">🔄 새로고침</button>
                 </div>
                 
                 <!-- 유실수/채소 서브탭 -->
@@ -1019,6 +1067,14 @@
                 <div class="section-title">
                     <span class="emoji">📋</span>
                     <span>기록 일지</span>
+                    <button onclick="openRecModal()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 13px;background:#1B5E20;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">➕ 작업 추가</button>
+                    <button onclick="reloadFromSheets()"
+                        style="padding:8px 13px;background:#90A4AE;color:white;border:none;
+                        border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+                        font-family:inherit">🔄 새로고침</button>
                 </div>
 
                 <!-- 작물 바로가기 (가나다순) -->
@@ -1873,15 +1929,19 @@
         }
         
         // 보유농약 삭제
-        function deletePesticide(idx, pesticideName) {
-            if (confirm(`"${pesticideName}"을 삭제하시겠습니까?`)) {
-                const pesticide = APP.data.myPesticides?.[idx];
-                if (pesticide) {
-                    _gasPost('deletePesticide', {id: pesticide[0]});
-                    APP.data.myPesticides?.splice(idx, 1);
-                    renderPesticides();
-                }
-            }
+        async function deletePesticide(idx, pesticideName) {
+            if (!confirm(`"${pesticideName}"을 삭제하시겠습니까?`)) return;
+            const pesticide = APP.data.myPesticides?.[idx];
+            if (!pesticide) { alert('삭제할 농약을 찾지 못했습니다.'); return; }
+
+            // 시트에서 먼저 지우고, 성공했을 때만 화면에서 뺀다
+            const r = await _gasPost('deletePesticide', { id: pesticide[0] });
+            if (!r || !r.ok) return;               // 실패하면 화면은 그대로 둔다
+
+            APP.data.myPesticides?.splice(idx, 1);
+            renderPesticides();
+            _pestToast('🗑️ 삭제되었습니다');
+            saveData();                            // 캐시도 갱신
         }
 
 
@@ -2015,6 +2075,7 @@
                         </div>
                     </td>
                     <td>
+                        <button onclick="openSupEdit('${supplyId}')" title="자세히 수정" style="padding:4px 8px;background:#1565C0;color:white;border:none;border-radius:3px;font-size:11px;margin-right:3px;cursor:pointer">✏️</button>
                         <button class="delete-btn" onclick="deleteSupply('${supplyId}', '${name.replace(/'/g, "\\'")}')" title="삭제">🗑️</button>
                     </td>
                 </tr>`;
@@ -2435,6 +2496,7 @@
                                 <option value="vegetables">🥬 채소</option>
                             </select>
                             <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
+                            <button onclick="openPlantModal('${r[0]}')" title="자세히 수정" style="padding: 4px 8px; background: #1565C0; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">✏️</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2459,6 +2521,7 @@
                                 <option value="vegetables" selected>🥬 채소</option>
                             </select>
                             <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
+                            <button onclick="openPlantModal('${r[0]}')" title="자세히 수정" style="padding: 4px 8px; background: #1565C0; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">✏️</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -3672,12 +3735,21 @@
         // 기록 수정 — 네 항목을 한 화면에서 고친다.
         // ⚠️ 예전에는 onclick 에 JSON.stringify(record) 를 넣어 큰따옴표가 속성을 끊었고,
         //    prompt 두 번으로 작업종류·내용만 고칠 수 있었다.
+        // 새 작업 기록 추가 — 수정 창을 그대로 쓴다
+        function openRecModal(){ editCropRecord(null); }
+
         function editCropRecord(id) {
-            const key = String(id);
-            const rec = (APP.data.growRecords || []).find(r => String(r[0]) === key);
-            if (!rec) {
-                alert('수정할 기록을 찾지 못했습니다.\n새로고침 후 다시 시도해 주세요.');
-                return;
+            const key = id == null ? null : String(id);
+            let rec;
+            if (key) {
+                rec = (APP.data.growRecords || []).find(r => String(r[0]) === key);
+                if (!rec) {
+                    alert('수정할 기록을 찾지 못했습니다.\n새로고침 후 다시 시도해 주세요.');
+                    return;
+                }
+            } else {
+                // 신규: 빈 값으로 시작 (오늘 날짜)
+                rec = ['', '', new Date().toISOString().slice(0, 10), '', ''];
             }
 
             const esc = s => String(s == null ? '' : s)
@@ -3715,7 +3787,7 @@
                      max-height:88vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.25)">
                   <div style="background:var(--primary-color);color:white;padding:14px 16px;
                        font-weight:700;font-size:15px;border-radius:12px 12px 0 0">
-                    ✏️ 기록 수정
+                    ${key ? '✏️ 기록 수정' : '➕ 새 작업 기록'}
                   </div>
                   <div style="padding:16px">
 
@@ -3766,7 +3838,7 @@
                         color:#666;border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">
                         취소
                       </button>
-                      <button onclick="saveRecEdit('${esc(rec[0])}')"
+                      <button onclick="saveRecEdit('${esc(rec[0])}')" id="rec-save-btn"
                         style="flex:2;padding:11px;border:none;background:var(--primary-color);
                         color:white;border-radius:8px;cursor:pointer;font-size:14px;
                         font-weight:700;font-family:inherit">
@@ -3805,9 +3877,10 @@
         }
 
         async function saveRecEdit(id) {
-            const key = String(id);
-            const idx = (APP.data.growRecords || []).findIndex(r => String(r[0]) === key);
-            if (idx < 0) { alert('기록을 찾지 못했습니다.'); closeRecEdit(); return; }
+            const key = String(id || '');
+            const isNew = !key;
+            const idx = isNew ? -1 : (APP.data.growRecords || []).findIndex(r => String(r[0]) === key);
+            if (!isNew && idx < 0) { alert('기록을 찾지 못했습니다.'); closeRecEdit(); return; }
 
             const v = i => (document.getElementById(i) || {}).value || '';
             let crop = v('rec-edit-crop').trim();
@@ -3820,24 +3893,36 @@
 
             if (!crop) { alert('작물명을 입력해 주세요.'); return; }
 
-            const row = APP.data.growRecords[idx];
-            row[1] = crop;
-            row[2] = date;
-            row[3] = type;
-            row[4] = note;
+            const newId = isNew ? ('g_' + Date.now()) : key;
+
+            if (isNew) {
+                APP.data.growRecords = APP.data.growRecords || [];
+                APP.data.growRecords.unshift([newId, crop, date, type, note]);
+            } else {
+                const row = APP.data.growRecords[idx];
+                row[1] = crop; row[2] = date; row[3] = type; row[4] = note;
+            }
 
             saveRecordsToStorage();
             renderRecords();
             closeRecEdit();
 
             const r = await postWithAlias(
-                ['updateGrowRecord', 'update', 'updateRow'],
+                isNew ? ['addGrowRecord', 'create', 'add']
+                      : ['updateGrowRecord', 'update', 'updateRow'],
                 { sheetName: 'growRecords', sheet: 'growRecords', collectionName: 'growRecords',
-                  id: row[0], plantName: crop, date: date, type: type, note: note });
+                  id: newId, plantName: crop, date: date, type: type, note: note });
 
-            if (r.ok) console.log('✏️ 시트에도 수정 완료:', row[0]);
-            else alert('화면에서는 바뀌었지만 구글 시트 반영에 실패했습니다.\n' +
-                       (r.message || '') + '\n\n시트에서 직접 수정해 주세요. (id: ' + row[0] + ')');
+            if (r.ok) {
+                console.log((isNew ? '➕ 시트에 추가 완료: ' : '✏️ 시트에도 수정 완료: ') + newId);
+                // 시트를 다시 읽어 화면과 시트를 맞춘다
+                // (화면에만 넣어두면 새로고침 때 중복되거나 사라져 보인다)
+                await reloadFromSheets(true);
+                _pestToast(isNew ? '✅ 기록이 추가되었습니다' : '✅ 수정되었습니다');
+            } else {
+                alert('화면에서는 바뀌었지만 구글 시트 반영에 실패했습니다.\n' +
+                      (r.message || '') + '\n\n시트에서 직접 확인해 주세요. (id: ' + newId + ')');
+            }
         }
 
         // ✅ 기록 삭제
@@ -3845,6 +3930,1428 @@
         //    같은 내용이 여러 건이면 함께 지워지고, 못 찾으면 아무것도 안 지워졌다.
         //    이제 id 로 정확히 찾고, 구글 시트에서도 지운다.
         // 날짜순 표를 보였다 숨겼다 한다
+
+        // ══ 농약 등록·수정 (index5 에서 이식) ═══════════════
+        //   GAS 는 시트별 전용 action 이름을 쓴다 (updateMyPesticide 등)
+        var SHEET_ACTIONS = {
+            myPesticides: { create:'addMyPesticide', update:'updateMyPesticide', delete:'deleteMyPesticide' }
+        };
+        var ACTION_ALIASES = {
+            create: ['create','add','insert','append','addRow'],
+            update: ['update','updateRow','edit','modify','set','upsert'],
+            delete: ['deleteRow','delete','remove','del','removeRow']
+        };
+        var _actionOk = {};
+
+        // PSIS 검색용 상수
+        const PSIS_KEYS = ['pestiKorName','pestiCode','compName','cropName','diseaseWeedName',
+                           'cmpaItmNm','useName','pestiUse','dilutUnit','ingredientName',
+                           'pestiBrandName','diseaseUseSeq','useSuittime','useNum'];
+        
+        const PSIS_PARAM_SETS = [
+          { action: 'psis' },              // doGet에 2줄 추가하면 이것 (전체 목록 반환 — 권장)
+          { action: 'searchPesticide' },   // GAS에 이미 존재 (요약 1건만 반환)
+          { action: 'index4Search' }
+        ];
+        
+        let _workingPsisParams = null;
+        //   g_index1 의 데이터 구조(2차원 배열)에 맞춘 어댑터
+        var editingId = null, isViewMode = false;
+
+        // myPesticides 를 객체 배열로 돌려준다
+        function _pestRows(){
+            var rows = (APP.data.myPesticides || []);
+            var H = ['id','name','type','quantity','unit','ingredient','manufacturer',
+                     'registeredAt','pest_status','status','emoji','excluded','memo',
+                     'updatedAt','icon','source'];
+            return rows.map(function(r){
+                if(r && !Array.isArray(r)) return r;          // 이미 객체면 그대로
+                var o = {};
+                H.forEach(function(h,i){ o[h] = (r && r[i] !== undefined) ? r[i] : ''; });
+                return o;
+            });
+        }
+
+        function _pestStatus(msg){ console.log('💊 ' + msg); }
+        function _pestToast(msg){
+            var el = document.getElementById('pest-toast');
+            if(!el){
+                el = document.createElement('div');
+                el.id = 'pest-toast';
+                el.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);'
+                  + 'background:#333;color:#fff;padding:11px 18px;border-radius:22px;z-index:10000;'
+                  + 'font-size:14px;box-shadow:0 4px 12px rgba(0,0,0,.3);opacity:0;transition:opacity .2s';
+                document.body.appendChild(el);
+            }
+            el.textContent = msg;
+            el.style.opacity = '1';
+            clearTimeout(el._t);
+            el._t = setTimeout(function(){ el.style.opacity = '0'; }, 2200);
+        }
+
+        function normalizeType(typeValue) {
+          if (!typeValue) return '';
+          const s = String(typeValue).replace(/\s/g, '').trim();
+        
+          const mapping = {
+            '살균제': '살균', '살충제': '살충', '제초제': '제초',
+            '균충제': '균충', '충초제': '충초', '생조제': '생조',
+            '살균': '살균', '살충': '살충', '제초': '제초',
+            '균충': '균충', '충초': '충초', '생조': '생조', '기타': '기타',
+            // ⭐ 겸용제 정식 명칭 — 이게 없어서 '균충' 필터에 안 잡혔다
+            '살균살충제': '균충', '살균살충': '균충',
+            '살충제초제': '충초', '살충제초': '충초',
+            '생장조정제': '생조', '생장조절제': '생조', '생장조정': '생조'
+          };
+          if (mapping[s]) return mapping[s];
+        
+          // 표에 없는 표기도 성분으로 판단한다 (겸용을 단일보다 먼저 본다)
+          const hasG = s.indexOf('살균') >= 0;
+          const hasC = s.indexOf('살충') >= 0;
+          const hasJ = s.indexOf('제초') >= 0;
+          if (hasG && hasC) return '균충';
+          if (hasC && hasJ) return '충초';
+          if (hasG) return '살균';
+          if (hasC) return '살충';
+          if (hasJ) return '제초';
+          if (s.indexOf('생장') >= 0 || s.indexOf('생조') >= 0) return '생조';
+          return s;
+        }
+        
+        function actionCandidates(kind){
+          const out = [];
+          const m = SHEET_ACTIONS['myPesticides'];
+          if (m && m[kind]) out.push(m[kind]);
+          (ACTION_ALIASES[kind] || [kind]).forEach(a => { if (out.indexOf(a) < 0) out.push(a); });
+          return out;
+        }
+        
+        async function sendToSheet(kind, payload){
+          const memo = _actionOk[kind];
+          const list = memo ? [memo] : actionCandidates(kind);
+          let lastMsg = '';
+        
+          for (const act of list) {
+            const params = new URLSearchParams();
+            params.append('action', act);
+            // GAS 함수마다 받는 이름이 달라 셋 다 보낸다
+            params.append('sheetName', 'myPesticides');
+            params.append('sheet', 'myPesticides');
+            params.append('collectionName', 'myPesticides');
+            for (const k in payload) {
+              if (payload[k] !== undefined && payload[k] !== null) params.append(k, payload[k]);
+            }
+        
+            try {
+              const res = await fetch(APP.gasUrl, { method:'POST', body: params });
+              const r = await res.json();
+              if (r && r.success) {
+                if (_actionOk[kind] !== act) {
+                  _actionOk[kind] = act;
+                  console.log(`✅ ${kind} → action='${act}'`);
+                }
+                return r;
+              }
+              lastMsg = (r && r.message) || '알 수 없는 응답';
+            } catch (e) { lastMsg = e.message; }
+        
+            // 'action 을 모른다' 가 아니면 그 이름은 통한 것 → 더 시도하지 않는다
+            if (lastMsg && !/알 수 없는 action/.test(String(lastMsg))) {
+              _actionOk[kind] = act;
+              throw new Error(lastMsg);
+            }
+            console.warn(`… action='${act}' 실패: ${lastMsg}`);
+          }
+          throw new Error(lastMsg || (kind + ' 실패'));
+        }
+        
+        function openRegisterModal() {
+          editingId = null;
+          isViewMode = false;
+          document.getElementById('modal-title').textContent = '🧪 새 농약 등록';
+          document.getElementById('form-name').value = '';
+          document.getElementById('form-type').value = '';
+          document.getElementById('form-quantity').value = '1';
+          document.getElementById('form-unit').value = '개';
+          document.getElementById('form-ingredient').value = '';
+          document.getElementById('form-manufacturer').value = '';
+          document.getElementById('form-memo').value = '';
+        
+          setFieldsDisabled(false);
+          document.getElementById('save-btn').textContent = '저장';
+          document.getElementById('psis-btn').style.display = 'inline-block';
+          document.getElementById('psis-results-container').style.display = 'none';
+          document.getElementById('pest-modal').style.display='flex';
+          document.body.style.overflow='hidden';   // 뒷배경 스크롤 잠금
+        }
+        
+        function closeRegisterModal() {
+          document.getElementById('pest-modal').style.display='none';
+          document.body.style.overflow = '';       // 뒷배경 스크롤 되살리기
+        }
+        
+        async function savePesticide() {
+          if (isViewMode) {
+            enableEditMode();
+            return;
+          }
+        
+          const name = document.getElementById('form-name').value.trim();
+          const type = document.getElementById('form-type').value.trim();
+          const quantity = document.getElementById('form-quantity').value;
+          const unit = document.getElementById('form-unit').value;
+          const ingredient = document.getElementById('form-ingredient').value.trim();
+          const manufacturer = document.getElementById('form-manufacturer').value.trim();
+          const memo = document.getElementById('form-memo').value.trim();
+        
+          if (!name || !type) {
+            alert('제품명과 분류는 필수 입력 항목입니다.');
+            return;
+          }
+        
+          // 수정일 때는 기존 값을 가져와 빠진 항목을 채운다
+          const prev = editingId
+            ? (_pestRows().find(x => String(x.id) === String(editingId)) || {})
+            : {};
+        
+          // 신규 등록 시 기본값 — 시트에서 쓰는 값에 맞춰 여기만 고치면 된다
+          //   값조사() 로 실제 쓰이는 값을 확인한 뒤 맞추세요
+          const DEFAULTS = { status: '여유', pest_status: 'have' };
+        
+          // 분류에 맞는 아이콘 (비어 있으면 자동 지정)
+          //   시트에는 '살충제·살균제·제초제' 형태가 다수라 그쪽으로 맞춘다
+          const TYPE_FULL = { '살균':'살균제', '살충':'살충제', '제초':'제초제',
+                              '균충':'살균살충제', '충초':'살충제초제', '생조':'생장조정제' };
+          const typeFull = TYPE_FULL[type] || type;
+        
+          const emojiByType = { '살균제':'🦠', '살충제':'🐛', '제초제':'🌿',
+                                '살균살충제':'🧪', '살충제초제':'🧪',
+                                '생장조정제':'🌱', '기타':'💊' };
+        
+          const payload = {
+            id: editingId || ('p_' + Date.now()),
+            name: name,
+            type: typeFull,
+            quantity: quantity,
+            unit: unit,
+            ingredient: ingredient,
+            manufacturer: manufacturer,
+            memo: memo,
+            // ⭐ 기존 값이 있으면 그대로 둔다.
+            //    시트에는 '여유', 'have' 처럼 앱이 모르는 값이 쓰이고 있어
+            //    함부로 기본값으로 덮으면 사라진다.
+            //    신규 등록일 때만 기본값을 넣는다.
+            status:      prev.status      || (editingId ? '' : DEFAULTS.status),
+            pest_status: prev.pest_status || (editingId ? '' : DEFAULTS.pest_status),
+            emoji:       prev.emoji       || emojiByType[typeFull] || '💊',
+            excluded:    prev.excluded    || '',
+            icon:        prev.icon        || '',
+            source:      prev.source      || 'index5',
+            registeredAt: prev.registeredAt || new Date().toISOString(),
+            updatedAt:   new Date().toISOString()
+          };
+        
+          try {
+            _pestStatus('⏳ 저장 중...');
+            await sendToSheet(editingId ? 'update' : 'create', payload);
+            _pestToast(editingId ? '✅ 수정되었습니다.' : '✅ 등록되었습니다.');
+            closeRegisterModal();
+            reloadFromSheets(true);
+          } catch (err) {
+            console.error('❌ 저장 에러:', err);
+            alert('저장 중 오류가 발생했습니다: ' + err.message);
+            _pestStatus('❌ 저장 실패');
+          }
+        }
+        
+        // 모달 안에서 쓰는 삭제 (목록의 deletePesticide(idx,name) 와 이름이 겹쳐
+        // 나중 정의가 이기면서 목록 삭제가 망가졌다. 이름을 나눈다.
+        async function deletePesticideById(id) {
+          if (!confirm('정말 삭제하시겠습니까?')) return;
+        
+          try {
+            _pestStatus('🗑️ 삭제 중...');
+            await sendToSheet('delete', { id: id });
+            _pestToast('✅ 삭제되었습니다.');
+            reloadFromSheets(true);
+          } catch (err) {
+            console.error('❌ 삭제 에러:', err);
+            alert('삭제 실패: ' + err.message);
+            _pestStatus('❌ 삭제 실패');
+          }
+        }
+        
+        function viewPesticide(id) {
+          const item = _pestRows().find(p => String(p.id) === String(id));
+          if (!item) return;
+        
+          editingId = item.id;
+          isViewMode = true;
+          
+          document.getElementById('modal-title').textContent = '👁️ 농약 상세 조회';
+          document.getElementById('form-name').value = item.name || '';
+          document.getElementById('form-type').value = normalizeType(item.type || '');
+          document.getElementById('form-quantity').value = item.quantity || 1;
+          document.getElementById('form-unit').value = item.unit || '개';
+          document.getElementById('form-ingredient').value = item.ingredient || '';
+          document.getElementById('form-manufacturer').value = item.manufacturer || '';
+          document.getElementById('form-memo').value = item.memo || '';
+        
+          setFieldsDisabled(true);
+          document.getElementById('save-btn').textContent = '편집';
+          document.getElementById('psis-btn').style.display = 'none';
+          document.getElementById('psis-results-container').style.display = 'none';
+          
+          document.getElementById('pest-modal').style.display='flex';
+          document.body.style.overflow='hidden';   // 뒷배경 스크롤 잠금
+        }
+        
+        function psisFindList(node, depth) {
+          depth = depth || 0;
+          if (!node || depth > 6) return null;
+        
+          if (Array.isArray(node)) {
+            if (node.length && typeof node[0] === 'object' && node[0] !== null
+                && PSIS_KEYS.some(k => k in node[0])) return node;
+            for (const el of node) {
+              const found = psisFindList(el, depth + 1);
+              if (found) return found;
+            }
+            return null;
+          }
+        
+          if (typeof node === 'object') {
+            // 항목이 1개면 배열이 아니라 객체 하나로 오는 경우가 흔하다
+            if (PSIS_KEYS.some(k => k in node)) return [node];
+            for (const k of Object.keys(node)) {
+              const found = psisFindList(node[k], depth + 1);
+              if (found) return found;
+            }
+          }
+          return null;
+        }
+        
+        function psisParseXml(text) {
+          try {
+            const doc = new DOMParser().parseFromString(text, 'text/xml');
+            if (doc.getElementsByTagName('parsererror').length) return null;
+            const items = doc.getElementsByTagName('item');
+            if (!items.length) return null;
+            return Array.from(items).map(node => {
+              const o = {};
+              Array.from(node.children).forEach(c => { o[c.tagName] = (c.textContent || '').trim(); });
+              return o;
+            });
+          } catch (e) { return null; }
+        }
+        
+        async function psisFetchList(keyword) {
+          const PAGE = 200;          // 한 번에 받는 최대치 (서버가 정한 상한)
+          const MAX_PAGES = 6;       // 최대 1200건까지
+
+          // 어떤 요청 형태가 통하는지 먼저 한 페이지로 확인한다
+          const sets = _workingPsisParams ? [_workingPsisParams, ...PSIS_PARAM_SETS] : PSIS_PARAM_SETS;
+          let lastRaw = null, good = null, first = [];
+
+          for (const extra of sets) {
+            const q = new URLSearchParams({
+              keyword: keyword, searchType: 'brand',
+              displayCount: String(PAGE), startPoint: '1', ...extra
+            });
+            let raw = null;
+            try {
+              const res = await fetch(`${APP.gasUrl}?${q}`);
+              const text = await res.text();
+              try { raw = JSON.parse(text); }
+              catch (e) { raw = psisParseXml(text) || text; }
+            } catch (e) { console.warn('PSIS 요청 실패:', e.message); continue; }
+
+            console.log('📡 PSIS 응답 (' + JSON.stringify(extra) + '):', raw);
+            lastRaw = raw;
+            const list = psisFindList(raw);
+            if (list && list.length) { good = extra; first = list; break; }
+          }
+
+          if (!good) return { list: [], raw: lastRaw };
+          _workingPsisParams = good;
+
+          const all = first.slice();
+          // 첫 페이지가 꽉 찼으면 뒤에 더 있다는 뜻 — 이어서 받는다
+          for (let page = 2; page <= MAX_PAGES && all.length % PAGE === 0; page++) {
+            const q = new URLSearchParams({
+              keyword: keyword, searchType: 'brand',
+              displayCount: String(PAGE),
+              startPoint: String((page - 1) * PAGE + 1), ...good
+            });
+            let more = [];
+            try {
+              const res = await fetch(`${APP.gasUrl}?${q}`);
+              const text = await res.text();
+              let raw2 = null;
+              try { raw2 = JSON.parse(text); }
+              catch (e) { raw2 = psisParseXml(text) || text; }
+              more = psisFindList(raw2) || [];
+            } catch (e) { break; }
+
+            console.log('📄 ' + page + '쪽 요청 (startPoint=' + ((page-1)*PAGE+1) + ') → '
+                        + more.length + '건 받음');
+            if (!more.length) { console.warn('   빈 응답 — GAS 가 startPoint 를 무시하는 듯합니다'); break; }
+
+            // 같은 내용이 또 오면(서버가 페이지를 무시하면) 멈춘다
+            const seen = new Set(all.map(x => (x.pestiCode||'') + '|' + (x.diseaseUseSeq||'') + '|' + (x.cropName||'')));
+            const fresh = more.filter(x => !seen.has((x.pestiCode||'') + '|' + (x.diseaseUseSeq||'') + '|' + (x.cropName||'')));
+            if (!fresh.length) break;
+
+            all.push(...fresh);
+            console.log('📄 ' + page + '쪽 — ' + fresh.length + '건 추가 (누적 ' + all.length + ')');
+            if (more.length < PAGE) break;
+          }
+
+          // 페이지 넘기기가 안 통했고 정확히 상한에 걸렸다면
+          // displayCount 를 크게 잡아 한 번에 더 받아본다
+          if (all.length === PAGE) {
+            for (const big of ['1000', '500']) {
+              try {
+                const q3 = new URLSearchParams({
+                  keyword: keyword, searchType: 'brand',
+                  displayCount: big, startPoint: '1', ...good
+                });
+                const res3 = await fetch(`${APP.gasUrl}?${q3}`);
+                const txt3 = await res3.text();
+                let raw3 = null;
+                try { raw3 = JSON.parse(txt3); }
+                catch (e) { raw3 = psisParseXml(txt3) || txt3; }
+                const big3 = psisFindList(raw3) || [];
+                console.log('📦 displayCount=' + big + ' → ' + big3.length + '건');
+                if (big3.length > all.length) {
+                  console.log('   더 많이 받았습니다 — 이쪽을 씁니다');
+                  return { list: big3, raw: raw3 };
+                }
+              } catch (e) { /* 다음 시도 */ }
+            }
+            console.warn('⚠️ ' + PAGE + '건에서 잘린 것으로 보입니다. '
+              + 'GAS 의 psis 핸들러가 displayCount·startPoint 를 그대로 전달하는지 확인이 필요합니다.');
+          }
+
+          console.log(`✅ PSIS 검색 완료 — ${JSON.stringify(good)}, 총 ${all.length}건`);
+          return { list: all, raw: lastRaw };
+        }
+        
+        async function searchPsisFromModal() {
+          const keyword = document.getElementById('form-name').value.trim();
+          if (!keyword) {
+            alert('농약명을 먼저 입력해주세요.');
+            return;
+          }
+        
+          const loadingEl = document.getElementById('modal-loading');
+          const container = document.getElementById('psis-results-container');
+          const resultsList = document.getElementById('psis-results');
+        
+          loadingEl.style.display = 'block';
+          container.style.display = 'none';
+        
+          try {
+            const { list: serviceList, raw: gasData } = await psisFetchList(keyword);
+        
+            if (serviceList.length === 0) {
+              loadingEl.style.display = 'none';
+              container.style.display = 'block';
+              // 서버가 뭐라고 답했는지 그대로 보여준다 — 원인 파악을 위해
+              const hint = psisDiagnose(gasData);
+              resultsList.innerHTML =
+                '<div style="padding:10px;color:#666;font-size:11px;line-height:1.7">'
+                + '<div style="font-weight:600;color:#C62828;margin-bottom:4px">검색 결과가 없습니다.</div>'
+                + hint
+                + '</div>';
+              return;
+            }
+        
+            // ── 독성 정보 ──────────────────────────────────────────────
+            // GAS의 _psisSearch()가 내부적으로 _fetchDetail(SVC02)을 이미 호출해
+            // toxicGubun / toxicName / fishToxic 을 함께 실어 보낸다.
+            // 따라서 별도 요청 없이 첫 응답에서 바로 꺼내 쓴다.
+            let toxicInfo = { toxicGubun: '-', toxicName: '-', fishToxic: '-' };
+            const firstItem = serviceList[0] || {};
+        
+            const svc01Toxic = (gasData && gasData.data) ? gasData.data : {};
+            if (svc01Toxic.toxicGubun || svc01Toxic.toxicName || svc01Toxic.fishToxic) {
+              toxicInfo = {
+                toxicGubun: svc01Toxic.toxicGubun || '-',
+                toxicName:  svc01Toxic.toxicName  || '-',
+                fishToxic:  svc01Toxic.fishToxic  || '-'
+              };
+              console.log('☠️ 독성 정보 (첫 응답에 포함됨):', toxicInfo);
+            } else {
+              // 첫 응답에 없을 때만 보조 요청 — GAS에 psisToxic 라우팅이 있어야 동작
+              const pestiCode = firstItem.pestiCode || firstItem.code || '';
+              if (pestiCode) {
+                try {
+                  const q2 = new URLSearchParams({
+                    action: 'psisToxic',
+                    pestiCode: pestiCode,
+                    diseaseUseSeq: firstItem.diseaseUseSeq || '1'
+                  });
+                  const resSvc02 = await fetch(`${APP.gasUrl}?${q2}`);
+                  const toxicData = await resSvc02.json();
+                  if (toxicData && toxicData.data && !Array.isArray(toxicData.data)) {
+                    toxicInfo = toxicData.data;
+                    console.log('☠️ 독성 정보 (보조 요청):', toxicInfo);
+                  } else {
+                    console.info('ℹ️ 독성 정보 없음 — 표시는 "-" 로 대체됩니다 (기능에 지장 없음)');
+                  }
+                } catch (toxicErr) {
+                  console.info('ℹ️ 독성 정보 조회 생략:', toxicErr.message);
+                }
+              }
+            }
+        
+            loadingEl.style.display = 'none';
+        
+            const combinationMap = new Map();
+            serviceList.forEach(item => {
+              const gubun = item.cmpaItmNm || '미분류';
+              const usage = item.useName || '기타';
+              const compName = item.compName || item.manufacturer || '미분류';
+              const ingredient = item.pestiKorName || item.ingredientName || '품목명 없음';
+              const key = `${gubun}|${usage}|${compName}|${ingredient}`;
+        
+              if (!combinationMap.has(key)) {
+                combinationMap.set(key, { gubun, usage, company: compName, ingredient, cropDetails: [] });
+              }
+        
+              const data = combinationMap.get(key);
+              const cropDetail = {
+                cropName: item.cropName || '-',
+                diseaseWeedName: item.diseaseWeedName || '-',
+                pestiUse: item.pestiUse || '-',
+                dilutUnit: item.dilutUnit || '-',
+                useSuittime: item.useSuittime || item.harvestGracePeriod || item.safetyLine || '-',
+                useNum: item.useNum || item.maxUseCount || '-'
+              };
+        
+              if (!data.cropDetails.find(c => c.cropName === cropDetail.cropName && c.diseaseWeedName === cropDetail.diseaseWeedName)) {
+                data.cropDetails.push(cropDetail);
+              }
+            });
+        
+            // 몇 건을 받아 몇 종으로 묶었는지 보여준다
+          var _cntEl = document.getElementById('psis-count');
+          if(_cntEl) _cntEl.textContent =
+            ' · 받은 ' + serviceList.length + '건 → ' + combinationMap.size + '종';
+
+          psisResultsCache = Array.from(combinationMap.values()).map(item => {
+              const cropMemo = buildCropMemo(item.cropDetails, toxicInfo);
+              return { ...item, cropMemo };
+            });
+        
+            container.style.display = 'block';
+            resultsList.innerHTML = psisResultsCache.map((item, idx) => `
+              <div style="padding: 8px; border-bottom: 1px solid var(--gray-200); cursor: pointer; border-radius: 4px;" onclick="selectPsisCompany(${idx})">
+                <div style="font-weight: 600; color: var(--green-dark); font-size: 12px;">🏢 ${item.company} (${item.ingredient})</div>
+                <div style="font-size: 10px; color: var(--gray-600); margin-top: 2px;">구분: ${item.gubun} | 용도: ${item.usage}</div>
+                <div style="font-size: 10px; color: var(--gray-500); margin-top: 2px;">✅ 메모: ${item.cropMemo}</div>
+              </div>
+            `).join('');
+        
+          } catch (err) {
+            loadingEl.style.display = 'none';
+            console.error('PSIS 및 독성 검색 실패:', err);
+            alert('PSIS 검색 중 오류가 발생했습니다.\n\n' + (err && err.message ? err.message : err));
+          }
+        }
+        
+        function selectPsisCompany(idx) {
+          const item = psisResultsCache[idx];
+          if (!item) return;
+        
+          document.getElementById('form-manufacturer').value = item.company || '';
+          document.getElementById('form-ingredient').value = item.ingredient || '';
+          
+          const typeMap = { '살충': '살충', '살균': '살균', '제초': '제초', '생장': '생조' };
+          let matchedType = '기타';
+          for (const key in typeMap) {
+            if (item.usage.includes(key)) {
+              matchedType = typeMap[key];
+              break;
+            }
+          }
+          document.getElementById('form-type').value = matchedType;
+          document.getElementById('form-memo').value = item.cropMemo || '';
+          document.getElementById('psis-results-container').style.display = 'none';
+          _pestToast('✅ 20L 기준 환산 정보가 자동으로 채워졌습니다.');
+        }
+
+        function setFieldsDisabled(disabled) {
+          document.getElementById('form-name').disabled = disabled;
+          document.getElementById('form-type').disabled = disabled;
+          document.getElementById('form-quantity').disabled = disabled;
+          document.getElementById('form-unit').disabled = disabled;
+          document.getElementById('form-ingredient').disabled = disabled;
+          document.getElementById('form-manufacturer').disabled = disabled;
+          document.getElementById('form-memo').disabled = disabled;
+        }
+        
+        function enableEditMode() {
+          isViewMode = false;
+          setFieldsDisabled(false);
+          document.getElementById('modal-title').textContent = '✏️ 농약 수정';
+          document.getElementById('save-btn').textContent = '저장';
+          document.getElementById('psis-btn').style.display = 'inline-block';
+        }
+        
+        function psisDiagnose(raw) {
+          if (raw == null) return '서버에서 응답이 오지 않았습니다. 네트워크를 확인해 주세요.';
+        
+          // {ok:true, data:{service:[], message:'...'}} 처럼 한 겹 안에 든 메시지도 끌어올린다
+          if (typeof raw === 'object' && raw.data && typeof raw.data === 'object'
+              && !raw.message && !raw.error && (raw.data.message || raw.data.error)) {
+            raw = Object.assign({}, raw, { message: raw.data.message || raw.data.error });
+          }
+        
+          if (typeof raw === 'string') {
+            return '서버 응답(원문): <code style="word-break:break-all">'
+                 + raw.slice(0, 200).replace(/</g, '&lt;') + '</code>';
+          }
+          if (raw.success === false || raw.error || raw.message) {
+            const msg = String(raw.message || raw.error);
+            let extra = '';
+            if (/알 수 없는 action/.test(msg)) {
+              extra = '<br><b style="color:#C62828">→ Google Apps Script에 PSIS 검색 기능이 없습니다.</b>'
+                    + '<br><span style="color:#666">GAS에 psis 핸들러를 추가해야 합니다. '
+                    + 'PSIS API는 브라우저에서 직접 부를 수 없어(CORS 차단) 서버를 반드시 거쳐야 합니다.</span>';
+            }
+            return '서버 메시지: <b style="color:#C62828">' + msg.replace(/</g, '&lt;') + '</b>' + extra;
+          }
+          const keys = Object.keys(raw).slice(0, 8).join(', ');
+          return '해당 제품명으로 등록된 농약이 없거나, 응답 형식이 예상과 다릅니다.<br>'
+               + '응답 최상위 항목: <code>' + (keys || '(비어 있음)') + '</code><br>'
+               + '<span style="color:#999">F12 콘솔의 「📡 PSIS 응답」 로그에서 전체 내용을 볼 수 있습니다.</span>';
+        }
+        
+        function buildCropMemo(cropDetails, toxicInfo) {
+          const toxicGubun = toxicInfo?.toxicGubun || toxicInfo?.toxicGrade || '-';
+          const toxicName = toxicInfo?.toxicName || toxicInfo?.toxicClassName || '-';
+          const fishToxic = toxicInfo?.fishToxic || toxicInfo?.fishToxicGubun || toxicInfo?.fishGrade || '-';
+          
+          const result = cropDetails.map(crop => {
+            const cName = crop.cropName || '-';
+            const dName = crop.diseaseWeedName || '-';
+            const pUse = crop.pestiUse || '-';
+            let dUnit = crop.dilutUnit || '-';
+            const uSuit = crop.useSuittime || crop.harvestGracePeriod || crop.safetyLine || '-';
+            const uNum = crop.useNum || crop.maxUseCount || '-';
+            
+            if (dUnit) {
+              const aMatch = dUnit.match(/(?:10a|1,000㎡|1000㎡)당\s*([\d\.]+)\s*(g|kg|ml|L)/i);
+              if (aMatch) {
+                let val = parseFloat(aMatch[1]);
+                let unitStr = aMatch[2].toLowerCase();
+                if (unitStr === 'kg') { val *= 1000; unitStr = 'g'; }
+                if (unitStr === 'l') { val *= 1000; unitStr = 'ml'; }
+                const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
+                dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
+              } else if (dUnit.includes('배')) {
+                const match = dUnit.match(/(\d+)배/);
+                if (match) {
+                  const times = parseInt(match[1]);
+                  const mlFor20L = (20000 / times).toFixed(1).replace(/\.0$/, '');
+                  dUnit = `${dUnit} (20L당 ${mlFor20L}ml)`;
+                }
+              } else {
+                const numMatch = dUnit.match(/([\d\.]+)\s*(g|ml)/i);
+                if (numMatch && !dUnit.includes('20L')) {
+                  const val = parseFloat(numMatch[1]);
+                  const unitStr = numMatch[2].toLowerCase();
+                  const per20L = (val / 8).toFixed(1).replace(/\.0$/, '');
+                  dUnit = `${dUnit} [20L당 ${per20L}${unitStr}]`;
+                }
+              }
+            }
+            
+            return `${cName}(${dName},${pUse},${dUnit},${uSuit},${uNum},${toxicGubun}(${toxicName}),${fishToxic})`;
+          }).join(' / ');
+          
+          return result;
+        }
+
+        // 🔧 psis파라미터('코니도') — GAS 가 어떤 요청을 받아주는지 하나씩 시험한다
+        window.psis파라미터 = async function(keyword){
+            keyword = keyword || '코니도';
+            var tries = [
+                { 설명: '기본 (200건)',        p: { displayCount:'200', startPoint:'1' } },
+                { 설명: '2쪽 (201부터)',       p: { displayCount:'200', startPoint:'201' } },
+                { 설명: '1000건 한번에',       p: { displayCount:'1000', startPoint:'1' } },
+                { 설명: 'numOfRows 방식',      p: { numOfRows:'1000', pageNo:'1' } },
+                { 설명: 'displayCount 없이',   p: {} },
+                { 설명: '품목명 검색',         p: { searchType:'item', displayCount:'200' } }
+            ];
+            var out = [];
+            for(var i=0;i<tries.length;i++){
+                var q = new URLSearchParams(Object.assign(
+                    { action:'psis', keyword:keyword, searchType:'brand' }, tries[i].p));
+                var cnt = '?', kinds = '';
+                try {
+                    var res = await fetch(APP.gasUrl + '?' + q);
+                    var txt = await res.text();
+                    var raw = null;
+                    try { raw = JSON.parse(txt); } catch(e){ raw = psisParseXml(txt) || txt; }
+                    var list = psisFindList(raw) || [];
+                    cnt = list.length;
+                    kinds = [...new Set(list.map(function(x){ return x.pestiKorName; }))].length + '종';
+                } catch(e){ cnt = '오류: ' + e.message; }
+                out.push({ 시험: tries[i].설명, 받은건수: cnt, 품목: kinds });
+            }
+            console.log('%c🔧 GAS 가 받아주는 요청 형태', 'color:#1565C0;font-weight:bold');
+            console.table(out);
+            console.log('%c건수가 가장 많은 형태를 알려주시면 그것으로 맞추겠습니다.', 'color:#E65100');
+            return out;
+        };
+
+        // 🔬 psis조회('코니도') — PSIS 가 실제로 무엇을 돌려주는지 그대로 본다
+        window.psis조회 = async function(keyword, opt){
+            var r = await psisFetchList(keyword);
+            var list = r.list || [];
+            console.log('%c🔬 PSIS 「' + keyword + '」 — ' + list.length + '건',
+                        'color:#1565C0;font-weight:bold');
+            if(!list.length){
+                console.warn('결과 없음. 원본 응답:', r.raw);
+                return r;
+            }
+
+            // 품목명(성분) 별로 묶어 보여준다
+            var byIng = {};
+            list.forEach(function(it){
+                var k = it.pestiKorName || it.ingredientName || '(품목명 없음)';
+                (byIng[k] = byIng[k] || []).push(it);
+            });
+            console.log('품목명 ' + Object.keys(byIng).length + '종:');
+            console.table(Object.keys(byIng).map(function(k){
+                return {
+                    품목명: k,
+                    건수: byIng[k].length,
+                    회사: [...new Set(byIng[k].map(function(x){ return x.compName; }))].join(', ').slice(0,40),
+                    상표명: [...new Set(byIng[k].map(function(x){ return x.pestiBrandName; }))].join(', ').slice(0,40)
+                };
+            }));
+
+            if(opt === true){
+                console.log('원본 첫 3건:');
+                console.log(JSON.stringify(list.slice(0,3), null, 1));
+            } else {
+                console.log('%c원본을 보려면  psis조회(\'' + keyword + '\', true)', 'color:#E65100');
+            }
+            return r;
+        };
+
+        // ══ 농약 스캔 등록 ════════════════════════════════
+        var _psStream = null, _psTimer = null, _psRaw = '', _psMode = 'code';
+
+        function openPestScan(){
+            document.getElementById('pest-scan-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+            psLangLabel();
+            psBackToRead();
+        }
+        function closePestScan(){
+            psStopCamera();
+            document.getElementById('pest-scan-modal').style.display = 'none';
+            document.body.style.overflow = '';
+        }
+        function psStopCamera(){
+            if(_psTimer){ clearInterval(_psTimer); _psTimer = null; }
+            if(_psStream){ _psStream.getTracks().forEach(function(x){ try{x.stop();}catch(e){} }); _psStream = null; }
+            var b = document.getElementById('ps-cam-box'); if(b) b.style.display = 'none';
+            var k = document.getElementById('ps-cam-btn'); if(k) k.textContent = '📷 QR·바코드 스캔';
+        }
+        function psBackToRead(){
+            document.getElementById('ps-step-read').style.display = 'block';
+            document.getElementById('ps-step-confirm').style.display = 'none';
+            psStopCamera();
+            _psStatus('어떻게 읽을지 골라주세요');
+        }
+        function _psStatus(m){ var e = document.getElementById('ps-status'); if(e) e.innerHTML = m; }
+
+        function psToggleLang(){
+            var box = document.getElementById('ps-lang-row');
+            var arr = document.getElementById('ps-lang-arrow');
+            var open = box.style.display === 'none';
+            box.style.display = open ? 'block' : 'none';
+            arr.textContent = open ? '▲' : '▼';
+            document.getElementById('ps-lang-head').style.borderRadius = open ? '8px 8px 0 0' : '8px';
+        }
+        function psLangLabel(){
+            var on = [];
+            if(document.getElementById('ps-kor').checked) on.push('한국어');
+            if(document.getElementById('ps-eng').checked) on.push('영어');
+            if(document.getElementById('ps-chi').checked) on.push('중국어');
+            var el = document.getElementById('ps-lang-now');
+            el.textContent = on.length ? on.join('·') : '(선택 없음)';
+            el.style.color = on.length ? '#00695C' : '#E65100';
+        }
+        function _psLangs(){
+            var o = [];
+            if(document.getElementById('ps-kor').checked) o.push('kor');
+            if(document.getElementById('ps-eng').checked) o.push('eng');
+            if(document.getElementById('ps-chi').checked) o.push('chi_sim');
+            return o.length ? o.join('+') : 'kor+eng';
+        }
+
+        async function psToggleCamera(){
+            var box = document.getElementById('ps-cam-box');
+            var btn = document.getElementById('ps-cam-btn');
+            if(_psStream){ psStopCamera(); _psStatus('어떻게 읽을지 골라주세요'); return; }
+            if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+                _psStatus('<span style="color:#C62828">이 브라우저는 카메라를 지원하지 않습니다.</span>'); return;
+            }
+            box.style.display = 'block'; btn.textContent = '⏹ 카메라 끄기';
+            try {
+                _psStream = await navigator.mediaDevices.getUserMedia({
+                    video:{ facingMode:{ ideal:'environment' } }, audio:false });
+                var video = document.getElementById('ps-video');
+                video.srcObject = _psStream; await video.play();
+                _psStatus('QR·바코드를 네모 안에 맞춰주세요');
+
+                var cvs = document.getElementById('ps-canvas');
+                var ctx = cvs.getContext('2d', { willReadFrequently:true });
+                _psTimer = setInterval(function(){
+                    if(video.readyState !== 4) return;
+                    var w = video.videoWidth, h = video.videoHeight;
+                    if(!w || !h) return;
+                    cvs.width = w; cvs.height = h; ctx.drawImage(video, 0, 0, w, h);
+                    try {
+                        var img = ctx.getImageData(0, 0, w, h);
+                        var code = (typeof jsQR === 'function')
+                            ? jsQR(img.data, w, h, { inversionAttempts:'attemptBoth' }) : null;
+                        if(code && code.data){ psStopCamera(); psOnRead(code.data, 'QR'); return; }
+                    } catch(e){}
+                    _supZxing(cvs).then(function(txt){
+                        if(txt){ psStopCamera(); psOnRead(txt, '바코드'); }
+                    }).catch(function(){});
+                }, 340);
+            } catch(err){
+                psStopCamera();
+                _psStatus('<span style="color:#C62828">'
+                  + (location.protocol === 'file:'
+                     ? '파일로 열면 카메라를 쓸 수 없습니다. 「사진에서 코드」 를 이용해 주세요.'
+                     : '카메라를 열지 못했습니다: ' + err.message) + '</span>');
+            }
+        }
+
+        function psPickPhoto(mode){
+            _psMode = mode || 'code';
+            if(_psMode === 'ocr'){
+                var none = ['ps-kor','ps-eng','ps-chi'].every(function(i){
+                    var e = document.getElementById(i); return !e || !e.checked; });
+                if(none){
+                    if(document.getElementById('ps-lang-row').style.display === 'none') psToggleLang();
+                    _psStatus('<span style="color:#E65100">읽을 언어를 하나 이상 골라주세요</span>');
+                    return;
+                }
+            }
+            document.getElementById('ps-file').click();
+        }
+
+        function psFromFile(input){
+            var file = input.files && input.files[0];
+            input.value = '';
+            if(!file) return;
+            psStopCamera();
+
+            var reader = new FileReader();
+            reader.onload = function(ev){
+                if(_psMode === 'ocr'){
+                    if(typeof Tesseract === 'undefined'){
+                        _psStatus('<span style="color:#C62828">글자 읽기 기능을 불러오지 못했습니다. '
+                                + '인터넷 연결을 확인해 주세요.</span>'); return;
+                    }
+                    var langs = _psLangs();
+                    _psStatus('🔤 글자를 읽는 중… <b>' + langs.replace(/\+/g,' + ') + '</b>');
+                    Tesseract.recognize(ev.target.result, langs, {
+                        logger: function(m){
+                            if(m.status === 'recognizing text')
+                                _psStatus('🔤 글자 읽는 중… ' + Math.round((m.progress||0)*100) + '%');
+                            else if(/loading|initializing/i.test(m.status))
+                                _psStatus('📥 언어 파일 준비 중… ' + Math.round((m.progress||0)*100) + '%');
+                        }
+                    }).then(function(res){
+                        var txt = (res && res.data && res.data.text) ? res.data.text.trim() : '';
+                        if(txt) psOnRead(txt, 'OCR');
+                        else _psStatus('<span style="color:#E65100">글자를 찾지 못했습니다.</span>');
+                    }).catch(function(e){
+                        _psStatus('<span style="color:#C62828">' + e.message + '</span>');
+                    });
+                    return;
+                }
+
+                var img = new Image();
+                img.onload = function(){
+                    var cvs = document.getElementById('ps-canvas');
+                    var ctx = cvs.getContext('2d', { willReadFrequently:true });
+                    var max = 1280, w = img.width, h = img.height;
+                    if(Math.max(w,h) > max){ var r = max/Math.max(w,h); w=Math.round(w*r); h=Math.round(h*r); }
+                    cvs.width = w; cvs.height = h; ctx.drawImage(img, 0, 0, w, h);
+                    var code = null;
+                    try {
+                        var dd = ctx.getImageData(0, 0, w, h);
+                        if(typeof jsQR === 'function') code = jsQR(dd.data, w, h, { inversionAttempts:'attemptBoth' });
+                    } catch(e){}
+                    if(code && code.data){ psOnRead(code.data, 'QR'); return; }
+                    _supZxing(cvs).then(function(txt){
+                        if(txt) psOnRead(txt, '바코드');
+                        else _psStatus('<span style="color:#E65100">코드를 찾지 못했습니다.<br>'
+                            + '「🔤 라벨 글자」 로 읽어보시거나 「직접 입력」 을 이용해 주세요.</span>');
+                    }).catch(function(){
+                        _psStatus('<span style="color:#E65100">코드를 찾지 못했습니다.</span>');
+                    });
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function psManual(){ psOnRead('', '직접 입력'); }
+
+        // 읽은 글자에서 제품명·회사명을 뽑는다
+        function psParse(raw){
+            var s = String(raw || '').trim();
+            var out = { name:'', company:'' };
+            if(!s) return out;
+
+            if(/^https?:\/\//i.test(s)){
+                try {
+                    var u = new URL(s);
+                    ['name','pname','product','item','brand','nm'].forEach(function(k){
+                        if(!out.name && u.searchParams.get(k)) out.name = u.searchParams.get(k); });
+                    ['company','comp','maker','mfr'].forEach(function(k){
+                        if(!out.company && u.searchParams.get(k)) out.company = u.searchParams.get(k); });
+                } catch(e){}
+                return out;
+            }
+
+            var lines = s.split(/[\n\r|,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+            var COMP = /\(주\)|\(유\)|주식회사|농협|경농|동방|팜한농|신젠타|바이엘|아그로|화학|생명과학|케미컬|Co\.|Ltd|Inc/i;
+            var NOISE = /^[\d\s.,%-]+$|등록번호|사용방법|주의사항|보관|유효기간|제조번호|^\d{8,}$|kg$|ml$|리터/i;
+
+            lines.forEach(function(ln){
+                var m1 = ln.match(/^\s*(제품명|품\s*명|농약명|상표명)\s*[:：]\s*(.+)$/);
+                if(m1 && !out.name) out.name = m1[2].trim();
+                var m2 = ln.match(/^\s*(회사명|제조사|판매사|제조원|판매원)\s*[:：]\s*(.+)$/);
+                if(m2 && !out.company) out.company = m2[2].trim();
+            });
+            if(!out.name){
+                var cand = lines.filter(function(x){
+                    return /[가-힣]/.test(x) && !NOISE.test(x) && !COMP.test(x) && x.length <= 25; });
+                out.name = cand[0] || lines.filter(function(x){ return !NOISE.test(x) && x.length<=30; })[0] || '';
+            }
+            if(!out.company){
+                var c = lines.find(function(x){ return COMP.test(x) && x.length <= 30; });
+                if(c) out.company = c.replace(/^\s*(회사명|제조사|판매사|제조원|판매원)\s*[:：]?\s*/, '').trim();
+            }
+            out.name = String(out.name).replace(/^[\[\(<「【]+|[\]\)>」】]+$/g, '').trim();
+            return out;
+        }
+
+        function psOnRead(raw, source){
+            _psRaw = String(raw || '');
+            var p = psParse(_psRaw);
+            var badge = '<span style="background:#1B5E20;color:#fff;border-radius:8px;padding:1px 7px;'
+                      + 'font-size:10px;margin-right:5px">' + (source||'') + '</span>';
+            document.getElementById('ps-raw').innerHTML = badge + (_psRaw
+                ? String(_psRaw).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')
+                : '<span style="opacity:.7">아래에 직접 입력해 주세요</span>');
+
+            document.getElementById('ps-name').value = p.name || '';
+            document.getElementById('ps-company').value = p.company || '';
+            document.getElementById('ps-step-read').style.display = 'none';
+            document.getElementById('ps-step-confirm').style.display = 'block';
+            setTimeout(function(){ document.getElementById('ps-name').focus(); }, 100);
+        }
+
+        function _psValues(){
+            var n = (document.getElementById('ps-name').value || '').trim();
+            var c = (document.getElementById('ps-company').value || '').trim();
+            if(!n){ alert('제품명을 입력해 주세요.'); return null; }
+            return { name:n, company:c };
+        }
+
+        // PSIS 로 찾아 등록
+        async function psGoPsis(){
+            var v = _psValues(); if(!v) return;
+            closePestScan();
+            openRegisterModal();
+            document.getElementById('form-name').value = v.name;
+            if(v.company) document.getElementById('form-manufacturer').value = v.company;
+            if(_psRaw && !/^https?:/i.test(_psRaw))
+                document.getElementById('form-memo').value = '스캔: ' + _psRaw.slice(0, 60);
+            setTimeout(function(){ searchPsisFromModal(); }, 250);
+        }
+
+        // 바로 등록창 열기
+        function psGoDirect(){
+            var v = _psValues(); if(!v) return;
+            closePestScan();
+            openRegisterModal();
+            document.getElementById('form-name').value = v.name;
+            if(v.company) document.getElementById('form-manufacturer').value = v.company;
+            if(_psRaw && !/^https?:/i.test(_psRaw))
+                document.getElementById('form-memo').value = '스캔: ' + _psRaw.slice(0, 60);
+            _pestToast('내용을 확인하고 저장을 눌러주세요');
+        }
+
+        // ══ 비료·자재 등록·수정·삭제 ═══════════════════════
+        //   supplies 열: [0]id [3]type [4]ingredient [7]name [9]quantity [10]memo
+        var _editSupId = null;
+
+        function openSupEdit(id){
+            _editSupId = id ? String(id) : null;
+            var v = function(i, val){ var el = document.getElementById(i); if(el) el.value = val; };
+            var row = null;
+
+            if(_editSupId){
+                row = (APP.data.supplies || []).find(function(r){
+                    return r && String(r[0]) === _editSupId; });
+                if(!row){ alert('자재를 찾지 못했습니다.'); return; }
+            }
+
+            document.getElementById('sup-edit-title').textContent =
+                row ? '🌱 비료·자재 수정' : '🌱 새 비료·자재 등록';
+            document.getElementById('supe-del-btn').style.display = row ? 'block' : 'none';
+
+            v('supe-name', row ? (row[7] || '') : '');
+            v('supe-type', row ? (row[3] || '비료') : '비료');
+            v('supe-qty',  row ? (row[9] || '1') : '1');
+            v('supe-ing',  row ? (row[4] || '') : '');
+            v('supe-memo', row ? (row[10] || '') : '');
+
+            var idRow = document.getElementById('supe-id-row');
+            if(row){ idRow.style.display = 'block'; idRow.textContent = 'id: ' + row[0]; }
+            else idRow.style.display = 'none';
+
+            document.getElementById('sup-edit-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSupEdit(){
+            document.getElementById('sup-edit-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            _editSupId = null;
+        }
+
+        async function saveSupEdit(){
+            var g = function(i){ var el = document.getElementById(i); return el ? String(el.value).trim() : ''; };
+            var name = g('supe-name');
+            if(!name){ alert('비료·자재명을 입력해 주세요.'); return; }
+
+            var btn = document.getElementById('supe-save-btn');
+            if(btn){ btn.disabled = true; btn.textContent = '⏳ 저장 중…'; }
+
+            var payload = {
+                id:         _editSupId || ('s_' + Date.now()),
+                name:       name,
+                type:       g('supe-type'),
+                ingredient: g('supe-ing'),
+                quantity:   g('supe-qty') || '1',
+                amount:     g('supe-qty') || '1',
+                memo:       g('supe-memo'),
+                updatedAt:  new Date().toISOString()
+            };
+            if(!_editSupId) payload.purchaseTime = new Date().toISOString().slice(0, 10);
+
+            var r = await _gasPost(_editSupId ? 'updateSupply' : 'addSupply', payload);
+            if(btn){ btn.disabled = false; btn.textContent = '✅ 저장'; }
+            if(!r || !r.ok) return;
+
+            closeSupEdit();
+            await reloadFromSheets(true);
+            _pestToast(_editSupId ? '✅ 수정되었습니다' : '✅ 「' + name + '」 등록 완료');
+        }
+
+        async function deleteSupplyById(){
+            if(!_editSupId) return;
+            var row = (APP.data.supplies || []).find(function(r){
+                return r && String(r[0]) === _editSupId; });
+            var nm = row ? row[7] : '이 자재';
+            if(!confirm('「' + nm + '」 을(를) 삭제할까요?')) return;
+
+            var r = await _gasPost('deleteSupply', { id: _editSupId });
+            if(!r || !r.ok) return;
+
+            closeSupEdit();
+            await reloadFromSheets(true);
+            _pestToast('🗑️ 삭제되었습니다');
+        }
+
+        // ══ 작물 등록·수정·삭제 ═══════════════════════════
+        //   growPlants 열: id name plantDate emoji category no status
+        //                  totalDays pinchDays fruitDays updatedAt
+        //                  irang qty zone spot crops
+        var _editPlantId = null;
+
+        function openPlantModal(id){
+            _editPlantId = id ? String(id) : null;
+            var v = function(i, val){ var el = document.getElementById(i); if(el) el.value = val; };
+            var row = null;
+
+            if(_editPlantId){
+                row = (APP.data.growPlants || []).find(function(r){
+                    return r && String(r[0]) === _editPlantId; });
+                if(!row){ alert('작물을 찾지 못했습니다.'); return; }
+            }
+
+            document.getElementById('plant-modal-title').textContent =
+                row ? '🌾 작물 수정' : '🌾 새 작물 등록';
+            document.getElementById('plant-del-btn').style.display = row ? 'block' : 'none';
+
+            v('plant-name',     row ? (row[1] || '') : '');
+            v('plant-category', row ? (String(row[4]).trim() === '유실수' ? '유실수' : '채소') : '채소');
+            v('plant-date',     row ? String(row[2] || '').slice(0, 10) : new Date().toISOString().slice(0,10));
+            v('plant-variety',  row ? (row[14] || '') : '');
+            v('plant-qty',      row ? (row[12] || '1') : '1');
+            v('plant-zone',     row ? (row[13] || '') : '');
+            v('plant-irang',    row ? (row[11] || '') : '');
+            v('plant-status',   row ? (row[6] || 'active') : 'active');
+            v('plant-memo',     row ? (row[15] || '') : '');
+
+            var idRow = document.getElementById('plant-id-row');
+            if(row){ idRow.style.display = 'block'; idRow.textContent = 'id: ' + row[0]; }
+            else idRow.style.display = 'none';
+
+            document.getElementById('plant-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePlantModal(){
+            document.getElementById('plant-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            _editPlantId = null;
+        }
+
+        async function savePlant(){
+            var g = function(i){ var el = document.getElementById(i); return el ? String(el.value).trim() : ''; };
+            var name = g('plant-name');
+            if(!name){ alert('작물명을 입력해 주세요.'); return; }
+
+            var btn = document.getElementById('plant-save-btn');
+            if(btn){ btn.disabled = true; btn.textContent = '⏳ 저장 중…'; }
+
+            var cat = g('plant-category');
+            var payload = {
+                id:        _editPlantId || ('p_' + Date.now()),
+                name:      name,
+                plantDate: g('plant-date'),
+                dateStr:   g('plant-date'),
+                emoji:     cat === '유실수' ? '🍎' : '🥬',
+                category:  cat,
+                status:    g('plant-status'),
+                irang:     g('plant-irang'),
+                qty:       g('plant-qty') || '1',
+                zone:      g('plant-zone'),
+                spot:      g('plant-variety'),
+                crops:     g('plant-memo'),
+                updatedAt: new Date().toISOString()
+            };
+
+            var r = await _gasPost(_editPlantId ? 'updatePlant' : 'addPlant', payload);
+            if(btn){ btn.disabled = false; btn.textContent = '✅ 저장'; }
+            if(!r || !r.ok) return;
+
+            closePlantModal();
+            await reloadFromSheets(true);
+            _pestToast(_editPlantId ? '✅ 수정되었습니다' : '✅ 「' + name + '」 등록 완료');
+        }
+
+        async function deletePlantById(){
+            if(!_editPlantId) return;
+            var row = (APP.data.growPlants || []).find(function(r){
+                return r && String(r[0]) === _editPlantId; });
+            var nm = row ? row[1] : '이 작물';
+            if(!confirm('「' + nm + '」 을(를) 삭제할까요?\n생육기록은 남아 있습니다.')) return;
+
+            var r = await _gasPost('deletePlant', { id: _editPlantId });
+            if(!r || !r.ok) return;
+
+            closePlantModal();
+            await reloadFromSheets(true);
+            _pestToast('🗑️ 삭제되었습니다');
+        }
+
+        // ══ 시트 쓰기 공용 ════════════════════════════════
+        //   _gasPost 는 여러 곳에서 부르는데 정의가 없어
+        //   수량 조절·삭제가 모두 조용히 실패하고 있었다.
+        //   action 이름을 실제 시트와 GAS 가 아는 이름으로 이어준다.
+        var _ACTION_MAP = {
+            updatePesticide: { sheet: 'myPesticides', names: ['updateMyPesticide','update','updateRow'] },
+            deletePesticide: { sheet: 'myPesticides', names: ['deleteMyPesticide','delete','deleteRow'] },
+            addPesticide:    { sheet: 'myPesticides', names: ['addMyPesticide','create','add'] },
+            updateSupply:    { sheet: 'supplies',     names: ['updateSupply','update','updateRow'] },
+            deleteSupply:    { sheet: 'supplies',     names: ['deleteSupply','delete','deleteRow'] },
+            addSupply:       { sheet: 'supplies',     names: ['addSupply','create','add'] },
+            updatePlant:     { sheet: 'growPlants',   names: ['updatePlant','update','updateRow'] },
+            deletePlant:     { sheet: 'growPlants',   names: ['deletePlant','delete','deleteRow'] },
+            addPlant:        { sheet: 'growPlants',   names: ['addPlant','create','add'] },
+            updateGrowRecord:{ sheet: 'growRecords',  names: ['updateGrowRecord','update','updateRow'] },
+            deleteGrowRecord:{ sheet: 'growRecords',  names: ['deleteGrowRecord','delete','deleteRow'] },
+            addGrowRecord:   { sheet: 'growRecords',  names: ['addGrowRecord','create','add'] },
+            updateWorkLog:   { sheet: 'workLog',      names: ['updateWorkLog','update','updateRow'] },
+            deleteWorkLog:   { sheet: 'workLog',      names: ['deleteWorkLog','delete','deleteRow'] },
+            addWorkLog:      { sheet: 'workLog',      names: ['addWorkLog','create','add'] }
+        };
+
+        // 성공한 이름을 기억해 다음부터 헛시도를 줄인다
+        var _actionMemo = {};
+
+        async function _gasPost(action, params){
+            var conf = _ACTION_MAP[action];
+            if(!conf){
+                console.warn('_gasPost: 모르는 action —', action);
+                return { ok:false, message:'알 수 없는 action: ' + action };
+            }
+            // 무슨 일을 하는 중인지 알려준다
+            var _busyMsg = /^delete/.test(action) ? '삭제하는 중입니다…'
+                         : /^update/.test(action) ? '수정한 내용을 저장하는 중입니다…'
+                         : '저장하는 중입니다…';
+            if(typeof showBusy === 'function') showBusy(_busyMsg);
+            var names = _actionMemo[action] ? [_actionMemo[action]] : conf.names;
+            var payload = Object.assign({
+                sheetName: conf.sheet, sheet: conf.sheet, collectionName: conf.sheet
+            }, params || {});
+
+            var r = await postWithAlias(names, payload);
+            if(r.ok){
+                _actionMemo[action] = r.action;
+                console.log('✅ ' + action + ' → ' + conf.sheet + ' (' + r.action + ')');
+            } else {
+                console.error('❌ ' + action + ' 실패:', r.message);
+                if(typeof hideBusy === 'function') hideBusy();
+                alert('저장에 실패했습니다.\n' + action + ': ' + (r.message || ''));
+            }
+            return r;
+        }
+
+        // ══ 비료·자재 스캔 등록 ═══════════════════════════
+        var _supStream = null, _supTimer = null, _supRaw = '';
+
+        function openSupplyScan(){
+            document.getElementById('sup-scan-modal').style.display = 'flex';
+            supBackToRead();
+        }
+
+// 입력 중인 내용이 있으면 확인을 받는다
+        function supTryClose(){
+            var form = document.getElementById('sup-step-form');
+            var typing = form && form.style.display === 'block'
+                       && (document.getElementById('sup-name').value || '').trim();
+            if(typing && !confirm('입력하던 내용이 사라집니다. 닫을까요?')) return;
+            closeSupplyScan();
+        }
+
+        function closeSupplyScan(){
+            supStopCamera();
+            document.getElementById('sup-scan-modal').style.display = 'none';
+        }
+
+        function supStopCamera(){
+            if(_supTimer){ clearInterval(_supTimer); _supTimer = null; }
+            if(_supStream){
+                _supStream.getTracks().forEach(function(tr){ try{ tr.stop(); }catch(e){} });
+                _supStream = null;
+            }
+            var box = document.getElementById('sup-cam-box');
+            if(box) box.style.display = 'none';
+            var btn = document.getElementById('sup-cam-btn');
+            if(btn) btn.textContent = '📷 QR·바코드 스캔';
+        }
+
+        function supBackToRead(){
+            document.getElementById('sup-step-read').style.display = 'block';
+            document.getElementById('sup-step-form').style.display = 'none';
+            supStopCamera();
+            _supStatus('어떻게 읽을지 골라주세요');
+        }
+
+        function _supStatus(msg){
+            var el = document.getElementById('sup-status');
+            if(el) el.innerHTML = msg;
+        }
+
+        async function supToggleCamera(){
+            var box = document.getElementById('sup-cam-box');
+            var btn = document.getElementById('sup-cam-btn');
+            if(_supStream){ supStopCamera(); _supStatus('어떻게 읽을지 골라주세요'); return; }
+
+            if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+                _supStatus('<span style="color:#C62828">이 브라우저는 카메라를 지원하지 않습니다.</span>');
+                return;
+            }
+            box.style.display = 'block';
+            btn.textContent = '⏹ 카메라 끄기';
+
+            try {
+                _supStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: { ideal: 'environment' } }, audio: false });
+                var video = document.getElementById('sup-video');
+                video.srcObject = _supStream;
+                await video.play();
+                _supStatus('QR·바코드를 네모 안에 맞춰주세요');
+
+                var cvs = document.getElementById('sup-canvas');
+                var ctx = cvs.getContext('2d', { willReadFrequently: true });
+                _supTimer = setInterval(function(){
+                    if(video.readyState !== 4) return;
+                    var w = video.videoWidth, h = video.videoHeight;
+                    if(!w || !h) return;
+                    cvs.width = w; cvs.height = h;
+                    ctx.drawImage(video, 0, 0, w, h);
+                    try {
+                        var img = ctx.getImageData(0, 0, w, h);
+                        var code = (typeof jsQR === 'function')
+                            ? jsQR(img.data, w, h, { inversionAttempts:'attemptBoth' }) : null;
+                        if(code && code.data){ supStopCamera(); supOnRead(code.data, 'QR'); return; }
+                    } catch(e){}
+                    _supZxing(cvs).then(function(txt){
+                        if(txt){ supStopCamera(); supOnRead(txt, '바코드'); }
+                    }).catch(function(){});
+                }, 340);
+
+            } catch(err){
+                supStopCamera();
+                _supStatus('<span style="color:#C62828">'
+                    + (location.protocol === 'file:'
+                        ? '파일로 열면 카메라를 쓸 수 없습니다. 「사진에서 코드 읽기」 를 이용해 주세요.'
+                        : '카메라를 열지 못했습니다: ' + err.message) + '</span>');
+            }
+        }
+
+        var _supZxReader = null, _supZxBusy = false;
+        async function _supZxing(cvs){
+            if(_supZxBusy || typeof ZXing === 'undefined' || !ZXing.MultiFormatReader) return null;
+            if(!_supZxReader){
+                try {
+                    var hints = new Map(), F = ZXing.BarcodeFormat;
+                    hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,
+                        [F.QR_CODE, F.EAN_13, F.EAN_8, F.CODE_128, F.CODE_39, F.UPC_A, F.UPC_E, F.ITF]);
+                    hints.set(ZXing.DecodeHintType.TRY_HARDER, true);
+                    _supZxReader = new ZXing.MultiFormatReader();
+                    _supZxReader.setHints(hints);
+                } catch(e){ return null; }
+            }
+            _supZxBusy = true;
+            try {
+                var ctx = cvs.getContext('2d');
+                var img = ctx.getImageData(0, 0, cvs.width, cvs.height);
+                var lum = new ZXing.RGBLuminanceSource(
+                    new Int32Array(new Uint32Array(img.data.buffer)), cvs.width, cvs.height);
+                var res = _supZxReader.decode(new ZXing.BinaryBitmap(new ZXing.HybridBinarizer(lum)));
+                return res ? res.getText() : null;
+            } catch(e){ return null; }
+            finally { _supZxBusy = false; try{ _supZxReader.reset(); }catch(e){} }
+        }
+
+        function supPickPhoto(){ document.getElementById('sup-file').click(); }
+
+        function supFromFile(input){
+            var file = input.files && input.files[0];
+            input.value = '';
+            if(!file) return;
+            supStopCamera();
+            _supStatus('사진을 읽는 중…');
+
+            var reader = new FileReader();
+            reader.onload = function(ev){
+                var img = new Image();
+                img.onload = function(){
+                    var cvs = document.getElementById('sup-canvas');
+                    var ctx = cvs.getContext('2d', { willReadFrequently: true });
+                    var max = 1280, w = img.width, h = img.height;
+                    if(Math.max(w,h) > max){ var r = max/Math.max(w,h); w = Math.round(w*r); h = Math.round(h*r); }
+                    cvs.width = w; cvs.height = h;
+                    ctx.drawImage(img, 0, 0, w, h);
+                    var code = null;
+                    try {
+                        var dd = ctx.getImageData(0, 0, w, h);
+                        if(typeof jsQR === 'function') code = jsQR(dd.data, w, h, { inversionAttempts:'attemptBoth' });
+                    } catch(e){}
+                    if(code && code.data){ supOnRead(code.data, 'QR'); return; }
+                    _supZxing(cvs).then(function(txt){
+                        if(txt) supOnRead(txt, '바코드');
+                        else _supStatus('<span style="color:#E65100">코드를 찾지 못했습니다.<br>'
+                            + '「직접 입력」 을 이용해 주세요.</span>');
+                    }).catch(function(){
+                        _supStatus('<span style="color:#E65100">코드를 찾지 못했습니다.</span>');
+                    });
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function supManual(){ supOnRead('', '직접 입력'); }
+
+        function supOnRead(raw, source){
+            _supRaw = String(raw || '');
+            var name = '', ing = '';
+
+            if(_supRaw && !/^https?:\/\//i.test(_supRaw)){
+                var lines = _supRaw.split(/[\n\r|,;]+/).map(function(x){ return x.trim(); }).filter(Boolean);
+                var kor = lines.filter(function(x){ return /[가-힣]/.test(x) && x.length <= 25; });
+                name = (kor[0] || lines[0] || '').replace(/^\s*(제품명|품명)\s*[:：]?\s*/, '');
+                var ln = lines.find(function(x){ return /\d+\s*-\s*\d+\s*-\s*\d+|N\s*[-:]|질소|인산|칼리/i.test(x); });
+                if(ln) ing = ln;
+            }
+
+            var box = document.getElementById('sup-raw-box');
+            var badge = '<span style="background:#33691E;color:white;border-radius:8px;'
+                      + 'padding:1px 7px;font-size:10px;margin-right:5px">' + (source||'') + '</span>';
+            box.innerHTML = badge + (_supRaw
+                ? String(_supRaw).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/\n/g,'<br>')
+                : '<span style="opacity:0.7">직접 입력하실 내용을 아래에 채워주세요</span>');
+
+            document.getElementById('sup-name').value = name;
+            document.getElementById('sup-ing').value = ing;
+            document.getElementById('sup-qty').value = '1';
+            document.getElementById('sup-memo').value = '';
+
+            document.getElementById('sup-step-read').style.display = 'none';
+            document.getElementById('sup-step-form').style.display = 'block';
+            setTimeout(function(){ document.getElementById('sup-name').focus(); }, 100);
+        }
+
+        async function supSave(){
+            var name = (document.getElementById('sup-name').value || '').trim();
+            if(!name){ alert('비료·자재명을 입력해 주세요.'); return; }
+
+            var btn = document.getElementById('sup-save-btn');
+            if(btn){ btn.disabled = true; btn.textContent = '⏳ 저장 중…'; }
+
+            var entry = {
+                id: 's_' + Date.now(),
+                name: name,
+                type: document.getElementById('sup-type').value,
+                amount: document.getElementById('sup-qty').value || '1',
+                quantity: document.getElementById('sup-qty').value || '1',
+                ingredient: document.getElementById('sup-ing').value || '',
+                memo: document.getElementById('sup-memo').value || '',
+                purchaseTime: new Date().toISOString().slice(0, 10),
+                updatedAt: new Date().toISOString()
+            };
+            if(_supRaw) entry.memo = (entry.memo ? entry.memo + '\n' : '') + '스캔: ' + _supRaw.slice(0, 60);
+
+            var r = await postWithAlias(['addSupply', 'create', 'add'],
+                Object.assign({ sheetName:'supplies', sheet:'supplies', collectionName:'supplies' }, entry));
+
+            if(btn){ btn.disabled = false; btn.textContent = '✅ 비료로 등록'; }
+
+            if(r.ok){
+                closeSupplyScan();
+                console.log('🌱 비료 등록 완료:', name);
+                await reloadFromSheets(true);      // 자동 새로고침
+                alert('✅ 「' + name + '」 등록 완료');
+            } else {
+                alert('❌ 등록에 실패했습니다.\n' + (r.message || ''));
+            }
+        }
+
         // ══ 농약장(index5) 새 창으로 열기 ══════════════════
         //   iframe 은 카메라(getUserMedia)가 막혀 스캔이 안 되므로 새 창을 쓴다.
         var _scanWin = null, _scanWatch = null;
@@ -3893,12 +5400,45 @@
             });
         }
 
+// 자료를 다시 읽는 동안 보여주는 덮개
+        function showBusy(msg){
+            var el = document.getElementById('busy-overlay');
+            if(!el){
+                el = document.createElement('div');
+                el.id = 'busy-overlay';
+                el.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:10001;'
+                  + 'display:flex;align-items:center;justify-content:center';
+                el.innerHTML =
+                  '<div style="background:#fff;border-radius:12px;padding:22px 30px;text-align:center;'
+                + 'box-shadow:0 8px 24px rgba(0,0,0,.3);min-width:200px">'
+                + '<div style="width:34px;height:34px;margin:0 auto 12px;border:3px solid #C8E6C9;'
+                + 'border-top-color:#2E7D32;border-radius:50%;animation:busySpin .8s linear infinite"></div>'
+                + '<div id="busy-text" style="font-size:14px;color:#33691E;font-weight:600"></div>'
+                + '</div>';
+                document.body.appendChild(el);
+                if(!document.getElementById('busy-style')){
+                    var st = document.createElement('style');
+                    st.id = 'busy-style';
+                    st.textContent = '@keyframes busySpin{to{transform:rotate(360deg)}}';
+                    document.head.appendChild(st);
+                }
+            }
+            document.getElementById('busy-text').textContent = msg || '자료를 새로 읽고 있습니다…';
+            el.style.display = 'flex';
+        }
+
+        function hideBusy(){
+            var el = document.getElementById('busy-overlay');
+            if(el) el.style.display = 'none';
+        }
+
         // 시트에서 다시 읽어온다 (수동 버튼 · 자동 갱신 공용)
         async function reloadFromSheets(auto){
             var btn = document.getElementById('reload-btn-pest');
             var old = btn ? btn.textContent : '';
             if(btn){ btn.textContent = '⏳ 불러오는 중…'; btn.disabled = true; }
             updateStatus('새로고침 중');
+            showBusy('자료를 새로 읽고 있습니다…');
 
             try {
                 // 캐시를 비우고 다시 읽는다
@@ -3912,6 +5452,7 @@
                 if(!auto) alert('❌ 새로고침에 실패했습니다.\n' + e.message);
             } finally {
                 if(btn){ btn.textContent = old || '🔄 새로고침'; btn.disabled = false; }
+                hideBusy();
             }
         }
 
@@ -4244,5 +5785,480 @@ ${info.shelfLife}
             await loadAllData();
         });
     </script>
+  <!-- ══ 농약 등록·수정 ═══════════════════════════════ -->
+<div id="pest-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9998;align-items:center;justify-content:center;padding:14px">
+  <div class="modal-box">
+    <div class="modal-title">
+      <span id="modal-title">🧪 새 농약 등록</span>
+      <span onclick="closeRegisterModal()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+    </div>
+    <div style="padding:16px">
+    
+    <div class="form-group">
+      <label class="form-label">제품명 *</label>
+      <input type="text" id="form-name" class="form-input" placeholder="농약명 입력...">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">분류 *</label>
+        <select id="form-type" class="form-select">
+          <option value="">선택</option>
+          <option value="살균">살균</option>
+          <option value="살충">살충</option>
+          <option value="제초">제초</option>
+          <option value="균충">균충(살균살충)</option>
+          <option value="충초">충초(살충제초)</option>
+          <option value="생조">생조(생장조정제)</option>
+          <option value="기타">기타</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">수량 *</label>
+        <input type="number" id="form-quantity" class="form-input" placeholder="수량" value="1" min="1">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">단위</label>
+      <select id="form-unit" class="form-select">
+        <option value="개">개</option>
+        <option value="병">병</option>
+        <option value="통">통</option>
+        <option value="봉">봉</option>
+        <option value="기타">기타</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">성분</label>
+      <input type="text" id="form-ingredient" class="form-input" placeholder="유황, 구리 등...">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">제조사</label>
+      <input type="text" id="form-manufacturer" class="form-input" placeholder="제조사명">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">메모</label>
+      <textarea id="form-memo" class="form-input" placeholder="구매 날짜, 보관 위치 등..." style="min-height: 80px;"></textarea>
+    </div>
+
+    <div class="form-btns">
+      <button class="btn" id="save-btn" onclick="savePesticide()">저장</button>
+      <button class="btn" id="psis-btn" onclick="searchPsisFromModal()" style="background: #1565C0;">🔍 PSIS검색</button>
+      <button class="btn-small" onclick="closeRegisterModal()" style="background: var(--gray-200); flex: 1; padding: 10px;">취소</button>
+    </div>
+
+    <div class="loading" id="modal-loading">⏳ PSIS 및 독성 정보(svc02) 검색 중...</div>
+
+    <!-- PSIS 검색 결과 컨테이너 -->
+    <div id="psis-results-container" style="display: none; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--gray-300);">
+      <div style="font-size: 12px; font-weight: 600; margin-bottom: 8px; color: var(--gray-600);">
+        🔍 PSIS 검색 결과 (회사명 선택)
+        <span id="psis-count" style="font-weight:400;color:#9E9E9E"></span>
+      </div>
+      <div id="psis-results" style="max-height: 180px; overflow-y: auto;"></div>
+    </div>
+    </div>
+  </div>
+</div>
+
+  <!-- ══ 농약 스캔 등록 ═════════════════════════════════ -->
+  <div id="pest-scan-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+       z-index:9998;align-items:center;justify-content:center;padding:14px">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;
+         overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+      <div style="background:#1B5E20;color:#fff;padding:13px 16px;font-weight:700;font-size:15px;
+           display:flex;align-items:center;justify-content:space-between">
+        <span>📷 농약 스캔 등록</span>
+        <span onclick="closePestScan()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+      </div>
+      <div style="padding:16px">
+
+        <!-- 읽기 -->
+        <div id="ps-step-read">
+          <div id="ps-cam-box" style="display:none;background:#000;border-radius:10px;
+               overflow:hidden;position:relative;aspect-ratio:4/3;margin-bottom:10px">
+            <video id="ps-video" playsinline muted
+              style="width:100%;height:100%;object-fit:cover;display:block"></video>
+            <canvas id="ps-canvas" style="display:none"></canvas>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;
+                 justify-content:center;pointer-events:none">
+              <div style="width:62%;aspect-ratio:1;border:3px solid rgba(139,195,74,.9);
+                   border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,.35)"></div>
+            </div>
+          </div>
+
+          <div id="ps-status" style="text-align:center;font-size:13px;color:#666;margin-bottom:10px">
+            어떻게 읽을지 골라주세요
+          </div>
+
+          <button id="ps-cam-btn" onclick="psToggleCamera()"
+            style="width:100%;padding:11px;background:#1B5E20;color:#fff;border:none;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;margin-bottom:8px">
+            📷 QR·바코드 스캔</button>
+
+          <div style="display:flex;gap:6px;margin-bottom:8px">
+            <button onclick="psPickPhoto('code')"
+              style="flex:1;padding:11px;background:#607D8B;color:#fff;border:none;border-radius:8px;
+              cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🖼️ 사진에서 코드</button>
+            <button onclick="psPickPhoto('ocr')"
+              style="flex:1;padding:11px;background:#00695C;color:#fff;border:none;border-radius:8px;
+              cursor:pointer;font-size:13px;font-weight:600;font-family:inherit">🔤 라벨 글자</button>
+          </div>
+          <button onclick="psManual()"
+            style="width:100%;padding:11px;background:#78909C;color:#fff;border:none;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">⌨️ 직접 입력</button>
+
+          <!-- OCR 언어 -->
+          <div style="margin-top:10px">
+            <div onclick="psToggleLang()" id="ps-lang-head"
+                 style="display:flex;align-items:center;justify-content:space-between;padding:7px 11px;
+                 background:#F5F5F5;border-radius:8px;cursor:pointer;font-size:12px;user-select:none">
+              <span style="color:#546E7A">⚙️ 글자 읽기 언어
+                <span id="ps-lang-now" style="font-weight:700;color:#00695C">한국어·영어</span></span>
+              <span id="ps-lang-arrow" style="color:#9E9E9E">▼</span>
+            </div>
+            <div id="ps-lang-row" style="display:none;padding:10px 11px;background:#FAFAFA;
+                 border:1px solid #EEE;border-top:none;border-radius:0 0 8px 8px;font-size:12px">
+              <label style="margin-right:12px;cursor:pointer">
+                <input type="checkbox" id="ps-kor" checked onchange="psLangLabel()"> 한국어</label>
+              <label style="margin-right:12px;cursor:pointer">
+                <input type="checkbox" id="ps-eng" checked onchange="psLangLabel()"> 영어</label>
+              <label style="cursor:pointer">
+                <input type="checkbox" id="ps-chi" onchange="psLangLabel()"> 중국어(간체)</label>
+              <div style="font-size:11px;color:#9E9E9E;margin-top:6px;line-height:1.5">
+                처음 한 번은 언어 파일을 내려받느라 시간이 걸립니다.
+              </div>
+            </div>
+          </div>
+
+          <input type="file" id="ps-file" accept="image/*" capture="environment"
+            onchange="psFromFile(this)" style="display:none">
+        </div>
+
+        <!-- 확인 -->
+        <div id="ps-step-confirm" style="display:none">
+          <div id="ps-raw" style="background:#F1F8E9;border:1.5px solid #C5E1A5;border-radius:10px;
+               padding:10px 12px;margin-bottom:14px;font-size:12px;color:#33691E;
+               word-break:break-all;max-height:74px;overflow-y:auto"></div>
+
+          <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">
+            제품명 <span style="color:#C62828">*</span></div>
+          <input type="text" id="ps-name" placeholder="예: 만사"
+            style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+            font-size:16px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+          <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">회사명</div>
+          <input type="text" id="ps-company" placeholder="예: 경농"
+            style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+            font-size:16px;box-sizing:border-box;margin-bottom:14px;font-family:inherit">
+
+          <div style="background:#FFF8E1;border-radius:8px;padding:10px 12px;margin-bottom:14px;
+               font-size:12px;color:#795548;line-height:1.6">
+            읽은 글자가 정확한지 확인하고 필요하면 고쳐주세요.<br>
+            이름이 맞아야 PSIS 검색이 잘 됩니다.
+          </div>
+
+          <button onclick="psGoPsis()"
+            style="width:100%;padding:12px;background:#1B5E20;color:#fff;border:none;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;text-align:left;
+            margin-bottom:7px">🔍 PSIS에서 찾아 등록
+            <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:2px">
+              성분·분류·독성까지 채웁니다 (권장)</div></button>
+
+          <button onclick="psGoDirect()"
+            style="width:100%;padding:12px;background:#558B2F;color:#fff;border:none;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:700;font-family:inherit;text-align:left;
+            margin-bottom:7px">⚡ 바로 등록
+            <div style="font-size:11px;font-weight:400;opacity:.85;margin-top:2px">
+              이름·회사만 채워 등록창을 엽니다</div></button>
+
+          <button onclick="psBackToRead()"
+            style="width:100%;padding:11px;background:#fff;color:#666;border:1.5px solid #E0E0E0;
+            border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">↩ 다시 스캔</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 비료·자재 등록·수정 ═══════════════════════════ -->
+  <div id="sup-edit-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+       z-index:9998;align-items:center;justify-content:center;padding:14px">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;
+         overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+      <div style="background:#33691E;color:#fff;padding:13px 16px;font-weight:700;font-size:15px;
+           display:flex;align-items:center;justify-content:space-between">
+        <span id="sup-edit-title">🌱 새 비료·자재 등록</span>
+        <span onclick="closeSupEdit()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+      </div>
+      <div style="padding:16px">
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">
+          비료·자재명 <span style="color:#C62828">*</span></div>
+        <input type="text" id="supe-name" placeholder="예: 유박비료"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:16px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">종류</div>
+            <select id="supe-type" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+              border-radius:8px;font-size:15px;font-family:inherit;background:#fff">
+              <option value="비료">비료</option>
+              <option value="영양제">영양제</option>
+              <option value="상토">상토</option>
+              <option value="퇴비">퇴비</option>
+              <option value="자재">자재</option>
+              <option value="기타">기타</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">보유량</div>
+            <input type="text" id="supe-qty" value="1"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">성분·규격</div>
+        <input type="text" id="supe-ing" placeholder="예: N-P-K 10-10-10 / 20kg"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:15px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">사용방법·메모</div>
+        <textarea id="supe-memo" rows="3" placeholder="예: 10a당 20kg, 정식 2주 전"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:14px;box-sizing:border-box;font-family:inherit;resize:vertical"></textarea>
+
+        <div id="supe-id-row" style="font-size:11px;color:#BDBDBD;margin-top:8px;display:none"></div>
+
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button onclick="closeSupEdit()"
+            style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:#fff;color:#666;
+            border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">취소</button>
+          <button id="supe-del-btn" onclick="deleteSupplyById()"
+            style="display:none;flex:1;padding:11px;border:none;background:#C62828;color:#fff;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;
+            font-family:inherit">🗑️ 삭제</button>
+          <button onclick="saveSupEdit()" id="supe-save-btn"
+            style="flex:2;padding:11px;border:none;background:#33691E;color:#fff;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">✅ 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 작물 등록·수정 ═══════════════════════════════ -->
+  <div id="plant-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+       z-index:9998;align-items:center;justify-content:center;padding:14px">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:420px;max-height:90vh;
+         overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+      <div style="background:#2E7D32;color:#fff;padding:13px 16px;font-weight:700;font-size:15px;
+           display:flex;align-items:center;justify-content:space-between">
+        <span id="plant-modal-title">🌾 새 작물 등록</span>
+        <span onclick="closePlantModal()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+      </div>
+      <div style="padding:16px">
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">
+          작물명 <span style="color:#C62828">*</span></div>
+        <input type="text" id="plant-name" placeholder="예: 감"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:16px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">분류</div>
+            <select id="plant-category" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+              border-radius:8px;font-size:15px;font-family:inherit;background:#fff">
+              <option value="유실수">🍎 유실수</option>
+              <option value="채소">🥬 채소</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">심은 날</div>
+            <input type="date" id="plant-date"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">품종</div>
+            <input type="text" id="plant-variety" placeholder="예: 대봉"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">수량</div>
+            <input type="text" id="plant-qty" value="1"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">구역</div>
+            <select id="plant-zone" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+              border-radius:8px;font-size:15px;font-family:inherit;background:#fff">
+              <option value="">선택</option>
+              <option value="1구역">1구역</option>
+              <option value="사이구역">사이구역</option>
+              <option value="2구역">2구역</option>
+              <option value="온실">온실</option>
+              <option value="울타리앞">울타리앞</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">이랑</div>
+            <input type="text" id="plant-irang" placeholder="예: 3이랑"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">상태</div>
+        <select id="plant-status" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+          border-radius:8px;font-size:15px;font-family:inherit;background:#fff;margin-bottom:12px">
+          <option value="active">재배중</option>
+          <option value="harvest">수확중</option>
+          <option value="최종수확">최종수확</option>
+          <option value="dead">고사</option>
+        </select>
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">비고</div>
+        <input type="text" id="plant-memo" placeholder="예: 2년생 묘목"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:15px;box-sizing:border-box;font-family:inherit">
+
+        <div id="plant-id-row" style="font-size:11px;color:#BDBDBD;margin-top:8px;display:none"></div>
+
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button onclick="closePlantModal()"
+            style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:#fff;color:#666;
+            border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">취소</button>
+          <button id="plant-del-btn" onclick="deletePlantById()"
+            style="display:none;flex:1;padding:11px;border:none;background:#C62828;color:#fff;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;
+            font-family:inherit">🗑️ 삭제</button>
+          <button onclick="savePlant()" id="plant-save-btn"
+            style="flex:2;padding:11px;border:none;background:#2E7D32;color:#fff;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">✅ 저장</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 비료·자재 스캔 등록 ═════════════════════════════ -->
+  <div id="sup-scan-modal" onclick="if(event.target===this) supTryClose()"
+       style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;
+       align-items:center;justify-content:center;padding:14px">
+    <div style="background:white;border-radius:12px;width:100%;max-width:420px;max-height:90vh;
+         overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.3)" onclick="event.stopPropagation()">
+      <div style="background:#33691E;color:white;padding:13px 16px;font-weight:700;font-size:15px;
+           display:flex;align-items:center;justify-content:space-between">
+        <span>📷 비료·자재 등록</span>
+        <span onclick="closeSupplyScan()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+      </div>
+      <div style="padding:16px">
+
+        <!-- 읽기 -->
+        <div id="sup-step-read">
+          <div id="sup-cam-box" style="display:none;background:#000;border-radius:10px;
+               overflow:hidden;position:relative;aspect-ratio:4/3;margin-bottom:10px">
+            <video id="sup-video" playsinline muted
+              style="width:100%;height:100%;object-fit:cover;display:block"></video>
+            <canvas id="sup-canvas" style="display:none"></canvas>
+            <div style="position:absolute;inset:0;display:flex;align-items:center;
+                 justify-content:center;pointer-events:none">
+              <div style="width:62%;aspect-ratio:1;border:3px solid rgba(139,195,74,0.9);
+                   border-radius:12px;box-shadow:0 0 0 9999px rgba(0,0,0,0.35)"></div>
+            </div>
+          </div>
+
+          <div id="sup-status" style="text-align:center;font-size:13px;color:#666;margin-bottom:10px">
+            어떻게 읽을지 골라주세요
+          </div>
+
+          <button id="sup-cam-btn" onclick="supToggleCamera()"
+            style="width:100%;padding:11px;background:#33691E;color:white;border:none;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;
+            margin-bottom:8px">📷 QR·바코드 스캔</button>
+          <button onclick="supPickPhoto()"
+            style="width:100%;padding:11px;background:#607D8B;color:white;border:none;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit;
+            margin-bottom:8px">🖼️ 사진에서 코드 읽기</button>
+          <button onclick="supManual()"
+            style="width:100%;padding:11px;background:#78909C;color:white;border:none;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;font-family:inherit">
+            ⌨️ 직접 입력</button>
+          <input type="file" id="sup-file" accept="image/*" capture="environment"
+            onchange="supFromFile(this)" style="display:none">
+        </div>
+
+        <!-- 확인 · 입력 -->
+        <div id="sup-step-form" style="display:none">
+          <div id="sup-raw-box" style="background:#F1F8E9;border:1.5px solid #C5E1A5;
+               border-radius:10px;padding:10px 12px;margin-bottom:14px;font-size:12px;
+               color:#33691E;word-break:break-all;max-height:70px;overflow-y:auto"></div>
+
+          <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">
+            비료·자재명 <span style="color:#C62828">*</span></div>
+          <input type="text" id="sup-name" placeholder="예: 유박비료"
+            style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+            font-size:16px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+          <div style="display:flex;gap:8px;margin-bottom:12px">
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">종류</div>
+              <select id="sup-type" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+                border-radius:8px;font-size:15px;font-family:inherit;background:white">
+                <option value="비료">비료</option>
+                <option value="영양제">영양제</option>
+                <option value="상토">상토</option>
+                <option value="퇴비">퇴비</option>
+                <option value="자재">자재</option>
+                <option value="기타">기타</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">보유량</div>
+              <input type="text" id="sup-qty" value="1"
+                style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+                font-size:15px;box-sizing:border-box;font-family:inherit">
+            </div>
+          </div>
+
+          <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">성분</div>
+          <input type="text" id="sup-ing" placeholder="예: N-P-K 10-10-10"
+            style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+            font-size:15px;box-sizing:border-box;margin-bottom:12px;font-family:inherit">
+
+          <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">사용방법·메모</div>
+          <textarea id="sup-memo" rows="3" placeholder="예: 10a당 20kg, 정식 2주 전"
+            style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+            font-size:14px;box-sizing:border-box;font-family:inherit;resize:vertical"></textarea>
+
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <button onclick="supBackToRead()"
+              style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:white;color:#666;
+              border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">↩ 다시</button>
+            <button onclick="supSave()" id="sup-save-btn"
+              style="flex:2;padding:11px;border:none;background:#33691E;color:white;
+              border-radius:8px;cursor:pointer;font-size:14px;font-weight:700;
+              font-family:inherit">✅ 비료로 등록</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>
