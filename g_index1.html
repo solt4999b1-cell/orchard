@@ -953,8 +953,12 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
+                    <button onclick="openFertPicker()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 14px;background:#33691E;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">🌾 작물별 시비량</button>
                     <button onclick="openSupEdit()"
-                        style="margin-left:auto;margin-right:6px;padding:8px 14px;background:#2E7D32;
+                        style="margin-right:6px;padding:8px 14px;background:#2E7D32;
                         color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
                         font-weight:600;font-family:inherit">➕ 자재 등록</button>
                     <button onclick="openSupplyScan()"
@@ -1468,6 +1472,44 @@
         // ════════════════════════════════════════════════════════════
         // 렌더링 함수들
         // ════════════════════════════════════════════════════════════
+// 시비 글에서 비료·액비·영양제 이름을 찾아 눈에 띄게 칠한다
+        //   ① 보유 자재(supplies)에 있는 이름은 초록 배경
+        //   ② 그 밖의 비료 관련 낱말은 주황 글씨
+        function highlightFertilizer(text){
+            var s = String(text == null ? '' : text);
+            if(!s) return '';
+
+            // 먼저 HTML 특수문자를 막는다
+            s = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+            // 보유 자재 이름 (긴 것부터 — 짧은 이름이 먼저 걸리지 않도록)
+            var owned = (APP.data.supplies || [])
+                .map(function(r){ return r && String(r[7] || '').trim(); })
+                .filter(function(x){ return x && x.length >= 2; })
+                .sort(function(a,b){ return b.length - a.length; });
+
+            var marks = [];
+            owned.forEach(function(name){
+                var esc = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                s = s.replace(new RegExp(esc, 'g'), function(m){
+                    marks.push('<span style="background:#C8E6C9;color:#1B5E20;font-weight:700;'
+                             + 'padding:1px 5px;border-radius:4px">' + m + '</span>');
+                    return '@@FT' + (marks.length - 1) + 'FT@@';
+                });
+            });
+
+            // 보유하지 않은 비료 관련 낱말도 눈에 띄게
+            s = s.replace(/([가-힣]*(?:유박|퇴비|계분|우분|골분|어분|깻묵|액비|영양제|요소비료|복합비료|유안|석회|고토|붕소|아미노산|칼슘제|칼륨|질소|인산|가리|밑거름|웃거름|추비|기비|상토)[가-힣]*)/g,
+                function(m){
+                    if(m.indexOf('@@FT') >= 0) return m;
+                    return '<span style="color:#E65100;font-weight:700">' + m + '</span>';
+                });
+
+            // 표시해 둔 자리를 되돌린다
+            s = s.replace(/@@FT(\d+)FT@@/g, function(_, i){ return marks[Number(i)]; });
+            return s;
+        }
+
         function renderWeekly() {
             console.log('🚀 renderWeekly 함수 시작!');
             
@@ -1704,14 +1746,17 @@
                                 `;
                             }
                             
-                            // 시비 관리
+                            // 시비 관리 — 비료·액비·영양제 이름을 눈에 띄게
                             if (category === '시비') {
+                                const _t = highlightFertilizer(r[2] || '');
+                                const _d = r[3] ? highlightFertilizer(r[3]) : '';
+                                const _x = r[4] ? highlightFertilizer(String(r[4]).split('|').join('\n')) : '';
                                 return `
                                     <div class="card">
-                                        <div class="card-title">🌾 ${r[2] || ''}</div>
+                                        <div class="card-title">🌾 ${_t}</div>
                                         <div class="card-content">
-                                            ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
-                                            ${r[4] ? `<div class="card-details">${String(r[4]).split('|').join('\n')}</div>` : ''}
+                                            ${_d ? `<div class="card-description">📋 ${_d}</div>` : ''}
+                                            ${_x ? `<div class="card-details">${_x}</div>` : ''}
                                         </div>
                                     </div>
                                 `;
@@ -2497,6 +2542,7 @@
                             </select>
                             <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
                             <button onclick="openPlantModal('${r[0]}')" title="자세히 수정" style="padding: 4px 8px; background: #1565C0; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">✏️</button>
+                            <button onclick="showFertInfo('${String(r[1]).replace(/'/g, "\\'")}')" title="시비량 보기" style="padding: 4px 8px; background: #33691E; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">🌾</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -2522,6 +2568,7 @@
                             </select>
                             <button onclick="saveVariety('${r[0]}', '${r[1]}')" style="padding: 4px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 4px;">💾</button>
                             <button onclick="openPlantModal('${r[0]}')" title="자세히 수정" style="padding: 4px 8px; background: #1565C0; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">✏️</button>
+                            <button onclick="showFertInfo('${String(r[1]).replace(/'/g, "\\'")}')" title="시비량 보기" style="padding: 4px 8px; background: #33691E; color: white; border: none; border-radius: 3px; font-size: 11px; margin-left: 3px;">🌾</button>
                         </td>
                     </tr>`;
                 }).join('');
@@ -4982,6 +5029,233 @@
             _pestToast('🗑️ 삭제되었습니다');
         }
 
+        // ══ 시비량 (흙토람) ═══════════════════════════════
+        //   10a = 1,000 m²  /  이랑 1개 = 20m × 1m = 20 m²  →  10a 의 1/50
+        var IRANG_M2 = 20;
+        var _fertCache = {};          // 작물코드별 조회 결과 (한 번만 부른다)
+
+        // growPlants 에서 작물코드를 찾는다
+        function _cropCodeOf(name){
+            var rows = APP.data.growPlants || [];
+            var hdr = _gpHeaders();
+            var ci = hdr.indexOf('cropCd');
+            var ni = hdr.indexOf('name');
+            if(ci < 0) return null;
+            var hit = rows.find(function(r){
+                return r && String(r[ni]).trim() === String(name).trim(); });
+            return hit ? String(hit[ci] || '').trim() : null;
+        }
+
+        // growPlants 머리글 (읽기 결과에 머리글이 없으면 기본값)
+        function _gpHeaders(){
+            return ['id','name','plantDate','emoji','category','no','status',
+                    'totalDays','pinchDays','fruitDays','updatedAt',
+                    'irang','qty','zone','spot','crops','cropCd','cropNm'];
+        }
+
+        // 시비량을 가져온다 (같은 코드는 다시 부르지 않는다)
+        async function getFertStd(cropCode){
+            if(!cropCode) return null;
+            if(_fertCache[cropCode]) return _fertCache[cropCode];
+            try {
+                var res = await fetch(APP.gasUrl + '?action=soilFrtlzr&cropCode='
+                                      + encodeURIComponent(cropCode));
+                var j = await res.json();
+                if(j && j.success && j.list && j.list.length){
+                    _fertCache[cropCode] = j.list[0];
+                    return j.list[0];
+                }
+            } catch(e){ console.warn('시비량 조회 실패:', e.message); }
+            return null;
+        }
+
+        // 10a 성분량(kg) → 이랑 N개 기준 g
+        function _toIrang(kgPer10a, irangCount){
+            var v = parseFloat(kgPer10a);
+            if(isNaN(v) || v <= 0) return 0;
+            return Math.round(v * 1000 / (1000 / IRANG_M2) * (irangCount || 1));
+        }
+
+        // 이 작물이 몇 이랑인지 센다
+        function _irangCountOf(name){
+            var hdr = _gpHeaders();
+            var ni = hdr.indexOf('name'), ii = hdr.indexOf('irang');
+            var set = {};
+            (APP.data.growPlants || []).forEach(function(r){
+                if(!r || String(r[ni]).trim() !== String(name).trim()) return;
+                var v = String(r[ii] || '').trim();
+                if(v) set[v] = true;
+            });
+            var n = Object.keys(set).length;
+            return n || 1;
+        }
+
+        // 보유 비료의 성분 함량을 읽는다  "N-P-K 4-2-1" → {n:4,p:2,k:1}
+        function _npkOf(text){
+            var s = String(text || '');
+            var m = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+            if(!m) return null;
+            return { n: parseFloat(m[1]), p: parseFloat(m[2]), k: parseFloat(m[3]) };
+        }
+
+        // 시비량 카드 HTML 을 만든다
+        function fertCardHtml(cropName, std, irangCount){
+            if(!std) return '';
+            var rows = [
+                ['밑거름', std.pre_Fert_N, std.pre_Fert_P, std.pre_Fert_K],
+                ['웃거름', std.post_Fert_N, std.post_Fert_P, std.post_Fert_K]
+            ];
+            var num = function(v){ var x = parseFloat(v); return (isNaN(x) || x <= 0) ? null : x; };
+
+            var body = rows.map(function(r){
+                var cells = [1,2,3].map(function(i){
+                    var kg = num(r[i]);
+                    if(kg === null) return '<td style="text-align:center;color:#CCC">—</td>';
+                    var g = _toIrang(kg, irangCount);
+                    return '<td style="text-align:center">'
+                         + '<div style="font-weight:700;color:#1B5E20">' + kg + ' kg</div>'
+                         + '<div style="font-size:11px;color:#E65100">' + g + ' g</div></td>';
+                }).join('');
+                var any = [1,2,3].some(function(i){ return num(r[i]) !== null; });
+                return any ? '<tr><td style="font-weight:700;color:#546E7A;white-space:nowrap">'
+                           + r[0] + '</td>' + cells + '</tr>' : '';
+            }).join('');
+
+            // 보유 비료 환산
+            var conv = '';
+            var preN = num(std.pre_Fert_N);
+            if(preN){
+                var needN = _toIrang(preN, irangCount);      // g
+                var lines = [];
+                (APP.data.supplies || []).forEach(function(r){
+                    if(!r) return;
+                    var nm = String(r[7] || '').trim();
+                    var npk = _npkOf(r[4]) || _npkOf(r[10]);
+                    if(!nm || !npk || !npk.n) return;
+                    var need = needN / (npk.n / 100);
+                    lines.push('<div style="margin-top:3px">'
+                      + '<span style="background:#C8E6C9;color:#1B5E20;font-weight:700;'
+                      + 'padding:1px 6px;border-radius:4px">' + nm + '</span>'
+                      + ' <span style="color:#666;font-size:11px">(' + npk.n + '-' + npk.p + '-' + npk.k + ')</span>'
+                      + ' → 이랑당 <b>' + (need >= 1000 ? (need/1000).toFixed(1) + ' kg' : Math.round(need) + ' g') + '</b>'
+                      + '</div>');
+                });
+                if(lines.length) conv =
+                    '<div style="margin-top:10px;padding-top:9px;border-top:1px dashed #DDD">'
+                  + '<div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:3px">'
+                  + '보유 비료로 환산 (밑거름 질소 기준)</div>' + lines.join('') + '</div>';
+            }
+
+            return '<div style="background:#F9FBE7;border:1.5px solid #DCE775;border-radius:10px;'
+                 + 'padding:11px 13px;margin-top:8px;font-size:13px">'
+                 + '<div style="font-weight:700;color:#33691E;margin-bottom:7px">'
+                 + '🌾 ' + std.fstd_Crop_Nm + ' · 표준 시비량'
+                 + '<span style="font-weight:400;font-size:11px;color:#666"> · 이랑 '
+                 + irangCount + '개(' + (IRANG_M2 * irangCount) + '㎡)</span></div>'
+                 + '<table style="width:100%;border-collapse:collapse;font-size:12px">'
+                 + '<tr style="color:#9E9E9E;font-size:11px">'
+                 + '<td></td><td style="text-align:center">질소</td>'
+                 + '<td style="text-align:center">인산</td><td style="text-align:center">칼리</td></tr>'
+                 + body + '</table>'
+                 + '<div style="font-size:10px;color:#9E9E9E;margin-top:5px">'
+                 + '위 = 10a(1,000㎡) 기준 · 아래 = 이랑 기준</div>'
+                 + conv + '</div>';
+        }
+
+        // 작물 하나의 시비량을 창으로 보여준다
+        async function showFertInfo(cropName){
+            var code = _cropCodeOf(cropName);
+            if(!code){
+                alert('「' + cropName + '」 의 작물코드가 없습니다.\n'
+                    + 'growPlants 시트의 cropCd 열을 확인해 주세요.');
+                return;
+            }
+            showBusy('시비량을 불러오는 중입니다…');
+            var std = await getFertStd(code);
+            hideBusy();
+            if(!std){ alert('시비량 정보를 받지 못했습니다.'); return; }
+
+            var n = _irangCountOf(cropName);
+            var ex = document.getElementById('fert-modal');
+            if(ex) ex.remove();
+
+            var box = document.createElement('div');
+            box.id = 'fert-modal';
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;'
+              + 'display:flex;align-items:center;justify-content:center;padding:14px';
+            box.innerHTML =
+              '<div style="background:#fff;border-radius:12px;width:100%;max-width:420px;'
+            + 'max-height:90vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)">'
+            + '<div style="background:#33691E;color:#fff;padding:13px 16px;font-weight:700;'
+            + 'font-size:15px;display:flex;align-items:center;justify-content:space-between">'
+            + '<span>🌾 ' + cropName + ' · 시비량</span>'
+            + '<span onclick="document.getElementById(\'fert-modal\').remove();'
+            + 'document.body.style.overflow=\'\'" style="cursor:pointer;font-size:22px">&times;</span>'
+            + '</div><div style="padding:14px">' + fertCardHtml(cropName, std, n)
+            + '<div style="font-size:11px;color:#9E9E9E;margin-top:10px;line-height:1.6">'
+            + '농촌진흥청 흙토람 표준 시비량입니다.<br>'
+            + '토양 검정을 받으시면 더 정확한 처방을 받을 수 있습니다.</div>'
+            + '</div></div>';
+            document.body.appendChild(box);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 작물을 골라 시비량을 본다
+        function openFertPicker(){
+            var hdr = _gpHeaders();
+            var ni = hdr.indexOf('name'), ci = hdr.indexOf('cropCd'), st = hdr.indexOf('status');
+
+            var seen = {}, list = [];
+            (APP.data.growPlants || []).forEach(function(r){
+                if(!r) return;
+                var nm = String(r[ni] || '').trim();
+                if(!nm || seen[nm]) return;
+                var s = String(r[st] || '').toLowerCase();
+                if(['dead','deleted','최종수확','고사','삭제'].indexOf(s) >= 0) return;
+                seen[nm] = true;
+                list.push({ name: nm, code: String(r[ci] || '').trim() });
+            });
+            list.sort(function(a,b){ return a.name.localeCompare(b.name,'ko'); });
+
+            if(!list.length){ alert('등록된 작물이 없습니다.'); return; }
+
+            var ex = document.getElementById('fert-picker'); if(ex) ex.remove();
+            var box = document.createElement('div');
+            box.id = 'fert-picker';
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;'
+              + 'display:flex;align-items:center;justify-content:center;padding:14px';
+            box.innerHTML =
+              '<div style="background:#fff;border-radius:12px;width:100%;max-width:420px;'
+            + 'max-height:88vh;display:flex;flex-direction:column;box-shadow:0 8px 24px rgba(0,0,0,.3)">'
+            + '<div style="background:#33691E;color:#fff;padding:13px 16px;font-weight:700;font-size:15px;'
+            + 'display:flex;align-items:center;justify-content:space-between">'
+            + '<span>🌾 작물별 시비량</span>'
+            + '<span onclick="closeFertPicker()" style="cursor:pointer;font-size:22px">&times;</span></div>'
+            + '<div style="padding:12px 14px;overflow-y:auto">'
+            + '<div style="font-size:12px;color:#666;margin-bottom:9px">보고 싶은 작물을 눌러주세요</div>'
+            + '<div style="display:flex;flex-wrap:wrap;gap:5px">'
+            + list.map(function(x){
+                var ok = !!x.code;
+                return '<button onclick="closeFertPicker();showFertInfo(&quot;'
+                     + x.name.replace(/"/g,'') + '&quot;)" '
+                     + 'style="background:' + (ok ? '#F1F8E9' : '#FAFAFA')
+                     + ';border:1px solid ' + (ok ? '#C5E1A5' : '#E0E0E0')
+                     + ';color:' + (ok ? '#33691E' : '#BDBDBD')
+                     + ';padding:5px 10px;border-radius:12px;cursor:pointer;font-size:12px;'
+                     + 'font-family:inherit;white-space:nowrap">' + x.name
+                     + (ok ? '' : ' <span style="font-size:10px">(코드없음)</span>') + '</button>';
+              }).join('')
+            + '</div></div></div>';
+            document.body.appendChild(box);
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeFertPicker(){
+            var m = document.getElementById('fert-picker');
+            if(m) m.remove();
+            document.body.style.overflow = '';
+        }
+
         // ══ 작물 등록·수정·삭제 ═══════════════════════════
         //   growPlants 열: id name plantDate emoji category no status
         //                  totalDays pinchDays fruitDays updatedAt
@@ -5134,6 +5408,7 @@
 
         function openSupplyScan(){
             document.getElementById('sup-scan-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';   // 뒷배경 스크롤 잠금
             supBackToRead();
         }
 
@@ -5149,6 +5424,7 @@
         function closeSupplyScan(){
             supStopCamera();
             document.getElementById('sup-scan-modal').style.display = 'none';
+            document.body.style.overflow = '';      // 뒷배경 스크롤 되살리기
         }
 
         function supStopCamera(){
@@ -6156,7 +6432,7 @@ ${info.shelfLife}
   </div>
 
   <!-- ══ 비료·자재 스캔 등록 ═════════════════════════════ -->
-  <div id="sup-scan-modal" onclick="if(event.target===this) supTryClose()"
+  <div id="sup-scan-modal"
        style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;
        align-items:center;justify-content:center;padding:14px">
     <div style="background:white;border-radius:12px;width:100%;max-width:420px;max-height:90vh;
