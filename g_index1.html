@@ -113,40 +113,34 @@
         }
 		
         /* 3열: 우측 QR 및 제작정보 */
-        .header-right {
-            text-align: right;
-            width: 26%;
-            padding-right: 36px !important; /* 토글 버튼 자리 확보 */
-        }
+        /* ✅ 3열 영역: 우측 메뉴 버튼(44px)과 겹치지 않도록 충분한 우측 여백 확보 */
+		.header-right, 
+		.header-table td:last-child {
+		    text-align: center;            /* 3열 칸 안에서 가운데 정렬하여 버튼과 충돌 방지 */
+		    padding-right: 48px !important; /* 메뉴 토글 버튼(☰) 자리 확보 */
+		}
 		
-        .header-right .hdr-qrcode {
-            display: inline-flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 2px;
-        }
-
-        .header-right .hdr-qrcode h5 {
-            margin: 0;
-            font-size: 9px;
-            color: #777;
-            font-weight: normal;
-            line-height: 1.1;
-            white-space: nowrap;
-        }
+		/* ✅ QR 코드 크기 직접 지정 (원하는 크기로 조절: 28px ~ 32px) */
+		.hdr-qrcode img {
+		    width: 30px !important;
+		    height: 30px !important;
+		    max-width: 30px !important;
+		    max-height: 30px !important;
+		    display: inline-block;
+		    vertical-align: middle;
+		    border-radius: 4px;
+		    border: 1px solid #ddd;
+		    background: #fff;
+		    padding: 1px;
+		}
 		
-        /* ✅ QR 코드 크기 적정화 */
-        .header-right .hdr-qrcode img {
-            width: 38px !important;
-            height: 38px !important;
-            max-width: 38px !important;
-            max-height: 38px !important;
-            display: block;
-            border-radius: 4px;
-            border: 1px solid #ddd;
-            background: #fff;
-            padding: 1px;
-        }
+		.hdr-qrcode h5 {
+		    margin: 0 0 2px 0;
+		    font-size: 9px;
+		    color: #777;
+		    font-weight: normal;
+		    white-space: nowrap;
+		}
         /* ═══════════════════════════════════════ */
         /* 헤더 (축소 가능) */
         /* ═══════════════════════════════════════ */
@@ -1037,45 +1031,44 @@
 <body>
     <!-- 헤더 -->
     <header id="main-header">
-        <div class="container">
-            <table class="header-table">
-                <colgroup>
-                    <col style="width: 32%;">
-                    <col style="width: 42%;">
-                    <col style="width: 26%;">
-                </colgroup>
-                <tbody>
-                    <tr>
-                        <!-- 1열 (좌측): 날짜 및 상태 정보 -->
-                        <td class="header-left">
-                            <div class="date-info">
-                                <div>📅 <strong id="today-date"></strong></div>
-                                <div>📊 <strong id="load-status">초기화 중<span class="spinner"></span></strong></div>
-                            </div>
-                        </td>
-
-                        <!-- 2열 (가운데): 타이틀 -->
-                        <td class="header-center">
-                            <h1>🌳 새솔동 과수원</h1>
-							<h5>이용호 copyright 2026. 08. 17.</h5>
-                        </td>
-
-                        <!-- 3열 (우측): QR코드 및 제작 정보 -->
-                        <td class="header-left">
-                            <div class="hdr-qrcode">
-                                
-                                <a href="https://solt4999b1-cell.github.io/orchard/g_index1.html" target="_blank" title="과수원 홈">
-                                    <img src="./2ey99.png" alt="QR코드">
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-        <!-- 메뉴 토글 버튼 -->
-        <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
-    </header>
+	    <div class="container">
+	        <table class="header-table">
+	            <colgroup>
+	                <col style="width: 32%;">
+	                <col style="width: 42%;">
+	                <col style="width: 26%;">
+	            </colgroup>
+	            <tbody>
+	                <tr>
+	                    <!-- 1열 (좌측): 날짜 및 상태 -->
+	                    <td class="header-left">
+	                        <div class="date-info">
+	                            <div>📅 <strong id="today-date"></strong></div>
+	                            <div>📊 <strong id="load-status">초기화 중<span class="spinner"></span></strong></div>
+	                        </div>
+	                    </td>
+	
+	                    <!-- 2열 (가운데): 타이틀 및 제작일 -->
+	                    <td class="header-center">
+	                        <h1>🌳 새솔동 과수원</h1>
+	                        <h5>이용호 copyright 2026. 08. 17.</h5>
+	                    </td>
+	
+	                    <!-- 3열 (우측): QR코드 (버튼과 겹치지 않음) -->
+	                    <td class="header-right">
+	                        <div class="hdr-qrcode">
+	                            <a href="https://solt4999b1-cell.github.io/orchard/g_index1.html" target="_blank" title="과수원 홈">
+	                                <img src="./2ey99.png" alt="QR코드">
+	                            </a>
+	                        </div>
+	                    </td>
+	                </tr>
+	            </tbody>
+	        </table>
+	    </div>
+	    <!-- 메뉴 토글 버튼 -->
+	    <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
+	</header>
 
     <!-- 처음 열 때 보이는 안내 (자료가 오면 사라진다) -->
   <div id="first-load" style="display:none;padding:36px 20px;text-align:center">
