@@ -61,85 +61,143 @@
             margin: 0 auto;
             padding: 0;
         }
-	/* ═══════════════════════════════════════ */
-        /* 헤더 3열 고정 테이블 및 QR 코드 스타일 */
-        /* ═══════════════════════════════════════ */
-        .header-table {
-            width: 100%;
-            table-layout: fixed;
-            border-collapse: collapse;
-        }
-		
-        .header-table td {
-            vertical-align: middle;
-            padding: 2px 4px;
-            overflow: hidden;
-        }
-		
-        /* 1열: 좌측 날짜 및 상태 */
-        .header-left {
-            text-align: left;
-            width: 32%;
-        }
-		
-        .date-info {
-            color: var(--text-light);
-            font-size: 11px;
-            line-height: 1.3;
-        }
-
-        .date-info div {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        /* 2열: 가운데 타이틀 */
-        .header-center {
-            text-align: center;
-            width: 42%;
-        }
-		
-        .header-center h1 {
-            margin: 0;
-            justify-content: center;
-            font-size: 18px;
-            color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-		
-        /* 3열: 우측 QR 및 제작정보 */
-        /* ✅ 3열 영역: 우측 메뉴 버튼(44px)과 겹치지 않도록 충분한 우측 여백 확보 */
-		.header-right, 
-		.header-table td:last-child {
-		    text-align: center;            /* 3열 칸 안에서 가운데 정렬하여 버튼과 충돌 방지 */
-		    padding-right: 48px !important; /* 메뉴 토글 버튼(☰) 자리 확보 */
+	    /* ═══════════════════════════════════════ */
+		/* 헤더 3열 고정 테이블 스타일 */
+		/* ═══════════════════════════════════════ */
+		.header-table {
+		    width: 100%;
+		    table-layout: fixed;
+		    border-collapse: collapse;
 		}
 		
-		/* ✅ QR 코드 크기 직접 지정 (원하는 크기로 조절: 28px ~ 32px) */
-		.hdr-qrcode img {
-		    width: 40px !important;
-		    height: 40px !important;
-		    max-width: 40px !important;
-		    max-height: 40px !important;
-		    display: inline-block;
+		.header-table td {
 		    vertical-align: middle;
+		    padding: 2px;
+		    overflow: hidden;
+		}
+		
+		/* 1열: 좌측 날짜 및 상태 */
+		.header-left {
+		    text-align: left;
+		    width: 30%;
+		}
+		
+		.date-info {
+		    color: var(--text-light);
+		    font-size: 11px;
+		    line-height: 1.3;
+		}
+		
+		.date-info div {
+		    white-space: nowrap;
+		    overflow: hidden;
+		    text-overflow: ellipsis;
+		}
+		
+		/* 2열: 가운데 타이틀 */
+		.header-center {
+		    text-align: center;
+		    width: 44%;
+		}
+		
+		.header-center h1 {
+		    margin: 0;
+		    justify-content: center;
+		    font-size: 17px;
+		    color: var(--primary-color);
+		    display: flex;
+		    align-items: center;
+		    gap: 4px;
+		    font-weight: 700;
+		    white-space: nowrap;
+		}
+		
+		.header-center h5 {
+		    margin: 1px 0 0 0;
+		    font-size: 9px;
+		    color: #777;
+		    font-weight: normal;
+		    white-space: nowrap;
+		}
+		
+		/* 3열: 우측 QR코드 + 메뉴 버튼 결합 영역 */
+		.header-right {
+		    text-align: right;
+		    width: 26%;
+		}
+		
+		.header-action-group {
+		    display: flex;
+		    align-items: center;
+		    justify-content: flex-end;
+		    gap: 6px;
+		}
+		
+		.hdr-qrcode {
+		    display: inline-flex;
+		    align-items: center;
+		    justify-content: center;
+		    flex: 0 0 auto;
+		}
+		
+		/* ✅ QR 코드 크기 축소 */
+		.hdr-qrcode img {
+		    width: 42px !important;
+		    height: 42px !important;
+		    max-width: 42px !important;
+		    max-height: 42px !important;
+		    display: block;
 		    border-radius: 4px;
 		    border: 1px solid #ddd;
 		    background: #fff;
 		    padding: 1px;
 		}
 		
-		.hdr-qrcode h5 {
-		    margin: 0 0 2px 0;
-		    font-size: 9px;
-		    color: #777;
-		    font-weight: normal;
-		    white-space: nowrap;
+		/* ✅ 메뉴 토글 버튼 (겹침 방지) */
+		.menu-toggle-btn {
+		    position: static; /* 겹치지 않게 Flex 아이템으로 변경 */
+		    width: 32px;
+		    height: 32px;
+		    flex: 0 0 32px;
+		    border: none;
+		    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+		    color: white;
+		    border-radius: 6px;
+		    font-size: 16px;
+		    cursor: pointer;
+		    display: flex;
+		    align-items: center;
+		    justify-content: center;
+		    box-shadow: 0 2px 5px rgba(42, 95, 42, 0.3);
+		    -webkit-tap-highlight-color: transparent;
+		    touch-action: manipulation;
+		}
+		
+		.menu-toggle-btn:active {
+		    transform: scale(0.95);
+		}
+		
+		/* ✅ 헤더 토글 축소 시: 1열, 2열, QR 숨김 */
+		header {
+		    background: white;
+		    padding: 6px 8px;
+		    border-radius: 0 0 12px 12px;
+		    margin-bottom: 0;
+		    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+		    border-left: 6px solid var(--primary-color);
+		    transition: all 0.3s ease;
+		    position: relative;
+		    z-index: 100;
+		}
+		
+		header.collapsed .header-left,
+		header.collapsed .header-center,
+		header.collapsed .hdr-qrcode {
+		    display: none !important;
+		}
+		
+		header.collapsed .header-right {
+		    width: 100% !important;
 		}
         /* ═══════════════════════════════════════ */
         /* 헤더 (축소 가능) */
@@ -1030,17 +1088,17 @@
 </head>
 <body>
     <!-- 헤더 -->
-    <header id="main-header">
+	<header id="main-header">
 	    <div class="container">
 	        <table class="header-table">
 	            <colgroup>
-	                <col style="width: 32%;">
-	                <col style="width: 42%;">
+	                <col style="width: 30%;">
+	                <col style="width: 44%;">
 	                <col style="width: 26%;">
 	            </colgroup>
 	            <tbody>
 	                <tr>
-	                    <!-- 1열 (좌측): 날짜 및 상태 -->
+	                    <!-- 1열 (좌측): 날짜 및 상태 정보 -->
 	                    <td class="header-left">
 	                        <div class="date-info">
 	                            <div>📅 <strong id="today-date"></strong></div>
@@ -1048,26 +1106,27 @@
 	                        </div>
 	                    </td>
 	
-	                    <!-- 2열 (가운데): 타이틀 및 제작일 -->
+	                    <!-- 2열 (가운데): 타이틀 -->
 	                    <td class="header-center">
 	                        <h1>🌳 새솔동 과수원</h1>
 	                        <h5>이용호 copyright 2026. 08. 17.</h5>
 	                    </td>
 	
-	                    <!-- 3열 (우측): QR코드 (버튼과 겹치지 않음) -->
+	                    <!-- 3열 (우측): QR코드 + 메뉴 버튼 나란히 배치 (가려짐 방지) -->
 	                    <td class="header-right">
-	                        <div class="hdr-qrcode">
-	                            <a href="https://solt4999b1-cell.github.io/orchard/g_index1.html" target="_blank" title="과수원 홈">
-	                                <img src="./2ey99.png" alt="QR코드">
-	                            </a>
+	                        <div class="header-action-group">
+	                            <div class="hdr-qrcode">
+	                                <a href="https://solt4999b1-cell.github.io/orchard/g_index1.html" target="_blank" title="과수원 홈">
+	                                    <img src="./2ey99.png" alt="QR코드">
+	                                </a>
+	                            </div>
+	                            <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
 	                        </div>
 	                    </td>
 	                </tr>
 	            </tbody>
 	        </table>
 	    </div>
-	    <!-- 메뉴 토글 버튼 -->
-	    <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
 	</header>
 
     <!-- 처음 열 때 보이는 안내 (자료가 오면 사라진다) -->
