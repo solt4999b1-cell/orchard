@@ -95,7 +95,7 @@
 		}
 		
 		/* ═══════════════════════════════════════ */
-		/* 2열: 가운데 타이틀 및 저작권 텍스트 */
+		/* 2열: 가운데 타이틀 (초록 계열 배경의 보색 적용) */
 		/* ═══════════════════════════════════════ */
 		.header-center {
 		    text-align: center;
@@ -103,32 +103,34 @@
 		    overflow: hidden;
 		}
 		
-		/* ✅ 메인 타이틀: 폰트 확대(18px) 및 선명한 딥그린 컬러 적용 */
+		/* ✅ 메인 타이틀: 초록/딥그린의 보색인 선명한 골드 옐로우(#FFD700) + 텍스트 그림자 */
 		.header-center h1 {
 		    margin: 0;
 		    justify-content: center;
 		    font-size: 18px !important;
-		    color: #1a3a1a !important; /* 배경(흰색)과 명확히 대비되는 짙은 초록색 */
+		    color: #FFB300 !important; /* 초록색 배경의 완벽한 보색(황금빛 노란색) */
+		    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); /* 어두운/밝은 배경 어디서나 또렷하게 분리 */
 		    display: flex;
 		    align-items: center;
 		    gap: 4px;
-		    font-weight: 800;
-		    white-space: nowrap;
-		    letter-spacing: -0.5px;
-		}
-		
-		/* ✅ 저작권/제작정보: 폰트 확대(11px) 및 선명한 다크 그레이 적용 */
-		.header-center h5 {
-		    margin: 2px 0 0 0;
-		    font-size: 11px !important;
-		    color: #444444 !important; /* 흐릿한 회색 대신 식별하기 쉬운 짙은 회색 */
-		    font-weight: 600;
+		    font-weight: 900;
 		    white-space: nowrap;
 		    letter-spacing: -0.3px;
 		}
 		
+		/* ✅ 저작권/제작정보: 눈에 띄는 화사한 앰버 오렌지(#FFE082) */
+		.header-center h5 {
+		    margin: 2px 0 0 0;
+		    font-size: 11px !important;
+		    color: #FFE082 !important; /* 따뜻한 라이트 앰버 계열 */
+		    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+		    font-weight: 700;
+		    white-space: nowrap;
+		    letter-spacing: -0.2px;
+		}
+		
 		/* ═══════════════════════════════════════ */
-		/* 모바일(iPhone 등 480px 이하) 최적화 */
+		/* 모바일 최적화 (iPhone 12 Pro 등) */
 		/* ═══════════════════════════════════════ */
 		@media (max-width: 480px) {
 		    .header-center h1 {
