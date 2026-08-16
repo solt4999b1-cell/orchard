@@ -94,31 +94,49 @@
 		    text-overflow: ellipsis;
 		}
 		
-		/* 2열: 가운데 타이틀 */
+		/* ═══════════════════════════════════════ */
+		/* 2열: 가운데 타이틀 및 저작권 텍스트 */
+		/* ═══════════════════════════════════════ */
 		.header-center {
 		    text-align: center;
 		    width: 41%;
 		    overflow: hidden;
 		}
 		
+		/* ✅ 메인 타이틀: 폰트 확대(18px) 및 선명한 딥그린 컬러 적용 */
 		.header-center h1 {
 		    margin: 0;
 		    justify-content: center;
-		    font-size: 15px;
-		    color: var(--primary-color);
+		    font-size: 18px !important;
+		    color: #1a3a1a !important; /* 배경(흰색)과 명확히 대비되는 짙은 초록색 */
 		    display: flex;
 		    align-items: center;
-		    gap: 3px;
-		    font-weight: 700;
+		    gap: 4px;
+		    font-weight: 800;
 		    white-space: nowrap;
+		    letter-spacing: -0.5px;
 		}
 		
+		/* ✅ 저작권/제작정보: 폰트 확대(11px) 및 선명한 다크 그레이 적용 */
 		.header-center h5 {
-		    margin: 1px 0 0 0;
-		    font-size: 8.5px;
-		    color: #777;
-		    font-weight: normal;
+		    margin: 2px 0 0 0;
+		    font-size: 11px !important;
+		    color: #444444 !important; /* 흐릿한 회색 대신 식별하기 쉬운 짙은 회색 */
+		    font-weight: 600;
 		    white-space: nowrap;
+		    letter-spacing: -0.3px;
+		}
+		
+		/* ═══════════════════════════════════════ */
+		/* 모바일(iPhone 등 480px 이하) 최적화 */
+		/* ═══════════════════════════════════════ */
+		@media (max-width: 480px) {
+		    .header-center h1 {
+		        font-size: 17px !important;
+		    }
+		    .header-center h5 {
+		        font-size: 10.5px !important;
+		    }
 		}
 		
 		/* 3열: 우측 QR코드(40px) + 메뉴 버튼 영역 */
@@ -1020,11 +1038,11 @@
 	                        </div>
 	                    </td>
 	
-	                    <!-- 2열: 가운데 타이틀 -->
-	                    <td class="header-center">
-	                        <h1>🌳 새솔동 과수원</h1>
-	                        <h5>이용호 copyright 2026. 08. 17.</h5>
-	                    </td>
+	                    <!-- 2열 (가운데): 타이틀 및 제작자 정보 -->
+						<td class="header-center">
+						    <h1>🌳 새솔동 과수원</h1>
+						    <h5>이용호 copyright 2026. 08. 17.</h5>
+						</td>
 	
 	                    <!-- 3열: 40px QR코드 + 메뉴 버튼 -->
 	                    <td class="header-right">
