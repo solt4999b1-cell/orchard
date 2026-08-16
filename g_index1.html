@@ -11,9 +11,14 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="새솔동 과수원">
     <title>새솔동 과수원 - 과수 관리 시스템</title>
-    <!-- ✅ Favicon -->
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%232a5f2a' width='180' height='180'/><text x='90' y='135' font-size='120' text-anchor='middle'>🌳</text></svg>">
+    <!-- ✅ 아이콘 (같은 폴더에 g_icon-*.png 를 두세요) -->
+    <link rel="icon" type="image/png" sizes="32x32"  href="g_icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16"  href="g_icon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180"     href="g_icon-180.png">
+    <link rel="manifest" href="g_manifest.json">
+    <meta name="theme-color" content="#2E7D32">
+    <!-- 파일이 없을 때를 대비한 예비 아이콘 -->
+    <link rel="alternate icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🌳</text></svg>">
     <style>
         * {
             margin: 0;
@@ -934,6 +939,7 @@
 
     /* 버튼 글자가 갈라지지 않게 — 전체 공통 */
     button{ word-break:keep-all; }
+    @keyframes busySpin{ to{ transform:rotate(360deg) } }
 </style>
   <!-- 스캔 라이브러리 (필요할 때만 내려받음) -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
@@ -954,7 +960,19 @@
         <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
     </header>
 
-    <!-- 탭 메뉴 -->
+    <!-- 처음 열 때 보이는 안내 (자료가 오면 사라진다) -->
+  <div id="first-load" style="display:none;padding:36px 20px;text-align:center">
+    <div style="width:44px;height:44px;margin:0 auto 16px;border:4px solid #C8E6C9;
+         border-top-color:#2E7D32;border-radius:50%;animation:busySpin .9s linear infinite"></div>
+    <div style="font-size:16px;font-weight:700;color:#33691E;margin-bottom:6px">
+      과수원 자료를 불러오는 중입니다</div>
+    <div id="first-load-msg" style="font-size:13px;color:#888;line-height:1.7">
+      구글 시트에서 받아오고 있습니다</div>
+    <div style="font-size:12px;color:#BDBDBD;margin-top:14px;line-height:1.6">
+      처음 한 번만 걸립니다<br>다음부터는 저장된 자료로 바로 열립니다</div>
+  </div>
+
+  <!-- 탭 메뉴 -->
     <div class="tabs" id="tabs-container">
         <button class="tab-btn active" data-tab="weekly-tasks">✅ 이번 주 할일</button>
         <button class="tab-btn" data-tab="pesticides">🧪 보유 농약</button>
@@ -1453,31 +1471,41 @@
             return false;
         }
 
-        async function loadAllData() {
+        async function loadAllData(force) {
             APP.isLoading = true;
-            updateStatus('로딩 중');
+
+            // ① 캐시가 있으면 먼저 보여준다 — 기다리지 않는다
+            var hadCache = false;
+            if(!force && loadData()){
+                hadCache = true;
+                _stripHeaders();
+                render();
+                var when = APP.lastUpdateTime
+                    ? new Date(APP.lastUpdateTime).toLocaleString('ko-KR',
+                        { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+                    : '';
+                updateStatus('🔄 최신 자료 확인 중' + (when ? ' · ' + when + ' 기준' : ''));
+                console.log('⚡ 저장된 자료로 먼저 보여줍니다' + (when ? ' (' + when + ')' : ''));
+            } else {
+                updateStatus('로딩 중');
+                var fl = document.getElementById('first-load');
+                if(fl) fl.style.display = 'block';
+                var tabs = document.getElementById('tabs-container');
+                if(tabs) tabs.style.display = 'none';
+                // 오래 걸리면 안내 문구를 바꿔준다
+                _loadTimer = setTimeout(function(){
+                    var m = document.getElementById('first-load-msg');
+                    if(m) m.innerHTML = '시트 27개 · 1,500여 건을 받는 중입니다<br>'
+                                      + '<span style="color:#BDBDBD">조금만 기다려 주세요</span>';
+                }, 4000);
+            }
+
+            // ② 시트에서 새로 받아온다 (캐시가 있었으면 뒤에서 조용히)
             try {
-                if (loadData()) {
-                    updateStatus('✅ 로드 완료');
-                    render();
-                    return;
-                }
-                const response = await fetchFromGAS('read_all');
-                if (response.success && response.data) {
+                var response = await fetchFromGAS('read_all');
+                if(response.success && response.data){
                     APP.data = convertObjectArrayTo2DArray(response.data);
-                    
-                    // ✅ 각 시트별로 헤더 제외
-                    const sheetsWithHeaders = ['myPesticides', 'growPlants', 'supplies', 'workLogs', 'growRecords'];
-                    for (const sheetName of sheetsWithHeaders) {
-                        if (APP.data[sheetName] && Array.isArray(APP.data[sheetName])) {
-                            const firstRow = APP.data[sheetName][0];
-                            // 첫 행이 헤더인지 확인 (대부분 'id'가 헤더의 첫 칼럼)
-                            if (firstRow && (firstRow[0] === 'id' || firstRow[1] === 'name')) {
-                                APP.data[sheetName] = APP.data[sheetName].slice(1);  // 헤더 제외
-                                console.log(`✅ ${sheetName}: 헤더 제외, ${APP.data[sheetName].length}개 데이터`);
-                            }
-                        }
-                    }
+                    _stripHeaders();
                 } else {
                     console.log('개별 로드 시작...');
                     await loadIndividually();
@@ -1485,12 +1513,35 @@
                 saveData();
                 updateStatus('✅ 로드 완료');
                 render();
-            } catch(error) {
+                if(hadCache) console.log('✅ 최신 자료로 갱신했습니다');
+            } catch(error){
                 console.error('로드 오류:', error);
-                updateStatus('❌ 오류');
+                // 캐시로 이미 보여주고 있으면 화면을 망치지 않는다
+                updateStatus(hadCache ? '⚠️ 저장된 자료 (갱신 실패)' : '❌ 오류');
             } finally {
                 APP.isLoading = false;
+                if(_loadTimer){ clearTimeout(_loadTimer); _loadTimer = null; }
+                var fl2 = document.getElementById('first-load');
+                if(fl2) fl2.style.display = 'none';
+                var tabs2 = document.getElementById('tabs-container');
+                if(tabs2) tabs2.style.display = '';
             }
+        }
+
+        var _loadTimer = null;
+
+        // 시트마다 첫 행이 머리글이면 뺀다
+        function _stripHeaders(){
+            var sheets = ['myPesticides', 'growPlants', 'supplies', 'workLogs',
+                          'growRecords', 'cropFertTime'];
+            sheets.forEach(function(name){
+                var rows = APP.data[name];
+                if(!Array.isArray(rows) || !rows.length) return;
+                var f = rows[0];
+                if(f && (f[0] === 'id' || f[1] === 'name' || f[0] === 'cropName')){
+                    APP.data[name] = rows.slice(1);
+                }
+            });
         }
 
         function convertObjectArrayTo2DArray(objectData) {
@@ -5217,9 +5268,10 @@
                         var P = isPre ? std.pre_Fert_P : std.post_Fert_P;
                         var K = isPre ? std.pre_Fert_K : std.post_Fert_K;
                         var g = function(v){ var x = _toArea(v, area.m2); return x ? x + 'g' : '—'; };
-                        amt = '<div style="font-size:12px;color:#1B5E20;margin-top:3px">'
-                            + '질소 <b>' + g(N) + '</b> · 인산 <b>' + g(P) + '</b> · 칼리 <b>' + g(K) + '</b>'
-                            + ' <span style="color:#9E9E9E">(' + area.m2 + '㎡)</span></div>';
+                        amt = '<div style="margin-top:5px">'
+                            + '<span style="font-size:15px;font-weight:700;color:#E65100">'
+                            + '질소 ' + g(N) + ' · 인산 ' + g(P) + ' · 칼리 ' + g(K) + '</span>'
+                            + '<span style="font-size:11px;color:#9E9E9E"> · ' + area.m2 + '㎡</span></div>';
                     }
                 }
 
@@ -5519,11 +5571,14 @@
             var body = rows.map(function(r){
                 var cells = [1,2,3].map(function(i){
                     var kg = num(r[i]);
-                    if(kg === null) return '<td style="text-align:center;color:#CCC">—</td>';
+                    if(kg === null) return '<td style="text-align:center;color:#CCC;font-size:16px">—</td>';
                     var g = _toArea(kg, area.m2);
-                    return '<td style="text-align:center">'
-                         + '<div style="font-weight:700;color:#1B5E20">' + kg + ' kg</div>'
-                         + '<div style="font-size:11px;color:#E65100">' + g + ' g</div></td>';
+                    // 실제로 쓰는 양(면적 기준)을 크게, 10a 기준은 작게
+                    return '<td style="text-align:center;padding:4px 2px">'
+                         + '<div style="font-size:17px;font-weight:700;color:#E65100;'
+                         + 'line-height:1.2">' + g + '<span style="font-size:12px">g</span></div>'
+                         + '<div style="font-size:11px;color:#9E9E9E;margin-top:1px">'
+                         + kg + ' kg/10a</div></td>';
                 }).join('');
                 var any = [1,2,3].some(function(i){ return num(r[i]) !== null; });
                 return any ? '<tr><td style="font-weight:700;color:#546E7A;white-space:nowrap">'
@@ -5568,7 +5623,7 @@
                  + '<td style="text-align:center">인산</td><td style="text-align:center">칼리</td></tr>'
                  + body + '</table>'
                  + '<div style="font-size:10px;color:#9E9E9E;margin-top:5px">'
-                 + '위 = 10a(1,000㎡) 기준 · 아래 = 실제 면적 기준'
+                 + '<b style="color:#E65100">위 = 실제 뿌릴 양</b> · 아래 = 10a(1,000㎡) 기준'
                  + (area.parts && area.parts.length
                     ? '<br>심은 양: ' + area.parts.slice(0, 6).join(' + ')
                       + (area.parts.length > 6 ? ' …' : '') : '')
@@ -6180,10 +6235,7 @@
             showBusy('자료를 새로 읽고 있습니다…');
 
             try {
-                // 캐시를 비우고 다시 읽는다
-                try { localStorage.removeItem('orchard_data'); localStorage.removeItem('orchard_time'); } catch(e){}
-                APP.data = {};
-                await loadAllData();
+                await loadAllData(true);      // true = 캐시를 건너뛰고 시트에서
                 console.log('🔄 새로고침 완료' + (auto ? ' (자동)' : ''));
                 if(!auto) alert('✅ 최신 데이터를 불러왔습니다.');
             } catch(e){
