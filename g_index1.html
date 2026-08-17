@@ -111,6 +111,25 @@
             display: none;
         }
 
+        /* 헤더 그림 — 제목 옆 38×38 */
+        #main-header h1 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #header-img {
+            width: 38px;
+            height: 38px;
+            object-fit: cover;
+            border-radius: 8px;
+            flex: 0 0 auto;
+            margin-left: 4px;
+        }
+        /* 최소화하면 그림도 함께 감춘다 */
+        header.collapsed #header-img {
+            display: none;
+        }
+
         .date-info span {
             display: flex;
             align-items: center;
@@ -945,6 +964,9 @@
         white-space:nowrap; line-height:1.25;
       }
 
+      /* 헤더 그림 — 좁은 화면에서도 38×38 유지 */
+      #header-img{ width:38px; height:38px; border-radius:7px; }
+
       /* 카드 여백 줄이기 */
       .card{ padding:10px 12px !important; margin-bottom:8px !important; }
       .card-title{ font-size:15px !important; }
@@ -973,8 +995,10 @@
 <body>
     <!-- 헤더 -->
     <header id="main-header">
-        <h1>🌳 새솔동 과수원</h1>
-	<h5>이용호 copyright 2026. 08. 17.</h5>
+        <h1>🌳 새솔동 과수원<img id="header-img"
+             src="https://raw.githubusercontent.com/solt4999b1-cell/orchard/main/2ey99.png"
+             alt="" onerror="this.style.display='none'"></h1>
+		<h5>이용호 Copyright 2026.08.17.</h5>
         <div class="date-info">
             <span>📅 오늘: <strong id="today-date"></strong></span>
             <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
