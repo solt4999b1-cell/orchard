@@ -61,159 +61,88 @@
             margin: 0 auto;
             padding: 0;
         }
-		/* ═══════════════════════════════════════ */
-		/* 헤더 3열 테이블 및 QR 코드 스타일 */
-		/* ═══════════════════════════════════════ */
-		.header-table {
-		    width: 100%;
-		    table-layout: fixed;
-		    border-collapse: collapse;
-		}
-		
-		.header-table td {
-		    vertical-align: middle;
-		    padding: 2px;
-		}
-		
-		/* 1열: 좌측 날짜 및 상태 */
-		.header-left {
-		    text-align: left;
-		    width: 25%;
-		    overflow: hidden;
-		}
-		
-		.date-info {
-		    color: var(--text-light);
-		    font-size: 10px;
-		    line-height: 1.3;
-		}
-		
-		.date-info div {
-		    white-space: nowrap;
-		    overflow: hidden;
-		    text-overflow: ellipsis;
-		}
-		
-		/* ═══════════════════════════════════════ */
-		/* 2열: 가운데 타이틀 (초록 계열 배경의 보색 적용) */
-		/* ═══════════════════════════════════════ */
-		.header-center {
-		    text-align: center;
-		    width: 41%;
-		    overflow: hidden;
-		}
-		
-		/* ✅ 메인 타이틀: 초록/딥그린의 보색인 선명한 골드 옐로우(#FFD700) + 텍스트 그림자 */
-		.header-center h1 {
-		    margin: 0;
-		    justify-content: center;
-		    font-size: 18px !important;
-		    color: #FFB300 !important; /* 초록색 배경의 완벽한 보색(황금빛 노란색) */
-		    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45); /* 어두운/밝은 배경 어디서나 또렷하게 분리 */
-		    display: flex;
-		    align-items: center;
-		    gap: 4px;
-		    font-weight: 900;
-		    white-space: nowrap;
-		    letter-spacing: -0.3px;
-		}
-		
-		/* ✅ 저작권/제작정보: 눈에 띄는 화사한 앰버 오렌지(#FFE082) */
-		.header-center h5 {
-		    margin: 2px 0 0 0;
-		    font-size: 11px !important;
-		    color: #FFE082 !important; /* 따뜻한 라이트 앰버 계열 */
-		    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-		    font-weight: 700;
-		    white-space: nowrap;
-		    letter-spacing: -0.2px;
-		}
-		
-		/* ═══════════════════════════════════════ */
-		/* 모바일 최적화 (iPhone 12 Pro 등) */
-		/* ═══════════════════════════════════════ */
-		@media (max-width: 480px) {
-		    .header-center h1 {
-		        font-size: 17px !important;
-		    }
-		    .header-center h5 {
-		        font-size: 10.5px !important;
-		    }
-		}
-		
-		/* 3열: 우측 QR코드(40px) + 메뉴 버튼 영역 */
-		.header-right {
-		    text-align: right;
-		    width: 34%; /* 40px QR과 30px 버튼이 여유 있게 들어가도록 너비 확보 */
-		    overflow: visible !important;
-		}
-		
-		.header-action-group {
-		    display: flex;
-		    align-items: center;
-		    justify-content: flex-end;
-		    gap: 6px;
-		    overflow: visible !important;
-		}
-		
-		.hdr-qrcode {
-		    display: inline-flex;
-		    align-items: center;
-		    justify-content: center;
-		    flex: 0 0 auto;
-		}
-		
-		.hdr-qrcode a {
-		    display: block;
-		    line-height: 0;
-		}
-		
-		/* ✅ QR 코드 크기: 40px 적용 */
-		.hdr-qrcode img {
-		    width: 40px !important;
-		    height: 40px !important;
-		    max-width: 40px !important;
-		    max-height: 40px !important;
-		    display: block !important;
-		    border-radius: 4px;
-		    border: 1px solid #ddd;
-		    background: #fff;
-		    padding: 1px;
-		}
-		
-		/* 메뉴 토글 버튼 */
-		.menu-toggle-btn {
-		    width: 30px;
-		    height: 30px;
-		    flex: 0 0 30px;
-		    border: none;
-		    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-		    color: white;
-		    border-radius: 6px;
-		    font-size: 15px;
-		    cursor: pointer;
-		    display: flex;
-		    align-items: center;
-		    justify-content: center;
-		    box-shadow: 0 2px 4px rgba(42, 95, 42, 0.3);
-		    -webkit-tap-highlight-color: transparent;
-		    touch-action: manipulation;
-		}
-		
-		.menu-toggle-btn:active {
-		    transform: scale(0.95);
-		}
-		
-		/* 토글 축소 시 */
-		header.collapsed .header-left,
-		header.collapsed .header-center,
-		header.collapsed .hdr-qrcode {
-		    display: none !important;
-		}
-		
-		header.collapsed .header-right {
-		    width: 100% !important;
-		}
+
+        /* ═══════════════════════════════════════ */
+        /* 헤더 (축소 가능) */
+        /* ═══════════════════════════════════════ */
+        header {
+            background: white;
+            padding: 12px;
+            border-radius: 0 0 12px 12px;
+            margin-bottom: 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            border-left: 6px solid var(--primary-color);
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 100;
+        }
+
+        header.collapsed {
+            padding: 12px 20px;
+            border-radius: 0;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-size: 28px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            letter-spacing: -0.5px;
+            font-weight: 700;
+        }
+
+        header.collapsed h1 {
+            font-size: 24px;
+            margin-bottom: 0;
+        }
+
+        .date-info {
+            color: var(--text-light);
+            font-size: 13px;
+            margin-top: 12px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        header.collapsed .date-info {
+            display: none;
+        }
+
+        .date-info span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* ✅ 메뉴 토글 버튼 */
+        .menu-toggle-btn {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            width: 44px;
+            height: 44px;
+            border: none;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+            color: white;
+            border-radius: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(42, 95, 42, 0.3);
+            transition: all 0.3s ease;
+            z-index: 101;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .menu-toggle-btn:active {
+            transform: scale(0.95);
+        }
 
         /* ═══════════════════════════════════════ */
         /* 탭 메뉴 (축소 가능) */
@@ -972,8 +901,29 @@
 
       /* 표 — 글씨를 키우고 여백을 줄인다 */
       table{ font-size:13px; }
-      th, td{ padding:7px 5px !important; }
+      th, td{ padding:7px 4px !important; }
       th{ font-size:12px; }
+
+      /* 작물 표의 작업 칸 — 버튼이 한 줄에 들어가게 */
+      #plants-fruits-table td:last-child,
+      #plants-vegetables-table td:last-child{
+        white-space:nowrap; padding:5px 2px !important;
+      }
+      #plants-fruits-table td:last-child select,
+      #plants-vegetables-table td:last-child select{
+        font-size:11px !important; padding:3px 2px !important;
+        max-width:64px;
+      }
+      #plants-fruits-table td:last-child button,
+      #plants-vegetables-table td:last-child button{
+        padding:4px 6px !important; margin-left:2px !important;
+        font-size:12px !important;
+      }
+      /* 품종 입력칸을 줄여 작업 칸에 자리를 준다 */
+      #plants-fruits-table td:nth-child(2) input,
+      #plants-vegetables-table td:nth-child(2) input{
+        font-size:13px !important; padding:3px !important;
+      }
 
       /* 창(모달) — 화면을 꽉 채우되 여백 최소화 */
       #pest-modal > div, #pest-scan-modal > div, #sup-scan-modal > div,
@@ -1022,46 +972,15 @@
 </head>
 <body>
     <!-- 헤더 -->
-	<header id="main-header">
-	    <div class="container">
-	        <table class="header-table">
-	            <colgroup>
-	                <col style="width: 25%;">
-	                <col style="width: 41%;">
-	                <col style="width: 34%;">
-	            </colgroup>
-	            <tbody>
-	                <tr>
-	                    <!-- 1열: 오늘 날짜 및 상태 -->
-	                    <td class="header-left">
-	                        <div class="date-info">
-	                            <div>📅 <strong id="today-date"></strong></div>
-	                            <div>📊 <strong id="load-status">초기화 중<span class="spinner"></span></strong></div>
-	                        </div>
-	                    </td>
-	
-	                    <!-- 2열 (가운데): 타이틀 및 제작자 정보 -->
-						<td class="header-center">
-						    <h1>🌳 새솔동 과수원</h1>
-						    <h5>이용호 copyright 2026. 08. 17.</h5>
-						</td>
-	
-	                    <!-- 3열: 40px QR코드 + 메뉴 버튼 -->
-	                    <td class="header-right">
-	                        <div class="header-action-group">
-	                            <div class="hdr-qrcode">
-	                                <a href="https://solt4999b1-cell.github.io/orchard/g_index1.html" target="_blank" title="과수원 홈">
-	                                    <img src="./2ey99.png" alt="QR코드">
-	                                </a>
-	                            </div>
-	                            <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
-	                        </div>
-	                    </td>
-	                </tr>
-	            </tbody>
-	        </table>
-	    </div>
-	</header>
+    <header id="main-header">
+        <h1>🌳 새솔동 과수원</h1>
+	<h5>이용호 copyright 2026. 08. 17.</h5>
+        <div class="date-info">
+            <span>📅 오늘: <strong id="today-date"></strong></span>
+            <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
+        </div>
+        <button class="menu-toggle-btn" id="menu-toggle-btn" title="메뉴 토글">☰</button>
+    </header>
 
     <!-- 처음 열 때 보이는 안내 (자료가 오면 사라진다) -->
   <div id="first-load" style="display:none;padding:36px 20px;text-align:center">
@@ -1219,8 +1138,7 @@
                                     <th>작물명</th>
                                     <th>품종</th>
                                     <th>파종일</th>
-                                    <th>비고</th>
-                                    <th>작업</th>
+                                    <th style="width:40%">작업</th>
                                 </tr>
                             </thead>
                             <tbody id="plants-fruits-tbody"></tbody>
@@ -1241,8 +1159,7 @@
                                     <th>작물명</th>
                                     <th>품종</th>
                                     <th>파종일</th>
-                                    <th>비고</th>
-                                    <th>작업</th>
+                                    <th style="width:40%">작업</th>
                                 </tr>
                             </thead>
                             <tbody id="plants-vegetables-tbody"></tbody>
@@ -1403,15 +1320,17 @@
     </div>
 
     <script>
-        // 🔥 캐시 강제 삭제
-        console.log('🧹 localStorage 삭제 중...');
-        try {
-            localStorage.clear();
-            sessionStorage.clear();
-            console.log('✅ 캐시 완전 삭제됨!');
-        } catch(e) {
-            console.error('캐시 삭제 실패:', e);
-        }
+        // ⚠️ 예전에는 여기서 localStorage.clear() 를 불러
+        //    열 때마다 캐시를 지웠습니다. 그래서 매번 시트를 새로 받느라 느렸습니다.
+        //    이제는 캐시를 남겨 두 번째부터 바로 열리게 합니다.
+        //    캐시를 비우시려면 콘솔에서  캐시비우기()  를 실행하세요.
+        window.캐시비우기 = window.clearCache = function(){
+            try {
+                localStorage.removeItem('orchard_data');
+                localStorage.removeItem('orchard_time');
+                console.log('🧹 캐시를 비웠습니다. 새로고침하면 시트에서 새로 받습니다.');
+            } catch(e){ console.error('캐시 삭제 실패:', e); }
+        };
 
         // ✅ 콘솔 경고 억제 (외부 스크립트 주입 방지)
         if (typeof window.rhwpDev !== 'undefined') {
@@ -1582,6 +1501,7 @@
             if(!force && loadData()){
                 hadCache = true;
                 _stripHeaders();
+                _beforeSnap = _snapData(APP.data);      // 비교용으로 기억해 둔다
                 render();
                 var when = APP.lastUpdateTime
                     ? new Date(APP.lastUpdateTime).toLocaleString('ko-KR',
@@ -1613,10 +1533,22 @@
                     console.log('개별 로드 시작...');
                     await loadIndividually();
                 }
+                // 캐시로 먼저 보여줬다면, 무엇이 바뀌었는지 비교한다
+                var diff = hadCache ? _diffData(_beforeSnap, APP.data) : null;
+
                 saveData();
-                updateStatus('✅ 로드 완료');
                 render();
-                if(hadCache) console.log('✅ 최신 자료로 갱신했습니다');
+
+                if(diff && diff.total){
+                    updateStatus('🆕 새 자료 ' + diff.total + '건');
+                    _pestToast('🆕 ' + diff.text);
+                    console.log('🆕 갱신됨:', diff.text);
+                } else if(hadCache){
+                    updateStatus('✅ 최신 상태');
+                    console.log('✅ 바뀐 것 없음 — 이미 최신입니다');
+                } else {
+                    updateStatus('✅ 로드 완료');
+                }
             } catch(error){
                 console.error('로드 오류:', error);
                 // 캐시로 이미 보여주고 있으면 화면을 망치지 않는다
@@ -1632,6 +1564,65 @@
         }
 
         var _loadTimer = null;
+
+        // 갱신 전후를 견주어 무엇이 바뀌었는지 알아낸다
+        var _beforeSnap = null;
+
+        var _WATCH = {
+            growPlants:   '작물',
+            growRecords:  '생육기록',
+            myPesticides: '농약',
+            supplies:     '자재',
+            workLog:      '작업기록',
+            '준비사항':    '할일',
+            cropFertTime: '시비일정'
+        };
+
+        // 시트별로 id → 내용 요약 을 만들어 둔다
+        function _snapData(data){
+            var snap = {};
+            Object.keys(_WATCH).forEach(function(key){
+                var rows = (data && data[key]) || [];
+                var m = {};
+                rows.forEach(function(r){
+                    if(!r) return;
+                    var id = String(r[0] || '');
+                    if(!id) return;
+                    m[id] = Array.isArray(r) ? r.join('\u0001') : JSON.stringify(r);
+                });
+                snap[key] = m;
+            });
+            return snap;
+        }
+
+        function _diffData(before, after){
+            if(!before) return null;
+            var now = _snapData(after);
+            var parts = [], total = 0;
+
+            Object.keys(_WATCH).forEach(function(key){
+                var a = before[key] || {}, b = now[key] || {};
+                var added = 0, changed = 0, removed = 0;
+
+                Object.keys(b).forEach(function(id){
+                    if(!(id in a)) added++;
+                    else if(a[id] !== b[id]) changed++;
+                });
+                Object.keys(a).forEach(function(id){ if(!(id in b)) removed++; });
+
+                var sum = added + changed + removed;
+                if(!sum) return;
+                total += sum;
+
+                var bits = [];
+                if(added)   bits.push('+' + added);
+                if(changed) bits.push('~' + changed);
+                if(removed) bits.push('-' + removed);
+                parts.push(_WATCH[key] + ' ' + bits.join(' '));
+            });
+
+            return { total: total, text: parts.join(' · ') || '' };
+        }
 
         // 시트마다 첫 행이 머리글이면 뺀다
         function _stripHeaders(){
@@ -2171,7 +2162,7 @@
             const pesticide = APP.data.myPesticides?.[idx];
             if (pesticide && (pesticide[16] || 1) < 3) {
                 pesticide[16] = (pesticide[16] || 1) + 1;
-                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]}, true);
                 renderPesticides();
             }
         }
@@ -2181,7 +2172,7 @@
             const pesticide = APP.data.myPesticides?.[idx];
             if (pesticide && (pesticide[16] || 1) > 1) {
                 pesticide[16] = (pesticide[16] || 1) - 1;
-                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]});
+                _gasPost('updatePesticide', {id: pesticide[0], quantity: pesticide[16]}, true);
                 renderPesticides();
             }
         }
@@ -2191,7 +2182,7 @@
             const pesticide = APP.data.myPesticides?.[idx];
             if (pesticide) {
                 pesticide[9] = newStatus;
-                _gasPost('updatePesticide', {id: pesticide[0], status: newStatus});
+                _gasPost('updatePesticide', {id: pesticide[0], status: newStatus}, true);
                 renderPesticides();
             }
         }
@@ -2202,14 +2193,25 @@
             const pesticide = APP.data.myPesticides?.[idx];
             if (!pesticide) { alert('삭제할 농약을 찾지 못했습니다.'); return; }
 
-            // 시트에서 먼저 지우고, 성공했을 때만 화면에서 뺀다
-            const r = await _gasPost('deletePesticide', { id: pesticide[0] });
-            if (!r || !r.ok) return;               // 실패하면 화면은 그대로 둔다
-
-            APP.data.myPesticides?.splice(idx, 1);
+            // 화면에서 먼저 지운다 — GAS 왕복(2~5초)을 기다리지 않는다
+            const backup = pesticide.slice();
+            APP.data.myPesticides.splice(idx, 1);
             renderPesticides();
-            _pestToast('🗑️ 삭제되었습니다');
-            saveData();                            // 캐시도 갱신
+            saveData();
+            _pestToast('🗑️ 삭제 중…');
+
+            // 시트는 뒤에서 지운다
+            const r = await _gasPost('deletePesticide', { id: pesticide[0] }, true);
+            if (r && r.ok){
+                _pestToast('🗑️ 삭제되었습니다');
+            } else {
+                // 실패하면 되돌린다
+                APP.data.myPesticides.splice(idx, 0, backup);
+                renderPesticides();
+                saveData();
+                alert('삭제하지 못했습니다.\n' + ((r && r.message) || '') +
+                      '\n\n목록을 되돌렸습니다.');
+            }
         }
 
 
@@ -2355,7 +2357,7 @@
             const supply = APP.data.supplies?.find(s => s[0] === supplyId);
             if (supply && (supply[9] || 1) < 3) {
                 supply[9] = (supply[9] || 1) + 1;
-                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]}, true);
                 renderSupplies();
             }
         }
@@ -2365,7 +2367,7 @@
             const supply = APP.data.supplies?.find(s => s[0] === supplyId);
             if (supply && (supply[9] || 1) > 1) {
                 supply[9] = (supply[9] || 1) - 1;
-                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]});
+                _gasPost('updateSupply', {id: supplyId, quantity: supply[9]}, true);
                 renderSupplies();
             }
         }
@@ -2464,7 +2466,7 @@
             const memoText = document.getElementById('supply-memo-input')?.value || '';
             supply[10] = memoText;  // supplies[10] = memo
             
-            _gasPost('updateSupply', {id: supplyId, memo: memoText});
+            _gasPost('updateSupply', {id: supplyId, memo: memoText}, true);
             alert(`"${supplyName}"의 사용 방법이 저장되었습니다!`);
             renderSupplies();
         }
@@ -2757,8 +2759,8 @@
                         <td>${r[1]||'-'}</td>
                         <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[6]||'-'}</td>
-                        <td>
+                        
+                        <td style="white-space:nowrap">
                             <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
                                 <option value="fruits">🍎 유실수</option>
                                 <option value="vegetables">🥬 채소</option>
@@ -2783,8 +2785,8 @@
                         <td>${r[1]||'-'}</td>
                         <td><input type="text" value="${r[4]||''}" id="variety-${r[0]}" style="width: 95%; padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px;"></td>
                         <td>${formatDate(r[2])}</td>
-                        <td>${r[6]||'-'}</td>
-                        <td>
+                        
+                        <td style="white-space:nowrap">
                             <select onchange="changePlantType('${r[0]}', '${r[1]}', this.value)" style="padding: 4px; border: 1px solid #ddd; border-radius: 3px; font-size: 11px;">
                                 <option value="fruits">🍎 유실수</option>
                                 <option value="vegetables" selected>🥬 채소</option>
@@ -5244,12 +5246,24 @@
             var nm = row ? row[7] : '이 자재';
             if(!confirm('「' + nm + '」 을(를) 삭제할까요?')) return;
 
-            var r = await _gasPost('deleteSupply', { id: _editSupId });
-            if(!r || !r.ok) return;
+            var id = _editSupId;
+            var idx = (APP.data.supplies || []).findIndex(function(r){
+                return r && String(r[0]) === String(id); });
+            var backup = idx >= 0 ? APP.data.supplies[idx].slice() : null;
 
+            // 화면에서 먼저 지운다
+            if(idx >= 0){ APP.data.supplies.splice(idx, 1); renderSupplies(); saveData(); }
             closeSupEdit();
-            await reloadFromSheets(true);
-            _pestToast('🗑️ 삭제되었습니다');
+            _pestToast('🗑️ 삭제 중…');
+
+            var r = await _gasPost('deleteSupply', { id: id }, true);
+            if(r && r.ok){
+                _pestToast('🗑️ 삭제되었습니다');
+            } else if(backup){
+                APP.data.supplies.splice(idx, 0, backup);
+                renderSupplies(); saveData();
+                alert('삭제하지 못했습니다.\n' + ((r && r.message) || '') + '\n\n목록을 되돌렸습니다.');
+            }
         }
 
         // ══ 이번 주 시비 알림 ═════════════════════════════
@@ -5375,6 +5389,12 @@
                             + '<span style="font-size:15px;font-weight:700;color:#E65100">'
                             + '질소 ' + g(N) + ' · 인산 ' + g(P) + ' · 칼리 ' + g(K) + '</span>'
                             + '<span style="font-size:11px;color:#9E9E9E"> · ' + area.m2 + '㎡</span></div>';
+
+                        // 어떤 비료를 얼마나 준비할지 알려준다
+                        var nN = _toArea(N, area.m2), nP = _toArea(P, area.m2), nK = _toArea(K, area.m2);
+                        var pick = _bestFertFor(nN, nP, nK, isPre ? '밑거름' : '웃거름');
+                        if(pick) amt += '<div style="margin-top:4px;font-size:12px;color:#33691E">'
+                                      + '👉 ' + pick + '</div>';
                     }
                 }
 
@@ -5662,6 +5682,119 @@
             return { n: parseFloat(m[1]), p: parseFloat(m[2]), k: parseFloat(m[3]) };
         }
 
+        // 시중 비료 목록에서 이 시비에 가장 알맞은 것을 고른다
+        //   fertProducts 시트: name N P K bagKg use
+        function _bestProduct(needN, needP, needK, wantUse){
+            var list = APP.data.fertProducts || [];
+            if(!list.length) return null;
+
+            var best = null, gap = 1e9;
+            list.forEach(function(r){
+                if(!r) return;
+                var nm = String(r[0] || '').trim();
+                if(!nm || nm === 'name') return;
+                var N = parseFloat(r[1]) || 0, P = parseFloat(r[2]) || 0, K = parseFloat(r[3]) || 0;
+                var use = String(r[5] || '').trim();
+                if(wantUse && use && use !== wantUse && use !== '단비' && use !== '유기질') return;
+                if(!N && !P && !K) return;
+
+                // 필요한 성분 중 가장 큰 것을 기준으로 양을 정한다
+                var amt = 0;
+                if(needN && N) amt = needN / (N/100);
+                else if(needP && P) amt = needP / (P/100);
+                else if(needK && K) amt = needK / (K/100);
+                if(!amt) return;
+
+                // 나머지 성분이 얼마나 어긋나는가
+                var d = Math.abs(amt*N/100 - needN)
+                      + Math.abs(amt*P/100 - needP)
+                      + Math.abs(amt*K/100 - needK);
+                if(d < gap){ gap = d; best = { nm: nm, N:N, P:P, K:K, amt: amt, use: use,
+                                               bag: parseFloat(r[4]) || 20 }; }
+            });
+            return best;
+        }
+
+        // 준할 비료를 한 줄로 알려준다
+        //   보유한 것이 있으면 그것을, 없으면 단비를 알려준다
+        function _bestFertFor(needN, needP, needK, stage){
+            var fmt = function(g){
+                if(!g) return null;
+                return g >= 1000 ? (g/1000).toFixed(g >= 10000 ? 0 : 1) + 'kg' : Math.round(g) + 'g';
+            };
+
+            // 보유 비료 중 가장 알맞은 것
+            var best = null, gap = 1e9;
+            (APP.data.supplies || []).forEach(function(r){
+                if(!r) return;
+                if(typeof _isFinished === 'function' && _isFinished(r)) return;
+                var nm = String(r[7] || '').trim();
+                var npk = _npkOf(r[4]) || _npkOf(r[10]);
+                if(!nm || !npk || !npk.n || !needN) return;
+                var amt = needN / (npk.n / 100);
+                var d = Math.abs(amt * npk.p / 100 - needP) + Math.abs(amt * npk.k / 100 - needK);
+                if(d < gap){ gap = d; best = { nm: nm, amt: amt }; }
+            });
+            if(best) return '보유 「' + best.nm + '」 약 ' + fmt(best.amt);
+
+            // 보유한 것이 없으면 시중 비료를 추천한다
+            var p = _bestProduct(needN, needP, needK, stage);
+            if(p) return '추천 「' + p.nm + '」 ('
+                       + p.N + '-' + p.P + '-' + p.K + ') 약 ' + fmt(p.amt);
+
+            // 그것도 없으면 단비로
+            var st = [];
+            if(needN) st.push('요소 ' + fmt(needN / 0.46));
+            if(needP) st.push('용성인비 ' + fmt(needP / 0.20));
+            if(needK) st.push('염화칼리 ' + fmt(needK / 0.60));
+            return st.length ? '준비: ' + st.join(' · ') : null;
+        }
+
+        // 단비(홑비료) — 성분 함량이 정해져 있다
+        var STRAIGHT = [
+            { name: '요소',      key: 'n', pct: 46, memo: '질소' },
+            { name: '용성인비',  key: 'p', pct: 20, memo: '인산' },
+            { name: '염화칼리',  key: 'k', pct: 60, memo: '칼리' }
+        ];
+
+        // 성분량(g) → 그 성분을 채우는 비료의 양(g)
+        function _needOf(gram, pct){
+            if(!gram || !pct) return 0;
+            return Math.round(gram / (pct / 100));
+        }
+
+        // 보유 비료 중 이 시비에 쓸 만한 것을 고른다
+        //   질소가 든 것 · 인산이 든 것 · 칼리가 든 것을 각각 찾는다
+        function _pickOwned(needN, needP, needK){
+            var owned = [];
+            (APP.data.supplies || []).forEach(function(r){
+                if(!r) return;
+                if(typeof _isFinished === 'function' && _isFinished(r)) return;
+                var nm = String(r[7] || '').trim();
+                if(!nm) return;
+                var npk = _npkOf(r[4]) || _npkOf(r[10]);
+                if(!npk) return;
+                owned.push({ name: nm, npk: npk, qty: r[9] || '' });
+            });
+            if(!owned.length) return [];
+
+            var out = [];
+            // 질소 기준으로 가장 알맞은 것 (질소가 있고, 인산·칼리 비율이 가까운 것)
+            if(needN){
+                var best = null, gap = 1e9;
+                owned.forEach(function(o){
+                    if(!o.npk.n) return;
+                    var amt = needN / (o.npk.n / 100);          // 이 비료를 몇 g 줘야 하나
+                    var gotP = amt * o.npk.p / 100;
+                    var gotK = amt * o.npk.k / 100;
+                    var d = Math.abs(gotP - needP) + Math.abs(gotK - needK);
+                    if(d < gap){ gap = d; best = { o: o, amt: amt, gotP: gotP, gotK: gotK }; }
+                });
+                if(best) out.push(best);
+            }
+            return out;
+        }
+
         // 시비량 카드 HTML 을 만든다
         function fertCardHtml(cropName, std, area){
             if(!std) return '';
@@ -5688,29 +5821,92 @@
                            + r[0] + '</td>' + cells + '</tr>' : '';
             }).join('');
 
-            // 보유 비료 환산
+            // ── 어떤 비료를 얼마나 ──────────────────────
             var conv = '';
-            var preN = num(std.pre_Fert_N);
-            if(preN){
-                var needN = _toArea(preN, area.m2);          // g
-                var lines = [];
+            var fmt = function(g){
+                if(!g) return null;
+                return g >= 1000 ? (g/1000).toFixed(g >= 10000 ? 0 : 1) + ' kg'
+                                 : Math.round(g) + ' g';
+            };
+
+            // 밑거름 기준으로 계산한다 (웃거름은 아래 표에 함께 나옴)
+            var needN = _toArea(num(std.pre_Fert_N), area.m2);
+            var needP = _toArea(num(std.pre_Fert_P), area.m2);
+            var needK = _toArea(num(std.pre_Fert_K), area.m2);
+
+            if(needN || needP || needK){
+                var box = '';
+
+                // ① 보유 비료 — 지금 가진 것으로
+                var owned = [];
                 (APP.data.supplies || []).forEach(function(r){
                     if(!r) return;
+                    if(typeof _isFinished === 'function' && _isFinished(r)) return;
                     var nm = String(r[7] || '').trim();
                     var npk = _npkOf(r[4]) || _npkOf(r[10]);
-                    if(!nm || !npk || !npk.n) return;
-                    var need = needN / (npk.n / 100);
-                    lines.push('<div style="margin-top:3px">'
-                      + '<span style="background:#C8E6C9;color:#1B5E20;font-weight:700;'
-                      + 'padding:1px 6px;border-radius:4px">' + nm + '</span>'
-                      + ' <span style="color:#666;font-size:11px">(' + npk.n + '-' + npk.p + '-' + npk.k + ')</span>'
-                      + ' → <b>' + (need >= 1000 ? (need/1000).toFixed(1) + ' kg' : Math.round(need) + ' g') + '</b>'
-                      + '</div>');
+                    if(!nm || !npk) return;
+                    // 어느 성분이든 들어 있으면 후보
+                    var amt = 0, basis = '';
+                    if(npk.n && needN){ amt = needN / (npk.n/100); basis = '질소'; }
+                    else if(npk.p && needP){ amt = needP / (npk.p/100); basis = '인산'; }
+                    else if(npk.k && needK){ amt = needK / (npk.k/100); basis = '칼리'; }
+                    if(!amt) return;
+                    owned.push({ nm: nm, npk: npk, amt: amt, basis: basis });
                 });
-                if(lines.length) conv =
-                    '<div style="margin-top:10px;padding-top:9px;border-top:1px dashed #DDD">'
-                  + '<div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:3px">'
-                  + '보유 비료로 환산 (밑거름 질소 기준)</div>' + lines.join('') + '</div>';
+
+                if(owned.length){
+                    box += '<div style="font-size:11px;font-weight:700;color:#33691E;'
+                         + 'margin-bottom:4px">🌱 가지고 계신 비료로</div>';
+                    owned.slice(0, 4).forEach(function(o){
+                        box += '<div style="margin-bottom:4px;font-size:12px">'
+                             + '<span style="background:#C8E6C9;color:#1B5E20;font-weight:700;'
+                             + 'padding:2px 7px;border-radius:4px">' + o.nm + '</span>'
+                             + ' <span style="color:#9E9E9E;font-size:10px">'
+                             + o.npk.n + '-' + o.npk.p + '-' + o.npk.k + '</span>'
+                             + ' → <b style="color:#E65100;font-size:14px">' + fmt(o.amt) + '</b>'
+                             + ' <span style="color:#9E9E9E;font-size:10px">(' + o.basis + ' 기준)</span>'
+                             + '</div>';
+                    });
+                }
+
+                // ② 단비 — 성분별로 정확히 맞추려면
+                var st = [];
+                if(needN) st.push({ nm:'요소',     pct:46, need:needN, sub:'질소' });
+                if(needP) st.push({ nm:'용성인비', pct:20, need:needP, sub:'인산' });
+                if(needK) st.push({ nm:'염화칼리', pct:60, need:needK, sub:'칼리' });
+
+                if(st.length){
+                    box += '<div style="font-size:11px;font-weight:700;color:#546E7A;'
+                         + 'margin:8px 0 4px">🧪 단비로 정확히 맞추려면</div>'
+                         + '<div style="display:flex;flex-wrap:wrap;gap:5px">';
+                    st.forEach(function(x){
+                        box += '<div style="background:#fff;border:1px solid #E0E0E0;'
+                             + 'border-radius:6px;padding:4px 8px;font-size:12px">'
+                             + x.nm + ' <b style="color:#E65100">'
+                             + fmt(x.need / (x.pct/100)) + '</b></div>';
+                    });
+                    box += '</div>';
+                }
+
+                // ③ 시중 비료 추천 — 사야 할 때
+                var prod = _bestProduct(needN, needP, needK, '밑거름');
+                if(prod){
+                    var bags = prod.amt / 1000 / prod.bag;
+                    box += '<div style="font-size:11px;font-weight:700;color:#546E7A;'
+                         + 'margin:8px 0 4px">🛒 사신다면 이런 비료</div>'
+                         + '<div style="background:#FFF8E1;border-radius:6px;padding:6px 9px;'
+                         + 'font-size:12px">'
+                         + '<b>' + prod.nm + '</b> '
+                         + '<span style="color:#9E9E9E;font-size:10px">'
+                         + prod.N + '-' + prod.P + '-' + prod.K + '</span>'
+                         + ' → <b style="color:#E65100">' + fmt(prod.amt) + '</b>'
+                         + (bags >= 0.05 ? ' <span style="color:#9E9E9E;font-size:10px">('
+                            + prod.bag + 'kg 포대의 ' + (bags*100).toFixed(0) + '%)</span>' : '')
+                         + '</div>';
+                }
+
+                if(box) conv = '<div style="margin-top:10px;padding-top:9px;'
+                             + 'border-top:1px dashed #DDD">' + box + '</div>';
             }
 
             return '<div style="background:#F9FBE7;border:1.5px solid #DCE775;border-radius:10px;'
@@ -5996,17 +6192,17 @@
         // 성공한 이름을 기억해 다음부터 헛시도를 줄인다
         var _actionMemo = {};
 
-        async function _gasPost(action, params){
+        async function _gasPost(action, params, quiet){
             var conf = _ACTION_MAP[action];
             if(!conf){
                 console.warn('_gasPost: 모르는 action —', action);
                 return { ok:false, message:'알 수 없는 action: ' + action };
             }
-            // 무슨 일을 하는 중인지 알려준다
+            // quiet 이면 덮개를 띄우지 않는다 (화면을 이미 바꿨을 때)
             var _busyMsg = /^delete/.test(action) ? '삭제하는 중입니다…'
                          : /^update/.test(action) ? '수정한 내용을 저장하는 중입니다…'
                          : '저장하는 중입니다…';
-            if(typeof showBusy === 'function') showBusy(_busyMsg);
+            if(!quiet && typeof showBusy === 'function') showBusy(_busyMsg);
             var names = _actionMemo[action] ? [_actionMemo[action]] : conf.names;
             var payload = Object.assign({
                 sheetName: conf.sheet, sheet: conf.sheet, collectionName: conf.sheet
@@ -6015,11 +6211,13 @@
             var r = await postWithAlias(names, payload);
             if(r.ok){
                 _actionMemo[action] = r.action;
+                if(!quiet && typeof hideBusy === 'function') hideBusy();
                 console.log('✅ ' + action + ' → ' + conf.sheet + ' (' + r.action + ')');
             } else {
                 console.error('❌ ' + action + ' 실패:', r.message);
                 if(typeof hideBusy === 'function') hideBusy();
-                alert('저장에 실패했습니다.\n' + action + ': ' + (r.message || ''));
+                // quiet 이면 부른 쪽에서 알린다
+                if(!quiet) alert('저장에 실패했습니다.\n' + action + ': ' + (r.message || ''));
             }
             return r;
         }
