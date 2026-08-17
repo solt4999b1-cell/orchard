@@ -5701,9 +5701,36 @@
         // 보유 비료의 성분 함량을 읽는다  "N-P-K 4-2-1" → {n:4,p:2,k:1}
         function _npkOf(text){
             var s = String(text || '');
+
+            // 「N-P-K 4-2-1」 「NPK 12-5-40」 처럼 머리글만 붙은 것은 떼어낸다
+            s = s.replace(/N\s*-?\s*P\s*-?\s*K/ig, ' ');
+
+            // ① 「N22-P9-K9」 「N-22 P-9 K-9」 처럼 글자마다 숫자가 붙은 형태
+            var mn = s.match(/N\s*-?\s*(\d+(?:\.\d+)?)/i);
+            var mp = s.match(/P\s*-?\s*(\d+(?:\.\d+)?)/i);
+            var mk = s.match(/K\s*-?\s*(\d+(?:\.\d+)?)/i);
+            if(mn || mp || mk){
+                return { n: mn ? parseFloat(mn[1]) : 0,
+                         p: mp ? parseFloat(mp[1]) : 0,
+                         k: mk ? parseFloat(mk[1]) : 0 };
+            }
+
+            // ② 「22-9-9」 「4-2-1」 처럼 숫자만
             var m = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
-            if(!m) return null;
-            return { n: parseFloat(m[1]), p: parseFloat(m[2]), k: parseFloat(m[3]) };
+            if(m) return { n: parseFloat(m[1]), p: parseFloat(m[2]), k: parseFloat(m[3]) };
+
+            return null;
+        }
+
+        // 「완효성」 「속효성」 같은 성질을 읽는다
+        function _fertTrait(text){
+            var s = String(text || '');
+            var out = [];
+            if(/완효성|완효|서방/.test(s)) out.push('완효성');
+            if(/속효성|속효/.test(s)) out.push('속효성');
+            if(/유기질|유기농/.test(s)) out.push('유기질');
+            if(/코팅/.test(s)) out.push('코팅');
+            return out.join('·');
         }
 
         // 시중 비료 목록에서 이 시비에 가장 알맞은 것을 고른다
@@ -5875,7 +5902,8 @@
                     else if(npk.p && needP){ amt = needP / (npk.p/100); basis = '인산'; }
                     else if(npk.k && needK){ amt = needK / (npk.k/100); basis = '칼리'; }
                     if(!amt) return;
-                    owned.push({ nm: nm, npk: npk, amt: amt, basis: basis });
+                    var trait = _fertTrait(String(r[4] || '') + ' ' + String(r[10] || ''));
+                    owned.push({ nm: nm, npk: npk, amt: amt, basis: basis, trait: trait });
                 });
 
                 if(owned.length){
@@ -5887,6 +5915,9 @@
                              + 'padding:2px 7px;border-radius:4px">' + o.nm + '</span>'
                              + ' <span style="color:#9E9E9E;font-size:10px">'
                              + o.npk.n + '-' + o.npk.p + '-' + o.npk.k + '</span>'
+                             + (o.trait ? ' <span style="background:#E1F5FE;color:#0277BD;'
+                                        + 'border-radius:6px;padding:1px 5px;font-size:10px">'
+                                        + o.trait + '</span>' : '')
                              + ' → <b style="color:#E65100;font-size:14px">' + fmt(o.amt) + '</b>'
                              + ' <span style="color:#9E9E9E;font-size:10px">(' + o.basis + ' 기준)</span>'
                              + '</div>';
