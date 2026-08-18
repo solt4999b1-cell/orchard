@@ -5465,13 +5465,17 @@
                      + '🌱 이번 주 시비 <span style="font-weight:400;font-size:12px;color:#666">· '
                      + now.month + '월 ' + now.week + '주 · ' + items.length + '건</span></div>';
 
+            // 같은 작물이 여러 번 나오면 한 번만 조회한다
+            var seenCrop = {};
+
             for(var i = 0; i < items.length; i++){
                 var it = items[i];
                 var area = _areaOf(it.crop);
                 var code = _cropCodeOf(it.crop);
                 var amt = '';
 
-                if(code){
+                if(code && !seenCrop[code + '|' + it.stage]){
+                    seenCrop[code + '|' + it.stage] = true;
                     var std = await getFertStd(code);
                     if(std){
                         var isPre = it.stage.indexOf('밑') >= 0;
@@ -5704,10 +5708,32 @@
 
         // ══ 시비량 (흙토람) ═══════════════════════════════
         //   10a = 1,000 m²  /  이랑 1개 = 20m × 1m = 20 m²  →  10a 의 1/50
+        var _fertCache = {};            // 작물코드별 시비량
+
+        // 시비량은 자주 바뀌지 않으므로 하루 동안 저장해 둔다
+        (function(){
+            try {
+                var raw = localStorage.getItem('fert_cache');
+                if(raw){
+                    var o = JSON.parse(raw);
+                    if(o && o.at && Date.now() - o.at < 24 * 60 * 60 * 1000){
+                        _fertCache = o.data || {};
+                        console.log('🌾 저장된 시비량 ' + Object.keys(_fertCache).length + '건 불러옴');
+                    }
+                }
+            } catch(e){}
+        })();
+
+        function _saveFertCache(){
+            try {
+                localStorage.setItem('fert_cache',
+                    JSON.stringify({ at: Date.now(), data: _fertCache }));
+            } catch(e){}
+        }
+
         var IRANG_M2 = 20;              // 이랑 1개 = 20m × 1m
         var TREE_M2  = 4;               // 나무 1그루 = 2m × 2m
         var VEG_M2   = 0.5;             // 채소 1포기 = 1m × 1m 에 2포기
-        var _fertCache = {};          // 작물코드별 조회 결과 (한 번만 부른다)
 
         // growPlants 에서 작물코드를 찾는다
         function _cropCodeOf(name){
@@ -5802,8 +5828,24 @@
         }
 
         // 시비량을 가져온다 (같은 코드는 다시 부르지 않는다)
+        var _fertFail = {};        // 자료가 없던 코드 — 다시 안 부른다
+        var _fert429At = 0;        // 429 를 받은 시각
+
         async function getFertStd(cropCode){
             if(!cropCode) return null;
+
+            // 요청이 막혔으면 5분간 쉰다
+            if(_fert429At && Date.now() - _fert429At < 5 * 60 * 1000){
+                console.warn('🌾 요청이 많아 잠시 쉬는 중입니다');
+                window._fertLastMsg = '구글 서버가 요청을 잠시 막았습니다.\n'
+                    + '몇 분 뒤에 다시 눌러주세요.';
+                return null;
+            }
+            // 앞서 자료가 없던 코드는 다시 부르지 않는다
+            if(_fertFail[cropCode]){
+                window._fertLastMsg = '작물코드 ' + cropCode + ' 로는 자료가 없습니다.';
+                return null;
+            }
             // 숫자로 된 코드만 보낸다 — 이름 조각이 들어오면 막는다
             if(!/^\d{1,5}$/.test(String(cropCode).trim())){
                 console.warn('🌾 코드가 숫자가 아닙니다:', cropCode, '— growPlants 의 fertCd 를 확인해 주세요');
@@ -5830,11 +5872,17 @@
 
                 if(j && j.success && j.list && j.list.length){
                     _fertCache[_k5] = j.list[0];
+                    _saveFertCache();
                     return j.list[0];
                 }
                 if(j && j.success && j.count === 0){
+                    _fertFail[cropCode] = true;          // 다시 안 부른다
                     window._fertLastMsg = '작물코드 ' + code5 + ' 로는 자료가 없습니다.\n'
                         + 'growPlants 의 fertCd 값을 확인해 주세요.';
+                }
+                if(j && !j.success && /429|Too Many/i.test(String(j.message || ''))){
+                    _fert429At = Date.now();
+                    console.warn('🌾 HTTP 429 — 5분간 요청을 멈춥니다');
                 }
                 console.warn('🌾 받은 내용:', j);
                 if(j && j.message) window._fertLastMsg = j.message;
