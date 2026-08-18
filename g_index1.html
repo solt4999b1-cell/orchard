@@ -5474,9 +5474,11 @@
                 var code = _cropCodeOf(it.crop);
                 var amt = '';
 
-                if(code && !seenCrop[code + '|' + it.stage]){
-                    seenCrop[code + '|' + it.stage] = true;
-                    var std = await getFertStd(code);
+                if(!seenCrop[it.crop + '|' + it.stage]){
+                    seenCrop[it.crop + '|' + it.stage] = true;
+                    // 검정값이 있으면 그 처방을 먼저 쓴다 (표준 API 를 안 부른다)
+                    var std = await getFertExp(it.crop);
+                    if(!std && code) std = await getFertStd(code);
                     if(std){
                         var isPre = it.stage.indexOf('밑') >= 0;
                         var N = isPre ? std.pre_Fert_N : std.post_Fert_N;
@@ -5486,7 +5488,11 @@
                         amt = '<div style="margin-top:5px">'
                             + '<span style="font-size:15px;font-weight:700;color:#E65100">'
                             + '질소 ' + g(N) + ' · 인산 ' + g(P) + ' · 칼리 ' + g(K) + '</span>'
-                            + '<span style="font-size:11px;color:#9E9E9E"> · ' + area.m2 + '㎡</span></div>';
+                            + '<span style="font-size:11px;color:#9E9E9E"> · ' + area.m2 + '㎡</span>'
+                            + (std._soil ? ' <span style="background:#33691E;color:#fff;'
+                                         + 'border-radius:5px;padding:1px 5px;font-size:10px">'
+                                         + '🔬 검정</span>' : '')
+                            + '</div>';
 
                         // 어떤 비료를 얼마나 준비할지 알려준다
                         var nN = _toArea(N, area.m2), nP = _toArea(P, area.m2), nK = _toArea(K, area.m2);
