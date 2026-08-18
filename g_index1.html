@@ -117,16 +117,31 @@
             align-items: center;
             gap: 10px;
         }
+        /* QR 코드 — 카메라가 읽으려면 크고 선명해야 한다 */
         #header-img {
-            width: 48px;
-            height: 48px;
-            object-fit: cover;
-            border-radius: 8px;
+            width: 64px;
+            height: 64px;
+            object-fit: contain;          /* QR 이 잘리지 않게 */
+            background: #fff;             /* 흰 여백이 있어야 인식된다 */
+            padding: 3px;
+            border-radius: 6px;
             flex: 0 0 auto;
-            margin-left: 4px;
+            margin-left: 6px;
+            image-rendering: pixelated;   /* 흐려지지 않게 */
+            cursor: pointer;
         }
-        /* 최소화하면 그림도 함께 감춘다 */
-        header.collapsed #header-img {
+        /* 눌러서 크게 보기 */
+        #header-img:active { transform: scale(.96); }
+        /* 저작권 표시 */
+        #main-header h5 {
+            font-size: 11px;
+            font-weight: 400;
+            opacity: .7;
+            margin: 2px 0 6px;
+        }
+        /* 최소화하면 그림·저작권도 함께 감춘다 */
+        header.collapsed #header-img,
+        header.collapsed h5 {
             display: none;
         }
 
@@ -141,8 +156,8 @@
             position: absolute;
             top: 16px;
             right: 16px;
-            width: 54px;
-            height: 54px;
+            width: 44px;
+            height: 44px;
             border: none;
             background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
             color: white;
@@ -964,8 +979,8 @@
         white-space:nowrap; line-height:1.25;
       }
 
-      /* 헤더 그림 — 좁은 화면에서도 38×38 유지 */
-      #header-img{ width:38px; height:38px; border-radius:7px; }
+      /* QR 코드 — 좁은 화면에서도 크게 유지 */
+      #header-img{ width:60px; height:60px; padding:2px; }
 
       /* 카드 여백 줄이기 */
       .card{ padding:10px 12px !important; margin-bottom:8px !important; }
@@ -997,8 +1012,10 @@
     <header id="main-header">
         <h1>🌳 새솔동 과수원<img id="header-img"
              src="https://raw.githubusercontent.com/solt4999b1-cell/orchard/main/2ey99.png"
-             alt="" onerror="this.style.display='none'"></h1>
-	<h5>이용호. Copyright 2026.08.17.</h5>
+             alt="QR 코드" title="눌러서 크게 보기"
+             onclick="showQrBig()"
+             onerror="this.style.display='none'"></h1>
+        <h5>이용호. Copyright 2026.08.17.</h5>
         <div class="date-info">
             <span>📅 오늘: <strong id="today-date"></strong></span>
             <span>📊 상태: <strong id="load-status">초기화 중<span class="spinner"></span></strong></span>
@@ -1085,8 +1102,12 @@
                 <div class="section-title">
                     <span class="emoji">🌱</span>
                     <span>보유 비료</span>
+                    <button onclick="openSoilModal()"
+                        style="margin-left:auto;margin-right:6px;padding:8px 14px;background:#5D4037;
+                        color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">🔬 토양검정</button>
                     <button onclick="openFertPicker()"
-                        style="margin-left:auto;margin-right:6px;padding:8px 14px;background:#33691E;
+                        style="margin-right:6px;padding:8px 14px;background:#33691E;
                         color:white;border:none;border-radius:6px;cursor:pointer;font-size:13px;
                         font-weight:600;font-family:inherit">🌾 시비량</button>
                     <button onclick="openSupEdit()"
@@ -1650,6 +1671,7 @@
 
         // 시트마다 첫 행이 머리글이면 뺀다
         function _stripHeaders(){
+            _gpHdrCache = null;                 // 머리글 캐시도 새로
             var sheets = ['myPesticides', 'growPlants', 'supplies', 'workLogs',
                           'growRecords', 'cropFertTime'];
             sheets.forEach(function(name){
@@ -5466,6 +5488,172 @@
             }
         }
 
+        // QR 코드를 화면 가득 크게 보여준다 (인증용)
+        function showQrBig(){
+            var img = document.getElementById('header-img');
+            if(!img || !img.src) return;
+
+            var ex = document.getElementById('qr-big');
+            if(ex) ex.remove();
+
+            var box = document.createElement('div');
+            box.id = 'qr-big';
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:10002;'
+              + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+              + 'padding:20px;cursor:pointer';
+            box.onclick = function(){ box.remove(); document.body.style.overflow = ''; };
+
+            box.innerHTML =
+              '<div style="background:#fff;padding:18px;border-radius:14px;'
+            + 'box-shadow:0 8px 30px rgba(0,0,0,.4)">'
+            + '<img src="' + img.src + '" alt="QR"'
+            + ' style="display:block;width:min(76vw,320px);height:min(76vw,320px);'
+            + 'object-fit:contain;image-rendering:pixelated">'
+            + '</div>'
+            + '<div style="color:#fff;font-size:13px;margin-top:16px;text-align:center;'
+            + 'line-height:1.7">화면을 밝게 하고 카메라를 비춰주세요<br>'
+            + '<span style="opacity:.7;font-size:12px">아무 곳이나 누르면 닫힙니다</span></div>';
+
+            document.body.appendChild(box);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // ══ 토양 검정 결과 ════════════════════════════════
+        //   soilTest 시트: id zone testNo testDate
+        //                  acid om vldpha k ca mg si ec memo url
+        var SOIL_FIELDS = [
+            { id:'acid',   label:'pH (산도)',      unit:'',           ok:'6.0~6.5',    min:4,    max:9 },
+            { id:'om',     label:'유기물',          unit:'g/kg',       ok:'25~35',      min:5,    max:300 },
+            { id:'vldpha', label:'유효인산',        unit:'mg/kg',      ok:'350~450',    min:5,    max:1700 },
+            { id:'k',      label:'칼륨',            unit:'cmol+/kg',   ok:'0.65~0.8',   min:0.01, max:9 },
+            { id:'ca',     label:'칼슘',            unit:'cmol+/kg',   ok:'5.0~6.0',    min:0.1,  max:30 },
+            { id:'mg',     label:'마그네슘',        unit:'cmol+/kg',   ok:'1.5~2.0',    min:0.1,  max:20 },
+            { id:'si',     label:'유효규산',        unit:'mg/kg',      ok:'—',          min:5,    max:1500 },
+            { id:'ec',     label:'전기전도도',      unit:'dS/m',       ok:'0.0~2.0',    min:0,    max:10 }
+        ];
+        var _editSoilId = null;
+
+        function _buildSoilFields(){
+            var box = document.getElementById('soil-fields');
+            if(!box || box.dataset.done) return;
+            box.innerHTML = SOIL_FIELDS.map(function(f){
+                return '<div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">'
+                     + '<div style="flex:1.1;font-size:13px;color:#424242">' + f.label
+                     + (f.unit ? ' <span style="font-size:10px;color:#9E9E9E">' + f.unit + '</span>' : '')
+                     + '</div>'
+                     + '<input type="number" step="0.01" id="soil-' + f.id + '"'
+                     + ' style="flex:0 0 88px;padding:8px;border:1.5px solid #E0E0E0;'
+                     + 'border-radius:7px;font-size:15px;text-align:right;font-family:inherit">'
+                     + '<div style="flex:0 0 74px;font-size:10px;color:#9E9E9E">적정 ' + f.ok + '</div>'
+                     + '</div>';
+            }).join('');
+            box.dataset.done = '1';
+        }
+
+        function openSoilModal(id){
+            _buildSoilFields();
+            _editSoilId = id ? String(id) : null;
+            var v = function(i, val){ var el = document.getElementById(i); if(el) el.value = val; };
+            var row = null;
+
+            if(_editSoilId){
+                row = (APP.data.soilTest || []).find(function(r){
+                    return r && String(r[0]) === _editSoilId; });
+                if(!row){ alert('검정 결과를 찾지 못했습니다.'); return; }
+            }
+
+            document.getElementById('soil-title').textContent =
+                row ? '🔬 검정 결과 수정' : '🔬 토양 검정 결과';
+            document.getElementById('soil-del-btn').style.display = row ? 'block' : 'none';
+
+            v('soil-zone', row ? (row[1] || '전체') : '전체');
+            v('soil-no',   row ? (row[2] || '') : '');
+            v('soil-date', row ? String(row[3] || '').slice(0,10)
+                               : new Date().toISOString().slice(0,10));
+            SOIL_FIELDS.forEach(function(f, i){ v('soil-' + f.id, row ? (row[4+i] || '') : ''); });
+            v('soil-memo', row ? (row[12] || '') : '');
+            v('soil-url',  row ? (row[13] || '') : '');
+
+            var idRow = document.getElementById('soil-id-row');
+            if(row){ idRow.style.display = 'block'; idRow.textContent = 'id: ' + row[0]; }
+            else idRow.style.display = 'none';
+
+            document.getElementById('soil-modal').style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeSoilModal(){
+            document.getElementById('soil-modal').style.display = 'none';
+            document.body.style.overflow = '';
+            _editSoilId = null;
+        }
+
+        async function saveSoilTest(){
+            var g = function(i){ var el = document.getElementById(i); return el ? String(el.value).trim() : ''; };
+
+            // 값의 범위를 살펴본다
+            var bad = [];
+            SOIL_FIELDS.forEach(function(f){
+                var s = g('soil-' + f.id);
+                if(!s) return;
+                var x = parseFloat(s);
+                if(isNaN(x) || x < f.min || x > f.max)
+                    bad.push(f.label + ' (' + f.min + '~' + f.max + ')');
+            });
+            if(bad.length){
+                alert('값의 범위를 확인해 주세요.\n\n' + bad.join('\n'));
+                return;
+            }
+            if(!g('soil-acid') || !g('soil-vldpha')){
+                alert('pH 와 유효인산은 꼭 넣어주세요.'); return;
+            }
+
+            var btn = document.getElementById('soil-save-btn');
+            if(btn){ btn.disabled = true; btn.textContent = '⏳ 저장 중…'; }
+
+            var payload = {
+                id:       _editSoilId || ('st_' + Date.now()),
+                zone:     g('soil-zone'),
+                testNo:   g('soil-no'),
+                testDate: g('soil-date'),
+                memo:     g('soil-memo'),
+                url:      g('soil-url'),
+                updatedAt: new Date().toISOString()
+            };
+            SOIL_FIELDS.forEach(function(f){ payload[f.id] = g('soil-' + f.id); });
+
+            var r = await _gasPost(_editSoilId ? 'updateSoilTest' : 'addSoilTest', payload);
+            if(btn){ btn.disabled = false; btn.textContent = '✅ 저장'; }
+            if(!r || !r.ok) return;
+
+            closeSoilModal();
+            await reloadFromSheets(true);
+            _pestToast('🔬 검정 결과가 저장되었습니다');
+        }
+
+        async function deleteSoilTest(){
+            if(!_editSoilId) return;
+            if(!confirm('이 검정 결과를 지울까요?')) return;
+            var r = await _gasPost('deleteSoilTest', { id: _editSoilId });
+            if(!r || !r.ok) return;
+            closeSoilModal();
+            await reloadFromSheets(true);
+            _pestToast('🗑️ 삭제되었습니다');
+        }
+
+        // 이 구역의 검정 결과를 찾는다 (없으면 「전체」 를 쓴다)
+        function _soilOf(zone){
+            var rows = APP.data.soilTest || [];
+            if(!rows.length) return null;
+            var z = String(zone || '').trim();
+            var hit = rows.find(function(r){ return r && String(r[1]).trim() === z; })
+                   || rows.find(function(r){ return r && String(r[1]).trim() === '전체'; });
+            if(!hit) return null;
+            var o = { id: hit[0], zone: hit[1], testNo: hit[2], testDate: hit[3] };
+            SOIL_FIELDS.forEach(function(f, i){ o[f.id] = hit[4+i]; });
+            return o;
+        }
+
         // ══ 시비량 (흙토람) ═══════════════════════════════
         //   10a = 1,000 m²  /  이랑 1개 = 20m × 1m = 20 m²  →  10a 의 1/50
         var IRANG_M2 = 20;              // 이랑 1개 = 20m × 1m
@@ -5479,17 +5667,88 @@
             var hdr = _gpHeaders();
             var ci = hdr.indexOf('fertCd');
             var ni = hdr.indexOf('name');
-            if(ci < 0) return null;
+            if(ci < 0 || ni < 0) return null;
             var hit = rows.find(function(r){
                 return r && String(r[ni]).trim() === String(name).trim(); });
             return hit ? String(hit[ci] || '').trim() : null;
         }
 
-        // growPlants 머리글 (읽기 결과에 머리글이 없으면 기본값)
+        // growPlants 머리글
+        //   시트에서 읽은 머리글을 쓰고, 없으면 기본값을 쓴다
+        //   → 열 순서가 바뀌거나 열이 늘어도 안전하다
+        var _gpHdrCache = null;
         function _gpHeaders(){
-            return ['id','name','plantDate','emoji','category','no','status',
-                    'totalDays','pinchDays','fruitDays','updatedAt',
-                    'irang','qty','zone','spot','crops','fertCd','fertNm','gorang'];
+            if(_gpHdrCache) return _gpHdrCache;
+
+            // 시트가 머리글을 함께 보내주면 그것을 쓴다
+            var h = APP.data.growPlantsHeader;
+            if(Array.isArray(h) && h.length && h.indexOf('name') >= 0){
+                _gpHdrCache = h.map(function(x){ return String(x).trim(); });
+                return _gpHdrCache;
+            }
+
+            // 첫 행이 머리글이면 그것을 쓴다
+            var rows = APP.data.growPlants || [];
+            if(rows.length && rows[0] && String(rows[0][1]).trim() === 'name'){
+                _gpHdrCache = rows[0].map(function(x){ return String(x).trim(); });
+                return _gpHdrCache;
+            }
+
+            // 마지막 수단 — 실제 시트 순서
+            _gpHdrCache = ['id','name','plantDate','emoji','category','no','status',
+                           'totalDays','pinchDays','fruitDays','updatedAt',
+                           'irang','qty','zone','spot','fstdCropCode',
+                           'expCd','fertCd','fertNm','crops','gorang','expNm'];
+            return _gpHdrCache;
+        }
+
+        // 이 작물의 구역을 찾는다
+        function _zoneOf(name){
+            var hdr = _gpHeaders();
+            var ni = hdr.indexOf('name'), zi = hdr.indexOf('zone');
+            if(ni < 0 || zi < 0) return '';
+            var hit = (APP.data.growPlants || []).find(function(r){
+                return r && String(r[ni]).trim() === String(name).trim(); });
+            return hit ? String(hit[zi] || '').trim() : '';
+        }
+
+        // 체험 API 코드를 찾는다
+        function _expCodeOf(name){
+            var hdr = _gpHeaders();
+            var ei = hdr.indexOf('expCd'), ni = hdr.indexOf('name');
+            if(ei < 0 || ni < 0) return null;
+            var hit = (APP.data.growPlants || []).find(function(r){
+                return r && String(r[ni]).trim() === String(name).trim(); });
+            return hit ? String(hit[ei] || '').trim() : null;
+        }
+
+        // 검정값 기반 처방을 가져온다 (없으면 null)
+        var _expCache = {};
+        async function getFertExp(cropName){
+            var code = _expCodeOf(cropName);
+            var soil = _soilOf(_zoneOf(cropName));
+            if(!code || !soil || !soil.acid || !soil.vldpha) return null;
+
+            var key = code + '|' + soil.id;
+            if(_expCache[key]) return _expCache[key];
+
+            var q = '?action=soilExp&cropCode=' + encodeURIComponent(('00000' + code).slice(-5));
+            ['acid','om','vldpha','k','ca','mg','si','ec'].forEach(function(f){
+                if(soil[f] !== undefined && soil[f] !== '') q += '&' + f + '=' + soil[f];
+            });
+            try {
+                var res = await fetch(APP.gasUrl + q);
+                var txt = await res.text();
+                console.log('🔬 검정 처방 응답:', txt.slice(0, 220));
+                var j = JSON.parse(txt);
+                if(j && j.success && j.list && j.list.length){
+                    var x = j.list[0];
+                    x._soil = soil;
+                    _expCache[key] = x;
+                    return x;
+                }
+            } catch(e){ console.warn('검정 처방 실패:', e.message); }
+            return null;
         }
 
         // 시비량을 가져온다 (같은 코드는 다시 부르지 않는다)
@@ -6029,14 +6288,42 @@
                          + '</div>';
                 }
 
+                // ④ 퇴비 — 검정 처방에만 있다
+                if(std._soil && std.pre_Compost_Mix){
+                    var cp = function(v){
+                        var x = _toArea(parseFloat(v), area.m2);
+                        return x ? (x >= 1000 ? (x/1000).toFixed(1) + ' kg' : Math.round(x) + ' g') : null;
+                    };
+                    var cs = [];
+                    if(std.pre_Compost_Mix)   cs.push('혼합가축분 ' + cp(std.pre_Compost_Mix));
+                    if(std.pre_Compost_Cattl) cs.push('우분 ' + cp(std.pre_Compost_Cattl));
+                    if(std.pre_Compost_Pig)   cs.push('돈분 ' + cp(std.pre_Compost_Pig));
+                    if(std.pre_Compost_Chick) cs.push('계분 ' + cp(std.pre_Compost_Chick));
+                    if(cs.length){
+                        box += '<div style="font-size:11px;font-weight:700;color:#546E7A;'
+                             + 'margin:8px 0 4px">🐄 퇴비 (하나만 고르세요)</div>'
+                             + '<div style="display:flex;flex-wrap:wrap;gap:5px">'
+                             + cs.map(function(x){
+                                 return '<div style="background:#EFEBE9;border-radius:6px;'
+                                      + 'padding:4px 8px;font-size:12px;color:#5D4037">' + x + '</div>';
+                               }).join('') + '</div>';
+                    }
+                }
+
                 if(box) conv = '<div style="margin-top:10px;padding-top:9px;'
                              + 'border-top:1px dashed #DDD">' + box + '</div>';
             }
 
-            return '<div style="background:#F9FBE7;border:1.5px solid #DCE775;border-radius:10px;'
-                 + 'padding:11px 13px;margin-top:8px;font-size:13px">'
+            var isExp = !!std._soil;          // 검정값 기반인가
+            return '<div style="background:' + (isExp ? '#F1F8E9' : '#F9FBE7')
+                 + ';border:1.5px solid ' + (isExp ? '#AED581' : '#DCE775')
+                 + ';border-radius:10px;padding:11px 13px;margin-top:8px;font-size:13px">'
+                 + (isExp ? '<div style="background:#33691E;color:#fff;border-radius:6px;'
+                          + 'padding:4px 9px;font-size:11px;margin-bottom:7px;display:inline-block">'
+                          + '🔬 토양검정 기반 · ' + (std._soil.zone || '') 
+                          + (std._soil.testNo ? ' · ' + std._soil.testNo : '') + '</div>' : '')
                  + '<div style="font-weight:700;color:#33691E;margin-bottom:7px">'
-                 + '🌾 ' + std.fstd_Crop_Nm + ' · 표준 시비량'
+                 + '🌾 ' + (std.crop_Nm || std.fstd_Crop_Nm) + (isExp ? ' · 처방 시비량' : ' · 표준 시비량')
                  + '<span style="font-weight:400;font-size:11px;color:#666"> · '
                  + (area.m2 % 1 ? area.m2.toFixed(1) : area.m2) + '㎡'
                  + (area.irang > 1 ? ' · ' + area.irang + '이랑' : '') + '</span></div>'
@@ -6069,7 +6356,9 @@
                 return;
             }
             showBusy('시비량을 불러오는 중입니다…');
-            var std = await getFertStd(code);
+            // 검정값이 있으면 그 처방을 먼저 쓴다
+            var exp = await getFertExp(cropName);
+            var std = exp || await getFertStd(code);
             hideBusy();
             if(!std){
                 alert('시비량 정보를 받지 못했습니다.\n'
@@ -6097,8 +6386,12 @@
             + 'document.body.style.overflow=\'\'" style="cursor:pointer;font-size:22px">&times;</span>'
             + '</div><div style="padding:14px">' + fertCardHtml(cropName, std, area)
             + '<div style="font-size:11px;color:#9E9E9E;margin-top:10px;line-height:1.6">'
-            + '농촌진흥청 흙토람 표준 시비량입니다.<br>'
-            + '토양 검정을 받으시면 더 정확한 처방을 받을 수 있습니다.</div>'
+            + (std._soil
+               ? '토양검정 결과를 반영한 처방입니다.<br>pH ' + std._soil.acid
+                 + ' · 유효인산 ' + std._soil.vldpha + ' · 칼륨 ' + std._soil.k
+               : '농촌진흥청 흙토람 표준 시비량입니다.<br>'
+                 + '토양 검정을 받으시면 더 정확한 처방을 받을 수 있습니다.')
+            + '</div>'
             + '</div></div>';
             document.body.appendChild(box);
             document.body.style.overflow = 'hidden';
@@ -6296,6 +6589,9 @@
         //   수량 조절·삭제가 모두 조용히 실패하고 있었다.
         //   action 이름을 실제 시트와 GAS 가 아는 이름으로 이어준다.
         var _ACTION_MAP = {
+            addSoilTest:     { sheet: 'soilTest',     names: ['addSoilTest','create','add'] },
+            updateSoilTest:  { sheet: 'soilTest',     names: ['updateSoilTest','update','updateRow'] },
+            deleteSoilTest:  { sheet: 'soilTest',     names: ['deleteSoilTest','delete','deleteRow'] },
             updatePesticide: { sheet: 'myPesticides', names: ['updateMyPesticide','update','updateRow'] },
             deletePesticide: { sheet: 'myPesticides', names: ['deleteMyPesticide','delete','deleteRow'] },
             addPesticide:    { sheet: 'myPesticides', names: ['addMyPesticide','create','add'] },
@@ -7197,6 +7493,86 @@ ${info.shelfLife}
             border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">↩ 다시 스캔</button>
         </div>
 
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ 토양 검정 결과 입력 ═════════════════════════ -->
+  <div id="soil-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);
+       z-index:9998;align-items:center;justify-content:center;padding:14px">
+    <div style="background:#fff;border-radius:12px;width:100%;max-width:430px;max-height:92vh;
+         overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.3)">
+      <div style="background:#5D4037;color:#fff;padding:13px 16px;font-weight:700;font-size:15px;
+           display:flex;align-items:center;justify-content:space-between">
+        <span id="soil-title">🔬 토양 검정 결과</span>
+        <span onclick="closeSoilModal()" style="cursor:pointer;font-size:22px;line-height:1">&times;</span>
+      </div>
+      <div style="padding:16px">
+
+        <div style="background:#EFEBE9;border-radius:8px;padding:9px 11px;margin-bottom:14px;
+             font-size:11px;color:#5D4037;line-height:1.6">
+          시군농업기술센터에서 받으신 <b>「밭 토양 비료사용 처방서」</b> 의 숫자를 옮겨 적으세요.<br>
+          표준값 대신 <b>이 밭에 맞는 시비량</b> 이 계산됩니다.
+        </div>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px">
+          <div style="flex:1.3">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">
+              구역 <span style="color:#C62828">*</span></div>
+            <select id="soil-zone" style="width:100%;padding:10px;border:1.5px solid #E0E0E0;
+              border-radius:8px;font-size:15px;font-family:inherit;background:#fff">
+              <option value="전체">전체 (모든 구역)</option>
+              <option value="1구역">1구역</option>
+              <option value="사이구역">사이구역</option>
+              <option value="2구역">2구역</option>
+              <option value="하우스">하우스</option>
+              <option value="하우스 앞">하우스 앞</option>
+            </select>
+          </div>
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">검정일</div>
+            <input type="date" id="soil-date"
+              style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+              font-size:15px;box-sizing:border-box;font-family:inherit">
+          </div>
+        </div>
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:4px">조사번호</div>
+        <input type="text" id="soil-no" placeholder="예: 2025-989"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:15px;box-sizing:border-box;margin-bottom:14px;font-family:inherit">
+
+        <div style="font-weight:700;color:#5D4037;font-size:13px;margin-bottom:8px;
+             padding-bottom:5px;border-bottom:1.5px solid #EFEBE9">
+          토양의 이화학적 특성</div>
+
+        <div id="soil-fields"></div>
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin:12px 0 4px">메모</div>
+        <input type="text" id="soil-memo" placeholder="예: 처방서 PDF 는 드라이브에 보관"
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:15px;box-sizing:border-box;font-family:inherit">
+
+        <div style="font-size:12px;font-weight:700;color:#546E7A;margin:12px 0 4px">
+          처방서 링크 <span style="font-weight:400;font-size:11px;opacity:.75">· 구글 드라이브 등</span></div>
+        <input type="text" id="soil-url" placeholder="https://drive.google.com/..."
+          style="width:100%;padding:10px;border:1.5px solid #E0E0E0;border-radius:8px;
+          font-size:14px;box-sizing:border-box;font-family:inherit">
+
+        <div id="soil-id-row" style="font-size:11px;color:#BDBDBD;margin-top:8px;display:none"></div>
+
+        <div style="display:flex;gap:8px;margin-top:16px">
+          <button onclick="closeSoilModal()"
+            style="flex:1;padding:11px;border:1.5px solid #E0E0E0;background:#fff;color:#666;
+            border-radius:8px;cursor:pointer;font-size:14px;font-family:inherit">취소</button>
+          <button id="soil-del-btn" onclick="deleteSoilTest()"
+            style="display:none;flex:1;padding:11px;border:none;background:#C62828;color:#fff;
+            border-radius:8px;cursor:pointer;font-size:14px;font-weight:600;
+            font-family:inherit">🗑️ 삭제</button>
+          <button onclick="saveSoilTest()" id="soil-save-btn"
+            style="flex:2;padding:11px;border:none;background:#5D4037;color:#fff;border-radius:8px;
+            cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">✅ 저장</button>
+        </div>
       </div>
     </div>
   </div>
