@@ -3858,190 +3858,7 @@
         }
 
 
-        function renderWeeklyWithSupplies() {
-            const today = new Date();
-            const dayOfWeek = today.getDay();
-            const weekStartDate = new Date(today);
-            weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
-            const weekEndDate = new Date(weekStartDate);
-            weekEndDate.setDate(weekStartDate.getDate() + 6);
-            weekStartDate.setHours(0, 0, 0, 0);
-            weekEndDate.setHours(23, 59, 59, 999);
-            
-            const tasks = (APP.data.준비사항 || []).filter(r => {
-                if (!r[0]) return false;
-                try {
-                    const itemDate = new Date(r[0]);
-                    if (isNaN(itemDate.getTime())) return false;
-                    return itemDate >= weekStartDate && itemDate <= weekEndDate;
-                } catch (e) {
-                    return false;
-                }
-            }) || [];
-            
-            document.getElementById('tasks-with-supplies-list').innerHTML = tasks.length ? tasks.map(r => `
-                <div class="card" style="margin-bottom: 4px; padding: 8px;">
-                    <div class="card-title" style="font-size: 12px; margin-bottom: 2px;">✅ ${r[2] || ''}</div>
-                    <div class="card-content" style="font-size: 11px;">
-                        ${r[3] ? `<p style="margin: 0;">${r[3]}</p>` : ''}
-                    </div>
-                </div>
-            `).join('') : '<div class="empty-state"><p>할일이 없습니다.</p></div>';
 
-            document.getElementById('needed-pesticides-list').innerHTML = APP.data.myPesticides && APP.data.myPesticides.length ? APP.data.myPesticides.map(r => {
-                const qty = parseFloat(r[3] || 0);
-                return `<div class="card" style="margin-bottom: 4px; padding: 8px;">
-                    <div class="card-title" style="font-size: 12px; margin-bottom: 2px;">🧪 ${r[1]}</div>
-                    <div class="card-content" style="font-size: 11px;">보유: <strong>${qty} ${r[4]||'-'}</strong></div>
-                </div>`;
-            }).join('') : '<div class="empty-state"><p>농약이 없습니다.</p></div>';
-
-            document.getElementById('needed-supplies-list').innerHTML = (() => {
-                const today = new Date();
-                const dayOfWeek = today.getDay();
-                const weekStartDate = new Date(today);
-                weekStartDate.setDate(today.getDate() - dayOfWeek + 1);
-                const weekEndDate = new Date(weekStartDate);
-                weekEndDate.setDate(weekStartDate.getDate() + 6);
-                weekStartDate.setHours(0, 0, 0, 0);
-                weekEndDate.setHours(23, 59, 59, 999);
-                
-                // 이번 주 시비 항목 찾기
-                const weeklyTasks = (APP.data.준비사항 || []).filter(r => {
-                    if (!r[0] || r[1] !== '시비') return false;
-                    try {
-                        const itemDate = new Date(r[0]);
-                        if (isNaN(itemDate.getTime())) return false;
-                        return itemDate >= weekStartDate && itemDate <= weekEndDate;
-                    } catch (e) {
-                        return false;
-                    }
-                });
-                
-                if (!APP.data.supplies || APP.data.supplies.length === 0) {
-                    return '<div class="empty-state"><p>비료가 없습니다.</p></div>';
-                }
-                
-                // 비료별로 그룹화
-                const fertilizersMap = {};
-                const fertilizerOrder = ['단한번비료', '엔케이플러스', '원예맞춤고추비료', '일회만비료', '슈퍼복합비료'];
-                
-                APP.data.supplies.forEach(supply => {
-                    const fertName = supply[7]; // 비료명
-                    const qty = parseFloat(supply[9] || 0);
-                    const memo = supply[10] || '';
-                    const ingredient = supply[4] || '';
-                    
-                    if (!fertilizersMap[fertName]) {
-                        fertilizersMap[fertName] = {
-                            name: fertName,
-                            ingredient: ingredient,
-                            qty: qty,
-                            memo: memo,
-                            crops: []
-                        };
-                    }
-                });
-                
-                // 이번 주 필요한 작물 추가
-                const currentMonth = new Date().getMonth() + 1; // 1-12
-                weeklyTasks.forEach(task => {
-                    const title = task[2] || '';
-                    const taskDate = task[0] ? new Date(task[0]) : null;
-                    const taskMonth = taskDate ? taskDate.getMonth() + 1 : currentMonth;
-                    
-                    // 제목에서 비료명 추출 (예: "🍇 수박 착과 후 웃거름 (엔케이플러스)")
-                    const fertMatch = title.match(/\((.*?)\)$/);
-                    if (fertMatch) {
-                        const fertName = fertMatch[1].trim();
-                        if (fertilizersMap[fertName]) {
-                            // 제목에서 작물명 추출 (이모지 제거)
-                            const cropTitle = title.replace(/\([^)]*\)$/, '').replace(/^[^\s]+\s/, '').trim();
-                            fertilizersMap[fertName].crops.push({
-                                name: cropTitle,
-                                fullTitle: title,  // 전체 제목 저장
-                                month: taskMonth,
-                                isCurrentMonth: taskMonth === currentMonth
-                            });
-                        }
-                    }
-                });
-                
-                // 비료별로 HTML 생성
-                const result = Object.values(fertilizersMap)
-                    .sort((a, b) => {
-                        const aIdx = fertilizerOrder.indexOf(a.name);
-                        const bIdx = fertilizerOrder.indexOf(b.name);
-                        return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
-                    })
-                    .map(fert => {
-                        const emoji = {
-                            '단한번비료': '🌾',
-                            '엔케이플러스': '🍇',
-                            '원예맞춤고추비료': '🫐',
-                            '일회만비료': '🌱',
-                            '슈퍼복합비료': '🌿'
-                        }[fert.name] || '🌱';
-                        
-                        const cropsHtml = fert.crops.length > 0 
-                            ? `<div style="margin-top: 3px; padding: 6px; background: #f9f9f9; border-radius: 4px; border: 1px solid #e0e0e0;">
-                                <strong style="font-size: 10px;">📅 이번 주:</strong>
-                                <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 4px;">
-                                    ${fert.crops.map(crop => {
-                                        const isCurrentMonth = crop.isCurrentMonth;
-                                        const bgColor = isCurrentMonth ? '#fff8f0' : '#f5faf8';
-                                        const borderColor = isCurrentMonth ? '#FF9800' : '#81C784';
-                                        const textColor = isCurrentMonth ? '#E65100' : '#2E7D32';
-                                        return `<div style="
-                                            padding: 6px 8px;
-                                            background: ${bgColor};
-                                            border-left: 2px solid ${borderColor};
-                                            border-radius: 2px;
-                                            font-size: 11px;
-                                            color: ${textColor};
-                                            line-height: 1.2;
-                                        ">
-                                            <div style="font-weight: 600; display: flex; align-items: center; gap: 3px;">
-                                                ${crop.fullTitle}
-                                                ${isCurrentMonth ? '<span style="color: #FF9800;">⭐</span>' : ''}
-                                            </div>
-                                        </div>`;
-                                    }).join('')}
-                                </div>
-                            </div>`
-                            : '';
-                        
-                        const memoPreview = fert.memo ? fert.memo.substring(0, 100).replace(/\n/g, ' ') + (fert.memo.length > 100 ? '...' : '') : '정보 없음';
-                        
-                        return `<div class="card" style="border-left: 4px solid var(--primary-color); margin-bottom: 4px; padding: 8px;">
-                            <div class="card-title" style="font-size: 13px; font-weight: 600; margin-bottom: 3px;">
-                                ${emoji} ${fert.name}
-                                <span style="font-size: 10px; color: #666; margin-left: 4px;">${fert.ingredient}</span>
-                            </div>
-                            <div class="card-content">
-                                ${cropsHtml}
-                                <div style="margin-top: 4px; padding-top: 4px; border-top: 1px solid #eee;">
-                                    <div style="font-size: 10px; color: #666; margin-bottom: 3px;">
-                                        📋 ${memoPreview}
-                                    </div>
-                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 4px;">
-                                        <span style="font-size: 11px;">
-                                            📦 ${fert.qty}개
-                                        </span>
-                                        <button onclick="alert('비료명: ${fert.name}\\n보유량: ${fert.qty}\\n\\n상세 정보는 보유 비료 탭에서 확인하세요.')" 
-                                                style="padding: 3px 8px; background: #4CAF50; color: white; border: none; border-radius: 3px; cursor: pointer; font-size: 10px; font-weight: 600;">
-                                            ✏️
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>`;
-                    })
-                    .join('');
-                
-                return result || '<div class="empty-state"><p>비료가 없습니다.</p></div>';
-            })()
-        }
 
 
         // ✅ 그룹 토글
@@ -5901,7 +5718,9 @@
             if(ci < 0 || ni < 0) return null;
             var hit = rows.find(function(r){
                 return r && String(r[ni]).trim() === String(name).trim(); });
-            return hit ? String(hit[ci] || '').trim() : null;
+            if(!hit) return null;
+            var v = String(hit[ci] || '').trim();
+            return /^\d{1,5}$/.test(v) ? v : null;      // 숫자가 아니면 없는 것으로
         }
 
         // growPlants 머리글
@@ -5985,6 +5804,13 @@
         // 시비량을 가져온다 (같은 코드는 다시 부르지 않는다)
         async function getFertStd(cropCode){
             if(!cropCode) return null;
+            // 숫자로 된 코드만 보낸다 — 이름 조각이 들어오면 막는다
+            if(!/^\d{1,5}$/.test(String(cropCode).trim())){
+                console.warn('🌾 코드가 숫자가 아닙니다:', cropCode, '— growPlants 의 fertCd 를 확인해 주세요');
+                window._fertLastMsg = '작물코드가 「' + cropCode + '」 로 잘못 읽혔습니다.\n'
+                    + 'growPlants 시트의 fertCd 열을 확인해 주세요.';
+                return null;
+            }
             var _k5 = ('00000' + String(cropCode).trim()).slice(-5);
             if(_fertCache[_k5]) return _fertCache[_k5];
 
@@ -7499,7 +7325,6 @@ ${info.shelfLife}
             renderSupplies();
             renderPlants();
             renderRecords();
-            renderWeeklyWithSupplies();
         }
 
         function switchTab(name) {
