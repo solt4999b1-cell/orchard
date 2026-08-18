@@ -2170,7 +2170,10 @@
             }
             
             console.log('✅ renderWeekly 완료!');
-            try { renderWeather(); } catch(e){ console.warn('날씨:', e.message); }
+            // async 함수라 catch 로는 못 잡는다 — Promise 로 받는다
+            Promise.resolve()
+                .then(function(){ return renderWeather(); })
+                .catch(function(e){ console.warn('🌤 날씨 그리기 실패:', e && e.message, e); });
             try { renderWeekFert(); } catch(e){ console.warn('이번 주 시비:', e.message); }
             console.log('최종 HTML 길이:', prepList.innerHTML.length, '자');
         }
@@ -5355,6 +5358,21 @@
         }
 
         var SKY_ICON = { '1':'☀️', '3':'⛅', '4':'☁️' };
+
+        // 풍향 각도 → 화살표 (바람이 불어가는 쪽을 가리킨다)
+        function _windArrow(deg){
+            if(deg === null || deg === undefined || isNaN(deg)) return '·';
+            var a = ['↓','↙','←','↖','↑','↗','→','↘'];
+            return a[Math.floor((Number(deg) + 22.5) / 45) % 8];
+        }
+
+        // 풍향 각도 → 이름
+        function _windName(deg){
+            if(deg === null || deg === undefined || isNaN(deg)) return '';
+            var n = ['북','북북동','북동','동북동','동','동남동','남동','남남동',
+                     '남','남남서','남서','서남서','서','서북서','북서','북북서'];
+            return n[Math.floor((Number(deg) + 11.25) / 22.5) % 16];
+        }
         var SKY_NAME = { '1':'맑음', '3':'구름많음', '4':'흐림' };
 
         function _mmdd(s){
@@ -5380,15 +5398,24 @@
 
             // 바람이 세면 방제가 어렵다
             if(today.wsd >= 4){
-                msgs.push({ t:'warn', s:'바람 ' + today.wsd + 'm/s — 방제 시 약이 날립니다' });
+                var wn = _windName(today.vec);
+                msgs.push({ t:'warn', s:(wn ? wn + '풍 ' : '바람 ') + today.wsd
+                          + 'm/s — 방제 시 약이 날립니다' });
             }
 
             // 서리·고온
             if(today.tmn !== null && today.tmn !== undefined && today.tmn <= 0){
                 msgs.push({ t:'bad', s:'서리 주의 (최저 ' + today.tmn + '℃)' });
             }
-            if(today.tmx !== null && today.tmx >= 31){
-                msgs.push({ t:'warn', s:'한낮 ' + today.tmx + '℃ — 이른 아침이나 저녁에 작업하세요' });
+            // 오늘·내일 중 더운 날을 알려준다
+            var hot = null, hotDay = '';
+            [[today,'오늘'], [tmr,'내일']].forEach(function(p){
+                if(p[0] && p[0].tmx !== null && p[0].tmx >= 31 && (!hot || p[0].tmx > hot)){
+                    hot = p[0].tmx; hotDay = p[1];
+                }
+            });
+            if(hot){
+                msgs.push({ t:'warn', s: hotDay + ' 한낮 ' + hot + '℃ — 이른 아침이나 저녁에 작업하세요' });
             }
 
             // 아무 문제 없으면
@@ -5400,21 +5427,23 @@
 
         async function renderWeather(){
             var box = document.getElementById('week-weather');
-            if(!box) return;
+            if(!box){ console.warn('🌤 week-weather 자리가 없습니다'); return; }
 
             var wx = await getWeather();
-            if(!wx || !wx.days || !wx.days.length){ box.innerHTML = ''; return; }
+            if(!wx || !wx.days || !wx.days.length){
+                console.warn('🌤 날씨 자료가 비었습니다:', wx);
+                box.innerHTML = '';
+                return;
+            }
+            console.log('🌤 날씨 ' + wx.days.length + '일치 받음');
 
             var days = wx.days.slice(0, 3);
             var adv = _wxAdvice(days) || [];
 
             var cards = days.map(function(d, i){
                 var label = i === 0 ? '오늘' : i === 1 ? '내일' : _mmdd(d.date);
-                var rain = d.rain >= 0.1
-                    ? '<div style="font-size:11px;color:#0277BD;font-weight:700">'
-                      + d.rain.toFixed(d.rain < 10 ? 1 : 0) + 'mm</div>' : '';
+
                 // 오늘은 최저·최고가 이미 지나 빠져 있을 수 있다
-                // 그럴 때는 남은 시간대의 기온으로 대신한다
                 var lo = d.tmn, hi = d.tmx;
                 if(lo === null || hi === null){
                     var temps = (d.hours || []).map(function(h){ return parseFloat(h.tmp); })
@@ -5424,34 +5453,49 @@
                         if(hi === null) hi = Math.max.apply(null, temps);
                     }
                 }
-                var now = (d.hours || []).length ? parseFloat(d.hours[0].tmp) : NaN;
-                var tempTxt = (lo !== null && hi !== null)
-                    ? Math.round(lo) + '° / <b>' + Math.round(hi) + '°</b>'
-                    : (!isNaN(now) ? '<b>' + Math.round(now) + '°</b>' : '-');
+                var temp = (lo !== null && hi !== null)
+                    ? Math.round(lo) + '/<b>' + Math.round(hi) + '°</b>' : '-';
 
-                return '<div style="flex:1;text-align:center;background:#fff;border-radius:8px;'
-                     + 'padding:8px 4px">'
-                     + '<div style="font-size:11px;color:#666">' + label + '</div>'
-                     + '<div style="font-size:22px;line-height:1.3">' + (SKY_ICON[d.sky] || '☁️') + '</div>'
-                     + '<div style="font-size:12px;color:#424242">' + tempTxt + '</div>'
-                     + '<div style="font-size:10px;color:#9E9E9E">비 ' + d.pop + '%</div>'
-                     + rain + '</div>';
+                var rain = d.rain >= 0.1
+                    ? '<div style="font-size:11px;color:#0277BD;font-weight:700">'
+                      + d.rain.toFixed(d.rain < 10 ? 1 : 0) + 'mm</div>' : '';
+
+                // 바람 — 화살표로 방향까지
+                var wind = '';
+                if(d.wsd){
+                    var arrow = _windArrow(d.vec);
+                    var wcol = d.wsd >= 4 ? '#E65100;font-weight:700' : '#455A64';
+                    wind = '<div style="font-size:11px;color:' + wcol + '">'
+                         + arrow + ' ' + d.wsd + 'm/s</div>';
+                }
+
+                return '<div style="flex:1;text-align:center;padding:0 2px'
+                     + (i < days.length - 1 ? ';border-right:1px solid #BBDEFB' : '') + '">'
+                     + '<div style="font-size:12px;color:#0D47A1;font-weight:600">' + label + '</div>'
+                     + '<div style="font-size:19px;line-height:1.25">' + (SKY_ICON[d.sky] || '☁️') + '</div>'
+                     + '<div style="font-size:13px;color:#212121;font-weight:600">' + temp + '</div>'
+                     + '<div style="font-size:11px;color:'
+                     + (d.pop >= 60 ? '#0277BD;font-weight:700' : '#455A64') + '">비 '
+                     + d.pop + '%</div>'
+                     + rain + wind + '</div>';
             }).join('');
 
             var tips = adv.map(function(a){
                 var c = a.t === 'bad' ? '#C62828' : a.t === 'warn' ? '#E65100' : '#2E7D32';
                 var ic = a.t === 'bad' ? '🚫' : a.t === 'warn' ? '⚠️' : '✅';
-                return '<div style="font-size:12px;color:' + c + ';margin-top:4px">'
-                     + ic + ' ' + a.s + '</div>';
+                return '<div style="font-size:12.5px;font-weight:600;color:' + c + ';'
+                     + 'margin-top:3px">' + ic + ' ' + a.s + '</div>';
             }).join('');
 
             box.innerHTML =
-              '<div style="background:#E3F2FD;border:1.5px solid #90CAF9;border-radius:10px;'
-            + 'padding:11px 13px;margin-bottom:12px">'
-            + '<div style="font-weight:700;color:#1565C0;font-size:14px;margin-bottom:8px">'
-            + '🌤 날씨 <span style="font-weight:400;font-size:11px;color:#666">· 새솔동</span></div>'
-            + '<div style="display:flex;gap:6px">' + cards + '</div>'
-            + tips + '</div>';
+              '<div style="background:#E3F2FD;border:1px solid #BBDEFB;border-radius:9px;'
+            + 'padding:8px 11px;margin-bottom:10px">'
+            + '<div style="font-weight:700;color:#0D47A1;font-size:14px;margin-bottom:5px">'
+            + '🌤 날씨 <span style="font-weight:400;font-size:12px;color:#455A64">· 새솔동</span></div>'
+            + '<div style="display:flex;align-items:flex-start">' + cards + '</div>'
+            + (tips ? '<div style="margin-top:6px;padding-top:5px;'
+                    + 'border-top:1px solid #BBDEFB">' + tips + '</div>' : '')
+            + '</div>';
         }
 
         // ══ 이번 주 시비 알림 ═════════════════════════════
