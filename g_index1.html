@@ -1971,6 +1971,10 @@
                                         <div class="card-title">💊 ${r[2] || ''}</div>
                                         <div class="card-content">
                                             ${r[3] ? `<div class="card-description">📋 ${r[3]}</div>` : ''}
+                                            ${(function(){
+                                                try { return suggestPesticides([r[2],r[3],r[4]].join(' ')); }
+                                                catch(e){ return ''; }
+                                            })()}
                                             
                                             ${foundPesticides.length > 0 ? `
                                                 <div style="background: #fff3e0; padding: 12px; border-radius: 6px; border-left: 4px solid #ff9800; margin: 8px 0;">
@@ -5149,33 +5153,69 @@
         //   growRecords 에서 올해 살포 횟수를 세어 남은 횟수를 알려준다
 
         // 메모에서 이 작물의 기준을 뽑는다
+        //   실제 형식: 배(검은무늬병,발병 초부터 경엽처리,1000배 -,수확7일전,5회,Ⅳ(저독성),Ⅰ급)
+        //             작물(병해,시기,희석배수,안전일수,횟수,독성,어독성)
         function _safeRuleOf(pesticide, cropName){
             var memo = String((pesticide && pesticide[12]) || '');
             if(!memo) return null;
 
-            var bare = String(cropName || '').replace(/\([^)]*\)/g, '')
-                        .replace(/[①-⑩]/g, '').replace(/\s/g, '').trim();
+            var clean = function(s){
+                return String(s || '').replace(/\([^)]*\)/g, '')
+                        .replace(/[①-⑩]/g, '').replace(/\d+\s*이랑/g, '')
+                        .replace(/\s/g, '').trim();
+            };
+            var want = clean(cropName);
+            if(!want) return null;
 
-            // 「) / 」 로 나뉜 작물별 조각
-            var parts = memo.split(/\)\s*\/\s*/).map(function(s, i, arr){
-                return i === arr.length - 1 ? s : s + ')';
-            });
-
+            // 「) / 」 로 작물별 조각을 나눈다
+            var parts = memo.split(/\)\s*\/\s*/);
             for(var i = 0; i < parts.length; i++){
-                var m = parts[i].trim().match(/^([^(]+)\(([^)]*)\)/);
+                var seg = parts[i].trim();
+                // 앞의 작물명 (괄호 앞)
+                var m = seg.match(/^([^(]+)\(/);
                 if(!m) continue;
-                var crop = m[1].replace(/\s/g, '').trim();
-                if(!(crop === bare || bare.indexOf(crop) >= 0 || crop.indexOf(bare) >= 0)) continue;
+                var crop = clean(m[1]);
+                if(!crop) continue;
 
-                var d = m[2];
-                var times = (d.match(/(\d+)\s*회/) || [])[1];
-                var days  = (d.match(/수확\s*(\d+)\s*일/) || d.match(/(\d+)\s*일\s*전/) || [])[1];
-                var dil   = (d.match(/(\d+)\s*배/) || [])[1];
-                return { crop: crop, times: times ? parseInt(times,10) : null,
-                         days: days ? parseInt(days,10) : null,
-                         dil: dil ? parseInt(dil,10) : null, raw: d };
+                // 「감(단감 포함)」 처럼 괄호가 이름 안에 있는 경우도 본다
+                var alt = String(m[1]).match(/\(([^)]*)\)/);
+                var names = [crop];
+                if(alt) names.push(clean(alt[1]));
+
+                var hit = names.some(function(n){
+                    return n === want || (n.length >= 2 && want.indexOf(n) >= 0)
+                        || (want.length >= 2 && n.indexOf(want) >= 0);
+                });
+                if(!hit) continue;
+
+                // 괄호 안의 상세를 읽는다
+                var body = seg.slice(seg.indexOf('(') + 1);
+                var dil   = (body.match(/(\d+)\s*배/) || [])[1];
+                var days  = (body.match(/수확\s*(\d+)\s*일\s*전/) || [])[1];
+                var times = (body.match(/,\s*(\d+)\s*회/) || body.match(/(\d+)\s*회/) || [])[1];
+                var dis   = (body.split(',')[0] || '').trim();
+
+                return {
+                    crop: m[1].trim(),
+                    disease: dis,
+                    dil:   dil   ? parseInt(dil, 10)   : null,
+                    days:  days  ? parseInt(days, 10)  : null,
+                    times: times ? parseInt(times, 10) : null,
+                    raw: body
+                };
             }
             return null;
+        }
+
+        // 이 작물에 쓸 수 있는 보유 농약을 찾는다
+        function _pesticidesFor(cropName){
+            var out = [];
+            (APP.data.myPesticides || []).forEach(function(p){
+                if(!p) return;
+                var rule = _safeRuleOf(p, cropName);
+                if(rule) out.push({ p: p, name: p[1], rule: rule });
+            });
+            return out;
         }
 
         // 올해 이 농약을 이 작물에 몇 번 뿌렸나
@@ -5203,6 +5243,60 @@
                 if(date > last) last = date;
             });
             return { count: n, last: last };
+        }
+
+        // 준비사항 글에서 작물명을 찾아 쓸 수 있는 농약을 알려준다
+        //   「배 마지막 병충해 방제. 매실/모과/살구 최종 방제」
+        //   → 배·매실·모과·살구 에 쓸 수 있는 보유 농약을 찾는다
+        function suggestPesticides(text){
+            var s = String(text || '');
+            if(!s) return '';
+
+            // 기르는 작물 중 이 글에 나오는 것
+            var mine = (typeof getOwnedPlants === 'function' ? getOwnedPlants() : []) || [];
+            var found = [];
+            mine.forEach(function(c){
+                var bare = String(c).replace(/\([^)]*\)/g,'').replace(/[①-⑩]/g,'')
+                            .replace(/\d+\s*이랑/g,'').trim();
+                if(bare.length >= 1 && s.indexOf(bare) >= 0 && found.indexOf(bare) < 0)
+                    found.push(bare);
+            });
+            if(!found.length) return '';
+
+            // 작물마다 쓸 수 있는 농약을 모은다
+            var rows = [];
+            found.slice(0, 5).forEach(function(crop){
+                var list = _pesticidesFor(crop);
+                if(!list.length) return;
+
+                var items = list.slice(0, 3).map(function(x){
+                    var r = x.rule;
+                    var used = _sprayCount(x.name, crop);
+                    var left = r.times ? r.times - used.count : null;
+                    var col = (left !== null && left <= 0) ? '#C62828'
+                            : (left === 1) ? '#E65100' : '#33691E';
+
+                    return '<div style="margin-top:3px;font-size:11px">'
+                         + '<span style="background:#FFF3E0;color:#E65100;font-weight:700;'
+                         + 'padding:1px 6px;border-radius:4px">' + x.name + '</span>'
+                         + (r.dil ? ' <b>' + r.dil + '배</b>' : '')
+                         + (r.days ? ' · 수확 ' + r.days + '일전' : '')
+                         + (r.times ? ' · <span style="color:' + col + '">'
+                                    + used.count + '/' + r.times + '회'
+                                    + (left <= 0 ? ' 초과!' : '') + '</span>' : '')
+                         + (r.disease ? ' <span style="color:#9E9E9E">' + r.disease + '</span>' : '')
+                         + '</div>';
+                }).join('');
+
+                rows.push('<div style="margin-bottom:6px">'
+                        + '<div style="font-size:11px;font-weight:700;color:#33691E">'
+                        + '🌾 ' + crop + '</div>' + items + '</div>');
+            });
+
+            if(!rows.length) return '';
+            return '<div style="background:#FFF8E1;border-radius:7px;padding:8px 10px;margin-top:6px">'
+                 + '<div style="font-size:11px;font-weight:700;color:#795548;margin-bottom:4px">'
+                 + '💊 쓸 수 있는 보유 농약</div>' + rows.join('') + '</div>';
         }
 
         // 안전사용 안내를 한 줄로
