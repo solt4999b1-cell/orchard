@@ -982,6 +982,9 @@
       /* QR 코드 — 좁은 화면에서도 크게 유지 */
       #header-img{ width:60px; height:60px; padding:2px; }
 
+      /* 밭 사진 — 좁은 화면에 맞춘다 */
+      .farm-photo{ max-height:240px; }
+
       /* 카드 여백 줄이기 */
       .card{ padding:10px 12px !important; margin-bottom:8px !important; }
       .card-title{ font-size:15px !important; }
@@ -998,6 +1001,19 @@
     /* 버튼 글자가 갈라지지 않게 — 전체 공통 */
     button{ word-break:keep-all; }
     @keyframes busySpin{ to{ transform:rotate(360deg) } }
+    /* 밭 사진 */
+    .farm-photo{
+      width: 100%;
+      max-width: 100%;
+      max-height: 320px;          /* 세로가 길어도 화면을 넘지 않게 */
+      object-fit: cover;          /* 잘리더라도 비율은 지킨다 */
+      object-position: center;
+      border-radius: 9px;
+      display: block;
+      cursor: pointer;
+      background: #F5F5F5;
+      box-shadow: 0 2px 6px rgba(0,0,0,.15);
+    }
 </style>
   <!-- 스캔 라이브러리 (필요할 때만 내려받음) -->
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"
@@ -1042,6 +1058,7 @@
         <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
         <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
         <button class="tab-btn" data-tab="records">📋 기록 일지</button>
+      <button class="tab-btn" data-tab="about">🏡 우리 밭</button>
     </div>
 
     <div class="container">
@@ -1288,6 +1305,75 @@
             </div>
         </div>
 
+            </div>
+
+            <!-- 🏡 우리 밭 -->
+            <div id="about" class="tab-content">
+                <div class="section-title">
+                    <span class="emoji">🏡</span>
+                    <span>우리 밭 이야기</span>
+                </div>
+
+                <div style="background:#F1F8E9;border:1.5px solid #C5E1A5;border-radius:10px;
+                     padding:14px 16px;margin-bottom:14px">
+                    <div style="font-weight:700;color:#33691E;font-size:15px;margin-bottom:8px">
+                        🌳 새솔동 과수원</div>
+                    <div style="font-size:13px;color:#424242;line-height:1.8">
+                        경기도 화성시 만세구 새솔동에 있는 학교 과수원입니다.<br>
+                        <b>100여 종</b>의 과수와 채소를 다섯 구역에 나누어 기르고 있습니다.
+                    </div>
+                    <div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:10px">
+                        <span style="background:#fff;border:1px solid #C5E1A5;border-radius:12px;
+                              padding:3px 10px;font-size:12px;color:#33691E">1구역 · 22m</span>
+                        <span style="background:#fff;border:1px solid #C5E1A5;border-radius:12px;
+                              padding:3px 10px;font-size:12px;color:#33691E">사이구역 · 20m</span>
+                        <span style="background:#fff;border:1px solid #C5E1A5;border-radius:12px;
+                              padding:3px 10px;font-size:12px;color:#33691E">2구역 · 16~20m</span>
+                        <span style="background:#fff;border:1px solid #C5E1A5;border-radius:12px;
+                              padding:3px 10px;font-size:12px;color:#33691E">하우스 · 10m</span>
+                        <span style="background:#fff;border:1px solid #C5E1A5;border-radius:12px;
+                              padding:3px 10px;font-size:12px;color:#33691E">하우스 앞 · 15m</span>
+                    </div>
+                </div>
+
+                <!-- 밭 사진 -->
+                <div class="section-title" style="font-size:15px;margin-top:16px">
+                    <span class="emoji">📷</span><span>밭의 모습</span></div>
+
+                <div style="margin-bottom:14px">
+                    <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:5px">
+                        시작 전 · 2025년 3월</div>
+                    <img src="https://raw.githubusercontent.com/solt4999b1-cell/orchard/main/images/blank_farm20250328.jpg"
+                         alt="시작 전 밭" onclick="showFarmBig(this.src, '시작 전 · 2025년 3월')"
+                         onerror="this.parentElement.style.display='none'"
+                         class="farm-photo">
+                    <div style="font-size:11px;color:#78909C;margin-top:4px">
+                        아무것도 심지 않았을 때의 모습입니다 · <b>눌러서 전체 보기</b></div>
+                </div>
+
+                <div style="margin-bottom:14px">
+                    <div style="font-size:12px;font-weight:700;color:#546E7A;margin-bottom:5px">
+                        배치 계획 · 2025년 12월</div>
+                    <img src="https://raw.githubusercontent.com/solt4999b1-cell/orchard/main/images/plan_farm20251228.jpg"
+                         alt="밭 배치 계획" onclick="showFarmBig(this.src, '배치 계획 · 2025년 12월')"
+                         onerror="this.parentElement.style.display='none'"
+                         class="farm-photo">
+                    <div style="font-size:11px;color:#78909C;margin-top:4px">
+                        구역과 이랑을 어떻게 나눌지 계획한 그림입니다 · <b>눌러서 전체 보기</b></div>
+                </div>
+
+                <!-- 앱 소개 -->
+                <div class="section-title" style="font-size:15px;margin-top:18px">
+                    <span class="emoji">📱</span><span>이 앱이 하는 일</span></div>
+
+                <div id="about-features"></div>
+
+                <div style="background:#FAFAFA;border-radius:9px;padding:12px 14px;
+                     margin-top:14px;font-size:11px;color:#78909C;line-height:1.8">
+                    자료는 <b>구글 시트</b>에 저장되며, 농약 정보는 <b>농촌진흥청 PSIS</b>,
+                    비료 처방은 <b>흙토람</b>, 날씨는 <b>기상청</b> 자료를 씁니다.<br>
+                    이용호. Copyright 2026.
+                </div>
             </div>
 
             <!-- 📌 할일+자재 -->
@@ -1803,7 +1889,10 @@
             });
 
             const categoryOrder = ['작업관리', '미리 준비해야 할 일', '이번주 할 일', '농약', '시비', '이번달 주의점'];
-            const orderedCategories = Object.keys(grouped).sort((a, b) => {
+            // 시비는 「🌱 이번 주 시비」 에서 함께 보여주므로 여기서는 뺀다
+            const orderedCategories = Object.keys(grouped)
+                .filter(c => c !== '시비')
+                .sort((a, b) => {
                 const aIdx = categoryOrder.indexOf(a);
                 const bIdx = categoryOrder.indexOf(b);
                 return (aIdx === -1 ? 999 : aIdx) - (bIdx === -1 ? 999 : bIdx);
@@ -5380,11 +5469,26 @@
             return parseInt(s.slice(4,6),10) + '/' + parseInt(s.slice(6,8),10);
         }
 
+        // 요일 (토·일은 색을 달리한다)
+        var _DOW = ['일','월','화','수','목','금','토'];
+        function _dowOf(s){
+            s = String(s);
+            var d = new Date(+s.slice(0,4), +s.slice(4,6)-1, +s.slice(6,8));
+            return isNaN(d.getTime()) ? '' : _DOW[d.getDay()];
+        }
+
         // 오늘·내일 비 예보로 일할 만한지 알려준다
         function _wxAdvice(days){
             if(!days || !days.length) return null;
             var today = days[0], tmr = days[1];
             var msgs = [];
+
+            // 앞으로 일주일 중 비 오는 날을 미리 알려준다
+            var rainy = [];
+            days.slice(2, 7).forEach(function(d, i){
+                if(d.pop >= 60 || d.rain >= 5)
+                    rainy.push(_mmdd(d.date) + '(' + _dowOf(d.date) + ')');
+            });
 
             // 비가 오면 시비·방제를 미룬다
             if(today.rain >= 5 || today.pop >= 60){
@@ -5422,6 +5526,10 @@
             if(!msgs.length){
                 msgs.push({ t:'ok', s:'날씨가 좋습니다 — 시비·방제하기 알맞습니다' });
             }
+            // 이번 주 비 소식
+            if(rainy.length){
+                msgs.push({ t:'warn', s:'이번 주 비 예보 — ' + rainy.join(' · ') });
+            }
             return msgs;
         }
 
@@ -5437,11 +5545,13 @@
             }
             console.log('🌤 날씨 ' + wx.days.length + '일치 받음');
 
-            var days = wx.days.slice(0, 3);
+            var days = wx.days.slice(0, 7);
             var adv = _wxAdvice(days) || [];
 
             var cards = days.map(function(d, i){
                 var label = i === 0 ? '오늘' : i === 1 ? '내일' : _mmdd(d.date);
+                var dow = _dowOf(d.date);
+                var dcol = dow === '일' ? '#C62828' : dow === '토' ? '#1565C0' : '#0D47A1';
 
                 // 오늘은 최저·최고가 이미 지나 빠져 있을 수 있다
                 var lo = d.tmn, hi = d.tmx;
@@ -5453,29 +5563,33 @@
                         if(hi === null) hi = Math.max.apply(null, temps);
                     }
                 }
-                var temp = (lo !== null && hi !== null)
-                    ? Math.round(lo) + '/<b>' + Math.round(hi) + '°</b>' : '-';
 
                 var rain = d.rain >= 0.1
-                    ? '<div style="font-size:11px;color:#0277BD;font-weight:700">'
-                      + d.rain.toFixed(d.rain < 10 ? 1 : 0) + 'mm</div>' : '';
+                    ? '<div style="font-size:10px;color:#0277BD;font-weight:700">'
+                      + d.rain.toFixed(d.rain < 10 ? 1 : 0) + '</div>' : '';
 
-                // 바람 — 화살표로 방향까지
+                // 바람 — 단기예보에만 있다
                 var wind = '';
                 if(d.wsd){
-                    var arrow = _windArrow(d.vec);
-                    var wcol = d.wsd >= 4 ? '#E65100;font-weight:700' : '#455A64';
-                    wind = '<div style="font-size:11px;color:' + wcol + '">'
-                         + arrow + ' ' + d.wsd + 'm/s</div>';
+                    var wcol = d.wsd >= 4 ? '#E65100;font-weight:700' : '#546E7A';
+                    wind = '<div style="font-size:10px;color:' + wcol + '">'
+                         + _windArrow(d.vec) + d.wsd + '</div>';
+                } else if(d.mid){
+                    wind = '<div style="font-size:10px;color:#CFD8DC">·</div>';
                 }
 
-                return '<div style="flex:1;text-align:center;padding:0 2px'
+                return '<div style="flex:1;min-width:0;text-align:center;padding:0 1px'
                      + (i < days.length - 1 ? ';border-right:1px solid #BBDEFB' : '') + '">'
-                     + '<div style="font-size:12px;color:#0D47A1;font-weight:600">' + label + '</div>'
-                     + '<div style="font-size:19px;line-height:1.25">' + (SKY_ICON[d.sky] || '☁️') + '</div>'
-                     + '<div style="font-size:13px;color:#212121;font-weight:600">' + temp + '</div>'
-                     + '<div style="font-size:11px;color:'
-                     + (d.pop >= 60 ? '#0277BD;font-weight:700' : '#455A64') + '">비 '
+                     + '<div style="font-size:11px;color:' + dcol + ';font-weight:600;'
+                     + 'white-space:nowrap">' + label + '</div>'
+                     + '<div style="font-size:10px;color:#78909C">' + dow + '</div>'
+                     + '<div style="font-size:17px;line-height:1.2">' + (SKY_ICON[d.sky] || '☁️') + '</div>'
+                     + '<div style="font-size:11px;color:#212121;font-weight:600;'
+                     + 'white-space:nowrap">'
+                     + (lo !== null ? Math.round(lo) : '-') + '/'
+                     + '<b>' + (hi !== null ? Math.round(hi) : '-') + '</b></div>'
+                     + '<div style="font-size:10px;color:'
+                     + (d.pop >= 60 ? '#0277BD;font-weight:700' : '#455A64') + '">'
                      + d.pop + '%</div>'
                      + rain + wind + '</div>';
             }).join('');
@@ -5588,20 +5702,91 @@
             return out;
         }
 
+        // 앞으로 다가올 시비 일정을 찾는다 (이번 주 다음부터 4주 안)
+        function getUpcomingFert(weeks){
+            var list = APP.data.cropFertTime || [];
+            if(!list.length) return [];
+
+            var now = _monthWeek();
+            var year = new Date().getFullYear();
+            var ahead = weeks || 4;
+
+            // 이번 주를 주 단위 숫자로 (월×5 + 주)
+            var nowNo = now.month * 5 + now.week;
+
+            var hdr = _gpHeaders();
+            var ni = hdr.indexOf('name'), st = hdr.indexOf('status');
+            var mine = {};
+            (APP.data.growPlants || []).forEach(function(r){
+                if(!r || _isFinished(r)) return;
+                var nm = String(r[ni] || '').trim();
+                if(!nm) return;
+                var k = _cropKey(nm);
+                if(!mine[k]) mine[k] = [];
+                if(mine[k].indexOf(nm) < 0) mine[k].push(nm);
+            });
+
+            var out = [];
+            list.forEach(function(r){
+                if(!r) return;
+                var crop = String(r[0] || '').trim();
+                var stage = String(r[1] || '').trim();
+                var mm = parseInt(r[2], 10), ww = parseInt(r[3], 10) || 1;
+                var memo = String(r[4] || '').trim();
+                var done = String(r[5] || '').trim();
+                if(!crop || !mm) return;
+                if(done && done.indexOf(String(year)) >= 0) return;   // 올해 이미 함
+
+                var no = mm * 5 + ww;
+                var gap = no - nowNo;
+                // 해가 넘어가는 경우
+                if(gap < 0) gap += 60;
+                if(gap <= 0 || gap > ahead) return;                   // 이번 주·먼 미래 제외
+
+                var key = _cropKey(crop);
+                var hit = null;
+                for(var k in mine){
+                    if(k === key || k.indexOf(key) >= 0 || key.indexOf(k) >= 0){ hit = mine[k]; break; }
+                }
+                if(!hit) return;
+
+                out.push({ crop: hit[0], base: crop, stage: stage, memo: memo,
+                           month: mm, week: ww, gap: gap });
+            });
+
+            out.sort(function(a,b){ return a.gap - b.gap; });
+            // 같은 작물·단계는 하나만
+            var seen = {}, uniq = [];
+            out.forEach(function(x){
+                var k = x.crop + '|' + x.stage;
+                if(seen[k]) return;
+                seen[k] = true; uniq.push(x);
+            });
+            return uniq;
+        }
+
         // 이번 주 시비 카드를 그린다
         async function renderWeekFert(){
             var box = document.getElementById('week-fert');
             if(!box) return;
 
             var items = getThisWeekFert();
-            if(!items.length){ box.innerHTML = ''; return; }
+            var soon = getUpcomingFert(4);
+            var memos0 = _weekFertMemos();
+            if(!items.length && !soon.length && !memos0.length){ box.innerHTML = ''; return; }
 
             var now = _monthWeek();
+            // 준비사항의 시비 메모를 함께 모은다
+            var memos = _weekFertMemos();
+
             var html = '<div style="background:#F1F8E9;border:1.5px solid #C5E1A5;border-radius:10px;'
                      + 'padding:12px 14px;margin-bottom:12px">'
                      + '<div style="font-weight:700;color:#33691E;font-size:14px;margin-bottom:9px">'
-                     + '🌱 이번 주 시비 <span style="font-weight:400;font-size:12px;color:#666">· '
-                     + now.month + '월 ' + now.week + '주 · ' + items.length + '건</span></div>';
+                     + (items.length ? '🌱 이번 주 시비' : '🌱 시비 일정')
+                     + ' <span style="font-weight:400;font-size:12px;color:#666">· '
+                     + now.month + '월 ' + now.week + '주'
+                     + (items.length ? ' · ' + items.length + '건' : ' · 이번 주는 없습니다')
+                     + (memos.length ? ' · 메모 ' + memos.length + '건' : '') + '</span></div>';
 
             // 같은 작물이 여러 번 나오면 한 번만 조회한다
             var seenCrop = {};
@@ -5655,8 +5840,75 @@
                      + 'font-family:inherit">✅ 완료</button>'
                      + '</div></div>';
             }
+            // 준비사항에 적어두신 시비 메모
+            if(memos.length){
+                html += '<div style="margin-top:4px;padding-top:9px;border-top:1px dashed #C5E1A5">'
+                      + '<div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:5px">'
+                      + '📋 적어두신 시비 계획</div>'
+                      + memos.map(function(m){
+                          return '<div style="background:#fff;border-radius:7px;padding:7px 10px;'
+                               + 'margin-bottom:5px;font-size:12px">'
+                               + '<div style="font-weight:700;color:#33691E">' + m.title + '</div>'
+                               + (m.desc ? '<div style="font-size:11px;color:#666;margin-top:1px">'
+                                         + m.desc + '</div>' : '')
+                               + (m.detail ? '<div style="font-size:12px;color:#424242;margin-top:3px">'
+                                           + m.detail + '</div>' : '')
+                               + '</div>';
+                        }).join('')
+                      + '</div>';
+            }
+
+            // 다가올 시비 일정
+            if(soon.length){
+                html += '<div style="margin-top:4px;padding-top:9px;border-top:1px dashed #C5E1A5">'
+                      + '<div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:5px">'
+                      + '📅 다가올 시비</div>'
+                      + soon.slice(0, 6).map(function(x){
+                          var when = x.gap === 1 ? '다음 주'
+                                   : x.gap <= 4 ? x.gap + '주 뒤' : '';
+                          var col = x.gap === 1 ? '#E65100' : '#546E7A';
+                          return '<div style="display:flex;align-items:center;gap:7px;'
+                               + 'font-size:12px;margin-bottom:3px;color:' + col + '">'
+                               + '<span style="flex:0 0 58px;font-weight:600">'
+                               + x.month + '월 ' + x.week + '주</span>'
+                               + '<span style="flex:0 0 46px;font-size:11px">' + when + '</span>'
+                               + '<span style="flex:0 0 auto;font-weight:700">' + x.crop + '</span>'
+                               + '<span style="background:#DCEDC8;color:#33691E;border-radius:7px;'
+                               + 'padding:1px 6px;font-size:10px">' + x.stage + '</span>'
+                               + (x.memo ? '<span style="font-size:11px;opacity:.8;'
+                                         + 'overflow:hidden;text-overflow:ellipsis;'
+                                         + 'white-space:nowrap">' + x.memo + '</span>' : '')
+                               + '</div>';
+                        }).join('')
+                      + '</div>';
+            }
+
             html += '</div>';
             box.innerHTML = html;
+        }
+
+        // 이번 주 준비사항 중 시비 항목을 모은다
+        function _weekFertMemos(){
+            var rows = APP.data['준비사항'] || [];
+            if(!rows.length) return [];
+
+            var today = new Date();
+            var mon = new Date(today); mon.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+            mon.setHours(0,0,0,0);
+            var sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+
+            var out = [];
+            rows.forEach(function(r){
+                if(!r || String(r[1] || '').indexOf('시비') < 0) return;
+                var d = new Date(r[0]);
+                if(isNaN(d.getTime()) || d < mon || d > sun) return;
+                out.push({
+                    title:  highlightFertilizer(String(r[2] || '')),
+                    desc:   String(r[3] || ''),
+                    detail: highlightFertilizer(String(r[4] || '').split('|').join(' · '))
+                });
+            });
+            return out;
         }
 
         // 완료 표시 — cropFertTime 의 done 에 오늘 날짜를 적는다
@@ -5682,6 +5934,70 @@
             } else {
                 alert('완료 표시에 실패했습니다.\n' + (r.message || ''));
             }
+        }
+
+        // 밭 사진을 크게 보여준다
+        function showFarmBig(src, title){
+            var ex = document.getElementById('farm-big'); if(ex) ex.remove();
+            var box = document.createElement('div');
+            box.id = 'farm-big';
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.9);z-index:10002;'
+              + 'display:flex;flex-direction:column;align-items:center;justify-content:center;'
+              + 'padding:12px;cursor:pointer';
+            box.onclick = function(){ box.remove(); document.body.style.overflow = ''; };
+            box.innerHTML =
+              '<img src="' + src + '" alt=""'
+            + ' style="max-width:100%;max-height:80vh;border-radius:8px;object-fit:contain;'
+            + 'background:#fff">'
+            + '<div style="color:#fff;font-size:13px;margin-top:14px;text-align:center">'
+            + (title || '') + '<br><span style="opacity:.6;font-size:11px">'
+            + '아무 곳이나 누르면 닫힙니다</span></div>';
+            document.body.appendChild(box);
+            document.body.style.overflow = 'hidden';
+        }
+
+        // 이 앱이 하는 일 — 실제로 있는 기능만 보여준다
+        function renderAbout(){
+            var box = document.getElementById('about-features');
+            if(!box || box.dataset.done) return;
+
+            var n = function(k){ return ((APP.data[k] || []).length) || 0; };
+            var feats = [
+                { i:'🧪', t:'농약 관리',
+                  d:'등록·수정·삭제, PSIS 검색, QR·바코드·라벨 글자 읽기',
+                  c: n('myPesticides') + '종 보유' },
+                { i:'🌱', t:'비료·자재 관리',
+                  d:'성분비를 읽어 필요한 양을 계산합니다',
+                  c: n('supplies') + '종 보유' },
+                { i:'🌾', t:'작물 관리',
+                  d:'구역·이랑·심은 양으로 실제 면적을 자동 계산합니다',
+                  c: n('growPlants') + '건' },
+                { i:'🔬', t:'토양검정 기반 시비',
+                  d:'흙토람 처방으로 밭에 맞는 비료량을 알려줍니다',
+                  c: (APP.data.soilTest || []).length ? '검정값 있음' : '표준값 사용' },
+                { i:'🌤', t:'날씨',
+                  d:'8일 예보로 시비·방제하기 좋은 날을 알려줍니다', c:'' },
+                { i:'⚠️', t:'안전사용기준',
+                  d:'희석배수·살포 횟수·수확 전 일수를 지킬 수 있게 돕습니다', c:'' },
+                { i:'📋', t:'기록 일지',
+                  d:'작물별로 한 일을 남겨둡니다',
+                  c: n('growRecords') + '건' }
+            ];
+
+            box.innerHTML = feats.map(function(f){
+                return '<div style="display:flex;gap:11px;align-items:flex-start;'
+                     + 'background:#fff;border:1px solid #EEE;border-radius:9px;'
+                     + 'padding:10px 12px;margin-bottom:6px">'
+                     + '<div style="flex:0 0 24px;font-size:19px;line-height:1.2">' + f.i + '</div>'
+                     + '<div style="flex:1;min-width:0">'
+                     + '<div style="font-weight:700;color:#33691E;font-size:13px">' + f.t
+                     + (f.c ? ' <span style="font-weight:400;font-size:11px;color:#78909C">· '
+                            + f.c + '</span>' : '') + '</div>'
+                     + '<div style="font-size:12px;color:#616161;margin-top:2px;'
+                     + 'line-height:1.6">' + f.d + '</div>'
+                     + '</div></div>';
+            }).join('');
+            box.dataset.done = '1';
         }
 
         // QR 코드를 화면 가득 크게 보여준다 (인증용)
@@ -7588,6 +7904,8 @@ ${info.shelfLife}
             renderSupplies();
             renderPlants();
             renderRecords();
+            var ab = document.getElementById('about-features');
+            if(ab && ab.dataset.done){ ab.dataset.done = ''; renderAbout(); }
         }
 
         function switchTab(name) {
@@ -7596,6 +7914,9 @@ ${info.shelfLife}
             
             document.querySelector(`[data-tab="${name}"]`).classList.add('active');
             document.getElementById(name).classList.add('active');
+            if(name === 'about'){
+                try { renderAbout(); } catch(e){ console.warn('우리 밭:', e.message); }
+            }
         }
 
         // ════════════════════════════════════════════════════════════
