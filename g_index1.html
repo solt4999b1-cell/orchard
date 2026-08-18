@@ -5829,16 +5829,21 @@
 
         // 시비량을 가져온다 (같은 코드는 다시 부르지 않는다)
         var _fertFail = {};        // 자료가 없던 코드 — 다시 안 부른다
-        var _fert429At = 0;        // 429 를 받은 시각
+        var _fert429At = 0;        // 흙토람 제한에 걸린 시각
+        try {
+            var _f4 = localStorage.getItem('fert_429');
+            if(_f4) _fert429At = parseInt(_f4, 10) || 0;
+        } catch(e){}
 
         async function getFertStd(cropCode){
             if(!cropCode) return null;
 
-            // 요청이 막혔으면 5분간 쉰다
-            if(_fert429At && Date.now() - _fert429At < 5 * 60 * 1000){
-                console.warn('🌾 요청이 많아 잠시 쉬는 중입니다');
-                window._fertLastMsg = '구글 서버가 요청을 잠시 막았습니다.\n'
-                    + '몇 분 뒤에 다시 눌러주세요.';
+            // 흙토람 일일 제한(100회)에 걸리면 오늘은 더 부르지 않는다
+            if(_fert429At && new Date(_fert429At).toDateString() === new Date().toDateString()){
+                console.warn('🌾 흙토람 일일 제한 — 오늘은 저장된 값만 씁니다');
+                window._fertLastMsg = '흙토람 하루 조회 한도(100회)를 넘겼습니다.\n'
+                    + '내일 0시 이후에 다시 받아집니다.\n\n'
+                    + '이미 조회한 작물은 그대로 보실 수 있습니다.';
                 return null;
             }
             // 앞서 자료가 없던 코드는 다시 부르지 않는다
@@ -5880,9 +5885,10 @@
                     window._fertLastMsg = '작물코드 ' + code5 + ' 로는 자료가 없습니다.\n'
                         + 'growPlants 의 fertCd 값을 확인해 주세요.';
                 }
-                if(j && !j.success && /429|Too Many/i.test(String(j.message || ''))){
+                if(j && !j.success && /429|Too Many|제한/i.test(String(j.message || ''))){
                     _fert429At = Date.now();
-                    console.warn('🌾 HTTP 429 — 5분간 요청을 멈춥니다');
+                    try { localStorage.setItem('fert_429', String(_fert429At)); } catch(e){}
+                    console.warn('🌾 흙토람 일일 제한 — 오늘은 더 부르지 않습니다');
                 }
                 console.warn('🌾 받은 내용:', j);
                 if(j && j.message) window._fertLastMsg = j.message;
@@ -6233,6 +6239,69 @@
             return out;
         }
 
+        // 이 작물의 시비 시기를 찾는다 (cropFertTime)
+        function _fertTimeOf(cropName){
+            var list = APP.data.cropFertTime || [];
+            if(!list.length) return [];
+
+            var key = _cropKey(cropName);
+            var out = [];
+            list.forEach(function(r){
+                if(!r) return;
+                var crop = String(r[0] || '').trim();
+                if(!crop) return;
+                var k = _cropKey(crop);
+                if(!(k === key || k.indexOf(key) >= 0 || key.indexOf(k) >= 0)) return;
+
+                var mm = parseInt(r[2], 10), ww = parseInt(r[3], 10);
+                if(!mm) return;
+                out.push({ stage: String(r[1] || '').trim(), month: mm, week: ww || 0,
+                           memo: String(r[4] || '').trim(), done: String(r[5] || '').trim() });
+            });
+            // 월·주 순으로
+            out.sort(function(a,b){ return (a.month - b.month) || (a.week - b.week); });
+            return out;
+        }
+
+        // 시비 시기를 보기 좋게
+        function fertTimeHtml(cropName){
+            var times = _fertTimeOf(cropName);
+            if(!times.length) return '';
+
+            var now = _monthWeek();
+            var year = String(new Date().getFullYear());
+
+            var rows = times.map(function(x){
+                var isDone = x.done && x.done.indexOf(year) >= 0;
+                var thisWeek  = (x.month === now.month && (!x.week || x.week === now.week));
+                var thisMonth = (x.month === now.month);
+                var isPast = x.month < now.month
+                           || (x.month === now.month && x.week && x.week < now.week);
+
+                var col  = isDone ? '#9E9E9E'
+                         : thisWeek ? '#E65100'
+                         : thisMonth ? '#F57C00'
+                         : isPast ? '#BDBDBD' : '#33691E';
+                var mark = isDone ? '✅' : thisWeek ? '👉' : thisMonth ? '📌' : '·';
+                var isNow = thisWeek || thisMonth;
+
+                return '<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;'
+                     + 'font-size:12px;color:' + col + (isNow ? ';font-weight:700' : '') + '">'
+                     + '<span style="flex:0 0 14px">' + mark + '</span>'
+                     + '<span style="flex:0 0 62px">' + x.month + '월'
+                     + (x.week ? ' ' + x.week + '주' : '') + '</span>'
+                     + '<span style="flex:0 0 52px">' + x.stage + '</span>'
+                     + '<span style="flex:1;font-size:11px;opacity:.85">' + (x.memo || '') + '</span>'
+                     + (isDone ? '<span style="font-size:10px;color:#9E9E9E">'
+                               + x.done.slice(5) + '</span>' : '')
+                     + '</div>';
+            }).join('');
+
+            return '<div style="margin-top:10px;padding-top:9px;border-top:1px dashed #DDD">'
+                 + '<div style="font-size:11px;font-weight:700;color:#546E7A;margin-bottom:5px">'
+                 + '📅 거름 주는 때</div>' + rows + '</div>';
+        }
+
         // 시비량 카드 HTML 을 만든다
         function fertCardHtml(cropName, std, area){
             if(!std) return '';
@@ -6449,7 +6518,9 @@
                     + '⚠️ 심은 양을 알 수 없는 항목이 ' + area.unknown + '개 있어 '
                     + '이랑 1개(20㎡)로 어림했습니다.<br>'
                     + '작물 수정에서 「심은 양」 을 적어주시면 정확해집니다.</div>' : '')
-                 + conv + '</div>';
+                 + conv
+                 + (typeof fertTimeHtml === 'function' ? fertTimeHtml(cropName) : '')
+                 + '</div>';
         }
 
         // 작물 하나의 시비량을 창으로 보여준다
