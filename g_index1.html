@@ -5774,19 +5774,42 @@
                 return g >= 1000 ? (g/1000).toFixed(g >= 10000 ? 0 : 1) + 'kg' : Math.round(g) + 'g';
             };
 
-            // 보유 비료 중 가장 알맞은 것
-            var best = null, gap = 1e9;
+            // 보유 비료 중 충족률 평균이 가장 높은 것
+            var best = null;
             (APP.data.supplies || []).forEach(function(r){
                 if(!r) return;
                 if(typeof _isFinished === 'function' && _isFinished(r)) return;
                 var nm = String(r[7] || '').trim();
                 var npk = _npkOf(r[4]) || _npkOf(r[10]);
-                if(!nm || !npk || !npk.n || !needN) return;
-                var amt = needN / (npk.n / 100);
-                var d = Math.abs(amt * npk.p / 100 - needP) + Math.abs(amt * npk.k / 100 - needK);
-                if(d < gap){ gap = d; best = { nm: nm, amt: amt }; }
+                if(!nm || !npk) return;
+
+                var amt = 0;
+                if(npk.n && needN) amt = needN / (npk.n/100);
+                else if(npk.p && needP) amt = needP / (npk.p/100);
+                else if(npk.k && needK) amt = needK / (npk.k/100);
+                if(!amt) return;
+
+                var pc = function(g, need){ return need ? Math.min(100, g/need*100) : 100; };
+                var avg = (pc(amt*npk.n/100, needN) + pc(amt*npk.p/100, needP)
+                         + pc(amt*npk.k/100, needK)) / 3;
+
+                if(!best || avg > best.avg){
+                    best = { nm: nm, amt: amt, avg: Math.round(avg),
+                             lackN: Math.max(0, needN - amt*npk.n/100),
+                             lackP: Math.max(0, needP - amt*npk.p/100),
+                             lackK: Math.max(0, needK - amt*npk.k/100) };
+                }
             });
-            if(best) return '보유 「' + best.nm + '」 약 ' + fmt(best.amt);
+            if(best){
+                var s = '보유 「' + best.nm + '」 ' + fmt(best.amt)
+                      + ' <span style="color:#9E9E9E">(충족 ' + best.avg + '%)</span>';
+                var add = [];
+                if(best.lackP >= 1) add.push('용성인비 ' + fmt(best.lackP / 0.20));
+                if(best.lackK >= 1) add.push('염화칼리 ' + fmt(best.lackK / 0.60));
+                if(best.lackN >= 1) add.push('요소 ' + fmt(best.lackN / 0.46));
+                if(add.length) s += '<br><span style="color:#E65100">➕ ' + add.join(' · ') + '</span>';
+                return s;
+            }
 
             // 보유한 것이 없으면 시중 비료를 추천한다
             var p = _bestProduct(needN, needP, needK, stage);
@@ -5888,7 +5911,7 @@
             if(needN || needP || needK){
                 var box = '';
 
-                // ① 보유 비료 — 지금 가진 것으로
+                // ① 보유 비료 — 충족률이 높은 것부터
                 var owned = [];
                 (APP.data.supplies || []).forEach(function(r){
                     if(!r) return;
@@ -5903,14 +5926,40 @@
                     else if(npk.k && needK){ amt = needK / (npk.k/100); basis = '칼리'; }
                     if(!amt) return;
                     var trait = _fertTrait(String(r[4] || '') + ' ' + String(r[10] || ''));
-                    owned.push({ nm: nm, npk: npk, amt: amt, basis: basis, trait: trait });
+
+                    // 이 양을 줬을 때 각 성분이 얼마나 채워지는가
+                    var got = { n: amt*npk.n/100, p: amt*npk.p/100, k: amt*npk.k/100 };
+                    var pc = function(g, need){
+                        if(!need) return 100;                 // 필요 없으면 채운 셈
+                        return Math.min(100, Math.round(g / need * 100));
+                    };
+                    var pN = pc(got.n, needN), pP = pc(got.p, needP), pK = pc(got.k, needK);
+                    var avg = Math.round((pN + pP + pK) / 3);
+
+                    owned.push({ nm: nm, npk: npk, amt: amt, basis: basis, trait: trait,
+                                 got: got, pN: pN, pP: pP, pK: pK, avg: avg,
+                                 lackP: Math.max(0, needP - got.p),
+                                 lackK: Math.max(0, needK - got.k),
+                                 lackN: Math.max(0, needN - got.n) });
                 });
+
+                // 충족률 평균이 높은 것부터
+                owned.sort(function(a, b){ return b.avg - a.avg; });
 
                 if(owned.length){
                     box += '<div style="font-size:11px;font-weight:700;color:#33691E;'
                          + 'margin-bottom:4px">🌱 가지고 계신 비료로</div>';
-                    owned.slice(0, 4).forEach(function(o){
-                        box += '<div style="margin-bottom:4px;font-size:12px">'
+                    owned.slice(0, 4).forEach(function(o, i){
+                        var top = (i === 0);
+                        // 충족률에 따라 색을 달리한다
+                        var col = o.avg >= 85 ? '#2E7D32' : o.avg >= 60 ? '#F57C00' : '#C62828';
+
+                        box += '<div style="margin-bottom:6px;padding:6px 8px;border-radius:7px;'
+                             + (top ? 'background:#E8F5E9;border:1.5px solid #A5D6A7' : 'background:#FAFAFA')
+                             + '">'
+                             + '<div style="font-size:12px">'
+                             + (top ? '<span style="background:#2E7D32;color:#fff;border-radius:4px;'
+                                    + 'padding:1px 5px;font-size:10px;margin-right:4px">추천</span>' : '')
                              + '<span style="background:#C8E6C9;color:#1B5E20;font-weight:700;'
                              + 'padding:2px 7px;border-radius:4px">' + o.nm + '</span>'
                              + ' <span style="color:#9E9E9E;font-size:10px">'
@@ -5918,9 +5967,29 @@
                              + (o.trait ? ' <span style="background:#E1F5FE;color:#0277BD;'
                                         + 'border-radius:6px;padding:1px 5px;font-size:10px">'
                                         + o.trait + '</span>' : '')
-                             + ' → <b style="color:#E65100;font-size:14px">' + fmt(o.amt) + '</b>'
-                             + ' <span style="color:#9E9E9E;font-size:10px">(' + o.basis + ' 기준)</span>'
+                             + ' → <b style="color:#E65100;font-size:15px">' + fmt(o.amt) + '</b>'
                              + '</div>';
+
+                        // 충족률 막대
+                        box += '<div style="font-size:10px;color:#666;margin-top:3px">'
+                             + '충족률 <b style="color:' + col + '">' + o.avg + '%</b>'
+                             + ' <span style="color:#BDBDBD">·</span> '
+                             + '질소 ' + o.pN + '% · 인산 ' + o.pP + '% · 칼리 ' + o.pK + '%'
+                             + '</div>';
+
+                        // 부족한 성분은 무엇으로 채울지
+                        var add = [];
+                        if(o.lackP >= 1) add.push('용성인비 ' + fmt(o.lackP / 0.20));
+                        if(o.lackK >= 1) add.push('염화칼리 ' + fmt(o.lackK / 0.60));
+                        if(o.lackN >= 1) add.push('요소 ' + fmt(o.lackN / 0.46));
+                        if(add.length){
+                            box += '<div style="font-size:11px;color:#E65100;margin-top:2px">'
+                                 + '➕ ' + add.join(' · ') + ' 더 주세요</div>';
+                        } else {
+                            box += '<div style="font-size:11px;color:#2E7D32;margin-top:2px">'
+                                 + '✅ 이것만으로 충분합니다</div>';
+                        }
+                        box += '</div>';
                     });
                 }
 
