@@ -1042,7 +1042,6 @@
         <button class="tab-btn" data-tab="supplies">🌱 보유 비료</button>
         <button class="tab-btn" data-tab="plants">🌾 재배 작물</button>
         <button class="tab-btn" data-tab="records">📋 기록 일지</button>
-        <button class="tab-btn" data-tab="weekly-with-supplies">📌 할일+자재</button>
     </div>
 
     <div class="container">
@@ -1055,6 +1054,7 @@
                     <span>이번 주 관리</span>
                     <small style="color: #999; font-size: 11px;">(로딩중...)</small>
                 </div>
+                <div id="week-weather"></div>
                 <div id="week-fert"></div>
                 <div id="weekly-prep-list"></div>
             </div>
@@ -1291,27 +1291,7 @@
             </div>
 
             <!-- 📌 할일+자재 -->
-            <div id="weekly-with-supplies" class="tab-content">
-                <div class="section-title">
-                    <span class="emoji">📌</span>
-                    <span>할일+자재</span>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">📋 할일</h3>
-                    <div id="tasks-with-supplies-list"></div>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">🧪 농약</h3>
-                    <div id="needed-pesticides-list"></div>
-                </div>
-
-                <div class="section">
-                    <h3 style="color: var(--primary-color); margin-bottom: 6px; font-size: 16px;">🌾 시비 관리</h3>
-                    <div id="needed-supplies-list"></div>
-                </div>
-            </div>
+            
         </div>
 
         <!-- 푸터 -->
@@ -1962,10 +1942,24 @@
                                                     }
                                                 }
                                                 
+                                                // 올해 살포 횟수를 세어 남은 횟수를 알려준다
+                                                var _rule = null, _used = null;
+                                                try {
+                                                    var _crops = getOwnedPlants() || [];
+                                                    var _crop = _crops.find(function(o){
+                                                        return String(found[12] || '').indexOf(o) >= 0; }) || '';
+                                                    if(_crop){
+                                                        _rule = _safeRuleOf(found, _crop);
+                                                        _used = _sprayCount(found[1], _crop);
+                                                    }
+                                                } catch(e){}
+
                                                 foundPesticides.push({
                                                     name: cleanedItem,
                                                     dilution: convertedDilution,
-                                                    usageCount: usageCount
+                                                    usageCount: usageCount,
+                                                    rule: _rule,
+                                                    used: _used
                                                 });
                                             }
                                         });
@@ -1994,6 +1988,26 @@
                                                                     <div style="font-weight: bold; color: #ff9800;">${fp.usageCount}</div>
                                                                 </div>
                                                             </div>
+                                                            ${(function(){
+                                                                if(!fp.rule || !fp.used) return '';
+                                                                var b = [];
+                                                                if(fp.rule.times){
+                                                                    var left = fp.rule.times - fp.used.count;
+                                                                    var col = left <= 0 ? '#C62828' : left === 1 ? '#E65100' : '#2E7D32';
+                                                                    b.push('<span style="color:' + col + '">올해 <b>'
+                                                                        + fp.used.count + '/' + fp.rule.times + '회</b>'
+                                                                        + (left <= 0 ? ' 초과!' : ' · 남은 ' + left + '회') + '</span>');
+                                                                }
+                                                                if(fp.rule.days) b.push('수확 <b>' + fp.rule.days + '일 전</b>까지');
+                                                                if(!b.length) return '';
+                                                                var over = fp.rule.times && fp.used.count >= fp.rule.times;
+                                                                return '<div style="background:' + (over ? '#FFEBEE' : '#FFF8E1')
+                                                                     + ';border-radius:6px;padding:6px 9px;margin-top:6px;font-size:11px;color:'
+                                                                     + (over ? '#C62828' : '#795548') + '">'
+                                                                     + (over ? '🚫' : '⚠️') + ' 안전사용기준 · ' + b.join(' · ')
+                                                                     + (over ? '<br>더 뿌리면 잔류농약 기준을 넘길 수 있습니다.' : '')
+                                                                     + '</div>';
+                                                            })()}
                                                         </div>
                                                     `).join('')}
                                                 </div>
@@ -2152,6 +2166,7 @@
             }
             
             console.log('✅ renderWeekly 완료!');
+            try { renderWeather(); } catch(e){ console.warn('날씨:', e.message); }
             try { renderWeekFert(); } catch(e){ console.warn('이번 주 시비:', e.message); }
             console.log('최종 HTML 길이:', prepList.innerHTML.length, '자');
         }
@@ -5310,6 +5325,222 @@
                 renderSupplies(); saveData();
                 alert('삭제하지 못했습니다.\n' + ((r && r.message) || '') + '\n\n목록을 되돌렸습니다.');
             }
+        }
+
+        // ══ 농약 안전사용기준 ═════════════════════════════
+        //   myPesticides[12] 에 「감(2000배 3회 수확7일전)」 처럼 적혀 있다
+        //   growRecords 에서 올해 살포 횟수를 세어 남은 횟수를 알려준다
+
+        // 메모에서 이 작물의 기준을 뽑는다
+        function _safeRuleOf(pesticide, cropName){
+            var memo = String((pesticide && pesticide[12]) || '');
+            if(!memo) return null;
+
+            var bare = String(cropName || '').replace(/\([^)]*\)/g, '')
+                        .replace(/[①-⑩]/g, '').replace(/\s/g, '').trim();
+
+            // 「) / 」 로 나뉜 작물별 조각
+            var parts = memo.split(/\)\s*\/\s*/).map(function(s, i, arr){
+                return i === arr.length - 1 ? s : s + ')';
+            });
+
+            for(var i = 0; i < parts.length; i++){
+                var m = parts[i].trim().match(/^([^(]+)\(([^)]*)\)/);
+                if(!m) continue;
+                var crop = m[1].replace(/\s/g, '').trim();
+                if(!(crop === bare || bare.indexOf(crop) >= 0 || crop.indexOf(bare) >= 0)) continue;
+
+                var d = m[2];
+                var times = (d.match(/(\d+)\s*회/) || [])[1];
+                var days  = (d.match(/수확\s*(\d+)\s*일/) || d.match(/(\d+)\s*일\s*전/) || [])[1];
+                var dil   = (d.match(/(\d+)\s*배/) || [])[1];
+                return { crop: crop, times: times ? parseInt(times,10) : null,
+                         days: days ? parseInt(days,10) : null,
+                         dil: dil ? parseInt(dil,10) : null, raw: d };
+            }
+            return null;
+        }
+
+        // 올해 이 농약을 이 작물에 몇 번 뿌렸나
+        function _sprayCount(pestName, cropName){
+            var year = String(new Date().getFullYear());
+            var bare = function(s){
+                return String(s || '').replace(/\([^)]*\)/g,'').replace(/[①-⑩]/g,'')
+                        .replace(/\d+\s*이랑/g,'').replace(/\s/g,'').trim();
+            };
+            var wantCrop = bare(cropName);
+            var wantPest = String(pestName || '').replace(/\s/g,'').trim();
+            var n = 0, last = '';
+
+            (APP.data.growRecords || []).forEach(function(r){
+                if(!r) return;
+                var date = String(r[2] || '');
+                if(date.indexOf(year) !== 0) return;
+                if(bare(r[1]) !== wantCrop) return;
+
+                var type = String(r[3] || ''), note = String(r[4] || '');
+                if(!/방제|살포|약제|농약/.test(type + note)) return;
+                if(wantPest && (type + note).replace(/\s/g,'').indexOf(wantPest) < 0) return;
+
+                n++;
+                if(date > last) last = date;
+            });
+            return { count: n, last: last };
+        }
+
+        // 안전사용 안내를 한 줄로
+        function safeUseHtml(pesticide, cropName){
+            var rule = _safeRuleOf(pesticide, cropName);
+            if(!rule) return '';
+
+            var used = _sprayCount(pesticide[1], cropName);
+            var bits = [];
+
+            if(rule.dil) bits.push('<b>' + rule.dil + '배</b> 희석');
+
+            if(rule.times){
+                var left = rule.times - used.count;
+                var col = left <= 0 ? '#C62828' : left === 1 ? '#E65100' : '#2E7D32';
+                bits.push('<span style="color:' + col + '"><b>' + used.count + '/' + rule.times
+                        + '회</b>' + (left <= 0 ? ' 초과!' : ' (남은 ' + left + '회)') + '</span>');
+            }
+
+            if(rule.days){
+                bits.push('수확 <b>' + rule.days + '일 전</b>까지');
+            }
+
+            var warn = '';
+            if(rule.times && used.count >= rule.times){
+                warn = '<div style="background:#FFEBEE;color:#C62828;border-radius:6px;'
+                     + 'padding:5px 8px;margin-top:4px;font-size:11px">'
+                     + '🚫 올해 살포 횟수를 다 썼습니다. 더 뿌리면 안 됩니다.</div>';
+            } else if(rule.days && used.last){
+                // 마지막 살포일 + 안전일수
+                var d = new Date(used.last.slice(0,4), +used.last.slice(5,7)-1, +used.last.slice(8,10));
+                d.setDate(d.getDate() + rule.days);
+                warn = '<div style="font-size:11px;color:#666;margin-top:3px">'
+                     + '마지막 살포 ' + used.last + ' → <b>'
+                     + (d.getMonth()+1) + '/' + d.getDate() + '</b> 이후 수확</div>';
+            }
+
+            return '<div style="background:#FFF8E1;border-radius:7px;padding:7px 9px;'
+                 + 'margin-top:5px;font-size:12px;color:#795548">'
+                 + '⚠️ <b>안전사용기준</b> · ' + bits.join(' · ') + warn + '</div>';
+        }
+
+        // ══ 날씨 — 시비·방제 판단 ═════════════════════════
+        var _wxCache = null, _wxAt = 0;
+
+        async function getWeather(){
+            // 30분 안에 받은 것이 있으면 다시 부르지 않는다
+            if(_wxCache && Date.now() - _wxAt < 30 * 60 * 1000) return _wxCache;
+            try {
+                var res = await fetch(APP.gasUrl + '?action=weather');
+                var j = await res.json();
+                if(j && j.success){ _wxCache = j; _wxAt = Date.now(); return j; }
+                console.warn('날씨:', j && j.message);
+            } catch(e){ console.warn('날씨 실패:', e.message); }
+            return null;
+        }
+
+        var SKY_ICON = { '1':'☀️', '3':'⛅', '4':'☁️' };
+        var SKY_NAME = { '1':'맑음', '3':'구름많음', '4':'흐림' };
+
+        function _mmdd(s){
+            s = String(s);
+            return parseInt(s.slice(4,6),10) + '/' + parseInt(s.slice(6,8),10);
+        }
+
+        // 오늘·내일 비 예보로 일할 만한지 알려준다
+        function _wxAdvice(days){
+            if(!days || !days.length) return null;
+            var today = days[0], tmr = days[1];
+            var msgs = [];
+
+            // 비가 오면 시비·방제를 미룬다
+            if(today.rain >= 5 || today.pop >= 60){
+                msgs.push({ t:'bad', s:'오늘 비 예보 — 시비·방제를 미루세요' });
+            } else if(tmr && (tmr.rain >= 10 || tmr.pop >= 70)){
+                msgs.push({ t:'warn', s:'내일 비 ' + (tmr.rain >= 1 ? tmr.rain.toFixed(0) + 'mm ' : '')
+                          + '— 오늘 시비하면 씻겨 내려갑니다' });
+            } else if(tmr && tmr.rain >= 1 && tmr.rain < 10){
+                msgs.push({ t:'ok', s:'내일 약한 비 — 시비 후 비가 오면 오히려 좋습니다' });
+            }
+
+            // 바람이 세면 방제가 어렵다
+            if(today.wsd >= 4){
+                msgs.push({ t:'warn', s:'바람 ' + today.wsd + 'm/s — 방제 시 약이 날립니다' });
+            }
+
+            // 서리·고온
+            if(today.tmn !== null && today.tmn !== undefined && today.tmn <= 0){
+                msgs.push({ t:'bad', s:'서리 주의 (최저 ' + today.tmn + '℃)' });
+            }
+            if(today.tmx !== null && today.tmx >= 31){
+                msgs.push({ t:'warn', s:'한낮 ' + today.tmx + '℃ — 이른 아침이나 저녁에 작업하세요' });
+            }
+
+            // 아무 문제 없으면
+            if(!msgs.length){
+                msgs.push({ t:'ok', s:'날씨가 좋습니다 — 시비·방제하기 알맞습니다' });
+            }
+            return msgs;
+        }
+
+        async function renderWeather(){
+            var box = document.getElementById('week-weather');
+            if(!box) return;
+
+            var wx = await getWeather();
+            if(!wx || !wx.days || !wx.days.length){ box.innerHTML = ''; return; }
+
+            var days = wx.days.slice(0, 3);
+            var adv = _wxAdvice(days) || [];
+
+            var cards = days.map(function(d, i){
+                var label = i === 0 ? '오늘' : i === 1 ? '내일' : _mmdd(d.date);
+                var rain = d.rain >= 0.1
+                    ? '<div style="font-size:11px;color:#0277BD;font-weight:700">'
+                      + d.rain.toFixed(d.rain < 10 ? 1 : 0) + 'mm</div>' : '';
+                // 오늘은 최저·최고가 이미 지나 빠져 있을 수 있다
+                // 그럴 때는 남은 시간대의 기온으로 대신한다
+                var lo = d.tmn, hi = d.tmx;
+                if(lo === null || hi === null){
+                    var temps = (d.hours || []).map(function(h){ return parseFloat(h.tmp); })
+                                 .filter(function(x){ return !isNaN(x); });
+                    if(temps.length){
+                        if(lo === null) lo = Math.min.apply(null, temps);
+                        if(hi === null) hi = Math.max.apply(null, temps);
+                    }
+                }
+                var now = (d.hours || []).length ? parseFloat(d.hours[0].tmp) : NaN;
+                var tempTxt = (lo !== null && hi !== null)
+                    ? Math.round(lo) + '° / <b>' + Math.round(hi) + '°</b>'
+                    : (!isNaN(now) ? '<b>' + Math.round(now) + '°</b>' : '-');
+
+                return '<div style="flex:1;text-align:center;background:#fff;border-radius:8px;'
+                     + 'padding:8px 4px">'
+                     + '<div style="font-size:11px;color:#666">' + label + '</div>'
+                     + '<div style="font-size:22px;line-height:1.3">' + (SKY_ICON[d.sky] || '☁️') + '</div>'
+                     + '<div style="font-size:12px;color:#424242">' + tempTxt + '</div>'
+                     + '<div style="font-size:10px;color:#9E9E9E">비 ' + d.pop + '%</div>'
+                     + rain + '</div>';
+            }).join('');
+
+            var tips = adv.map(function(a){
+                var c = a.t === 'bad' ? '#C62828' : a.t === 'warn' ? '#E65100' : '#2E7D32';
+                var ic = a.t === 'bad' ? '🚫' : a.t === 'warn' ? '⚠️' : '✅';
+                return '<div style="font-size:12px;color:' + c + ';margin-top:4px">'
+                     + ic + ' ' + a.s + '</div>';
+            }).join('');
+
+            box.innerHTML =
+              '<div style="background:#E3F2FD;border:1.5px solid #90CAF9;border-radius:10px;'
+            + 'padding:11px 13px;margin-bottom:12px">'
+            + '<div style="font-weight:700;color:#1565C0;font-size:14px;margin-bottom:8px">'
+            + '🌤 날씨 <span style="font-weight:400;font-size:11px;color:#666">· 새솔동</span></div>'
+            + '<div style="display:flex;gap:6px">' + cards + '</div>'
+            + tips + '</div>';
         }
 
         // ══ 이번 주 시비 알림 ═════════════════════════════
