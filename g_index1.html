@@ -1071,7 +1071,21 @@
                     <span>이번 주 관리</span>
                     <small style="color: #999; font-size: 11px;">(로딩중...)</small>
                 </div>
+                <!-- 일반 / 주말농부 -->
+                <div style="display:flex;gap:5px;margin-bottom:10px;padding:4px;
+                     background:#F1F8E9;border-radius:8px">
+                    <button id="wk-mode-all" onclick="setWeekMode('all')"
+                        style="flex:1;padding:8px 6px;background:var(--primary-color);color:#fff;
+                        border:none;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">📋 전체</button>
+                    <button id="wk-mode-weekend" onclick="setWeekMode('weekend')"
+                        style="flex:1;padding:8px 6px;background:#fff;color:#558B2F;
+                        border:1px solid #C5E1A5;border-radius:6px;cursor:pointer;font-size:13px;
+                        font-weight:600;font-family:inherit">⛅ 주말농부</button>
+                </div>
+
                 <div id="week-weather"></div>
+                <div id="weekend-plan"></div>
                 <div id="week-fert"></div>
                 <div id="weekly-prep-list"></div>
             </div>
@@ -1336,6 +1350,22 @@
                     </div>
                 </div>
 
+                <!-- 자료 갱신 -->
+                <div class="section-title" style="font-size:15px;margin-top:18px">
+                    <span class="emoji">🔄</span><span>자료 갱신</span></div>
+
+                <div style="background:#FFF8E1;border-radius:9px;padding:12px 14px;
+                     font-size:12px;color:#795548;line-height:1.7">
+                    작물코드와 시비량은 <b>공공기관 자료</b>라 가끔 늘어납니다.<br>
+                    새 작물을 심으셨거나 한참 만에 여실 때 눌러주세요.
+                    <button onclick="updateSheets()" id="upd-btn"
+                        style="display:block;width:100%;margin-top:10px;padding:11px;
+                        background:#5D4037;color:#fff;border:none;border-radius:8px;
+                        cursor:pointer;font-size:14px;font-weight:700;font-family:inherit">
+                        🔄 시트 자료 갱신하기</button>
+                    <div id="upd-result" style="margin-top:9px"></div>
+                </div>
+
                 <!-- 밭 사진 -->
                 <div class="section-title" style="font-size:15px;margin-top:16px">
                     <span class="emoji">📷</span><span>밭의 모습</span></div>
@@ -1368,10 +1398,70 @@
 
                 <div id="about-features"></div>
 
-                <div style="background:#FAFAFA;border-radius:9px;padding:12px 14px;
-                     margin-top:14px;font-size:11px;color:#78909C;line-height:1.8">
-                    자료는 <b>구글 시트</b>에 저장되며, 농약 정보는 <b>농촌진흥청 PSIS</b>,
-                    비료 처방은 <b>흙토람</b>, 날씨는 <b>기상청</b> 자료를 씁니다.<br>
+                <!-- 자료 출처 -->
+                <div class="section-title" style="font-size:15px;margin-top:18px">
+                    <span class="emoji">📚</span><span>자료 출처</span></div>
+
+                <div style="background:#FAFAFA;border-radius:9px;padding:12px 14px;font-size:12px">
+                    <div style="margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #EEE">
+                        <div style="font-weight:700;color:#33691E">농촌진흥청</div>
+                        <div style="color:#616161;line-height:1.7;margin-top:3px">
+                            <b>농약안전정보시스템 (PSIS)</b><br>
+                            <span style="font-size:11px;color:#78909C">
+                                농약 등록 정보 · 적용 작물 · 희석배수 · 안전사용기준</span><br>
+                            <a href="https://psis.rda.go.kr" target="_blank"
+                               style="font-size:11px;color:#1565C0">psis.rda.go.kr</a>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #EEE">
+                        <div style="font-weight:700;color:#33691E">농촌진흥청 국립농업과학원</div>
+                        <div style="color:#616161;line-height:1.7;margin-top:3px">
+                            <b>흙토람 — 토양환경정보시스템</b><br>
+                            <span style="font-size:11px;color:#78909C">
+                                작물별 비료 표준사용량 · 토양검정 기반 비료사용처방 · 작물코드</span><br>
+                            <a href="https://soil.rda.go.kr" target="_blank"
+                               style="font-size:11px;color:#1565C0">soil.rda.go.kr</a>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #EEE">
+                        <div style="font-weight:700;color:#33691E">농촌진흥청</div>
+                        <div style="color:#616161;line-height:1.7;margin-top:3px">
+                            <b>국가농작물병해충관리시스템 (NCPMS)</b><br>
+                            <span style="font-size:11px;color:#78909C">
+                                병해충 진단 · 발생 정보 · 방제 방법</span><br>
+                            <a href="https://ncpms.rda.go.kr" target="_blank"
+                               style="font-size:11px;color:#1565C0">ncpms.rda.go.kr</a>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom:9px;padding-bottom:9px;border-bottom:1px solid #EEE">
+                        <div style="font-weight:700;color:#33691E">기상청</div>
+                        <div style="color:#616161;line-height:1.7;margin-top:3px">
+                            <b>단기예보 · 중기예보</b><br>
+                            <span style="font-size:11px;color:#78909C">
+                                8일 날씨 · 강수 · 기온 · 바람 (새솔동 격자 57,120)</span><br>
+                            <a href="https://www.weather.go.kr" target="_blank"
+                               style="font-size:11px;color:#1565C0">weather.go.kr</a>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="font-weight:700;color:#33691E">공공데이터포털</div>
+                        <div style="color:#616161;line-height:1.7;margin-top:3px">
+                            <span style="font-size:11px;color:#78909C">
+                                위 자료는 공공데이터포털의 OpenAPI 로 받아옵니다</span><br>
+                            <a href="https://www.data.go.kr" target="_blank"
+                               style="font-size:11px;color:#1565C0">data.go.kr</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background:#F5F5F5;border-radius:9px;padding:11px 14px;
+                     margin-top:10px;font-size:11px;color:#78909C;line-height:1.8">
+                    농장 자료는 <b>구글 시트</b>에 저장되며, 앱은 구글 Apps Script 를 거쳐
+                    시트와 각 기관의 자료를 주고받습니다.<br>
                     이용호. Copyright 2026.
                 </div>
             </div>
@@ -2264,6 +2354,7 @@
                 .then(function(){ return renderWeather(); })
                 .catch(function(e){ console.warn('🌤 날씨 그리기 실패:', e && e.message, e); });
             try { renderWeekFert(); } catch(e){ console.warn('이번 주 시비:', e.message); }
+            try { setWeekMode(_weekMode); } catch(e){ console.warn('주말농부:', e.message); }
             console.log('최종 HTML 길이:', prepList.innerHTML.length, '자');
         }
 
@@ -5337,6 +5428,63 @@
             return { count: n, last: last };
         }
 
+        // 병해충 이름으로 검색 — NCPMS 와 네이버 둘 다
+        //   NCPMS 는 사진이 없는 병해충이 많아 네이버도 함께 엽니다
+        function searchPest(name, crop){
+            var q = String(name || '').trim();
+            if(!q) return;
+            var full = (crop ? String(crop).replace(/\([^)]*\)/g,'').trim() + ' ' : '') + q;
+
+            var ex = document.getElementById('pest-search'); if(ex) ex.remove();
+            var box = document.createElement('div');
+            box.id = 'pest-search';
+            box.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:10001;'
+              + 'display:flex;align-items:center;justify-content:center;padding:16px';
+            box.onclick = function(e){ if(e.target === box) box.remove(); };
+
+            box.innerHTML =
+              '<div style="background:#fff;border-radius:12px;width:100%;max-width:380px;'
+            + 'box-shadow:0 8px 24px rgba(0,0,0,.3);overflow:hidden">'
+            + '<div style="background:#5D4037;color:#fff;padding:12px 15px;font-weight:700;'
+            + 'font-size:15px">🔍 ' + q + '</div>'
+            + '<div style="padding:14px">'
+            + '<div style="font-size:12px;color:#666;margin-bottom:11px">'
+            + '어디서 찾아볼까요?</div>'
+
+            + '<a href="https://ncpms.rda.go.kr/npmsAPI/search?searchWord='
+            + encodeURIComponent(q) + '" target="_blank" rel="noopener"'
+            + ' style="display:block;background:#2E7D32;color:#fff;padding:12px 14px;'
+            + 'border-radius:8px;text-decoration:none;margin-bottom:7px">'
+            + '<div style="font-weight:700;font-size:14px">🏛 국가농작물병해충관리시스템</div>'
+            + '<div style="font-size:11px;opacity:.85;margin-top:2px">'
+            + '농촌진흥청 · 정확한 진단과 방제 방법</div></a>'
+
+            + '<a href="https://search.naver.com/search.naver?query='
+            + encodeURIComponent(full + ' 병해충') + '" target="_blank" rel="noopener"'
+            + ' style="display:block;background:#03C75A;color:#fff;padding:12px 14px;'
+            + 'border-radius:8px;text-decoration:none;margin-bottom:7px">'
+            + '<div style="font-weight:700;font-size:14px">🟢 네이버 검색</div>'
+            + '<div style="font-size:11px;opacity:.9;margin-top:2px">'
+            + '사진이 많습니다 · 실제 밭 사례</div></a>'
+
+            + '<a href="https://search.naver.com/search.naver?where=image&query='
+            + encodeURIComponent(full) + '" target="_blank" rel="noopener"'
+            + ' style="display:block;background:#E8F5E9;color:#1B5E20;padding:12px 14px;'
+            + 'border-radius:8px;text-decoration:none;margin-bottom:7px;'
+            + 'border:1px solid #A5D6A7">'
+            + '<div style="font-weight:700;font-size:14px">📷 네이버 이미지</div>'
+            + '<div style="font-size:11px;opacity:.8;margin-top:2px">'
+            + '증상을 눈으로 견주어 볼 때</div></a>'
+
+            + '<button onclick="document.getElementById(\'pest-search\').remove()"'
+            + ' style="width:100%;padding:10px;background:#fff;color:#666;'
+            + 'border:1.5px solid #E0E0E0;border-radius:8px;cursor:pointer;'
+            + 'font-size:13px;font-family:inherit;margin-top:4px">닫기</button>'
+            + '</div></div>';
+
+            document.body.appendChild(box);
+        }
+
         // 준비사항 글에서 작물명을 찾아 쓸 수 있는 농약을 알려준다
         //   「배 마지막 병충해 방제. 매실/모과/살구 최종 방제」
         //   → 배·매실·모과·살구 에 쓸 수 있는 보유 농약을 찾는다
@@ -5376,7 +5524,11 @@
                          + (r.times ? ' · <span style="color:' + col + '">'
                                     + used.count + '/' + r.times + '회'
                                     + (left <= 0 ? ' 초과!' : '') + '</span>' : '')
-                         + (r.disease ? ' <span style="color:#9E9E9E">' + r.disease + '</span>' : '')
+                         + (r.disease ? ' <span onclick="searchPest(&quot;'
+                                      + r.disease.replace(/"/g,'') + '&quot;,&quot;'
+                                      + String(crop).replace(/"/g,'') + '&quot;)"'
+                                      + ' style="color:#1565C0;text-decoration:underline;'
+                                      + 'cursor:pointer">' + r.disease + ' 🔍</span>' : '')
                          + '</div>';
                 }).join('');
 
@@ -5429,6 +5581,256 @@
             return '<div style="background:#FFF8E1;border-radius:7px;padding:7px 9px;'
                  + 'margin-top:5px;font-size:12px;color:#795548">'
                  + '⚠️ <b>안전사용기준</b> · ' + bits.join(' · ') + warn + '</div>';
+        }
+
+        // ══ 주말농부 — 이틀에 6시간으로 줄인 계획 ══════════
+        var _weekMode = 'all';
+        try { _weekMode = localStorage.getItem('week_mode') || 'all'; } catch(e){}
+
+        function setWeekMode(mode){
+            _weekMode = mode;
+            try { localStorage.setItem('week_mode', mode); } catch(e){}
+
+            var a = document.getElementById('wk-mode-all');
+            var b = document.getElementById('wk-mode-weekend');
+            var on  = 'background:var(--primary-color);color:#fff;border:none';
+            var off = 'background:#fff;color:#558B2F;border:1px solid #C5E1A5';
+            if(a) a.style.cssText = a.style.cssText.replace(/background:[^;]*;color:[^;]*;border:[^;]*/, mode==='all'?on:off);
+            if(b) b.style.cssText = b.style.cssText.replace(/background:[^;]*;color:[^;]*;border:[^;]*/, mode==='weekend'?on:off);
+
+            var showAll = (mode === 'all');
+            ['week-fert','weekly-prep-list'].forEach(function(id){
+                var el = document.getElementById(id);
+                if(el) el.style.display = showAll ? '' : 'none';
+            });
+            var wp = document.getElementById('weekend-plan');
+            if(wp) wp.style.display = showAll ? 'none' : '';
+
+            if(!showAll){
+                Promise.resolve().then(function(){ return renderWeekendPlan(); })
+                    .catch(function(e){ console.warn('주말농부:', e && e.message); });
+            }
+        }
+
+        // 일이 얼마나 걸릴지 어림한다 (분)
+        function _estMinutes(text, kind){
+            var s = String(text || '');
+            var base = { '농약':60, '시비':45, '작업관리':40, '수확':60 }[kind] || 30;
+
+            // 글에서 힌트를 찾는다
+            if(/전면|전체|모든|일괄/.test(s)) base += 30;
+            if(/점검|확인|살펴/.test(s)) base = Math.min(base, 20);
+            if(/준비|계획|파악|조율/.test(s)) base = 15;
+            if(/정식|파종|이식/.test(s)) base += 20;
+            if(/가지치기|전정|유인/.test(s)) base += 30;
+            return base;
+        }
+
+        // 급한 정도 — 높을수록 먼저
+        function _priority(kind, text, when){
+            var s = String(text || '');
+            var p = 50;
+            if(kind === '농약') p += 25;               // 때를 놓치면 안 됨
+            if(kind === '시비') p += 20;
+            if(/최종|마지막|긴급|필수|반드시/.test(s)) p += 30;
+            if(/수확/.test(s)) p += 25;
+            if(/정식|파종/.test(s)) p += 20;
+            if(/준비|계획|검토|파악/.test(s)) p -= 25;  // 미뤄도 되는 일
+            if(/점검|확인/.test(s)) p -= 10;
+            return p;
+        }
+
+        // 시비 — 얼마나 줄지 한 줄로
+        async function _fertDetailLine(cropName, stage){
+            var area = _areaOf(cropName);
+            var std = await getFertExp(cropName);
+            if(!std){
+                var code = _cropCodeOf(cropName);
+                if(code) std = await getFertStd(code);
+            }
+            if(!std) return '';
+
+            var isPre = String(stage || '').indexOf('밑') >= 0;
+            var N = isPre ? std.pre_Fert_N : std.post_Fert_N;
+            var P = isPre ? std.pre_Fert_P : std.post_Fert_P;
+            var K = isPre ? std.pre_Fert_K : std.post_Fert_K;
+
+            var g = function(v){ var x = _toArea(v, area.m2); return x ? x + 'g' : '—'; };
+            var nN = _toArea(N, area.m2), nP = _toArea(P, area.m2), nK = _toArea(K, area.m2);
+            var pick = _bestFertFor(nN, nP, nK, isPre ? '밑거름' : '웃거름');
+
+            return '<div style="background:#F1F8E9;border-radius:6px;padding:6px 9px;'
+                 + 'margin-top:5px;font-size:11px;line-height:1.7">'
+                 + '<span style="color:#E65100;font-weight:700;font-size:12px">'
+                 + '질소 ' + g(N) + ' · 인산 ' + g(P) + ' · 칼리 ' + g(K) + '</span>'
+                 + '<span style="color:#9E9E9E"> · ' + area.m2 + '㎡'
+                 + (std._soil ? ' · 🔬검정' : '') + '</span>'
+                 + (pick ? '<div style="color:#33691E;margin-top:2px">👉 ' + pick + '</div>' : '')
+                 + '</div>';
+        }
+
+        // 농약 — 어떤 약을 얼마로
+        function _pestDetailLine(text){
+            var s = String(text || '');
+            var mine = (typeof getOwnedPlants === 'function' ? getOwnedPlants() : []) || [];
+            var crops = [];
+            mine.forEach(function(c){
+                var bare = String(c).replace(/\([^)]*\)/g,'').replace(/[①-⑩]/g,'')
+                            .replace(/\d+\s*이랑/g,'').trim();
+                if(bare.length >= 1 && s.indexOf(bare) >= 0 && crops.indexOf(bare) < 0)
+                    crops.push(bare);
+            });
+            if(!crops.length) return '';
+
+            var lines = [];
+            crops.slice(0, 3).forEach(function(crop){
+                var list = _pesticidesFor(crop);
+                if(!list.length) return;
+                var x = list[0];                       // 가장 알맞은 것 하나
+                var r = x.rule;
+                var used = _sprayCount(x.name, crop);
+                var left = r.times ? r.times - used.count : null;
+                var over = (left !== null && left <= 0);
+
+                lines.push('<div style="margin-top:2px;' + (over ? 'color:#C62828' : '') + '">'
+                    + '<b>' + crop + '</b> · '
+                    + '<span style="background:#FFF3E0;color:#E65100;font-weight:700;'
+                    + 'padding:1px 5px;border-radius:4px">' + x.name + '</span>'
+                    + (r.dil ? ' <b>' + r.dil + '배</b>' : '')
+                    + (r.dil ? ' <span style="color:#9E9E9E">(20L에 '
+                             + Math.round(20000 / r.dil) + 'g)</span>' : '')
+                    + (r.times ? ' · ' + used.count + '/' + r.times + '회'
+                               + (over ? ' 초과!' : '') : '')
+                    + (r.days ? ' · 수확 ' + r.days + '일전' : '')
+                    + '</div>');
+            });
+            if(!lines.length) return '';
+
+            return '<div style="background:#FFF8E1;border-radius:6px;padding:6px 9px;'
+                 + 'margin-top:5px;font-size:11px;line-height:1.6;color:#795548">'
+                 + lines.join('') + '</div>';
+        }
+
+        // 주말 이틀치 계획을 짠다
+        async function renderWeekendPlan(){
+            var box = document.getElementById('weekend-plan');
+            if(!box) return;
+
+            var DAY_MIN = 180;        // 하루 3시간
+            var jobs = [];
+
+            // ① 이번 주 시비 — 얼마나 줄지도 함께
+            (getThisWeekFert() || []).forEach(function(it){
+                jobs.push({ kind:'시비', title: it.crop + ' ' + it.stage,
+                            desc: it.memo || '', min: 45, crop: it.crop, stage: it.stage,
+                            pri: _priority('시비', it.stage + ' ' + it.memo) });
+            });
+
+            // ② 준비사항 (농약·작업관리 등)
+            var rows = APP.data['준비사항'] || [];
+            var today = new Date();
+            var mon = new Date(today); mon.setDate(today.getDate() - ((today.getDay()+6)%7));
+            mon.setHours(0,0,0,0);
+            var sun = new Date(mon); sun.setDate(mon.getDate()+6); sun.setHours(23,59,59,999);
+
+            rows.forEach(function(r){
+                if(!r) return;
+                var d = new Date(r[0]);
+                if(isNaN(d.getTime()) || d < mon || d > sun) return;
+                var kind = String(r[1] || '').trim();
+                if(kind === '시비') return;            // 위에서 이미 담았다
+                var title = String(r[2] || '').trim();
+                if(!title) return;
+                var full = title + ' ' + String(r[3] || '') + ' ' + String(r[4] || '');
+                jobs.push({ kind: kind, title: title, desc: String(r[3] || '').trim(),
+                            detail: String(r[4] || '').trim(), full: full,
+                            min: _estMinutes(full, kind), pri: _priority(kind, full) });
+            });
+
+            if(!jobs.length){
+                box.innerHTML = '<div style="background:#F1F8E9;border:1.5px solid #C5E1A5;'
+                              + 'border-radius:10px;padding:20px;text-align:center;'
+                              + 'color:#558B2F;font-size:13px">'
+                              + '이번 주는 꼭 해야 할 일이 없습니다 🌿</div>';
+                return;
+            }
+
+            // 급한 것부터
+            jobs.sort(function(a,b){ return b.pri - a.pri; });
+
+            // 이틀에 나눠 담는다
+            var days = [{ label:'토요일', jobs:[], min:0 }, { label:'일요일', jobs:[], min:0 }];
+            var later = [];
+            jobs.forEach(function(j){
+                var d = days[0].min <= days[1].min ? days[0] : days[1];
+                if(d.min + j.min <= DAY_MIN){ d.jobs.push(j); d.min += j.min; }
+                else later.push(j);
+            });
+
+            // 시비·농약에는 구체적인 내용을 붙인다
+            for(var q = 0; q < days.length; q++){
+                for(var w = 0; w < days[q].jobs.length; w++){
+                    var j = days[q].jobs[w];
+                    try {
+                        if(j.kind === '시비' && j.crop){
+                            j.extra = await _fertDetailLine(j.crop, j.stage);
+                        } else if(j.kind === '농약'){
+                            j.extra = _pestDetailLine(j.full || j.title);
+                        }
+                    } catch(e){}
+                }
+            }
+
+            var KIND_ICON = { '농약':'🧪', '시비':'🌱', '작업관리':'🔧', '수확':'🧺' };
+            var hm = function(m){
+                var h = Math.floor(m/60), n = m%60;
+                return (h ? h + '시간' : '') + (n ? ' ' + n + '분' : '');
+            };
+
+            var html = '<div style="background:#F1F8E9;border:1.5px solid #C5E1A5;border-radius:10px;'
+                     + 'padding:12px 14px;margin-bottom:12px">'
+                     + '<div style="font-weight:700;color:#33691E;font-size:14px;margin-bottom:4px">'
+                     + '⛅ 주말농부 계획</div>'
+                     + '<div style="font-size:11px;color:#78909C;margin-bottom:10px">'
+                     + '하루 3시간 · 이틀 6시간에 맞춰 급한 일부터 골랐습니다</div>';
+
+            days.forEach(function(d){
+                if(!d.jobs.length) return;
+                html += '<div style="margin-bottom:10px">'
+                      + '<div style="font-size:12px;font-weight:700;color:#558B2F;margin-bottom:5px">'
+                      + '📅 ' + d.label
+                      + ' <span style="font-weight:400;color:#78909C">· 약 ' + hm(d.min) + '</span></div>'
+                      + d.jobs.map(function(j){
+                          return '<div style="background:#fff;border-radius:8px;padding:9px 11px;'
+                               + 'margin-bottom:5px">'
+                               + '<div style="display:flex;align-items:center;gap:6px">'
+                               + '<span>' + (KIND_ICON[j.kind] || '📌') + '</span>'
+                               + '<span style="flex:1;font-weight:700;color:#33691E;font-size:13px">'
+                               + j.title + '</span>'
+                               + '<span style="background:#DCEDC8;color:#33691E;border-radius:8px;'
+                               + 'padding:1px 7px;font-size:11px;white-space:nowrap">'
+                               + hm(j.min) + '</span></div>'
+                               + (j.desc ? '<div style="font-size:11px;color:#666;margin-top:3px">'
+                                         + j.desc + '</div>' : '')
+                               + (j.extra || '')
+                               + '</div>';
+                        }).join('')
+                      + '</div>';
+            });
+
+            if(later.length){
+                html += '<div style="margin-top:6px;padding-top:9px;border-top:1px dashed #C5E1A5">'
+                      + '<div style="font-size:11px;font-weight:700;color:#E65100;margin-bottom:4px">'
+                      + '⏭ 다음으로 미룬 일 ' + later.length + '건</div>'
+                      + later.slice(0,5).map(function(j){
+                          return '<div style="font-size:11px;color:#78909C;margin-bottom:2px">'
+                               + '· ' + j.title + ' (' + hm(j.min) + ')</div>';
+                        }).join('')
+                      + '</div>';
+            }
+
+            html += '</div>';
+            box.innerHTML = html;
         }
 
         // ══ 날씨 — 시비·방제 판단 ═════════════════════════
@@ -5933,6 +6335,55 @@
                 _pestToast('✅ ' + crop + ' ' + stage + ' 완료');
             } else {
                 alert('완료 표시에 실패했습니다.\n' + (r.message || ''));
+            }
+        }
+
+        // 시트 자료를 갱신한다 (GAS 의 시트갱신 을 부른다)
+        async function updateSheets(){
+            var btn = document.getElementById('upd-btn');
+            var out = document.getElementById('upd-result');
+            if(!btn || !out) return;
+
+            if(!confirm('작물코드와 시비량을 새로 받아옵니다.\n1~2분 걸릴 수 있습니다.\n\n계속할까요?')) return;
+
+            btn.disabled = true;
+            btn.textContent = '⏳ 갱신 중… 기다려 주세요';
+            out.innerHTML = '<div style="font-size:11px;color:#795548">'
+                          + '공공데이터포털에서 받아오는 중입니다…</div>';
+
+            try {
+                var res = await fetch(APP.gasUrl + '?action=updateSheets');
+                var txt = await res.text();
+                console.log('🔄 갱신 응답:', txt.slice(0, 300));
+
+                var j = null;
+                try { j = JSON.parse(txt); } catch(e){}
+
+                if(j && j.success){
+                    out.innerHTML =
+                      '<div style="background:#E8F5E9;border-radius:7px;padding:9px 11px;'
+                    + 'font-size:12px;color:#1B5E20;line-height:1.7">'
+                    + '<b>✅ 갱신했습니다</b><br>'
+                    + '작물코드 · ' + (j.crop || '-') + '<br>'
+                    + '시비량 · ' + (j.fert || '-') + '</div>';
+                    _pestToast('✅ 자료를 갱신했습니다');
+
+                    // 앱 자료도 새로 읽는다
+                    setTimeout(function(){ reloadFromSheets(true); }, 800);
+                } else {
+                    out.innerHTML =
+                      '<div style="background:#FFEBEE;border-radius:7px;padding:9px 11px;'
+                    + 'font-size:12px;color:#C62828;line-height:1.7">'
+                    + '갱신하지 못했습니다.<br>'
+                    + ((j && j.message) || 'GAS 에 updateSheets 가 없는 듯합니다.') + '</div>';
+                }
+            } catch(e){
+                out.innerHTML = '<div style="background:#FFEBEE;border-radius:7px;'
+                              + 'padding:9px 11px;font-size:12px;color:#C62828">'
+                              + '연결하지 못했습니다: ' + e.message + '</div>';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🔄 시트 자료 갱신하기';
             }
         }
 
